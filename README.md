@@ -8,6 +8,17 @@
 
 [English](README.en-US.md) · [下载最新版](https://github.com/ai68298100/siyuan-glean/releases/latest) · [能力矩阵](docs/CAPABILITY-MATRIX.md) · [反馈与问题](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.22 更新（2026-10-25）
+
+本次版本实现全功能系统性 E2E 排查、老用户历史数据兼容与多维体验加固。
+
+**新增与体验增强：**
+
+- **读库已选标签栏（Filter Chips）阅读时长对齐**：`domain/library-filter-chips.ts` 扩展 `readingTimeTier` 标签映射，点击 `✕` 即可单项安全重置为 `"all"`，消除高级筛选中选了时长却在标签栏“隐形”的体验断层。
+- **历史剪藏微信识别防御性补齐**：`domain/wechat.ts` 纯函数 `isWechatUrl` 强化容错：无协议前缀的 `mp.weixin.qq.com` 域名及 `"微信"`、`"微信公众号"` 历史别名均能防御性正确判定，历史剪藏 100% 自动对齐微信徽标。
+- **划词悬浮条与批注输入框 Escape 键盘退出闭环**：`ReaderTab.svelte` 键盘处理器将 Escape 优先分配给正文划词条（`excerpt`）与 Memo 批注输入框，秒级收起并平滑回退焦点。
+- **伴生栏批注建稿安全边界强化**：`highlights.ts` 对输入批注项增加父级文档 `box` 与 `hpath` 自动回退保护，缺少位置属性的老旧高亮块也能稳定生成思源笔记。
+
 ## v1.3.21 更新（2026-10-24）
 
 本次版本实现全文朗读视口左下角浮动音频声波播放胶囊（`.glean-reader__floating-speech`），带来实时动态声波跳动微动效与就地暂停控制。
@@ -391,7 +402,7 @@
 
 ## 兼容性与验收
 
-本次发布为 [v1.3.21](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.21)。自动门禁与发布证据见[发布候选复核](docs/RELEASE-CANDIDATE.md)；这不代表所有真实环境都已验收。
+本次发布为 [v1.3.22](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.22)。自动门禁与发布证据见[发布候选复核](docs/RELEASE-CANDIDATE.md)；这不代表所有真实环境都已验收。
 
 桌面宿主、Android/移动端、浏览器前端、真实模型、官方剪藏、外部文件和订阅服务仍按环境分别验收。使用前提、降级方式和阻塞项以[能力矩阵](docs/CAPABILITY-MATRIX.md)及[已知阻塞](docs/BLOCKERS.md)为准；请勿把单元测试或隔离 E2E 当作真机通过。
 

@@ -2079,3 +2079,19 @@ T-3416 承接方向五（有依据的阅读 AI）与同类产品对标（Readwis
    - 动态集成跳动声波微动效（`@keyframes glean-speech-wave`），朗读暂停时自动冻结声波并半透，恢复时实时跳动；
    - 呈现段落进度指示（`X/Y`）、就地播放/暂停切换按钮与停止按钮，朗读结束自动隐退；
    - 无论伴生栏展开、折叠或在全屏沉浸阅读下，听书与朗读控制完全就地闭环。
+
+## D-0334（2026-10-25）全功能系统性 E2E 排查、老用户历史数据兼容与多维体验加固（T-3455）
+
+建立完整用户路径与真实内核 E2E 验证闭环，全面清除各功能边界盲区与老数据阻断：
+1. 读库 Filter Chips 与阅读时长分级对齐：
+   - `src/domain/library-filter-chips.ts` 纯函数 `FILTER_CHIP_KEYS` 扩展 `readingTimeTier`，`libraryFilterChips` 完整呈现时长分级徽标；
+   - `DockPanel.svelte` 实现 `filterChipText` 时长文案多语解析，点击 `✕` 即可单项安全重置为 `"all"`，消除高级筛选中选了时长却在标签栏“隐形”的体验断层；
+2. 历史微信剪藏脏数据防御性解析：
+   - `src/domain/wechat.ts` 纯函数 `isWechatUrl` 强化容错：无协议前缀的 `mp.weixin.qq.com` 域名及 `"微信"`、`"微信公众号"` 历史别名均能防御性正确判定；
+   - 彻底解决老用户历史剪藏中因缺少 `https://` 导致 `new URL()` 解析抛错被误判为非微信文章的暗坑；
+3. 划词悬浮条与批注输入框 Escape 键盘退出闭环：
+   - `ReaderTab.svelte` 键盘处理器将 Escape 优先分配给正文划词条（`excerpt`）与 Memo 批注输入框，秒级收起并平滑回退焦点，全键盘研读流无阻塞；
+4. 伴生栏批注建稿安全边界强化：
+   - `highlights.ts`（`createArticleHighlightsDoc`）对输入批注项增加父级文档 `box` 与 `hpath` 自动回退保护，缺少位置属性的老旧高亮块也能稳定生成思源笔记；
+5. 全功能迁移与排查指南：
+   - 编写《全功能排查与老用户平滑迁移指南》（`docs/MIGRATION-GUIDE.md`），更新 `docs/DATA-CONTRACT.md` 契约事实源，全套 1661 项单测与 58 条隔离内核服务级 E2E 100% 通过。

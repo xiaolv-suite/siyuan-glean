@@ -286,14 +286,29 @@ export async function createArticleHighlightsDoc(
 ): Promise<{ ok: boolean; docId?: string; reason?: string }> {
     if (!group.items.length) return { ok: false, reason: "empty" };
     const firstItem = group.items[0];
-    const box = firstItem.box;
-    const parent = firstItem.hpath.slice(0, firstItem.hpath.lastIndexOf("/"));
+    let box = firstItem.box;
+    let hpath = firstItem.hpath;
+    if (!box || !hpath) {
+        try {
+            const documents = await listHighlightDocuments([group.rootId]);
+            const doc = documents[0];
+            if (doc) {
+                box = box || doc.box;
+                hpath = hpath || doc.hpath;
+            }
+        } catch {
+            // fallback if doc meta cannot be retrieved
+        }
+    }
+    if (!box) return { ok: false, reason: "invalidBox" };
+    const lastSlash = (hpath || "").lastIndexOf("/");
+    const parent = lastSlash > 0 ? hpath.slice(0, lastSlash) : "";
     const safeTitle = (group.title || "未命名").replace(/[\\/\u0000-\u001f]/g, " ").trim().slice(0, 100);
-    const hpath = `${parent}/[${labels.title}] ${safeTitle} ${newNodeId()}`;
+    const targetHpath = `${parent}/[${labels.title}] ${safeTitle} ${newNodeId()}`;
     const markdown = renderArticleHighlightsMarkdown(group, labels);
 
     try {
-        const docId = await createDocWithMd(box, hpath, markdown);
+        const docId = await createDocWithMd(box, targetHpath, markdown);
         if (!isHighlightId(docId)) return { ok: false, reason: "createFailed" };
         await writeClip(plugin, docId, { internal: true });
         return { ok: true, docId };

@@ -399,3 +399,19 @@ AI 设置遵循逐功能默认关闭（D-0070，T-3228）：新用户的 dedupOn
 后台停止先核对 manifest 的版本、正整数 PID、回环 host/port/base 一致性及工作区标记。两进程都已退出时只收口元数据，不向旧端口发请求；活跃会话使用已有内核退出端点，并等待内核与启动进程都结束后才记 stopped。不得依进程名称清理任何作者实例。
 
 事务探针的 `transaction-report.json` 另有 `reportVersion`，并记录 `workspace`、回环 `host`/`port`、`kernelVersion`、`pluginVersion`、逐项 `{name,ok,detail}` 的 `results`、详细 `probes` 和 `limitations`。只有实际读回通过的隔离证据进入 `results`；负面观察和未验证边界留在详情中。验收账本可导入该报告，但报告不改变 T-3220 的真实宿主、权限、资源删除或编辑器待办状态。
+
+## 8. 读库分面筛选、阅读器视口微动效与历史剪藏脏数据防御契约（D-0334，T-3455）
+
+1. **分面筛选 Chip 与阅读时长对齐**：
+   - `FILTER_CHIP_KEYS` 必须包含 `readingTimeTier`，只有当取值为 `short` / `medium` / `long` 等非 `"all"` 值时才生成 Chip 投影；
+   - 移除 `readingTimeTier` Chip 时，状态必须重置回中性 `"all"`，不得留下空字符串破坏筛选；
+   - 老用户已保存视图（saved views）如果包含 `readingTimeTier`，读库工作台按 `filter.readingTimeTier ?? "all"` 健壮初始化。
+2. **历史微信剪藏脏数据防御与别名降级**：
+   - 早期通过外部工具或旧版剪藏录入的文章，其来源 URL 或 site 属性可能缺少 `https://` 协议前缀（例如直接存入 `"mp.weixin.qq.com"`、`"mp.weixin.qq.com/s/..."`）或存入 `"微信"`、`"微信公众号"` 文本；
+   - `isWechatUrl` 必须对无协议前缀与中文别名进行防御性补齐解析，确保历史数据在卡片来源微标、排版清洗与公众号下钻筛选时零断裂、全线闭环。
+3. **伴生栏批注建稿安全边界**：
+   - `createArticleHighlightsDoc` 对输入 `items` 的 `box` 与 `hpath` 进行防御性校验，当首项缺失位置元数据时，主动回退至 `fetchDocMeta(group.rootId)` 获取父级笔记本与文档路径，严禁因属性缺失抛出异常破坏用户建稿流程；
+   - 生成的读书笔记必须标记 `internal: true`，杜绝被误扫入读库待确认候选池。
+4. **视口浮动微胶囊与键盘中断**：
+   - 阅读器浮动进度胶囊与悬浮音频播放控制器严格遵守轻量微动效与 `pointer-events: none`（纯信息类）或极小触摸区（控制类）设计，绝不干扰正文选区划词；
+   - 划词悬浮条及 Memo 输入框与 Escape 全局中断联动，保证键盘流即刻收拢，避免焦点滞留屏幕中央。

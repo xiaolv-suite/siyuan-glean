@@ -199,6 +199,7 @@ test("ReaderTab 正文搜索与高亮批注伴生栏接线（T-3419 与批注优
     assert.match(tab, /examFromHighlight\(hl\)/);
     assert.match(tab, /class="glean-reader__floating-progress"/);
     assert.match(tab, /\{t\(i18n, "reader\.remainingMinutes", \{ n: remainingMinutes \}\)\}/);
+    assert.match(tab, /if \(excerpt \|\| memoInputOpen\) \{/);
     assert.match(tab, /class="glean-reader__floating-speech"/);
     assert.match(tab, /class="glean-reader__speech-pulse"/);
     assert.match(tab, /onclick=\{toggleSpeechPause\}/);

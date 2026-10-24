@@ -681,8 +681,8 @@ function selectAiTag(value: string): void {
 }
 
 function filterChipText(key: FilterChipKey, value: string): string {
-    const labels: Record<FilterChipKey, string> = { author: "library.filterAuthor", site: "library.filterSite", tag: "library.filterTag", aiTag: "library.filterAiTag", src: "library.filterSource", timeSource: "library.filterTimeSource", contentType: "library.filterContentType", keyword: "action.search" };
-    const text = key === "tag" ? `#${value}` : key === "aiTag" ? `✨${value}` : key === "src" ? sourceLabel(value) : key === "timeSource" || key === "contentType" ? facetLabel(value, key) : value;
+    const labels: Record<FilterChipKey, string> = { author: "library.filterAuthor", site: "library.filterSite", tag: "library.filterTag", aiTag: "library.filterAiTag", src: "library.filterSource", timeSource: "library.filterTimeSource", contentType: "library.filterContentType", readingTimeTier: "library.filterReadingTime", keyword: "action.search" };
+    const text = key === "tag" ? `#${value}` : key === "aiTag" ? `✨${value}` : key === "src" ? sourceLabel(value) : key === "timeSource" || key === "contentType" ? facetLabel(value, key) : key === "readingTimeTier" ? (value === "short" ? t(i18n, "library.readingTimeShort") : value === "medium" ? t(i18n, "library.readingTimeMedium") : value === "long" ? t(i18n, "library.readingTimeLong") : value) : value;
     return `${t(i18n, labels[key])}: ${text}`;
 }
 
@@ -697,6 +697,7 @@ function removeFilterChip(key: FilterChipKey): void {
     selectedSource = next.src ?? "";
     selectedTimeSource = next.timeSource ?? "";
     selectedContentType = next.contentType ?? "";
+    if (key === "readingTimeTier") selectedReadingTimeTier = "all";
     keyword = next.keyword ?? "";
 }
 const activeFilterCount = $derived([selectedAuthor, selectedSite, selectedTag, selectedAiTag, selectedSource, selectedTimeSource, selectedContentType, selectedReadingTimeTier !== "all" ? selectedReadingTimeTier : "", keyword.trim()].filter(Boolean).length);

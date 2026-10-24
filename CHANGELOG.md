@@ -1,5 +1,22 @@
 # 更新日志（CHANGELOG）
 
+## v1.3.22（2026-10-25）
+
+### 全功能系统性 E2E 排查、老用户历史数据兼容与多维体验加固
+
+- **读库已选标签栏（Filter Chips）阅读时长对齐（T-3455）**：
+  - `domain/library-filter-chips.ts` 纯函数 `FILTER_CHIP_KEYS` 扩展 `readingTimeTier`，`libraryFilterChips` 完整呈现阅读时长分级标签微标；
+  - `DockPanel.svelte` 实现 `filterChipText` 时长文案多语解析，点击 `✕` 即可单项安全重置为 `"all"`，消除高级筛选中选了时长却在标签栏“隐形”的体验断层。
+- **历史剪藏微信识别防御性补齐（T-3455）**：
+  - `domain/wechat.ts` 纯函数 `isWechatUrl` 强化容错：无协议前缀的 `mp.weixin.qq.com` 域名及 `"微信"`、`"微信公众号"` 历史别名均能防御性正确判定；
+  - 老用户历史剪藏无论是直接存入域名还是中文别名，均能 100% 自动对齐绿色微信徽标与公众号下钻筛选流。
+- **划词悬浮条与批注输入框 Escape 键盘退出闭环（T-3455）**：
+  - `ReaderTab.svelte` 键盘处理器将 Escape 优先分配给正文划词条（`excerpt`）与 Memo 批注输入框，秒级收起并平滑回退焦点，全键盘研读流无阻塞。
+- **伴生栏批注建稿安全边界强化（T-3455）**：
+  - `highlights.ts`（`createArticleHighlightsDoc`）对输入批注项增加父级文档 `box` 与 `hpath` 自动回退保护，缺少位置属性的老旧高亮块也能稳定生成思源笔记；
+- **全系统 E2E 全链路覆盖与迁移指南（T-3455）**：
+  - 沉淀《全功能排查与老用户平滑迁移指南》（`docs/MIGRATION-GUIDE.md`），更新 `docs/DATA-CONTRACT.md` 契约事实源，全套 1661 项单测与 58 条隔离内核服务级 E2E 100% 通过。
+
 ## v1.3.21（2026-10-24）
 
 ### 全文朗读浮动声波播放器与视口控制闭环

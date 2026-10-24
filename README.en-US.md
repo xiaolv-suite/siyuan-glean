@@ -8,6 +8,17 @@ Lv Glean organizes clippings and articles already in SiYuan. It does not crawl t
 
 [中文说明](README.md) · [Latest Release](https://github.com/ai68298100/siyuan-glean/releases/latest) · [Capability matrix](docs/CAPABILITY-MATRIX.md) · [Feedback](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.22 update (2026-10-25)
+
+This release delivers comprehensive E2E verification across all user paths, legacy clipping data robustness, and refined multi-tier filter alignment.
+
+**New features & improvements:**
+
+- **Reading Time Filter Chips Alignment**: `domain/library-filter-chips.ts` now tracks `readingTimeTier`, allowing readers to see and clear reading duration filters (`<5 min`, `5-15 min`, `>15 min`) directly in the active filter bar.
+- **Legacy WeChat Article Recognition Hardening**: `domain/wechat.ts` now defensively identifies scheme-less domains (`mp.weixin.qq.com`) and legacy aliases (`微信`/`微信公众号`), bringing 100% badge recognition to older clippings.
+- **Escape Keyboard Dismiss for Selection Bar & Memo**: Escape key now immediately collapses the selection toolbar and memo input box, seamlessly returning keyboard focus to the document root.
+- **Defensive Note Generation for Companion Highlights**: Added parent notebook/path fallbacks in `createArticleHighlightsDoc` ensuring 100% note generation success even for isolated blocks from older databases.
+
 ## v1.3.21 update (2026-10-24)
 
 This release implements a floating waveform audio player capsule (`.glean-reader__floating-speech`) for in-viewport playback and pause control during text-to-speech reading.
@@ -390,7 +401,7 @@ Ordinary notes are not bulk-captured just because of their location, and opening
 
 ## Compatibility and acceptance
 
-This release is [v1.3.21](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.21). See the [release candidate record](docs/RELEASE-CANDIDATE.md) for automated gates and release evidence; this does not mean every real environment has been accepted.
+This release is [v1.3.22](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.22). See the [release candidate record](docs/RELEASE-CANDIDATE.md) for automated gates and release evidence; this does not mean every real environment has been accepted.
 
 Desktop host, Android/mobile, browser frontend, real models, the official clipper, external files, and subscription services still require environment-specific checks. Prerequisites, fallbacks, and open blockers are listed in the [capability matrix](docs/CAPABILITY-MATRIX.md) and [known blockers](docs/BLOCKERS.md). Unit tests and isolated E2E are not device acceptance.
 

@@ -573,15 +573,20 @@ import { aiFailureKey } from "../libs/ai-feedback";
 
     async function createDocFromDocHighlights(): Promise<void> {
         if (!docHighlights.length || !context) return;
+        const current = context;
         try {
             const group = {
-                rootId: context.id,
-                title: context.title,
-                site: context.site || "",
-                url: context.url || "",
-                tags: context.tags || [],
-                aiTags: context.aiTags || [],
-                items: docHighlights,
+                rootId: current.id,
+                title: current.title,
+                site: current.site || "",
+                url: current.url || "",
+                tags: current.tags || [],
+                aiTags: current.aiTags || [],
+                items: docHighlights.map((hl) => ({
+                    ...hl,
+                    box: hl.box || current.location?.box || "",
+                    hpath: hl.hpath || current.location?.hpath || "",
+                })),
             };
             const labels = {
                 title: t(i18n, "highlight.exportTitle"),
@@ -740,6 +745,13 @@ import { aiFailureKey } from "../libs/ai-feedback";
                 event.stopPropagation();
                 aiResult = null;
                 questionResult = null;
+                return;
+            }
+            if (excerpt || memoInputOpen) {
+                event.preventDefault();
+                event.stopPropagation();
+                excerpt = null;
+                memoInputOpen = false;
                 return;
             }
             if (immersive) {

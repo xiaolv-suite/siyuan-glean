@@ -15,12 +15,18 @@ const WECHAT_HOSTS = new Set([
 ]);
 
 /**
- * 判断是否为微信公众号文章 URL
+ * 判断是否为微信公众号文章 URL 或微信站点标识
  */
 export function isWechatUrl(rawUrl: string | undefined): boolean {
     if (!rawUrl) return false;
+    const trimmed = rawUrl.trim();
+    if (!trimmed) return false;
+    const lower = trimmed.toLowerCase();
+    if (lower === "微信" || lower === "微信公众号") return true;
+    if (lower.includes("weixin.qq.com")) return true;
     try {
-        const parsed = new URL(rawUrl.trim());
+        const candidate = trimmed.includes("://") ? trimmed : `https://${trimmed}`;
+        const parsed = new URL(candidate);
         const host = parsed.hostname.toLowerCase();
         return WECHAT_HOSTS.has(host) || host.endsWith(".weixin.qq.com");
     } catch {

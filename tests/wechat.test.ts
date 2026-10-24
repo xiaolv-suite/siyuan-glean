@@ -11,6 +11,10 @@ test("isWechatUrl：准确识别 mp.weixin.qq.com 及子域名", () => {
     assert.equal(isWechatUrl("https://mp.weixin.qq.com/s/abcdef123"), true);
     assert.equal(isWechatUrl("http://weixin.qq.com/r/xyz"), true);
     assert.equal(isWechatUrl("https://sub.weixin.qq.com/test"), true);
+    assert.equal(isWechatUrl("mp.weixin.qq.com"), true);
+    assert.equal(isWechatUrl("mp.weixin.qq.com/s/123"), true);
+    assert.equal(isWechatUrl("微信"), true);
+    assert.equal(isWechatUrl("微信公众号"), true);
     assert.equal(isWechatUrl("https://zhihu.com/question/123"), false);
     assert.equal(isWechatUrl(""), false);
     assert.equal(isWechatUrl(undefined), false);
