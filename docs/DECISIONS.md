@@ -2060,3 +2060,13 @@ T-3416 承接方向五（有依据的阅读 AI）与同类产品对标（Readwis
 2. 全局摘录墙筛选交互闭环：
    - `HighlightView.svelte` 筛选工具栏动态派生 `availableColors`；
    - 当摘录库存在多种颜色时，自动呈现高亮颜色下拉选择器（`reader.filterByColor`），支持在“黄/红/蓝/绿”高亮分类之间秒级切换，并在 `clearFilters` 统一纳入重置。
+
+## D-0332（2026-10-24）沉浸阅读浮动进度微胶囊与剩余时长预估（T-3453）
+
+提升长篇深度研读与全屏沉浸时的把控感与正反馈：
+1. 剩余时长与进度衍生计算：
+   - `src/ui/ReaderTab.svelte` 增加 `remainingMinutes` 响应式衍生，基于 `estReadingMinutes` 与实时滚动进度百分比（`readingPercentage`）动态预估剩余所需分钟数；
+2. 毛玻璃浮动阅读进度微胶囊（`.glean-reader__floating-progress`）：
+   - 当读者在沉浸模式（`immersive`）或折叠伴生栏（`sidebarCollapsed`）下阅读且进度超过 12% 时，右下角自动浮现精致半透明毛玻璃药丸微胶囊；
+   - 动态展示当前已读进度（如 `45%`）与剩余时长（如 `· 余 3 分钟`）；
+   - 采用 `pointer-events: none` 与微弹簧动画，既保障视觉反馈清晰灵敏，又绝不遮挡或干扰底层文字阅读与划词操作。

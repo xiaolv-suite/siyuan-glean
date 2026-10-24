@@ -1360,5 +1360,6 @@
   "reader.highlightFilterPlaceholder": "Filter highlights…",
   "reader.shortcutPageDown": "Page down",
   "reader.shortcutPageUp": "Page up",
-  "reading.openInReader": "Open in Glean Reader"
+  "reading.openInReader": "Open in Glean Reader",
+  "reader.remainingMinutes": "${n} min left"
 }

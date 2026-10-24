@@ -8,6 +8,14 @@
 
 [English](README.en-US.md) · [下载最新版](https://github.com/ai68298100/siyuan-glean/releases/latest) · [能力矩阵](docs/CAPABILITY-MATRIX.md) · [反馈与问题](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.20 更新（2026-10-24）
+
+本次版本实现沉浸与折叠阅读模式下的毛玻璃浮动阅读进度微胶囊（已读百分比与剩余预估阅读分钟数），提升专注长文研读时的把控感。
+
+**新增与体验增强：**
+
+- **毛玻璃浮动阅读进度微胶囊**：`ReaderTab.svelte` 当伴生栏折叠或开启全屏沉浸阅读且进度超过 12% 时，右下角自动浮现半透明毛玻璃药丸微胶囊（`.glean-reader__floating-progress`），动态展示已读百分比与剩余预估阅读时间（如 `45% · 余 3 分钟`）。
+
 ## v1.3.19 更新（2026-10-24）
 
 本次版本实现全局摘录墙多色高亮筛选闭环（`filterHighlights` 接入 `color` 过滤与色彩下拉分段器），全线贯通四色批注管理体系。
@@ -375,7 +383,7 @@
 
 ## 兼容性与验收
 
-本次发布为 [v1.3.19](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.19)。自动门禁与发布证据见[发布候选复核](docs/RELEASE-CANDIDATE.md)；这不代表所有真实环境都已验收。
+本次发布为 [v1.3.20](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.20)。自动门禁与发布证据见[发布候选复核](docs/RELEASE-CANDIDATE.md)；这不代表所有真实环境都已验收。
 
 桌面宿主、Android/移动端、浏览器前端、真实模型、官方剪藏、外部文件和订阅服务仍按环境分别验收。使用前提、降级方式和阻塞项以[能力矩阵](docs/CAPABILITY-MATRIX.md)及[已知阻塞](docs/BLOCKERS.md)为准；请勿把单元测试或隔离 E2E 当作真机通过。
 

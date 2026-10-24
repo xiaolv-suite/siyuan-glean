@@ -197,4 +197,6 @@ test("ReaderTab 正文搜索与高亮批注伴生栏接线（T-3419 与批注优
     assert.match(tab, /\{t\(i18n, "wechat\.rescanAuthor"\)\}/);
     assert.match(tab, /\{t\(i18n, "reader\.highlightFilterPlaceholder"\)\}/);
     assert.match(tab, /examFromHighlight\(hl\)/);
+    assert.match(tab, /class="glean-reader__floating-progress"/);
+    assert.match(tab, /\{t\(i18n, "reader\.remainingMinutes", \{ n: remainingMinutes \}\)\}/);
 });

@@ -1360,5 +1360,6 @@
   "reader.highlightFilterPlaceholder": "过滤批注内容…",
   "reader.shortcutPageDown": "向下翻屏",
   "reader.shortcutPageUp": "向上翻屏",
-  "reading.openInReader": "在拾遗阅读器打开"
+  "reading.openInReader": "在拾遗阅读器打开",
+  "reader.remainingMinutes": "余 ${n} 分钟"
 }

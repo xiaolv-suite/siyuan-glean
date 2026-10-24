@@ -154,6 +154,11 @@ import { aiFailureKey } from "../libs/ai-feedback";
         Array.from(new Set(docHighlights.map((h) => h.color || "yellow")))
     );
     const estReadingMinutes = $derived(context?.words ? Math.max(1, Math.round(context.words / 350)) : undefined);
+    const remainingMinutes = $derived(
+        estReadingMinutes && (readingPercentage ?? 0) < 100
+            ? Math.max(1, Math.round(estReadingMinutes * (1 - (readingPercentage ?? 0) / 100)))
+            : null
+    );
     const readingTimeTier = $derived(resolveReadingTimeTier(estReadingMinutes));
     const hasCardsInstalled = $derived(typeof window !== "undefined" && Boolean(getBridgeSafely("cards")));
     const hasExamInstalled = $derived(typeof window !== "undefined" && Boolean(getBridgeSafely("exam")));
@@ -1676,6 +1681,14 @@ import { aiFailureKey } from "../libs/ai-feedback";
                 >
                     <svg class="glean-icon" aria-hidden="true"><use href="#iconGleanArrowUp" /></svg>
                 </button>
+            {/if}
+            {#if showBackToTop && (sidebarCollapsed || immersive)}
+                <div class="glean-reader__floating-progress" role="status" aria-label={t(i18n, "reader.progress")}>
+                    <span class="glean-reader__progress-pct">{readingPercentage}%</span>
+                    {#if remainingMinutes && (readingPercentage ?? 0) < 95}
+                        <span class="glean-reader__progress-remain">· {t(i18n, "reader.remainingMinutes", { n: remainingMinutes })}</span>
+                    {/if}
+                </div>
             {/if}
         {:else}
             <div class="glean-reader__empty">
