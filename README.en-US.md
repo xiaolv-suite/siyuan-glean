@@ -8,6 +8,14 @@ Lv Glean organizes clippings and articles already in SiYuan. It does not crawl t
 
 [中文说明](README.md) · [Latest Release](https://github.com/ai68298100/siyuan-glean/releases/latest) · [Capability matrix](docs/CAPABILITY-MATRIX.md) · [Feedback](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.19 update (2026-10-24)
+
+This release closes the loop on multi-color highlight filtering across the global highlights wall (`filterHighlights` with `color` support and in-place color selector dropdown).
+
+**New features & improvements:**
+
+- **Global Highlights Wall Multi-Color Filter**: `HighlightView.svelte` dynamically presents a color filter dropdown (`reader.filterByColor`) whenever multiple colors exist, enabling seamless sorting among yellow/red/blue/green marks.
+
 ## v1.3.18 update (2026-10-24)
 
 This release delivers the interactive site/publisher drill-down filter loop (`handleSiteClick`) across library cards, ensuring effortless publisher filtering even when metadata is incomplete.
@@ -366,7 +374,7 @@ Ordinary notes are not bulk-captured just because of their location, and opening
 
 ## Compatibility and acceptance
 
-This release is [v1.3.18](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.18). See the [release candidate record](docs/RELEASE-CANDIDATE.md) for automated gates and release evidence; this does not mean every real environment has been accepted.
+This release is [v1.3.19](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.19). See the [release candidate record](docs/RELEASE-CANDIDATE.md) for automated gates and release evidence; this does not mean every real environment has been accepted.
 
 Desktop host, Android/mobile, browser frontend, real models, the official clipper, external files, and subscription services still require environment-specific checks. Prerequisites, fallbacks, and open blockers are listed in the [capability matrix](docs/CAPABILITY-MATRIX.md) and [known blockers](docs/BLOCKERS.md). Unit tests and isolated E2E are not device acceptance.
 

@@ -8,6 +8,14 @@
 
 [English](README.en-US.md) · [下载最新版](https://github.com/ai68298100/siyuan-glean/releases/latest) · [能力矩阵](docs/CAPABILITY-MATRIX.md) · [反馈与问题](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.19 更新（2026-10-24）
+
+本次版本实现全局摘录墙多色高亮筛选闭环（`filterHighlights` 接入 `color` 过滤与色彩下拉分段器），全线贯通四色批注管理体系。
+
+**新增与体验增强：**
+
+- **全局摘录墙多色高亮筛选闭环**：`HighlightView.svelte` 筛选工具栏在存在多种颜色摘录时自动呈现高亮颜色下拉筛选器（`reader.filterByColor`），支持在“黄/红/蓝/绿”高亮分类之间秒级切换筛选，并支持一键清空重置。
+
 ## v1.3.18 更新（2026-10-24）
 
 本次版本实现读库卡片微信公众号来源微标点击智能下钻筛选闭环（`handleSiteClick`），彻底消灭来源未规范时的点击无响应问题。
@@ -367,7 +375,7 @@
 
 ## 兼容性与验收
 
-本次发布为 [v1.3.18](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.18)。自动门禁与发布证据见[发布候选复核](docs/RELEASE-CANDIDATE.md)；这不代表所有真实环境都已验收。
+本次发布为 [v1.3.19](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.19)。自动门禁与发布证据见[发布候选复核](docs/RELEASE-CANDIDATE.md)；这不代表所有真实环境都已验收。
 
 桌面宿主、Android/移动端、浏览器前端、真实模型、官方剪藏、外部文件和订阅服务仍按环境分别验收。使用前提、降级方式和阻塞项以[能力矩阵](docs/CAPABILITY-MATRIX.md)及[已知阻塞](docs/BLOCKERS.md)为准；请勿把单元测试或隔离 E2E 当作真机通过。
 

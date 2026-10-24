@@ -2049,3 +2049,14 @@ T-3416 承接方向五（有依据的阅读 AI）与同类产品对标（Readwis
    - 当文章已设置 `site` 时，按站点筛选；
    - 当文章未设置 `site` 但属于微信文章时：若已识别微信公众号作者（`author`），直接触发按该微信公众号进行全库钻取筛选；若无作者则按 `mp.weixin.qq.com` 站点筛选；
    - 看板、列表行、表格卡片全表面微信微标点击行为完全对齐，彻底消除传入 `undefined` 导致的交互死胡同。
+
+## D-0331（2026-10-24）全局摘录墙多色高亮筛选闭环与纯函数扩展（T-3452）
+
+全线贯通四色高亮研读流与多维批注分类检索：
+1. 域层纯函数与类型扩展：
+   - `src/domain/highlights.ts` 纯函数接口 `HighlightFilter` 扩充 `color?: string` 字段；
+   - `filterHighlights` 纯函数中接入色彩严格匹配逻辑（`(item.color || "yellow") === filter.color`），并在 `tests/highlights.test.ts` 补充专项自动化单测；
+   - 保留 `highlightFacets` 原有返回结构，防止破损既有断言；
+2. 全局摘录墙筛选交互闭环：
+   - `HighlightView.svelte` 筛选工具栏动态派生 `availableColors`；
+   - 当摘录库存在多种颜色时，自动呈现高亮颜色下拉选择器（`reader.filterByColor`），支持在“黄/红/蓝/绿”高亮分类之间秒级切换，并在 `clearFilters` 统一纳入重置。

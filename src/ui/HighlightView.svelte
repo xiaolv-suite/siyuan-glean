@@ -44,6 +44,7 @@ let search = $state("");
 let site = $state("");
 let tag = $state("");
 let aiTag = $state("");
+let color = $state("");
 let sort = $state<NonNullable<HighlightFilter["sort"]>>("id");
 let direction = $state<"asc" | "desc">("asc");
 let page = $state(1);
@@ -66,7 +67,8 @@ let tagAliasGeneration = 0;
 let allGroupsOpen = $state(true);
 
 const facets = $derived(highlightFacets(items));
-const filtered = $derived(filterHighlights(items, { search, site, tag, aiTag, sort, direction }));
+const availableColors = $derived(Array.from(new Set(items.map((i) => i.color || "yellow"))).sort());
+const filtered = $derived(filterHighlights(items, { search, site, tag, aiTag, color, sort, direction }));
 const articleGroups = $derived(groupHighlightsByArticle(filtered));
 const highlightPageSize = 20;
 const visible = $derived(pageHighlights(filtered, page, highlightPageSize));
@@ -208,10 +210,11 @@ function clearFilters() {
     site = "";
     tag = "";
     aiTag = "";
+    color = "";
     page = 1;
 }
 
-const hasFilters = $derived(Boolean(search.trim() || site || tag || aiTag));
+const hasFilters = $derived(Boolean(search.trim() || site || tag || aiTag || color));
 
 function reasonText(reason: HighlightSaveReason): string {
     const keys: Record<HighlightSaveReason, string> = {
@@ -512,6 +515,9 @@ function focusHighlightRow(id: string): void {
         <label>{t(i18n, "library.filterSite")}<select bind:value={site} onchange={() => page = 1}><option value="">{t(i18n, "action.filterAll")}</option>{#each facets.sites as value}<option value={value}>{value}</option>{/each}</select></label>
         <label>{t(i18n, "library.filterTag")}<select bind:value={tag} onchange={() => page = 1}><option value="">{t(i18n, "action.filterAll")}</option>{#each facets.tags as value}<option value={value}>{displayTagAlias(tagAliases, value)}</option>{/each}</select></label>
         <label>{t(i18n, "library.filterAiTag")}<select bind:value={aiTag} onchange={() => page = 1}><option value="">{t(i18n, "action.filterAll")}</option>{#each facets.aiTags as value}<option value={value}>{value}</option>{/each}</select></label>
+        {#if availableColors.length > 1}
+            <label>{t(i18n, "reader.filterByColor")}<select bind:value={color} onchange={() => page = 1}><option value="">{t(i18n, "action.filterAll")}</option>{#each availableColors as c}<option value={c}>{c}</option>{/each}</select></label>
+        {/if}
         <label>{t(i18n, "library.sort")}<select bind:value={sort} onchange={() => page = 1}><option value="id">{t(i18n, "action.sortTime")}</option><option value="title">{t(i18n, "library.sortTitle")}</option><option value="site">{t(i18n, "library.filterSite")}</option></select></label>
         <button class="glean-filter-dir" aria-pressed={direction === "asc"} aria-label={`${t(i18n, "library.toggleDirection")}: ${t(i18n, direction === "asc" ? "library.directionAscending" : "library.directionDescending")}`} title={`${t(i18n, "library.toggleDirection")}: ${t(i18n, direction === "asc" ? "library.directionAscending" : "library.directionDescending")}`} onclick={() => { direction = direction === "asc" ? "desc" : "asc"; page = 1; }}><span class="glean-filter-dir__icon" aria-hidden="true"><svg class="glean-icon glean-icon--xs"><use href={direction === "asc" ? "#iconGleanArrowUp" : "#iconGleanArrowDown"} /></svg></span><span class="glean-filter-dir__label">{t(i18n, "library.toggleDirection")}</span></button>
         <button onclick={clearFilters}>{t(i18n, "library.clearFilters")}</button>

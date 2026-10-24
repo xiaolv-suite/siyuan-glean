@@ -20,10 +20,13 @@ function item(offset: number, overrides: Partial<HighlightItem> = {}): Highlight
 }
 
 test("搜索覆盖摘录及文章元数据，站点和两种标签独立精确筛选", () => {
-    const items = [item(1), item(2, { tags: ["模型"], aiTags: ["用户"], site: "other.test", text: "other text" })];
+    const items = [item(1, { color: "red" }), item(2, { tags: ["模型"], aiTags: ["用户"], site: "other.test", text: "other text", color: "blue" })];
     assert.deepEqual(filterHighlights(items, { search: "正文 EXAMPLE", site: "example.test", tag: "用户", aiTag: "模型" }).map((value) => value.id), [items[0].id]);
     assert.deepEqual(filterHighlights(items, { tag: "模型" }).map((value) => value.id), [items[1].id]);
     assert.deepEqual(filterHighlights(items, { aiTag: "模型" }).map((value) => value.id), [items[0].id]);
+    assert.deepEqual(filterHighlights(items, { color: "red" }).map((value) => value.id), [items[0].id]);
+    assert.deepEqual(filterHighlights(items, { color: "blue" }).map((value) => value.id), [items[1].id]);
+    assert.equal(filterHighlights(items, { color: "yellow" }).length, 0);
     assert.equal(filterHighlights(items, { tag: "用" }).length, 0);
     assert.equal(filterHighlights(items, { search: "no-match" }).length, 0);
     assert.deepEqual(highlightFacets(items), { sites: ["example.test", "other.test"], tags: ["模型", "用户"], aiTags: ["模型", "用户"] });

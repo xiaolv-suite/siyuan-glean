@@ -24,6 +24,7 @@ export interface HighlightFilter {
     site?: string;
     tag?: string;
     aiTag?: string;
+    color?: string;
     sort?: "id" | "title" | "site";
     direction?: "asc" | "desc";
 }
@@ -62,6 +63,7 @@ export function filterHighlights(items: readonly HighlightItem[], filter: Highli
         if (filter.site && item.site !== filter.site) return false;
         if (filter.tag && !item.tags.includes(filter.tag)) return false;
         if (filter.aiTag && !item.aiTags.includes(filter.aiTag)) return false;
+        if (filter.color && (item.color || "yellow") !== filter.color) return false;
         const searchable = [item.text, item.title, item.site, item.url, ...item.tags, ...item.aiTags].join("\n").toLowerCase();
         return terms.every((term) => searchable.includes(term));
     });
