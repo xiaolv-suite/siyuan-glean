@@ -2231,8 +2231,15 @@ mark.glean-search-highlight {
     &:hover { opacity: 1; color: var(--b3-theme-primary); }
 }
 
-.glean-reader__highlights-copy-all {
+.glean-reader__highlights-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     margin-left: auto;
+}
+
+.glean-reader__highlights-copy-all,
+.glean-reader__highlights-doc-btn {
     font-size: 11px;
     padding: 2px 6px;
     height: 22px;

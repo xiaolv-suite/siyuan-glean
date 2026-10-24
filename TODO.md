@@ -143,6 +143,8 @@
 
 - [◐] **T-3449**（P2，2026-10-24）拾遗卡片多维元数据呈现对齐与年度热力图下钻筛选交互：`ResurfaceView.svelte` 拾遗推荐卡片全面引入微信公众号绿色来源徽标（`.glean-source-wechat`）、预估阅读时长分级色彩徽标（短文/中篇/长篇圆点）以及用户主题标签（`#tag`）与 AI 标签（`✨aiTag`）；`StatsView.svelte` 全年热力图单元格（`glean-stats__day`）升级为可聚焦与可交互单元，支持读者点击或键盘 `Enter`/`Space` 直接联动下方完成文章清单下钻筛选（`selectedDayDate`），再次点击取消；单测与门禁完备。代码状态：完成；隔离验证：`tests/accessibility.test.ts` 56/56、`tests/stats.test.ts` 26/26、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实热力图点击走查；延后原因：真实热力图交互手感仍归 B-0002。
 
+- [◐] **T-3450**（P2，2026-10-24）伴生栏批注流就地一键生成思源读书笔记文档与排版微信双向识别：`ReaderTab.svelte` 伴生栏批注流顶部标题区增设「创建摘录笔记」一键导出动作（`highlight.createArticleDoc`），就地将本文批注以原生块引用汇编为格式标准的独立思源笔记文档；`formatting-service.ts` 微信判定升级为对 `attrs.url` 与 `attrs.site` 双向探测 `isWechatUrl`；单测与门禁完备。代码状态：完成；隔离验证：`tests/reader.test.ts` 14/14、`tests/formatting.test.ts` 28/28、`tests/formatting-service.test.mjs` 20/20、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实伴生栏建稿走查；延后原因：真实思源新建文档与页签激活仍归 B-0002。
+
 
 - [◐] **T-3367**（P1，2026-10-18）批量选择范围与底部操作可达性：保留跨筛选选择，显示总数及筛选外数量，提供仅保留当前筛选、追加已显示文章和清空入口；三画布共用正常流批量条，获焦时按 Escape 快捷取消选择并安全回退焦点；移动窄屏保留左右安全区。代码状态：实现完成，契约见 D-0247/D-0292，不新增属性、端点或持久化；隔离验证：定向 51/51、完整 `pnpm test` 1517/1517、`pnpm check` 0 错误/0 警告、`pnpm build`、`pnpm check:release`、`pnpm perf:check`、`pnpm visual:check`、`pnpm task:ledger -- --check` 与 `git diff --check` 通过；Chrome 原型已点验宽/窄 Dock、筛选外提示、显式保留和清空，窄布局批量区 `738px` 宽、`142px` 高且无横溢出。真实验收：待 B-0002 原工作区、触控和系统读屏；延后原因：Chrome 原型与隔离样本不替代真实设备与视觉矩阵，视觉登记仍为 24 项待真实宿主。
 

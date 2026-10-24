@@ -45,7 +45,7 @@ export type FormattingSaveReason = "changed" | "readFailed" | "markFailed" | "cr
 async function readSource(docId: string): Promise<FormattingSource> {
     const { meta, attrs, markdown } = await readClipDocument(docId, { yfm: false, addTitle: false, refMode: 2 });
     if (!attrs.status || attrs.internal) throw new Error("Not a reading library article");
-    const isWechat = Boolean(attrs.url && isWechatUrl(attrs.url));
+    const isWechat = Boolean((attrs.url && isWechatUrl(attrs.url)) || (attrs.site && isWechatUrl(attrs.site)));
     const processedMarkdown = isWechat ? repairWechatContent(markdown) : markdown;
     return { id: docId, title: meta.title, box: meta.box, hpath: meta.hpath, url: attrs.url ?? "", markdown: processedMarkdown };
 }

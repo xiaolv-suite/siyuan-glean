@@ -46,6 +46,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
     import { normalizeReaderAppearance, type ReaderAppearance } from "../domain/ui-prefs";
     import { loadReadingOutline } from "../services/outline-service";
     import { listDocHighlights, type HighlightItem } from "../services/highlights";
+    import { createArticleHighlightsDoc } from "../services/highlights";
     import { formatHighlightShare, formatHighlightTime } from "../domain/highlights";
     import { estimateReadingPercentage } from "../domain/reading-position";
     import { findMatchingOutlineItemId, type OutlineItem } from "../domain/outline";
@@ -562,6 +563,37 @@ import { aiFailureKey } from "../libs/ai-feedback";
             showMessage(t(i18n, "highlight.copied"), 2000);
         } catch {
             showMessage(t(i18n, "reader.actionFailed"), 3000);
+        }
+    }
+
+    async function createDocFromDocHighlights(): Promise<void> {
+        if (!docHighlights.length || !context) return;
+        try {
+            const group = {
+                rootId: context.id,
+                title: context.title,
+                site: context.site || "",
+                url: context.url || "",
+                tags: context.tags || [],
+                aiTags: context.aiTags || [],
+                items: docHighlights,
+            };
+            const labels = {
+                title: t(i18n, "highlight.exportTitle"),
+                original: t(i18n, "highlight.original"),
+                source: t(i18n, "highlight.source"),
+            };
+            const result = await createArticleHighlightsDoc(facade.pluginInstance, group, labels);
+            if (result.ok && result.docId) {
+                showMessage(t(i18n, "highlight.articleDocCreated"), 3000);
+                facade.notifyDataChanged();
+                void openTab({ app: facade.pluginInstance.app, doc: { id: result.docId } });
+            } else {
+                showMessage(t(i18n, "msg.actionFailed"), 3000);
+            }
+        } catch (error) {
+            console.warn("[LvGlean] 创建读书笔记失败:", error);
+            showMessage(t(i18n, "msg.actionFailed"), 3000);
         }
     }
 
@@ -1914,15 +1946,26 @@ import { aiFailureKey } from "../libs/ai-feedback";
                     <summary id={highlightsTitleId} class="glean-reader__section-title">
                         <span>💡 {t(i18n, "reader.highlightsTitle")} ({docHighlights.length})</span>
                         {#if docHighlights.length > 0}
-                            <button
-                                type="button"
-                                class="glean-btn glean-btn--ghost glean-btn--sm glean-reader__highlights-copy-all"
-                                onclick={(e) => { e.stopPropagation(); void copyAllDocHighlights(); }}
-                                title={t(i18n, "reader.copyAllHighlights")}
-                            >
-                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
-                                {t(i18n, "highlight.copyArticleQuotes")}
-                            </button>
+                            <div class="glean-reader__highlights-actions">
+                                <button
+                                    type="button"
+                                    class="glean-btn glean-btn--ghost glean-btn--sm glean-reader__highlights-copy-all"
+                                    onclick={(e) => { e.stopPropagation(); void copyAllDocHighlights(); }}
+                                    title={t(i18n, "reader.copyAllHighlights")}
+                                >
+                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
+                                    {t(i18n, "highlight.copyArticleQuotes")}
+                                </button>
+                                <button
+                                    type="button"
+                                    class="glean-btn glean-btn--ghost glean-btn--sm glean-reader__highlights-doc-btn"
+                                    onclick={(e) => { e.stopPropagation(); void createDocFromDocHighlights(); }}
+                                    title={t(i18n, "highlight.createArticleDoc")}
+                                >
+                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg>
+                                    {t(i18n, "highlight.createArticleDoc")}
+                                </button>
+                            </div>
                         {/if}
                     </summary>
                     {#if highlightsLoading}

@@ -8,6 +8,15 @@
 
 [English](README.en-US.md) · [下载最新版](https://github.com/ai68298100/siyuan-glean/releases/latest) · [能力矩阵](docs/CAPABILITY-MATRIX.md) · [反馈与问题](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.17 更新（2026-10-24）
+
+本次版本实现伴生栏批注流就地一键生成思源读书笔记文档（`createDocFromDocHighlights`），以及排版服务微信文章 URL 与 site 双向判定及正文提纯。
+
+**新增与体验增强：**
+
+- **伴生栏批注一键生成思源读书笔记文档**：`ReaderTab.svelte` 伴生栏批注流顶部标题区增设「创建摘录笔记」一键动作，读者读完长文后可就地一键将所有批注以原生块引用汇编为格式标准的独立思源笔记文档并自动打开。
+- **排版分析服务微信文章判定双向对齐**：`formatting-service.ts` 支持 `attrs.url` 与 `attrs.site` 双向探测 `isWechatUrl`，确保无论来源链接记录在哪个属性中，排版清洗均能完整触发正文懒加载图片修复、代码块提取与公式还原。
+
 ## v1.3.16 更新（2026-10-24）
 
 本次版本实现今日拾遗卡片微信来源微标、阅读时长分级色彩徽标、主题与 AI 标签展示，以及年度回顾热力图单元格点击/键盘直达下钻联动。
@@ -350,7 +359,7 @@
 
 ## 兼容性与验收
 
-本次发布为 [v1.3.16](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.16)。自动门禁与发布证据见[发布候选复核](docs/RELEASE-CANDIDATE.md)；这不代表所有真实环境都已验收。
+本次发布为 [v1.3.17](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.17)。自动门禁与发布证据见[发布候选复核](docs/RELEASE-CANDIDATE.md)；这不代表所有真实环境都已验收。
 
 桌面宿主、Android/移动端、浏览器前端、真实模型、官方剪藏、外部文件和订阅服务仍按环境分别验收。使用前提、降级方式和阻塞项以[能力矩阵](docs/CAPABILITY-MATRIX.md)及[已知阻塞](docs/BLOCKERS.md)为准；请勿把单元测试或隔离 E2E 当作真机通过。
 
