@@ -1690,6 +1690,34 @@ import { aiFailureKey } from "../libs/ai-feedback";
                     {/if}
                 </div>
             {/if}
+            {#if speechState === "playing" || speechState === "paused"}
+                <div class="glean-reader__floating-speech" role="region" aria-label={t(i18n, "reader.speechTitle")}>
+                    <span class="glean-reader__speech-pulse" class:glean-reader__speech-pulse--paused={speechState === "paused"}>
+                        <span class="glean-reader__speech-bar"></span>
+                        <span class="glean-reader__speech-bar"></span>
+                        <span class="glean-reader__speech-bar"></span>
+                    </span>
+                    <span class="glean-reader__speech-progress">
+                        {speechChunkIndex + 1}/{speechChunks.length}
+                    </span>
+                    <button
+                        type="button"
+                        class="glean-icon-btn glean-reader__floating-speech-btn"
+                        title={speechState === "playing" ? t(i18n, "reader.speechPause") : t(i18n, "reader.speechResume")}
+                        onclick={toggleSpeechPause}
+                    >
+                        {speechState === "playing" ? "⏸" : "▶"}
+                    </button>
+                    <button
+                        type="button"
+                        class="glean-icon-btn glean-reader__floating-speech-btn"
+                        title={t(i18n, "reader.speechStop")}
+                        onclick={stopSpeech}
+                    >
+                        ⏹
+                    </button>
+                </div>
+            {/if}
         {:else}
             <div class="glean-reader__empty">
                 <div class="glean-reader__empty-art">📖</div>

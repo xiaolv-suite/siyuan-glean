@@ -8,6 +8,14 @@
 
 [English](README.en-US.md) · [下载最新版](https://github.com/ai68298100/siyuan-glean/releases/latest) · [能力矩阵](docs/CAPABILITY-MATRIX.md) · [反馈与问题](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.21 更新（2026-10-24）
+
+本次版本实现全文朗读视口左下角浮动音频声波播放胶囊（`.glean-reader__floating-speech`），带来实时动态声波跳动微动效与就地暂停控制。
+
+**新增与体验增强：**
+
+- **视口浮动音频声波播放胶囊**：`ReaderTab.svelte` 开启 TTS 语音朗读时，主视口左下角自动浮现半透明毛玻璃音频悬浮控制器，提供波形跳动微动效（`@keyframes glean-speech-wave`）、段落进度指示（`X/Y`）、就地播放/暂停切换（`⏯`）与一键停止动作（`⏹`），无需反复展开伴生栏。
+
 ## v1.3.20 更新（2026-10-24）
 
 本次版本实现沉浸与折叠阅读模式下的毛玻璃浮动阅读进度微胶囊（已读百分比与剩余预估阅读分钟数），提升专注长文研读时的把控感。
@@ -383,7 +391,7 @@
 
 ## 兼容性与验收
 
-本次发布为 [v1.3.20](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.20)。自动门禁与发布证据见[发布候选复核](docs/RELEASE-CANDIDATE.md)；这不代表所有真实环境都已验收。
+本次发布为 [v1.3.21](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.21)。自动门禁与发布证据见[发布候选复核](docs/RELEASE-CANDIDATE.md)；这不代表所有真实环境都已验收。
 
 桌面宿主、Android/移动端、浏览器前端、真实模型、官方剪藏、外部文件和订阅服务仍按环境分别验收。使用前提、降级方式和阻塞项以[能力矩阵](docs/CAPABILITY-MATRIX.md)及[已知阻塞](docs/BLOCKERS.md)为准；请勿把单元测试或隔离 E2E 当作真机通过。
 

@@ -37,8 +37,9 @@
 - T-3451/D-0330：读库卡片微信来源微标与公众号下钻筛选闭环。`DockPanel.svelte` 实现 `handleSiteClick` 智能路由；当读者点击卡片上的微信微标时，若该文章已识别出公众号作者（`entry.author`），优先直接触发按该微信公众号进行精准全库筛选；若无作者则按 `mp.weixin.qq.com` 站点筛选；彻底消灭来源未规范时的点击无响应问题；单测与门禁完备。
 - T-3452/D-0331：全局摘录墙多色高亮筛选闭环与纯函数扩展。`domain/highlights.ts` 纯函数 `HighlightFilter` 扩展 `color` 字段，`filterHighlights` 纯函数接入高亮色彩严格匹配与专项单测覆盖；`HighlightView.svelte` 筛选工具栏在存在多种颜色摘录时自动呈现高亮颜色下拉筛选器（`reader.filterByColor`），支持在“黄/红/蓝/绿”高亮分类之间秒级切换筛选，并支持一键清空重置；单测与门禁完备。
 - T-3453/D-0332：沉浸阅读浮动进度微胶囊与剩余时长预估。`ReaderTab.svelte` 增加 `remainingMinutes` 响应式衍生计算；在伴生栏折叠或开启全屏沉浸阅读且进度超过 12% 时，右下角自动浮现半透明毛玻璃药丸微胶囊（`.glean-reader__floating-progress`），动态展示已读百分比与剩余预估阅读时间（如 `45% · 余 3 分钟`）；单测与门禁完备。
+- T-3454/D-0333：视口浮动音频声波播放胶囊与就地暂停控制。`ReaderTab.svelte` 接入 `.glean-reader__floating-speech` 悬浮音频控制器，在 TTS 朗读时动态呈现波形声波跳动微动效（`@keyframes glean-speech-wave`）、段落进度指示（`X/Y`）、就地播放/暂停切换（`⏯`）与停止动作（`⏹`），朗读结束自动隐退；单测与门禁完备。
 - 全量门禁闭环：定向单测（`tests/header-actions.test.ts` 27/27、`tests/wechat.test.ts` 22/22、`tests/reader-search.test.ts` 10/10、`tests/reader-search-dom.test.ts` 4/4、`tests/reader.test.ts` 14/14、`tests/formatting.test.ts` 28/28、`tests/formatting-service.test.mjs` 20/20、`tests/highlights.test.ts` 14/14、`tests/resurface.test.ts` 26/26、`tests/stats.test.ts` 24/24、`tests/library-view.test.ts` 20/20、`tests/prefs.test.ts` 17/17、`tests/excerpt-service.test.mjs` 12/12、`tests/content-url.test.ts` 8/8、`tests/architecture.test.ts` 3/3、`tests/lifecycle-contract.test.ts` 3/3、`tests/checkin.test.ts` 4/4、`tests/mobile-nav.test.ts` 26/26、`tests/accessibility.test.ts` 56/56、`tests/i18n.test.ts` 5/5、`tests/task-ledger.test.mjs` 2/2）、`tsc` 与 `svelte-check` 0 错误 0 警告、`pnpm build`、`pnpm check:release`、`pnpm perf:check`、`pnpm visual:check`（24 项仍待真实宿主）与任务账本检查均通过。真实宿主交互手感仍归 B-0002。
-- 下一步：按当前执行板顺序推进下一个任务（如 T-3367 批量选择范围与底部操作在更多场景的走查，或按作者点单继续）。版本保持 1.3.20，本轮不打 tag、不发布、不推送。
+- 下一步：按当前执行板顺序推进下一个任务（如 T-3367 批量选择范围与底部操作在更多场景的走查，或按作者点单继续）。版本保持 1.3.21，本轮不打 tag、不发布、不推送。
 
 
 ## 当前有效交接（2026-10-20 分面侧栏未读与待办动态角标计数投影）

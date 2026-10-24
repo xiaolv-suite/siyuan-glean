@@ -8,6 +8,14 @@ Lv Glean organizes clippings and articles already in SiYuan. It does not crawl t
 
 [中文说明](README.md) · [Latest Release](https://github.com/ai68298100/siyuan-glean/releases/latest) · [Capability matrix](docs/CAPABILITY-MATRIX.md) · [Feedback](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.21 update (2026-10-24)
+
+This release implements a floating waveform audio player capsule (`.glean-reader__floating-speech`) for in-viewport playback and pause control during text-to-speech reading.
+
+**New features & improvements:**
+
+- **In-Viewport Floating Audio Player Capsule**: An unobtrusive frosted-glass audio capsule manifests in the bottom-left corner when TTS playback begins, delivering real-time animated waveforms (`@keyframes glean-speech-wave`), progress indicators (`X/Y`), and in-place play/pause/stop buttons.
+
 ## v1.3.20 update (2026-10-24)
 
 This release equips immersive and collapsed reading modes with a frosted-glass floating progress pill showing current percentage and estimated minutes remaining.
@@ -382,7 +390,7 @@ Ordinary notes are not bulk-captured just because of their location, and opening
 
 ## Compatibility and acceptance
 
-This release is [v1.3.20](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.20). See the [release candidate record](docs/RELEASE-CANDIDATE.md) for automated gates and release evidence; this does not mean every real environment has been accepted.
+This release is [v1.3.21](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.21). See the [release candidate record](docs/RELEASE-CANDIDATE.md) for automated gates and release evidence; this does not mean every real environment has been accepted.
 
 Desktop host, Android/mobile, browser frontend, real models, the official clipper, external files, and subscription services still require environment-specific checks. Prerequisites, fallbacks, and open blockers are listed in the [capability matrix](docs/CAPABILITY-MATRIX.md) and [known blockers](docs/BLOCKERS.md). Unit tests and isolated E2E are not device acceptance.
 
