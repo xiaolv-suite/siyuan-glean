@@ -656,6 +656,20 @@ function selectSite(value: string): void {
     selectedSite = alreadySelected ? "" : value;
 }
 
+function handleSiteClick(entry: ClipIndexEntry): void {
+    if (entry.site) {
+        selectSite(entry.site);
+        return;
+    }
+    if (isWechatEntry(entry)) {
+        if (entry.author) {
+            selectAuthor(entry.author);
+        } else {
+            selectSite("mp.weixin.qq.com");
+        }
+    }
+}
+
 function selectTag(value: string): void {
     markPrefsInteraction();
     selectedTag = selectedTag === value ? "" : value;
@@ -2767,7 +2781,7 @@ function metaLine(entry: Row): string {
                                     {#if bodyPending(entry)}
                                         <span class="glean-body-pending" title={t(i18n, "clip.bodyPendingHint")}>{t(i18n, "clip.bodyPending")}</span>
                                     {/if}
-                                    {#if entry.site}<button type="button" class="glean-meta-icon glean-meta-btn" class:glean-source-wechat={isWechatEntry(entry)} onclick={(event) => { event.stopPropagation(); selectSite(entry.site!); }} title={entry.site}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg>{siteDisplayLabel(entry)}</button>{/if}
+                                    {#if entry.site || isWechatEntry(entry)}<button type="button" class="glean-meta-icon glean-meta-btn" class:glean-source-wechat={isWechatEntry(entry)} onclick={(event) => { event.stopPropagation(); handleSiteClick(entry); }} title={entry.site || siteDisplayLabel(entry)}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg>{siteDisplayLabel(entry)}</button>{/if}
                                     {#if entry.author}<button class="glean-source-author" onclick={(event) => { event.stopPropagation(); selectAuthor(entry.author!); }}>· {entry.author}</button>{/if}
                                     {#if entry.minutes > 0}<span class="glean-tier-badge glean-tier-badge--{resolveReadingTimeTier(entry.minutes)}">· {t(i18n, "panel.minutes", { n: entry.minutes })}</span>{/if}
                                     {#if (entry.status === "inbox" || entry.status === "later") && staleText(entry.time) !== null}
@@ -2922,7 +2936,7 @@ function metaLine(entry: Row): string {
                                                 {#if matchBadge(entry)}
                                                     <span class="glean-badge glean-badge--match" title={matchBadge(entry)}>{matchBadge(entry)}</span>
                                                 {/if}
-                                                <span class="glean-drow__site" class:glean-source-wechat={isWechatEntry(entry)} title={entry.site || sourceFallback(entry)}><button type="button" class="glean-source-site" onclick={(event) => { event.stopPropagation(); selectSite(entry.site!); }}>{siteDisplayLabel(entry)}</button>{#if entry.author}<button class="glean-source-author" onclick={(event) => { event.stopPropagation(); selectAuthor(entry.author!); }}>· {entry.author}</button>{/if}</span>
+                                                <span class="glean-drow__site" class:glean-source-wechat={isWechatEntry(entry)} title={entry.site || sourceFallback(entry)}><button type="button" class="glean-source-site" onclick={(event) => { event.stopPropagation(); handleSiteClick(entry); }}>{siteDisplayLabel(entry)}</button>{#if entry.author}<button class="glean-source-author" onclick={(event) => { event.stopPropagation(); selectAuthor(entry.author!); }}>· {entry.author}</button>{/if}</span>
                                                 <span class={carrierClass(entry)} title={entry.contentType === "link" && !hasSourceAction(entry.contentType, entry.url) ? t(i18n, "clip.sourceMissing") : carrierLabel(entry)}>{carrierLabel(entry)}</span>
                                                 {#if entry.contentType === "link" && !hasSourceAction(entry.contentType, entry.url)}
                                                     <span class="glean-source-missing">{t(i18n, "clip.sourceMissing")}</span>
@@ -3073,8 +3087,8 @@ function metaLine(entry: Row): string {
                                     {#if matchBadge(entry)}
                                         <span class="glean-badge glean-badge--match" title={matchBadge(entry)}>{matchBadge(entry)}</span>
                                     {/if}
-                                    {#if entry.kind === "clip" && entry.site}
-                                        <button type="button" class="glean-card__site glean-card__site-btn" class:glean-source-wechat={isWechatEntry(entry)} onclick={(event) => { event.stopPropagation(); selectSite(entry.site!); }}>{siteDisplayLabel(entry)}</button>
+                                    {#if entry.kind === "clip" && (entry.site || isWechatEntry(entry))}
+                                        <button type="button" class="glean-card__site glean-card__site-btn" class:glean-source-wechat={isWechatEntry(entry)} onclick={(event) => { event.stopPropagation(); handleSiteClick(entry); }}>{siteDisplayLabel(entry)}</button>
                                     {:else if entry.kind === "candidate"}
                                         <span title={entry.url || entry.hpath}>{entry.site || candidateEvidence(entry)}</span>
                                     {/if}

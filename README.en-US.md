@@ -8,6 +8,14 @@ Lv Glean organizes clippings and articles already in SiYuan. It does not crawl t
 
 [中文说明](README.md) · [Latest Release](https://github.com/ai68298100/siyuan-glean/releases/latest) · [Capability matrix](docs/CAPABILITY-MATRIX.md) · [Feedback](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.18 update (2026-10-24)
+
+This release delivers the interactive site/publisher drill-down filter loop (`handleSiteClick`) across library cards, ensuring effortless publisher filtering even when metadata is incomplete.
+
+**New features & improvements:**
+
+- **Interactive WeChat Publisher Filtering Loop**: `DockPanel.svelte` equips all cards with smart `handleSiteClick` routing; clicking the emerald badge filters by recognized author publisher directly, or falls back gracefully to `mp.weixin.qq.com`.
+
 ## v1.3.17 update (2026-10-24)
 
 This release enables one-click study note generation directly from the companion sidebar highlights stream and refines dual-attribute WeChat detection in formatting analysis.
@@ -358,7 +366,7 @@ Ordinary notes are not bulk-captured just because of their location, and opening
 
 ## Compatibility and acceptance
 
-This release is [v1.3.17](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.17). See the [release candidate record](docs/RELEASE-CANDIDATE.md) for automated gates and release evidence; this does not mean every real environment has been accepted.
+This release is [v1.3.18](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.18). See the [release candidate record](docs/RELEASE-CANDIDATE.md) for automated gates and release evidence; this does not mean every real environment has been accepted.
 
 Desktop host, Android/mobile, browser frontend, real models, the official clipper, external files, and subscription services still require environment-specific checks. Prerequisites, fallbacks, and open blockers are listed in the [capability matrix](docs/CAPABILITY-MATRIX.md) and [known blockers](docs/BLOCKERS.md). Unit tests and isolated E2E are not device acceptance.
 

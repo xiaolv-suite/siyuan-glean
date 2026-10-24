@@ -8,6 +8,14 @@
 
 [English](README.en-US.md) · [下载最新版](https://github.com/ai68298100/siyuan-glean/releases/latest) · [能力矩阵](docs/CAPABILITY-MATRIX.md) · [反馈与问题](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.18 更新（2026-10-24）
+
+本次版本实现读库卡片微信公众号来源微标点击智能下钻筛选闭环（`handleSiteClick`），彻底消灭来源未规范时的点击无响应问题。
+
+**新增与体验增强：**
+
+- **读库卡片微信公众号智能下钻筛选闭环**：`DockPanel.svelte` 实现 `handleSiteClick` 智能路由；当读者点击卡片上的微信微标时，若该文章已识别出公众号作者（`entry.author`），优先直接触发按该微信公众号进行精准全库筛选；若无作者则按 `mp.weixin.qq.com` 站点筛选。
+
 ## v1.3.17 更新（2026-10-24）
 
 本次版本实现伴生栏批注流就地一键生成思源读书笔记文档（`createDocFromDocHighlights`），以及排版服务微信文章 URL 与 site 双向判定及正文提纯。
@@ -359,7 +367,7 @@
 
 ## 兼容性与验收
 
-本次发布为 [v1.3.17](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.17)。自动门禁与发布证据见[发布候选复核](docs/RELEASE-CANDIDATE.md)；这不代表所有真实环境都已验收。
+本次发布为 [v1.3.18](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.18)。自动门禁与发布证据见[发布候选复核](docs/RELEASE-CANDIDATE.md)；这不代表所有真实环境都已验收。
 
 桌面宿主、Android/移动端、浏览器前端、真实模型、官方剪藏、外部文件和订阅服务仍按环境分别验收。使用前提、降级方式和阻塞项以[能力矩阵](docs/CAPABILITY-MATRIX.md)及[已知阻塞](docs/BLOCKERS.md)为准；请勿把单元测试或隔离 E2E 当作真机通过。
 
