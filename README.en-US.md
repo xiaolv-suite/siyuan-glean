@@ -8,6 +8,15 @@ Lv Glean organizes clippings and articles already in SiYuan. It does not crawl t
 
 [中文说明](README.md) · [Latest Release](https://github.com/ai68298100/siyuan-glean/releases/latest) · [Capability matrix](docs/CAPABILITY-MATRIX.md) · [Feedback](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.25 update (2026-10-25)
+
+This release implements the silent background WeChat publisher auto-recognition queue and elegant localized Chinese site projection in the navigation rail.
+
+**New features & improvements:**
+
+- **Silent Background WeChat Recognition Queue**: Added `triggerSilentWechatScan` in `DockPanel.svelte`, which automatically and gently processes WeChat articles in batches of 6 in the background after library load, requiring zero manual clicks or confirmation from the reader.
+- **Friendly Chinese Site Projection in Rail**: `LibraryRailGroup.svelte` maps `mp.weixin.qq.com` to the friendly label "微信" (WeChat) in the sidebar rail, making navigation more intuitive and consistent.
+
 ## v1.3.24 update (2026-10-25)
 
 This release delivers the Nordic Library Teal aesthetic overhaul, significantly elevating UI texture and visual calm across all surfaces.
@@ -420,7 +429,7 @@ Ordinary notes are not bulk-captured just because of their location, and opening
 
 ## Compatibility and acceptance
 
-This release is [v1.3.24](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.24). See the [release candidate record](docs/RELEASE-CANDIDATE.md) for automated gates and release evidence; this does not mean every real environment has been accepted.
+This release is [v1.3.25](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.25). See the [release candidate record](docs/RELEASE-CANDIDATE.md) for automated gates and release evidence; this does not mean every real environment has been accepted.
 
 Desktop host, Android/mobile, browser frontend, real models, the official clipper, external files, and subscription services still require environment-specific checks. Prerequisites, fallbacks, and open blockers are listed in the [capability matrix](docs/CAPABILITY-MATRIX.md) and [known blockers](docs/BLOCKERS.md). Unit tests and isolated E2E are not device acceptance.
 

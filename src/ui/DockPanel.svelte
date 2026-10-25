@@ -86,6 +86,38 @@ let activeQueue = $state<ClipStatus>("inbox");
 let keyword = $state("");
 let wechatScanning = $state(false);
 let wechatScanProgressText = $state("");
+let autoWechatScanTimer: number | null = null;
+
+function triggerSilentWechatScan(): void {
+    if (wechatScanning || autoWechatScanTimer !== null || disposed) return;
+    autoWechatScanTimer = window.setTimeout(async () => {
+        autoWechatScanTimer = null;
+        if (wechatScanning || disposed || !rootEl) return;
+        const targets = libraryItems.filter((entry) => isWechatEntry(entry) && (!entry.author || !entry.author.trim()));
+        if (targets.length === 0) return;
+
+        // 取前 6 篇进行静默批处理，避免抢占主操作
+        const batch = targets.slice(0, 6);
+        try {
+            const result = await batchRecognizeWechatAuthors(facade.pluginInstance, batch);
+            if (result.detectedCount > 0 && !disposed && rootEl) {
+                facade.notifyDataChanged();
+                await reload();
+            }
+            if (targets.length > 6 && !disposed && rootEl) {
+                triggerSilentWechatScan();
+            }
+        } catch (error) {
+            console.debug("[LvGlean] 后台自动识别微信公众号轻量处理:", error);
+        }
+    }, 2500);
+}
+
+$effect(() => {
+    if (index.updatedAt && wechatArticlesWithoutAuthor.length > 0) {
+        untrack(triggerSilentWechatScan);
+    }
+});
 let sortBy = $state<LibrarySortKey>("time");
 let sortDirection = $state<LibrarySortDirection>("desc");
 let selectedSite = $state("");
@@ -175,6 +207,8 @@ onMount(() => {
         dayRefreshTimer = null;
         if (focusFlashTimer !== null) window.clearTimeout(focusFlashTimer);
         focusFlashTimer = null;
+        if (autoWechatScanTimer !== null) window.clearTimeout(autoWechatScanTimer);
+        autoWechatScanTimer = null;
         focusFlashTarget?.classList.remove("glean-focus-flash");
         focusFlashTarget = null;
         document.removeEventListener("visibilitychange", onVisibilityChange);
@@ -2166,6 +2200,10 @@ function siteDisplayLabel(entry: ClipIndexEntry): string {
     return site;
 }
 
+function siteItemLabel(val: string): string {
+    return isWechatUrl(val) || val === "mp.weixin.qq.com" ? "微信" : displaySiteName(val);
+}
+
 function carrierLabel(entry: ClipIndexEntry): string {
     return clipType(entry);
 }
@@ -2621,7 +2659,7 @@ function metaLine(entry: Row): string {
                             <span>{t(i18n, "library.filterSite")}</span>
                             <select class="b3-select" bind:value={mobileFilterDraft.site}>
                                 <option value="">{t(i18n, "library.filterSite")}</option>
-                                {#each facets.sites as facet (facet.value)}<option value={facet.value}>{facet.value} · {facet.count}</option>{/each}
+                                {#each facets.sites as facet (facet.value)}<option value={facet.value}>{siteItemLabel(facet.value)} · {facet.count}</option>{/each}
                             </select>
                         </label>
                         <label class="glean-mobile-filter-field">
@@ -2949,7 +2987,7 @@ function metaLine(entry: Row): string {
                         <LibraryRailGroup plugin={facade.pluginInstance} {i18n} group="authors" label={t(i18n, "rail.authors")} items={railStats.authors} selected={selectedAuthor} onSelect={selectAuthor} groupPrefs={railGroups.authors} onToggleGroup={handleToggleRailGroup} />
                     {/if}
                     {#if railStats.sites.length > 0 || selectedSite}
-                        <LibraryRailGroup plugin={facade.pluginInstance} {i18n} group="sites" label={t(i18n, "rail.sites")} items={railStats.sites} selected={selectedSite} onSelect={(value) => { markPrefsInteraction(); selectedSite = selectedSite.toLocaleLowerCase() === value.toLocaleLowerCase() ? "" : value; }} groupPrefs={railGroups.sites} onToggleGroup={handleToggleRailGroup} />
+                        <LibraryRailGroup plugin={facade.pluginInstance} {i18n} group="sites" label={t(i18n, "rail.sites")} items={railStats.sites} selected={selectedSite} itemLabel={siteItemLabel} onSelect={(value) => { markPrefsInteraction(); selectedSite = selectedSite.toLocaleLowerCase() === value.toLocaleLowerCase() ? "" : value; }} groupPrefs={railGroups.sites} onToggleGroup={handleToggleRailGroup} />
                     {/if}
                     {#if railStats.tags.length > 0 || selectedTag}
                         <LibraryRailGroup plugin={facade.pluginInstance} {i18n} group="tags" label={t(i18n, "rail.tags")} prefix="#" items={railStats.tags} selected={selectedTag} itemLabel={aliasForTag} onSelect={(value) => { markPrefsInteraction(); selectedTag = selectedTag.toLocaleLowerCase() === value.toLocaleLowerCase() ? "" : value; }} groupPrefs={railGroups.tags} onToggleGroup={handleToggleRailGroup} />

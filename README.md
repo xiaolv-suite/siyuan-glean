@@ -8,6 +8,15 @@
 
 [English](README.en-US.md) · [下载最新版](https://github.com/ai68298100/siyuan-glean/releases/latest) · [能力矩阵](docs/CAPABILITY-MATRIX.md) · [反馈与问题](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.25 更新（2026-10-25）
+
+本次版本实现读库后台静默微信公众号自动识别队列与分面侧栏微信站点投影。
+
+**新增与体验增强：**
+
+- **读库后台静默分片自动识别队列**：`DockPanel.svelte` 新增轻量静默扫描调度（`triggerSilentWechatScan`）；工作台载入 2.5 秒后自动启动后台队列，以每批 6 篇的温和节奏静默提取正文、回填公众号名称并同步派生索引，用户无需任何手动干预或点击，上百篇微信文章自动全量自愈。
+- **分面侧栏站点项友好中文名称投影**：`LibraryRailGroup.svelte` 站点项接入 `siteItemLabel` 优雅投影；侧栏原本显示的英文裸域名 `mp.weixin.qq.com` 自动映射为规范的中文「微信」，下钻与筛选行为保持一致，界面更加清晰友好。
+
 ## v1.3.24 更新（2026-10-25）
 
 本次版本实现北欧文库雅致青绿色彩美学重构与全表面 UI 质感飞跃。
@@ -421,7 +430,7 @@
 
 ## 兼容性与验收
 
-本次发布为 [v1.3.24](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.24)。自动门禁与发布证据见[发布候选复核](docs/RELEASE-CANDIDATE.md)；这不代表所有真实环境都已验收。
+本次发布为 [v1.3.25](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.25)。自动门禁与发布证据见[发布候选复核](docs/RELEASE-CANDIDATE.md)；这不代表所有真实环境都已验收。
 
 桌面宿主、Android/移动端、浏览器前端、真实模型、官方剪藏、外部文件和订阅服务仍按环境分别验收。使用前提、降级方式和阻塞项以[能力矩阵](docs/CAPABILITY-MATRIX.md)及[已知阻塞](docs/BLOCKERS.md)为准；请勿把单元测试或隔离 E2E 当作真机通过。
 
