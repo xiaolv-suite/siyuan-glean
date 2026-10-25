@@ -4,7 +4,7 @@ import {
     isWechatUrl, isWechatImage, extractWechatAuthor, cleanWechatNoise, extractWechatTime, extractWechatSeries,
     repairWechatImages, extractWechatCover, extractWechatDescription, cleanWechatArticleUrl, wechatArticleToWereadUrl,
     repairWechatMath, repairWechatCode, repairWechatVoice, repairWechatContent, extractWechatAvatar, extractWechatBiz,
-    repairWechatBackgroundImages, repairWechatVideos,
+    repairWechatBackgroundImages, repairWechatVideos, displayWechatAuthor,
 } from "../src/domain/wechat.ts";
 
 test("isWechatUrl：准确识别 mp.weixin.qq.com 及子域名", () => {
@@ -102,6 +102,28 @@ test("extractWechatAuthor：从剪藏模板链接形式提取", () => {
 正文
     `;
     assert.equal(extractWechatAuthor(md), "极客公园");
+});
+
+test("extractWechatAuthor & displayWechatAuthor：严禁将 URL 或长链接提取或显示为作者", () => {
+    const mdWithUrlInLink = `
+# 标题
+- [https://mp.weixin.qq.com/s/vUX_X8kPt2w1XRgy9f4jKIw](https://mp.weixin.qq.com/s/vUX_X8kPt2w1XRgy9f4jKIw)
+正文
+    `;
+    assert.equal(extractWechatAuthor(mdWithUrlInLink), null);
+
+    const mdWithGeneralText = `
+# 标题
+- [原文链接](https://mp.weixin.qq.com/s/vUX_X8kPt2w1XRgy9f4jKIw)
+正文
+    `;
+    assert.equal(extractWechatAuthor(mdWithGeneralText), null);
+
+    // displayWechatAuthor 防御长链接
+    assert.equal(displayWechatAuthor("https://mp.weixin.qq.com/s/vUX_X8kPt2w1XRgy9f4jKIw"), "");
+    assert.equal(displayWechatAuthor("差评"), "差评");
+    assert.equal(displayWechatAuthor(""), "");
+    assert.equal(displayWechatAuthor(null), "");
 });
 
 test("extractWechatAuthor：黑名单过滤通用词与空值防护", () => {

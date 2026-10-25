@@ -8,6 +8,16 @@
 
 [English](README.en-US.md) · [下载最新版](https://github.com/ai68298100/siyuan-glean/releases/latest) · [能力矩阵](docs/CAPABILITY-MATRIX.md) · [反馈与问题](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.26 更新（2026-10-25）
+
+本次版本实现微信公众号作者长链接过滤防范、预览区短来源微胶囊重塑以及全表面色彩深度协调调和。
+
+**新增与体验增强：**
+
+- **微信公众号作者长链接与脏数据严格过滤**：`domain/wechat.ts` 纯函数 `cleanExtractedName` 与 `displayWechatAuthor` 严防长链接泄露；看板卡片、列表行与表格卡片全面防御，彻底告别卡片上露出长串 URL 的丑陋问题。
+- **工作台预览区长链接优化与微胶囊重塑**：`WorkbenchPreview.svelte` 消除顶部大段裸露的无意义原始 URL，重塑为雅致小巧的来源微胶囊徽标（`.glean-preview__source-link`），悬浮提示完整 URL 并支持点击直达原文。
+- **全表面色彩微美学协调深度调和**：`全文剪藏` 载体微标从突兀紫色重塑为沉静微透的北欧青绿微胶囊，五态微标与 AI 标签全面融入青绿柔美质感。
+
 ## v1.3.25 更新（2026-10-25）
 
 本次版本实现读库后台静默微信公众号自动识别队列与分面侧栏微信站点投影。
@@ -430,7 +440,7 @@
 
 ## 兼容性与验收
 
-本次发布为 [v1.3.25](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.25)。自动门禁与发布证据见[发布候选复核](docs/RELEASE-CANDIDATE.md)；这不代表所有真实环境都已验收。
+本次发布为 [v1.3.26](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.26)。自动门禁与发布证据见[发布候选复核](docs/RELEASE-CANDIDATE.md)；这不代表所有真实环境都已验收。
 
 桌面宿主、Android/移动端、浏览器前端、真实模型、官方剪藏、外部文件和订阅服务仍按环境分别验收。使用前提、降级方式和阻塞项以[能力矩阵](docs/CAPABILITY-MATRIX.md)及[已知阻塞](docs/BLOCKERS.md)为准；请勿把单元测试或隔离 E2E 当作真机通过。
 

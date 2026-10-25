@@ -53,6 +53,9 @@ const GENERIC_AUTHOR_BLACKLIST = new Set([
     "微信公众号",
     "公众号",
     "阅读原文",
+    "原文链接",
+    "查看原文",
+    "原文",
     "预览时标签不可点",
     "原创",
     "作者",
@@ -60,6 +63,9 @@ const GENERIC_AUTHOR_BLACKLIST = new Set([
     "编辑",
     "分享",
     "关注",
+    "点击蓝字关注我们",
+    "点击上方蓝字关注我们",
+    "长按二维码关注",
 ]);
 
 function cleanExtractedName(raw: string): string | null {
@@ -75,9 +81,30 @@ function cleanExtractedName(raw: string): string | null {
     name = name.replace(/\s+(?:20\d{2}[-/.]\d{1,2}[-/.]\d{1,2}.*|发表于.*|发布于.*|\d{1,2}月\d{1,2}日.*)$/, "").trim();
 
     if (!name) return null;
+    // 严格防御：严禁将任何 URL、域名、包含斜杠或问号的长路径作为作者！
+    if (/^https?:\/\//i.test(name) || name.includes("weixin.qq.com") || name.includes("/") || name.includes("?") || name.includes("&") || name.length > 35) {
+        return null;
+    }
+    // 过滤形如 abc.xyz 的纯域名
+    if (/^[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/.test(name)) {
+        return null;
+    }
     if (GENERIC_AUTHOR_BLACKLIST.has(name)) return null;
 
     return normalizeAuthor(name);
+}
+
+/**
+ * 安全格式化微信公众号作者显示名称，杜绝长链接或脏数据泄露
+ */
+export function displayWechatAuthor(author: string | null | undefined): string {
+    if (!author) return "";
+    const clean = author.trim();
+    if (!clean) return "";
+    if (/^https?:\/\//i.test(clean) || clean.includes("weixin.qq.com") || clean.includes("/") || clean.includes("?") || clean.length > 35) {
+        return "";
+    }
+    return clean;
 }
 
 /**

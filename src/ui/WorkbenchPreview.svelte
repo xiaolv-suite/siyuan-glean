@@ -15,7 +15,7 @@
     import ProtyleHost from "./ProtyleHost.svelte";
     import AuthorEditor from "./AuthorEditor.svelte";
     import { exportArticleMarkdown } from "../services/library-export-service";
-    import { isWechatUrl } from "../domain/wechat";
+    import { isWechatUrl, displayWechatAuthor } from "../domain/wechat";
     import { scanAndFillWechatAuthor } from "../services/wechat-service";
 
     type PreviewItem = ({ kind: "clip" } & ClipIndexEntry) | ({ kind: "candidate" } & CandidateEntry);
@@ -45,6 +45,20 @@
     const candidate = $derived(entry.kind === "candidate" && attrs && !attrs.status && !attrs.internal && !attrs.excluded);
     const confirmed = $derived(entry.kind === "clip" && attrs?.status && !attrs.internal);
     const sourceUrl = $derived(attrs?.url || entry.url);
+    const safeAuthor = $derived(displayWechatAuthor(attrs?.author || entry.author));
+
+    function previewSourceLabel(): string {
+        if (isWechatUrl(sourceUrl) || isWechatUrl(entry.site)) {
+            return safeAuthor ? `微信 · ${safeAuthor}` : "微信公众号原文";
+        }
+        if (entry.site) return entry.site;
+        try {
+            const u = new URL(sourceUrl);
+            return u.hostname;
+        } catch {
+            return t(i18n, "clip.openSource");
+        }
+    }
     // 预览里的状态动作应覆盖读库五态，避免“阅读中”的文章只能回到收件箱/稍后。
     // 与 ClipStatusActions、LibraryBatchBar 保持同一套状态入口。
     const statuses: ClipStatus[] = ["inbox", "later", "reading", "done", "archived"];
@@ -231,9 +245,15 @@
         </div>
     </div>
     <div id={metaId} class="glean-preview__meta">
-        <span>{t(i18n, "preview.readonly")}</span>
-        {#if normalizeUrl(sourceUrl)}<a href={sourceUrl} target="_blank" rel="noopener noreferrer">{sourceUrl}</a>
-        {:else if sourceUrl}<span>{sourceUrl}</span>{/if}
+        <span class="glean-preview__readonly-tag">📖 {t(i18n, "preview.readonly")}</span>
+        {#if normalizeUrl(sourceUrl)}
+            <a href={sourceUrl} target="_blank" rel="noopener noreferrer" class="glean-preview__source-link" title={sourceUrl}>
+                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanExternal" /></svg>
+                <span>{previewSourceLabel()}</span>
+            </a>
+        {:else if sourceUrl}
+            <span class="glean-preview__source-link">{previewSourceLabel()}</span>
+        {/if}
         {#if entry.kind === "candidate"}
             <div class="glean-preview__evidence" aria-label={t(i18n, "candidate.evidenceLabel")}>
                 <span class="glean-preview__evidence-chip glean-preview__evidence-chip--signal">{t(i18n, "candidate.evidenceLabel")}: {entry.evidence.map((value) => t(i18n, `candidate.evidence.${value}`)).join(" · ")}</span>
@@ -271,7 +291,7 @@
         </div>
     {/if}
     {#if confirmed}
-        {#if attrs?.author}<span class="glean-preview__author">{attrs.site ? `${attrs.site} · ` : ""}{attrs.author}</span>{/if}
+        {#if safeAuthor}<span class="glean-preview__author">{attrs?.site ? `${attrs.site} · ` : ""}{safeAuthor}</span>{/if}
         <AuthorEditor {facade} docId={entry.id} onSaved={onRefresh} />
     {/if}
     <ProtyleHost app={facade.pluginInstance.app} docId={entry.id} mode="preview" {i18n} bind:host onOpenDocument={() => facade.openReadingDocument(entry.id)} />
@@ -285,6 +305,37 @@
 </section>
 
 <style>
+    .glean-preview__meta {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: var(--glean-space-2);
+        padding: var(--glean-space-1-5) var(--glean-space-3);
+        font-size: var(--glean-text-xs);
+        color: var(--b3-theme-on-surface);
+        background: color-mix(in srgb, var(--b3-theme-surface) 95%, transparent);
+        border-bottom: 1px solid var(--glean-border-soft);
+    }
+    .glean-preview__readonly-tag {
+        opacity: 0.8;
+    }
+    .glean-preview__source-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 8px;
+        border-radius: var(--glean-radius-pill);
+        background: color-mix(in srgb, var(--lv-brand) 10%, var(--b3-theme-surface));
+        color: var(--lv-brand);
+        text-decoration: none;
+        font-weight: var(--glean-weight-medium);
+        transition: all var(--glean-duration-fast) ease;
+
+        &:hover {
+            background: color-mix(in srgb, var(--lv-brand) 18%, var(--b3-theme-surface));
+            color: var(--lv-brand-hover);
+        }
+    }
     .glean-preview__meta,
     .glean-preview__meta > span,
     .glean-preview__author {

@@ -161,6 +161,8 @@
 
 - [◐] **T-3458**（P2，2026-10-25）读库后台静默微信公众号自动识别队列与分面侧栏微信站点投影：`DockPanel.svelte` 新增轻量静默扫描调度（`triggerSilentWechatScan`），工作台载入 2.5 秒后自动启动后台低优先级队列，以每批 6 篇温和节奏静默提取正文回填公众号；`LibraryRailGroup.svelte` 站点项接入 `siteItemLabel` 优雅投影将 `mp.weixin.qq.com` 映射为中文「微信」；单测与门禁完备。代码状态：完成；隔离验证：`tests/header-actions.test.ts` 27/27、`tests/wechat-service.test.mjs` 5/5、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实后台全自动自愈走查；延后原因：真实多篇长文静默回填仍归 B-0002。
 
+- [◐] **T-3459**（P2，2026-10-25）微信公众号作者防长链过滤与全表面色彩深度协调优化：`domain/wechat.ts` 纯函数 `cleanExtractedName` 与 `displayWechatAuthor` 严防长链接泄露，拒绝将 URL 识别为作者；`DockPanel.svelte` 卡片与列表行全表面接入安全作者显示；`WorkbenchPreview.svelte` 消除顶部大段裸露的无意义原始 URL，重塑为雅致来源微胶囊徽标（`.glean-preview__source-link`）；`全文剪藏` 等载体徽标与 AI 标签全面融入青绿柔美质感；单测与门禁完备。代码状态：完成；隔离验证：`tests/wechat.test.ts` 23/23、`tests/header-actions.test.ts` 27/27、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实多样性 URL 走查；延后原因：真实多源长链接样本仍归 B-0002。
+
 
 - [◐] **T-3367**（P1，2026-10-18）批量选择范围与底部操作可达性：保留跨筛选选择，显示总数及筛选外数量，提供仅保留当前筛选、追加已显示文章和清空入口；三画布共用正常流批量条，获焦时按 Escape 快捷取消选择并安全回退焦点；移动窄屏保留左右安全区。代码状态：实现完成，契约见 D-0247/D-0292，不新增属性、端点或持久化；隔离验证：定向 51/51、完整 `pnpm test` 1517/1517、`pnpm check` 0 错误/0 警告、`pnpm build`、`pnpm check:release`、`pnpm perf:check`、`pnpm visual:check`、`pnpm task:ledger -- --check` 与 `git diff --check` 通过；Chrome 原型已点验宽/窄 Dock、筛选外提示、显式保留和清空，窄布局批量区 `738px` 宽、`142px` 高且无横溢出。真实验收：待 B-0002 原工作区、触控和系统读屏；延后原因：Chrome 原型与隔离样本不替代真实设备与视觉矩阵，视觉登记仍为 24 项待真实宿主。
 

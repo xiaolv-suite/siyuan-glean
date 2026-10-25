@@ -8,6 +8,16 @@ Lv Glean organizes clippings and articles already in SiYuan. It does not crawl t
 
 [中文说明](README.md) · [Latest Release](https://github.com/ai68298100/siyuan-glean/releases/latest) · [Capability matrix](docs/CAPABILITY-MATRIX.md) · [Feedback](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.26 update (2026-10-25)
+
+This release implements strict long-URL suppression for WeChat authors, concise source pill capsules in the workbench preview, and deep palette harmonization.
+
+**New features & improvements:**
+
+- **Strict URL Author Filtering**: `cleanExtractedName` and `displayWechatAuthor` defensively filter out raw HTTP/HTTPS links and domains from author fields, ensuring only genuine publisher names appear on cards.
+- **Concise Preview Source Pill**: `WorkbenchPreview.svelte` replaces raw URL strings with an elegant `.glean-preview__source-link` pill badge, keeping titles clean while preserving link access.
+- **Harmonized Surface Badges**: Fulltext carrier badges and AI tags harmonize into subtle translucent Nordic Teal, resolving multi-color clashes.
+
 ## v1.3.25 update (2026-10-25)
 
 This release implements the silent background WeChat publisher auto-recognition queue and elegant localized Chinese site projection in the navigation rail.
@@ -429,7 +439,7 @@ Ordinary notes are not bulk-captured just because of their location, and opening
 
 ## Compatibility and acceptance
 
-This release is [v1.3.25](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.25). See the [release candidate record](docs/RELEASE-CANDIDATE.md) for automated gates and release evidence; this does not mean every real environment has been accepted.
+This release is [v1.3.26](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.26). See the [release candidate record](docs/RELEASE-CANDIDATE.md) for automated gates and release evidence; this does not mean every real environment has been accepted.
 
 Desktop host, Android/mobile, browser frontend, real models, the official clipper, external files, and subscription services still require environment-specific checks. Prerequisites, fallbacks, and open blockers are listed in the [capability matrix](docs/CAPABILITY-MATRIX.md) and [known blockers](docs/BLOCKERS.md). Unit tests and isolated E2E are not device acceptance.
 

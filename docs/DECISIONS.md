@@ -2130,3 +2130,16 @@ T-3416 承接方向五（有依据的阅读 AI）与同类产品对标（Readwis
 2. 侧栏分面站点名称友好中文映射：
    - `LibraryRailGroup.svelte` 站点项接入 `siteItemLabel` 优雅投影；
    - 侧栏原本显示的裸英文域名 `mp.weixin.qq.com` 自动映射为规范的中文「微信」，下钻与筛选行为保持一致，界面更加清晰友好。
+
+## D-0338（2026-10-25）微信公众号作者防长链过滤与全表面色彩深度协调优化（T-3459）
+
+彻底解决公众号作者误露长链接问题，重塑预览区 URL 呈现并深度调和全表面微标色彩：
+1. 微信公众号作者长链接与脏数据严格过滤：
+   - `src/domain/wechat.ts` 纯函数 `cleanExtractedName` 严防长链接泄露，一旦包含 `http://` / `https://`、域名或斜杠直接丢弃；
+   - 新增 `displayWechatAuthor` 纯函数，若历史数据已存入链接格式作者，界面显示时自动隐匿长 URL；
+   - `DockPanel.svelte` 看板、列表行、表格全表面接入 `displayWechatAuthor`，彻底消除卡片上的长链接噪音；
+2. 工作台预览区来源微胶囊重塑：
+   - `WorkbenchPreview.svelte` 彻底消灭顶部大段裸露的无意义原始 URL，重塑为雅致小巧的来源微胶囊徽标（`.glean-preview__source-link`，如 `🔗 微信 · 公众号名称`），悬浮提示完整 URL 并支持点击直达原文；
+3. 全表面微标色彩深度协调：
+   - `.glean-carrier-badge--fulltext`（全文剪藏）从突兀的紫色重塑为沉静微透的北欧青绿微胶囊；
+   - 卡片标签（`.glean-mini-tag--ai`）与五态徽标（`.glean-st-badge`）全面对齐北欧青绿柔美质感，消除杂色冲突，整体视觉浑然天成。

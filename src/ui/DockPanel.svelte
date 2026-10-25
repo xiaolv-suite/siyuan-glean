@@ -36,7 +36,7 @@ import { deleteSavedViewPref, deleteTagAliasPref, loadUiPrefs, saveLastViewPref,
 import { ageDays, todayStamp } from "../domain/resurface.ts";
 import { recordReadingDone } from "../services/checkin-bridge";
 import { hasSourceAction, openTargetForCarrier, resolveCarrier, sourceUrlForCarrier } from "../domain/carrier";
-import { isWechatUrl } from "../domain/wechat";
+import { isWechatUrl, displayWechatAuthor } from "../domain/wechat";
 import { batchRecognizeWechatAuthors, scanAndFillWechatAuthor } from "../services/wechat-service";
 import ClipStatusActions from "./ClipStatusActions.svelte";
 import ClipRankControls from "./ClipRankControls.svelte";
@@ -2875,7 +2875,7 @@ function metaLine(entry: Row): string {
                                         <span class="glean-body-pending" title={t(i18n, "clip.bodyPendingHint")}>{t(i18n, "clip.bodyPending")}</span>
                                     {/if}
                                     {#if entry.site || isWechatEntry(entry)}<button type="button" class="glean-meta-icon glean-meta-btn" class:glean-source-wechat={isWechatEntry(entry)} onclick={(event) => { event.stopPropagation(); handleSiteClick(entry); }} title={entry.site || siteDisplayLabel(entry)}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg>{siteDisplayLabel(entry)}</button>{/if}
-                                    {#if entry.author}<button class="glean-source-author" onclick={(event) => { event.stopPropagation(); selectAuthor(entry.author!); }}>· {entry.author}</button>{/if}
+                                    {#if displayWechatAuthor(entry.author)}<button class="glean-source-author" onclick={(event) => { event.stopPropagation(); selectAuthor(entry.author!); }}>· {displayWechatAuthor(entry.author)}</button>{/if}
                                     {#if isWechatEntry(entry) && (!entry.author || !entry.author.trim())}
                                         <button
                                             type="button"
@@ -3049,7 +3049,7 @@ function metaLine(entry: Row): string {
                                                 {#if matchBadge(entry)}
                                                     <span class="glean-badge glean-badge--match" title={matchBadge(entry)}>{matchBadge(entry)}</span>
                                                 {/if}
-                                                <span class="glean-drow__site" class:glean-source-wechat={isWechatEntry(entry)} title={entry.site || sourceFallback(entry)}><button type="button" class="glean-source-site" onclick={(event) => { event.stopPropagation(); handleSiteClick(entry); }}>{siteDisplayLabel(entry)}</button>{#if entry.author}<button class="glean-source-author" onclick={(event) => { event.stopPropagation(); selectAuthor(entry.author!); }}>· {entry.author}</button>{/if}</span>
+                                                <span class="glean-drow__site" class:glean-source-wechat={isWechatEntry(entry)} title={entry.site || sourceFallback(entry)}><button type="button" class="glean-source-site" onclick={(event) => { event.stopPropagation(); handleSiteClick(entry); }}>{siteDisplayLabel(entry)}</button>{#if displayWechatAuthor(entry.author)}<button class="glean-source-author" onclick={(event) => { event.stopPropagation(); selectAuthor(entry.author!); }}>· {displayWechatAuthor(entry.author)}</button>{/if}</span>
                                                 {#if isWechatEntry(entry) && (!entry.author || !entry.author.trim())}
                                                     <button
                                                         type="button"
@@ -3225,7 +3225,7 @@ function metaLine(entry: Row): string {
                                     {:else if entry.kind === "candidate"}
                                         <span title={entry.url || entry.hpath}>{entry.site || candidateEvidence(entry)}</span>
                                     {/if}
-                                    {#if entry.kind === "clip" && entry.author}<button class="glean-source-author" onclick={(event) => { event.stopPropagation(); selectAuthor(entry.author!); }}>· {entry.author}</button>{/if}
+                                    {#if entry.kind === "clip" && displayWechatAuthor(entry.author)}<button class="glean-source-author" onclick={(event) => { event.stopPropagation(); selectAuthor(entry.author!); }}>· {displayWechatAuthor(entry.author)}</button>{/if}
                                     {#if entry.kind === "clip" && isWechatEntry(entry) && (!entry.author || !entry.author.trim())}
                                         <button
                                             type="button"
