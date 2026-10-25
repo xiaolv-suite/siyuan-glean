@@ -37,6 +37,7 @@ import { ageDays, todayStamp } from "../domain/resurface.ts";
 import { recordReadingDone } from "../services/checkin-bridge";
 import { hasSourceAction, openTargetForCarrier, resolveCarrier, sourceUrlForCarrier } from "../domain/carrier";
 import { isWechatUrl } from "../domain/wechat";
+import { batchRecognizeWechatAuthors, scanAndFillWechatAuthor } from "../services/wechat-service";
 import ClipStatusActions from "./ClipStatusActions.svelte";
 import ClipRankControls from "./ClipRankControls.svelte";
 import { installMobileViewportVars } from "../libs/mobile-viewport";
@@ -83,6 +84,8 @@ let offline = $state(false);
 let index = $state<GleanIndex>({ version: 1, updatedAt: "", clips: {}, candidates: {} });
 let activeQueue = $state<ClipStatus>("inbox");
 let keyword = $state("");
+let wechatScanning = $state(false);
+let wechatScanProgressText = $state("");
 let sortBy = $state<LibrarySortKey>("time");
 let sortDirection = $state<LibrarySortDirection>("desc");
 let selectedSite = $state("");
@@ -433,6 +436,46 @@ const rows = $derived.by<Row[]>(() => {
 const activeFilterKey = $derived(JSON.stringify(activeFilter));
 const visibleRows = $derived(rows.slice(0, renderLimit));
 const hasMoreRows = $derived(visibleRows.length < rows.length);
+
+function isWechatEntry(entry: { url?: string; site?: string }): boolean {
+    return Boolean((entry.url && isWechatUrl(entry.url)) || (entry.site && isWechatUrl(entry.site)) || entry.site === "微信公众号");
+}
+
+const wechatArticlesWithoutAuthor = $derived(
+    libraryItems.filter((entry) => isWechatEntry(entry) && (!entry.author || !entry.author.trim()))
+);
+const currentViewWechatWithoutAuthor = $derived(
+    rows.filter((entry) => isWechatEntry(entry) && (!entry.author || !entry.author.trim()))
+);
+
+async function startBatchWechatScan(): Promise<void> {
+    if (wechatScanning) return;
+    const targets = currentViewWechatWithoutAuthor.length > 0
+        ? currentViewWechatWithoutAuthor
+        : wechatArticlesWithoutAuthor;
+    if (targets.length === 0) return;
+
+    wechatScanning = true;
+    wechatScanProgressText = t(i18n, "wechat.scanningProgress", { current: 0, total: targets.length });
+    try {
+        const result = await batchRecognizeWechatAuthors(
+            facade.pluginInstance,
+            targets,
+            (processed, total, detectedCount) => {
+                wechatScanProgressText = `${processed}/${total} (${detectedCount})`;
+            }
+        );
+        facade.notifyDataChanged();
+        await reload();
+        showMessage(t(i18n, "wechat.batchScanDone", { count: result.detectedCount }), 3500);
+    } catch (error) {
+        console.warn("[LvGlean] 批量识别微信公众号失败:", error);
+        showMessage(t(i18n, "reader.actionFailed"), 3000);
+    } finally {
+        wechatScanning = false;
+        wechatScanProgressText = "";
+    }
+}
 
 function loadMoreRows(): void {
     renderLimit = Math.min(rows.length, renderLimit + LIBRARY_RENDER_PAGE);
@@ -2114,10 +2157,6 @@ function sourceFallback(entry: ClipIndexEntry): string {
     return resolveCarrier(entry.contentType) === "local" ? t(i18n, "clip.sourceLocal") : t(i18n, "panel.unknownSite");
 }
 
-function isWechatEntry(entry: ClipIndexEntry): boolean {
-    return Boolean((entry.url && isWechatUrl(entry.url)) || (entry.site && isWechatUrl(entry.site)) || entry.site === "微信公众号");
-}
-
 function siteDisplayLabel(entry: ClipIndexEntry): string {
     if (!entry.site) return isWechatEntry(entry) ? "微信" : sourceFallback(entry);
     const site = displaySiteName(entry.site);
@@ -2655,6 +2694,21 @@ function metaLine(entry: Row): string {
         {/if}
 
         {#if authorTimeline && selectedAuthor}<p class="glean-author-timeline" role="status">{t(i18n, "author.timeline", { author: selectedAuthor })}</p>{/if}
+        {#if currentViewWechatWithoutAuthor.length > 0}
+            <div class="glean-quota glean-wechat-banner" role="status">
+                <svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanSpark" /></svg>
+                <span style="flex:1">{t(i18n, "wechat.unrecognizedBanner", { n: currentViewWechatWithoutAuthor.length })}</span>
+                <button
+                    type="button"
+                    class="glean-cap-btn glean-cap-btn--pri"
+                    disabled={wechatScanning}
+                    aria-busy={wechatScanning}
+                    onclick={() => void startBatchWechatScan()}
+                >
+                    {wechatScanning ? wechatScanProgressText : t(i18n, "wechat.startAutoRecognize")}
+                </button>
+            </div>
+        {/if}
         {#if governanceCueCount > 1 && !governanceExpanded}
             <div class="glean-governance-summary" role="status">
                 <span aria-hidden="true">💡</span>
@@ -2784,6 +2838,26 @@ function metaLine(entry: Row): string {
                                     {/if}
                                     {#if entry.site || isWechatEntry(entry)}<button type="button" class="glean-meta-icon glean-meta-btn" class:glean-source-wechat={isWechatEntry(entry)} onclick={(event) => { event.stopPropagation(); handleSiteClick(entry); }} title={entry.site || siteDisplayLabel(entry)}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg>{siteDisplayLabel(entry)}</button>{/if}
                                     {#if entry.author}<button class="glean-source-author" onclick={(event) => { event.stopPropagation(); selectAuthor(entry.author!); }}>· {entry.author}</button>{/if}
+                                    {#if isWechatEntry(entry) && (!entry.author || !entry.author.trim())}
+                                        <button
+                                            type="button"
+                                            class="glean-mini-tag glean-mini-tag--ai"
+                                            title={t(i18n, "wechat.recognizeSingle")}
+                                            onclick={async (e) => {
+                                                e.stopPropagation();
+                                                const res = await scanAndFillWechatAuthor(facade.pluginInstance, entry.id, { url: entry.url, site: entry.site });
+                                                if (res) {
+                                                    facade.notifyDataChanged();
+                                                    await reload();
+                                                    showMessage(t(i18n, "wechat.authorRecognized", { name: res }), 2500);
+                                                } else {
+                                                    showMessage(t(i18n, "wechat.authorNotFound"), 2500);
+                                                }
+                                            }}
+                                        >
+                                            ✨{t(i18n, "wechat.recognizeSingle")}
+                                        </button>
+                                    {/if}
                                     {#if entry.minutes > 0}<span class="glean-tier-badge glean-tier-badge--{resolveReadingTimeTier(entry.minutes)}">· {t(i18n, "panel.minutes", { n: entry.minutes })}</span>{/if}
                                     {#if (entry.status === "inbox" || entry.status === "later") && staleText(entry.time) !== null}
                                         <span class="glean-stale">{staleText(entry.time)}</span>
@@ -2938,6 +3012,26 @@ function metaLine(entry: Row): string {
                                                     <span class="glean-badge glean-badge--match" title={matchBadge(entry)}>{matchBadge(entry)}</span>
                                                 {/if}
                                                 <span class="glean-drow__site" class:glean-source-wechat={isWechatEntry(entry)} title={entry.site || sourceFallback(entry)}><button type="button" class="glean-source-site" onclick={(event) => { event.stopPropagation(); handleSiteClick(entry); }}>{siteDisplayLabel(entry)}</button>{#if entry.author}<button class="glean-source-author" onclick={(event) => { event.stopPropagation(); selectAuthor(entry.author!); }}>· {entry.author}</button>{/if}</span>
+                                                {#if isWechatEntry(entry) && (!entry.author || !entry.author.trim())}
+                                                    <button
+                                                        type="button"
+                                                        class="glean-mini-tag glean-mini-tag--ai"
+                                                        title={t(i18n, "wechat.recognizeSingle")}
+                                                        onclick={async (e) => {
+                                                            e.stopPropagation();
+                                                            const res = await scanAndFillWechatAuthor(facade.pluginInstance, entry.id, { url: entry.url, site: entry.site });
+                                                            if (res) {
+                                                                facade.notifyDataChanged();
+                                                                await reload();
+                                                                showMessage(t(i18n, "wechat.authorRecognized", { name: res }), 2500);
+                                                            } else {
+                                                                showMessage(t(i18n, "wechat.authorNotFound"), 2500);
+                                                            }
+                                                        }}
+                                                    >
+                                                        ✨{t(i18n, "wechat.recognizeSingle")}
+                                                    </button>
+                                                {/if}
                                                 <span class={carrierClass(entry)} title={entry.contentType === "link" && !hasSourceAction(entry.contentType, entry.url) ? t(i18n, "clip.sourceMissing") : carrierLabel(entry)}>{carrierLabel(entry)}</span>
                                                 {#if entry.contentType === "link" && !hasSourceAction(entry.contentType, entry.url)}
                                                     <span class="glean-source-missing">{t(i18n, "clip.sourceMissing")}</span>
@@ -3094,6 +3188,26 @@ function metaLine(entry: Row): string {
                                         <span title={entry.url || entry.hpath}>{entry.site || candidateEvidence(entry)}</span>
                                     {/if}
                                     {#if entry.kind === "clip" && entry.author}<button class="glean-source-author" onclick={(event) => { event.stopPropagation(); selectAuthor(entry.author!); }}>· {entry.author}</button>{/if}
+                                    {#if entry.kind === "clip" && isWechatEntry(entry) && (!entry.author || !entry.author.trim())}
+                                        <button
+                                            type="button"
+                                            class="glean-mini-tag glean-mini-tag--ai"
+                                            title={t(i18n, "wechat.recognizeSingle")}
+                                            onclick={async (e) => {
+                                                e.stopPropagation();
+                                                const res = await scanAndFillWechatAuthor(facade.pluginInstance, entry.id, { url: entry.url, site: entry.site });
+                                                if (res) {
+                                                    facade.notifyDataChanged();
+                                                    await reload();
+                                                    showMessage(t(i18n, "wechat.authorRecognized", { name: res }), 2500);
+                                                } else {
+                                                    showMessage(t(i18n, "wechat.authorNotFound"), 2500);
+                                                }
+                                            }}
+                                        >
+                                            ✨{t(i18n, "wechat.recognizeSingle")}
+                                        </button>
+                                    {/if}
                                      {#if entry.kind === "clip"}
                                          <span class={carrierClass(entry)}>{carrierLabel(entry)}</span>
                                          {#if entry.contentType === "link" && !hasSourceAction(entry.contentType, entry.url)}

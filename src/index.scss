@@ -7377,6 +7377,23 @@ mark.glean-search-highlight {
     }
 }
 
+.glean-wechat-banner {
+    border: 1px solid color-mix(in srgb, #07c160 40%, var(--b3-border-color));
+    background: color-mix(in srgb, #07c160 7%, var(--b3-theme-surface));
+    box-shadow: 0 2px 8px -2px rgba(7, 193, 96, 0.12);
+
+    .glean-icon {
+        color: #07c160;
+    }
+
+    .glean-cap-btn--pri {
+        background: #07c160;
+        color: #fff;
+        border-color: #07c160;
+        &:hover { filter: brightness(1.08); }
+    }
+}
+
 /* 设置内分段选择（富化模式三态） */
 .glean-seg-row {
     border-bottom: 1px solid var(--b3-border-color);

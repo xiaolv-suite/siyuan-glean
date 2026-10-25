@@ -8,6 +8,15 @@ Lv Glean organizes clippings and articles already in SiYuan. It does not crawl t
 
 [中文说明](README.md) · [Latest Release](https://github.com/ai68298100/siyuan-glean/releases/latest) · [Capability matrix](docs/CAPABILITY-MATRIX.md) · [Feedback](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.23 update (2026-10-25)
+
+This release delivers automatic, mandatory WeChat publisher recognition & backfill without requiring user confirmation, plus silent hiding for unavailable cloud inboxes.
+
+**New features & improvements:**
+
+- **Mandatory Auto-Recognition for WeChat Publishers**: Added `wechat-service.ts` for fast, zero-token local extraction; `WorkbenchPreview.svelte` now silently and automatically detects and saves publisher names to `custom-clip-author`; `DockPanel.svelte` adds a one-click banner to scan and backfill all WeChat articles in batch.
+- **Silent Hiding for Unavailable Inboxes**: Strictly adheres to the silent-hide contract when cloud inboxes are unavailable or unconfigured, completely removing intrusive error banners and checkmarks from the library workbench.
+
 ## v1.3.22 update (2026-10-25)
 
 This release delivers comprehensive E2E verification across all user paths, legacy clipping data robustness, and refined multi-tier filter alignment.
@@ -401,7 +410,7 @@ Ordinary notes are not bulk-captured just because of their location, and opening
 
 ## Compatibility and acceptance
 
-This release is [v1.3.22](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.22). See the [release candidate record](docs/RELEASE-CANDIDATE.md) for automated gates and release evidence; this does not mean every real environment has been accepted.
+This release is [v1.3.23](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.23). See the [release candidate record](docs/RELEASE-CANDIDATE.md) for automated gates and release evidence; this does not mean every real environment has been accepted.
 
 Desktop host, Android/mobile, browser frontend, real models, the official clipper, external files, and subscription services still require environment-specific checks. Prerequisites, fallbacks, and open blockers are listed in the [capability matrix](docs/CAPABILITY-MATRIX.md) and [known blockers](docs/BLOCKERS.md). Unit tests and isolated E2E are not device acceptance.
 

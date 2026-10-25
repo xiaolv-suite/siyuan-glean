@@ -1361,5 +1361,10 @@
   "reader.shortcutPageDown": "Page down",
   "reader.shortcutPageUp": "Page up",
   "reading.openInReader": "Open in Glean Reader",
-  "reader.remainingMinutes": "${n} min left"
+  "reader.remainingMinutes": "${n} min left",
+  "wechat.unrecognizedBanner": "${n} WeChat article(s) without publisher detected",
+  "wechat.startAutoRecognize": "✨ Auto-recognize All Publishers",
+  "wechat.batchScanDone": "Successfully recognized and filled ${count} WeChat publishers",
+  "wechat.scanningProgress": "Recognizing (${current}/${total})",
+  "wechat.recognizeSingle": "Recognize Publisher"
 }

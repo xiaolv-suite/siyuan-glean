@@ -8,6 +8,15 @@
 
 [English](README.en-US.md) · [下载最新版](https://github.com/ai68298100/siyuan-glean/releases/latest) · [能力矩阵](docs/CAPABILITY-MATRIX.md) · [反馈与问题](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.23 更新（2026-10-25）
+
+本次版本实现微信公众号作者强行自动识别回填机制与收集箱不可用状态静默隐藏。
+
+**新增与体验增强：**
+
+- **微信公众号作者全自动强行识别与回填**：新增 `wechat-service.ts` 纯本地高速结构化提取服务；`WorkbenchPreview.svelte` 接入预览自动静默识别，无需用户同意强行提取并自动回填 `custom-clip-author`；`DockPanel.svelte` 读库工作台接入「✨ 自动识别全部公众号」一键全量并发批处理横幅与卡片快速识别动作。
+- **收集箱不可用状态彻底静默隐藏**：`InboxSection.svelte` 严格落地“不可用时 UI 整块隐藏”契约，彻底消灭未开通思源云端收集箱或离线环境下的错误横幅与绿勾干扰，读库顶部清爽无扰。
+
 ## v1.3.22 更新（2026-10-25）
 
 本次版本实现全功能系统性 E2E 排查、老用户历史数据兼容与多维体验加固。
@@ -402,7 +411,7 @@
 
 ## 兼容性与验收
 
-本次发布为 [v1.3.22](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.22)。自动门禁与发布证据见[发布候选复核](docs/RELEASE-CANDIDATE.md)；这不代表所有真实环境都已验收。
+本次发布为 [v1.3.23](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.23)。自动门禁与发布证据见[发布候选复核](docs/RELEASE-CANDIDATE.md)；这不代表所有真实环境都已验收。
 
 桌面宿主、Android/移动端、浏览器前端、真实模型、官方剪藏、外部文件和订阅服务仍按环境分别验收。使用前提、降级方式和阻塞项以[能力矩阵](docs/CAPABILITY-MATRIX.md)及[已知阻塞](docs/BLOCKERS.md)为准；请勿把单元测试或隔离 E2E 当作真机通过。
 

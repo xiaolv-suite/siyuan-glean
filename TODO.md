@@ -155,6 +155,8 @@
 
 - [◐] **T-3455**（P2，2026-10-25）全功能系统性 E2E 排查、老用户历史数据兼容与多维体验加固：`domain/library-filter-chips.ts` 纯函数 `FILTER_CHIP_KEYS` 扩展 `readingTimeTier`，`libraryFilterChips` 完整呈现时长分级徽标；`domain/wechat.ts` 纯函数 `isWechatUrl` 强化容错无前缀域名与中文别名；`ReaderTab.svelte` 键盘处理器将 Escape 优先分配给划词条（`excerpt`）与 Memo 批注输入框；`highlights.ts` 增加父级文档 `box` 与 `hpath` 自动回退保护；沉淀《全功能排查与老用户平滑迁移指南》（`docs/MIGRATION-GUIDE.md`）；单测与门禁完备。代码状态：完成；隔离验证：`tests/library-filter-chips.test.ts` 4/4、`tests/wechat.test.ts` 22/22、`tests/reader.test.ts` 14/14、`tests/highlights.test.ts` 14/14、`tests/highlights-service.test.mjs` 38/38、S1 服务级 E2E 58/58 全通；真实验收：待 B-0002 真实多设备走查；延后原因：多平台设备宿主仍归 B-0002。
 
+- [◐] **T-3456**（P2，2026-10-25）微信公众号作者全自动强行识别回填与收集箱不可用静默隐藏：新增 `src/services/wechat-service.ts` 专属服务（`scanAndFillWechatAuthor` 与 `batchRecognizeWechatAuthors`）；`WorkbenchPreview.svelte` 接入预览自动静默识别，无需用户同意强行提取并自动回填 `custom-clip-author` 属性与同步索引；`DockPanel.svelte` 读库工作台接入「✨ 自动识别全部公众号」一键全量并发批处理横幅与卡片快速识别动作；`InboxSection.svelte` 严格落地“不可用时 UI 整块隐藏”契约消除错误横条干扰；单测与门禁完备。代码状态：完成；隔离验证：`tests/wechat-service.test.mjs` 5/5、`tests/i18n.test.ts` 5/5、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实大批量微信剪藏走查；延后原因：真实上百篇微信剪藏仍归 B-0002。
+
 
 - [◐] **T-3367**（P1，2026-10-18）批量选择范围与底部操作可达性：保留跨筛选选择，显示总数及筛选外数量，提供仅保留当前筛选、追加已显示文章和清空入口；三画布共用正常流批量条，获焦时按 Escape 快捷取消选择并安全回退焦点；移动窄屏保留左右安全区。代码状态：实现完成，契约见 D-0247/D-0292，不新增属性、端点或持久化；隔离验证：定向 51/51、完整 `pnpm test` 1517/1517、`pnpm check` 0 错误/0 警告、`pnpm build`、`pnpm check:release`、`pnpm perf:check`、`pnpm visual:check`、`pnpm task:ledger -- --check` 与 `git diff --check` 通过；Chrome 原型已点验宽/窄 Dock、筛选外提示、显式保留和清空，窄布局批量区 `738px` 宽、`142px` 高且无横溢出。真实验收：待 B-0002 原工作区、触控和系统读屏；延后原因：Chrome 原型与隔离样本不替代真实设备与视觉矩阵，视觉登记仍为 24 项待真实宿主。
 

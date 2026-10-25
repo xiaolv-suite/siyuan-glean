@@ -1361,5 +1361,10 @@
   "reader.shortcutPageDown": "向下翻屏",
   "reader.shortcutPageUp": "向上翻屏",
   "reading.openInReader": "在拾遗阅读器打开",
-  "reader.remainingMinutes": "余 ${n} 分钟"
+  "reader.remainingMinutes": "余 ${n} 分钟",
+  "wechat.unrecognizedBanner": "检测到 ${n} 篇微信文章未识别公众号",
+  "wechat.startAutoRecognize": "✨ 自动识别全部公众号",
+  "wechat.batchScanDone": "已自动识别并回填 ${count} 篇微信公众号作者",
+  "wechat.scanningProgress": "正在识别 (${current}/${total})",
+  "wechat.recognizeSingle": "识别公众号"
 }

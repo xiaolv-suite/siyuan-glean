@@ -15,6 +15,8 @@
     import ProtyleHost from "./ProtyleHost.svelte";
     import AuthorEditor from "./AuthorEditor.svelte";
     import { exportArticleMarkdown } from "../services/library-export-service";
+    import { isWechatUrl } from "../domain/wechat";
+    import { scanAndFillWechatAuthor } from "../services/wechat-service";
 
     type PreviewItem = ({ kind: "clip" } & ClipIndexEntry) | ({ kind: "candidate" } & CandidateEntry);
     interface Props {
@@ -55,8 +57,43 @@
             if (!mounted || !isCurrent() || entry.id !== id) return;
             attrs = next;
             loadFailed = false;
+
+            // 微信公众号作者自动强行识别（强需求，无需用户同意）
+            const isWechat = isWechatUrl(next.url || entry.url) || isWechatUrl(next.site || entry.site);
+            if (isWechat && (!next.author || !next.author.trim())) {
+                void autoDetectWechatAuthor(id, isCurrent);
+            }
         } catch {
             if (mounted && isCurrent() && entry.id === id) { attrs = null; loadFailed = true; }
+        }
+    }
+
+    async function autoDetectWechatAuthor(id: string, isCurrent: () => boolean): Promise<void> {
+        try {
+            let domSnippet = "";
+            if (host) {
+                const jsName = host.querySelector("#js_name");
+                if (jsName?.textContent?.trim()) domSnippet = jsName.textContent.trim();
+                if (!domSnippet) {
+                    const nickname = host.querySelector(".profile_nickname, .profile_meta_value");
+                    if (nickname?.textContent?.trim()) domSnippet = nickname.textContent.trim();
+                }
+                if (!domSnippet) {
+                    domSnippet = host.innerText?.slice(0, 2500) || "";
+                }
+            }
+            const detected = await scanAndFillWechatAuthor(facade.pluginInstance, id, {
+                url: attrs?.url || entry.url,
+                site: attrs?.site || entry.site,
+                domText: domSnippet,
+            });
+            if (detected && mounted && isCurrent() && entry.id === id) {
+                if (attrs) attrs.author = detected;
+                facade.notifyDataChanged();
+                await onRefresh();
+            }
+        } catch (error) {
+            console.debug("[LvGlean] 预览区自动识别微信公众号失败:", error);
         }
     }
 

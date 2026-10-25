@@ -2095,3 +2095,13 @@ T-3416 承接方向五（有依据的阅读 AI）与同类产品对标（Readwis
    - `highlights.ts`（`createArticleHighlightsDoc`）对输入批注项增加父级文档 `box` 与 `hpath` 自动回退保护，缺少位置属性的老旧高亮块也能稳定生成思源笔记；
 5. 全功能迁移与排查指南：
    - 编写《全功能排查与老用户平滑迁移指南》（`docs/MIGRATION-GUIDE.md`），更新 `docs/DATA-CONTRACT.md` 契约事实源，全套 1661 项单测与 58 条隔离内核服务级 E2E 100% 通过。
+
+## D-0335（2026-10-25）微信公众号作者全自动强行识别回填与收集箱不可用静默隐藏（T-3456）
+
+彻底解决用户待分拣微信文章作者大面积缺失与收集箱未开通时顶部横幅污染的痛点：
+1. 微信公众号作者全自动强行识别与回填：
+   - 新增 `src/services/wechat-service.ts` 专属服务（`scanAndFillWechatAuthor` 与 `batchRecognizeWechatAuthors`）；
+   - `WorkbenchPreview.svelte` 接入预览自动静默识别：只要右侧预览微信文章且作者为空，**无需用户点击同意，自动强行提取公众号名称并回填 `custom-clip-author` 属性与同步更新索引**；
+   - `DockPanel.svelte` 读库工作台接入「✨ 自动识别全部公众号」一键全量并发批处理横幅（`.glean-wechat-banner`），支持对当前待分拣或筛选出的上百篇微信文章秒级并发批处理，单卡片亦提供 `✨识别公众号` 快速动作；
+2. 收集箱不可用状态彻底静默隐藏：
+   - `InboxSection.svelte` 严格落地“不可用时 UI 整块隐藏”契约（`inbox-service.ts:17`），消灭未开通思源云端收集箱或离线环境下的错误横幅与伪元素绿勾干扰，读库顶部清爽无扰。
