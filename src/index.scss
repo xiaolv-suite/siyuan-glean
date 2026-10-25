@@ -190,20 +190,22 @@
 :root {
     /* Primitive palette. Keep the host b3 variables as the theme surface;
        these are the only brand/status literals allowed in component CSS. */
-    --glean-color-amber-300: #ffc15e;
-    --glean-color-orange-500: #f97316;
+    --glean-color-amber-300: #eab308;
+    --glean-color-orange-500: #d97706;
     --lv-brand: #0D9488; /* 北欧文库青绿 */
+    --lv-brand-hover: #0F766E;
+    --lv-brand-active: #115E59;
     --lv-brand-soft: color-mix(in srgb, var(--lv-brand) 12%, transparent);
-    --lv-accent-wheat: #FB923C; /* 金杏麦穗色 */
-    --glean-color-status-inbox: #f59e0b;
-    --glean-color-status-later: #3b82f6;
-    --glean-color-status-reading: #8b5cf6;
-    --glean-color-status-done: #10b981;
-    --glean-color-status-archived: #94a3b8;
-    --glean-accent-a: var(--glean-color-amber-300);
-    --glean-accent-b: var(--glean-color-orange-500);
-    --glean-grad: linear-gradient(135deg, var(--glean-accent-a) 0%, var(--glean-accent-b) 100%);
-    --glean-grad-soft: linear-gradient(135deg, color-mix(in srgb, var(--glean-accent-a) 14%, transparent), color-mix(in srgb, var(--glean-accent-b) 8%, transparent));
+    --lv-accent-wheat: #F59E0B; /* 金麦麦穗点睛色 */
+    --glean-color-status-inbox: #D97706; /* 沉静琥珀 */
+    --glean-color-status-later: #2563EB; /* 专注湖蓝 */
+    --glean-color-status-reading: #7C3AED; /* 研读紫罗兰 */
+    --glean-color-status-done: #059669; /* 读毕翡翠绿 */
+    --glean-color-status-archived: #64748B; /* 归档石板灰 */
+    --glean-accent-a: var(--lv-brand);
+    --glean-accent-b: var(--lv-brand-hover);
+    --glean-grad: linear-gradient(135deg, var(--lv-brand) 0%, var(--lv-brand-hover) 100%);
+    --glean-grad-soft: linear-gradient(135deg, color-mix(in srgb, var(--lv-brand) 12%, transparent), color-mix(in srgb, var(--lv-brand) 6%, transparent));
     --glean-st-inbox: var(--glean-color-status-inbox);
     --glean-st-later: var(--glean-color-status-later);
     --glean-st-reading: var(--glean-color-status-reading);
@@ -222,7 +224,7 @@
     --glean-shadow-float: 0 12px 32px -8px rgba(16, 24, 40, 0.22), 0 2px 6px rgba(16, 24, 40, 0.08);
     --glean-shadow-control: 0 1px 4px rgba(16, 24, 40, 0.14), 0 0 0 0.5px var(--b3-border-color);
     --glean-shadow-knob: 0 1px 3px rgba(16, 24, 40, 0.25);
-    --glean-shadow-accent: 0 4px 14px -4px color-mix(in srgb, var(--glean-accent-b) 50%, transparent);
+    --glean-shadow-accent: 0 4px 14px -4px color-mix(in srgb, var(--lv-brand) 36%, transparent);
     /* Optical/focus shadows: named once so feedback remains consistent while
        preserving the existing contrast of each surface. */
     --glean-shadow-focus-current: 0 0 0 3px color-mix(in srgb, currentColor 16%, transparent);
@@ -476,7 +478,7 @@
         border-color: color-mix(in srgb, var(--glean-accent-b, #f97316) 24%, transparent);
 
         &:hover {
-            background: color-mix(in srgb, var(--glean-accent-b, #f97316) 16%, transparent);
+            background: color-mix(in srgb, var(--glean-accent-b, var(--lv-brand)) 16%, transparent);
         }
     }
 }
@@ -484,6 +486,12 @@
 [data-theme-mode="dark"],
 body.body--dark,
 body.b3-theme-dark {
+    --lv-brand: #14B8A6;
+    --lv-brand-hover: #2DD4BF;
+    --lv-brand-active: #0D9488;
+    --glean-accent-a: #14B8A6;
+    --glean-accent-b: #0D9488;
+    --glean-shadow-accent: 0 4px 14px -4px rgba(20, 184, 166, 0.32);
     --glean-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.25), 0 10px 28px -14px rgba(0, 0, 0, 0.5);
     --glean-shadow-float: 0 16px 40px -10px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.4);
     --glean-shadow-control: 0 1px 3px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.04);
@@ -721,20 +729,36 @@ body.b3-theme-dark {
         width: auto;
         min-width: 32px;
         height: 32px;
-        padding: var(--glean-space-1-5) var(--glean-space-2);
+        padding: var(--glean-space-1-5) var(--glean-space-2-5);
         display: inline-flex;
         align-items: center;
         justify-content: center;
         gap: var(--glean-space-1-5);
-        border: 1px solid var(--b3-border-color);
+        border: 1px solid var(--glean-border-soft);
+        border-radius: var(--glean-radius-sm);
         background: var(--b3-theme-surface);
+        color: var(--b3-theme-on-surface);
         white-space: nowrap;
+        transition: all var(--glean-duration-fast) ease;
+
+        &:hover {
+            background: color-mix(in srgb, var(--lv-brand) 8%, var(--b3-theme-surface));
+            border-color: color-mix(in srgb, var(--lv-brand) 28%, transparent);
+            color: var(--b3-theme-on-background);
+        }
     }
 
     .glean-head-action--primary {
-        border-color: transparent;
+        border-color: color-mix(in srgb, var(--lv-brand-hover) 60%, transparent);
         background: var(--glean-grad);
-        color: var(--b3-theme-on-primary);
+        color: #ffffff;
+        box-shadow: 0 2px 8px -1px color-mix(in srgb, var(--lv-brand) 32%, transparent);
+
+        &:hover {
+            filter: brightness(1.06);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 14px -2px color-mix(in srgb, var(--lv-brand) 44%, transparent);
+        }
     }
 
     .glean-head-action__label {
@@ -1253,11 +1277,11 @@ body.b3-theme-dark {
     transition: all var(--glean-duration-normal) var(--glean-ease-out);
 
     &.glean-q--on {
-        color: var(--glean-accent-b);
-        background: var(--glean-grad-soft);
+        color: var(--lv-brand);
+        background: color-mix(in srgb, var(--lv-brand) 10%, var(--b3-theme-surface));
         font-weight: var(--glean-weight-semibold);
-        border-color: color-mix(in srgb, var(--glean-accent-b) 18%, transparent);
-        box-shadow: var(--glean-elevation-none);
+        border-color: color-mix(in srgb, var(--lv-brand) 28%, transparent);
+        box-shadow: 0 1px 3px rgba(13, 148, 136, 0.1);
     }
 
     &:not(.glean-q--on):hover {
@@ -1279,8 +1303,8 @@ body.b3-theme-dark {
 }
 
 .glean-q--on .glean-q__n {
-    background: color-mix(in srgb, var(--glean-accent-b) 14%, transparent);
-    color: var(--glean-accent-b);
+    background: color-mix(in srgb, var(--lv-brand) 16%, transparent);
+    color: var(--lv-brand);
 }
 
 /* 读库键盘操作提示（T-3392）：桌面端行内快捷键，光标激活时加深。 */
@@ -3178,18 +3202,33 @@ mark.glean-search-highlight {
 
     .glean-workbench-rail__mark {
         display: grid;
-        width: 34px;
-        height: 34px;
-        flex: 0 0 34px;
+        width: 36px;
+        height: 36px;
+        flex: 0 0 36px;
         place-items: center;
         border-radius: var(--glean-radius-10);
-        background: var(--glean-primary-soft);
-        color: var(--glean-accent-b);
+        background: color-mix(in srgb, var(--lv-brand) 12%, var(--b3-theme-surface));
+        color: var(--lv-brand);
+        box-shadow: 0 2px 8px -2px color-mix(in srgb, var(--lv-brand) 20%, transparent);
     }
 
-    .glean-workbench-rail__mark svg { width: 19px; height: 19px; fill: currentColor; }
-    .glean-workbench-rail__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: var(--glean-text-lg); font-weight: 700; }
-    .glean-workbench-rail__capture { min-height: 40px; justify-content: center; gap: 8px; }
+    .glean-workbench-rail__mark svg { width: 20px; height: 20px; fill: currentColor; }
+    .glean-workbench-rail__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: var(--glean-text-lg); font-weight: 700; letter-spacing: -0.01em; }
+    .glean-workbench-rail__capture {
+        min-height: 42px;
+        justify-content: center;
+        gap: 8px;
+        font-weight: var(--glean-weight-semibold);
+        letter-spacing: var(--glean-tracking-0-2);
+        border-radius: var(--glean-radius-md);
+        box-shadow: 0 4px 14px -3px color-mix(in srgb, var(--lv-brand) 38%, transparent);
+        transition: all var(--glean-duration-fast) var(--glean-ease-spring);
+
+        &:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px -4px color-mix(in srgb, var(--lv-brand) 46%, transparent);
+        }
+    }
     .glean-workbench-rail__capture svg { width: 16px; height: 16px; fill: currentColor; }
     .glean-workbench-rail__nav { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
     .glean-workbench-rail__item {
@@ -3199,7 +3238,7 @@ mark.glean-search-highlight {
         min-width: 0;
         min-height: 40px;
         width: 100%;
-        padding: var(--glean-space-2) var(--glean-space-2-5);
+        padding: var(--glean-space-2) var(--glean-space-3);
         border: 1px solid transparent;
         border-radius: var(--glean-radius-10);
         background: transparent;
@@ -3207,10 +3246,20 @@ mark.glean-search-highlight {
         font-size: var(--glean-text-md);
         text-align: start;
         cursor: pointer;
+        transition: background var(--glean-duration-fast) ease, color var(--glean-duration-fast) ease;
     }
     .glean-workbench-rail__item svg { width: 17px; height: 17px; flex: 0 0 17px; fill: currentColor; }
-    .glean-workbench-rail__item:hover { border-color: var(--glean-border-soft); background: var(--glean-primary-soft); color: var(--b3-theme-on-background); }
-    .glean-workbench-rail__item--on { background: var(--glean-primary-soft); color: var(--glean-accent-b); font-weight: 650; }
+    .glean-workbench-rail__item:hover {
+        background: color-mix(in srgb, var(--lv-brand) 8%, var(--b3-theme-surface));
+        color: var(--b3-theme-on-background);
+    }
+    .glean-workbench-rail__item--on {
+        background: color-mix(in srgb, var(--lv-brand) 12%, var(--b3-theme-surface));
+        color: var(--lv-brand);
+        font-weight: 650;
+        border-color: color-mix(in srgb, var(--lv-brand) 22%, transparent);
+        box-shadow: 0 2px 8px -2px color-mix(in srgb, var(--lv-brand) 16%, transparent);
+    }
     .glean-workbench-rail__item:focus-visible { outline: 2px solid var(--b3-theme-primary); outline-offset: 2px; }
     .glean-workbench-rail__spacer { flex: 1 1 auto; min-height: 12px; }
     .glean-workbench-rail__hint { padding: 10px; border-top: 1px solid var(--glean-border-soft); color: var(--b3-theme-on-surface); font-size: 11px; line-height: 1.6; }
@@ -4533,7 +4582,7 @@ mark.glean-search-highlight {
     max-height: min(35%, 240px);
     box-sizing: border-box;
     margin: var(--glean-space-2) var(--glean-space-4) var(--glean-space-3-5);
-    padding: var(--glean-space-2) var(--glean-space-2-5) var(--glean-space-2) var(--glean-space-3-5);
+    padding: var(--glean-space-2-5) var(--glean-space-3) var(--glean-space-2-5) var(--glean-space-3-5);
     border-radius: var(--glean-radius-18);
     display: flex;
     flex-wrap: wrap;
@@ -4542,8 +4591,10 @@ mark.glean-search-highlight {
     overflow-y: auto;
     overscroll-behavior: contain;
     scrollbar-width: thin;
-    background: var(--b3-theme-surface);
-    border: 1px solid var(--b3-border-color);
+    background: color-mix(in srgb, var(--b3-theme-surface) 94%, transparent);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--glean-border-soft);
+    box-shadow: 0 10px 32px -8px rgba(0, 0, 0, 0.12), var(--glean-shadow-card);
     font-size: var(--glean-text-xs-plus);
     animation: var(--glean-motion-none);
 }
@@ -6655,10 +6706,10 @@ mark.glean-search-highlight {
     }
 
     &.glean-rail__item--on {
-        background: var(--glean-grad-soft);
-        color: var(--glean-accent-b);
+        background: color-mix(in srgb, var(--lv-brand) 10%, var(--b3-theme-surface));
+        color: var(--lv-brand);
         font-weight: var(--glean-weight-semibold);
-        box-shadow: inset 2px 0 0 var(--glean-accent-b);
+        box-shadow: inset 3px 0 0 var(--lv-brand);
     }
 
     .glean-rail__n {
@@ -6667,6 +6718,11 @@ mark.glean-search-highlight {
         background: var(--glean-inset-surface);
         border-radius: var(--glean-radius-pill);
         padding: var(--glean-space-0-25) var(--glean-space-1-75);
+    }
+
+    &.glean-rail__item--on .glean-rail__n {
+        background: color-mix(in srgb, var(--lv-brand) 16%, transparent);
+        color: var(--lv-brand);
     }
 }
 

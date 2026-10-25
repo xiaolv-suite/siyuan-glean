@@ -8,6 +8,16 @@ Lv Glean organizes clippings and articles already in SiYuan. It does not crawl t
 
 [中文说明](README.md) · [Latest Release](https://github.com/ai68298100/siyuan-glean/releases/latest) · [Capability matrix](docs/CAPABILITY-MATRIX.md) · [Feedback](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.24 update (2026-10-25)
+
+This release delivers the Nordic Library Teal aesthetic overhaul, significantly elevating UI texture and visual calm across all surfaces.
+
+**New features & improvements:**
+
+- **Nordic Library Teal Aesthetic Overhaul**: Primary brand gradient `--glean-grad` is upgraded to deep, sophisticated Nordic pine/teal (`#0D9488` → `#0F766E`); primary capture and action buttons embrace subtle teal glows, retiring high-saturation orange and eliminating visual noise.
+- **Queue and Facet Visual De-Noising**: Status capsules like "Inbox" and active rail facets now use gentle, translucent teal backdrops with pill counters, reducing eye strain.
+- **Frosted Batch Bar & Dark Mode Tuning**: The batch action bar features 12px backdrop-blur and soft diffused shadows; dark mode contrast adapts automatically for nighttime comfort.
+
 ## v1.3.23 update (2026-10-25)
 
 This release delivers automatic, mandatory WeChat publisher recognition & backfill without requiring user confirmation, plus silent hiding for unavailable cloud inboxes.
@@ -410,7 +420,7 @@ Ordinary notes are not bulk-captured just because of their location, and opening
 
 ## Compatibility and acceptance
 
-This release is [v1.3.23](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.23). See the [release candidate record](docs/RELEASE-CANDIDATE.md) for automated gates and release evidence; this does not mean every real environment has been accepted.
+This release is [v1.3.24](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.24). See the [release candidate record](docs/RELEASE-CANDIDATE.md) for automated gates and release evidence; this does not mean every real environment has been accepted.
 
 Desktop host, Android/mobile, browser frontend, real models, the official clipper, external files, and subscription services still require environment-specific checks. Prerequisites, fallbacks, and open blockers are listed in the [capability matrix](docs/CAPABILITY-MATRIX.md) and [known blockers](docs/BLOCKERS.md). Unit tests and isolated E2E are not device acceptance.
 

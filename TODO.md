@@ -157,6 +157,8 @@
 
 - [◐] **T-3456**（P2，2026-10-25）微信公众号作者全自动强行识别回填与收集箱不可用静默隐藏：新增 `src/services/wechat-service.ts` 专属服务（`scanAndFillWechatAuthor` 与 `batchRecognizeWechatAuthors`）；`WorkbenchPreview.svelte` 接入预览自动静默识别，无需用户同意强行提取并自动回填 `custom-clip-author` 属性与同步索引；`DockPanel.svelte` 读库工作台接入「✨ 自动识别全部公众号」一键全量并发批处理横幅与卡片快速识别动作；`InboxSection.svelte` 严格落地“不可用时 UI 整块隐藏”契约消除错误横条干扰；单测与门禁完备。代码状态：完成；隔离验证：`tests/wechat-service.test.mjs` 5/5、`tests/i18n.test.ts` 5/5、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实大批量微信剪藏走查；延后原因：真实上百篇微信剪藏仍归 B-0002。
 
+- [◐] **T-3457**（P2，2026-10-25）北欧文库雅致青绿色彩美学重构与全表面 UI 质感飞跃：核心品牌渐变 `--glean-grad` 升级为北欧文库青绿（`#0D9488` → `#0F766E`）；【+ 快速收录】、【+ 加入读库】等主按钮注入青绿微光与弥散阴影；队列【待分拣】胶囊与侧栏分面选块告别刺目亮橙，重绘为呼吸感微透底衬与精致数字药丸；批量底栏接入 12px 毛玻璃与立体软阴影；暗黑模式对比度自适应微调；单测与门禁完备。代码状态：完成；隔离验证：`tests/header-actions.test.ts` 27/27、`tests/a11y-glean-styles.test.ts` 8/8、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实多端主题走查；延后原因：真实宿主各套外部主题仍归 B-0002。
+
 
 - [◐] **T-3367**（P1，2026-10-18）批量选择范围与底部操作可达性：保留跨筛选选择，显示总数及筛选外数量，提供仅保留当前筛选、追加已显示文章和清空入口；三画布共用正常流批量条，获焦时按 Escape 快捷取消选择并安全回退焦点；移动窄屏保留左右安全区。代码状态：实现完成，契约见 D-0247/D-0292，不新增属性、端点或持久化；隔离验证：定向 51/51、完整 `pnpm test` 1517/1517、`pnpm check` 0 错误/0 警告、`pnpm build`、`pnpm check:release`、`pnpm perf:check`、`pnpm visual:check`、`pnpm task:ledger -- --check` 与 `git diff --check` 通过；Chrome 原型已点验宽/窄 Dock、筛选外提示、显式保留和清空，窄布局批量区 `738px` 宽、`142px` 高且无横溢出。真实验收：待 B-0002 原工作区、触控和系统读屏；延后原因：Chrome 原型与隔离样本不替代真实设备与视觉矩阵，视觉登记仍为 24 项待真实宿主。
 
