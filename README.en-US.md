@@ -8,6 +8,16 @@ Lv Glean organizes clippings and articles already in SiYuan. It does not crawl t
 
 [中文说明](README.md) · [Latest Release](https://github.com/ai68298100/siyuan-glean/releases/latest) · [Capability matrix](docs/CAPABILITY-MATRIX.md) · [Feedback](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.30 update (2026-10-27)
+
+This release implements WeChat article series/collection auto-tagging, a brand-new Quote Card generator, and high-DPI 2x Canvas PNG export.
+
+**New features & improvements:**
+
+- **WeChat Series / Collection Auto-tagging**: `wechat-service.ts` automatically extracts article series names (e.g. "LLM Frontier Practice") into `custom-clip-ai-tags`, enabling 1-click sidebar filtering by series.
+- **Quote Card Generator & Retina PNG Export**: Designed `QuoteCardDialog.svelte` featuring 4 themes (Nordic Teal, Wheat & Paper, Obsidian, Minimal White); native Canvas 2x super-sampled export supports "Copy Image" and "Save PNG".
+- **Quote Card Action Across Views**: Added "🖼️ Quote Card" shortcuts to both `HighlightView.svelte` and `ReaderTab.svelte`.
+
 ## v1.3.29 update (2026-10-27)
 
 This release implements direct interactive heatmap drill-down, auto-expanding completed lists, preview-to-library author filtering, and concise domain pills in editor context.
@@ -471,7 +481,7 @@ Ordinary notes are not bulk-captured just because of their location, and opening
 
 ## Compatibility and acceptance
 
-This release is [v1.3.29](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.29). See the [release candidate record](docs/RELEASE-CANDIDATE.md) for automated gates and release evidence; this does not mean every real environment has been accepted.
+This release is [v1.3.30](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.30). See the [release candidate record](docs/RELEASE-CANDIDATE.md) for automated gates and release evidence; this does not mean every real environment has been accepted.
 
 Desktop host, Android/mobile, browser frontend, real models, the official clipper, external files, and subscription services still require environment-specific checks. Prerequisites, fallbacks, and open blockers are listed in the [capability matrix](docs/CAPABILITY-MATRIX.md) and [known blockers](docs/BLOCKERS.md). Unit tests and isolated E2E are not device acceptance.
 

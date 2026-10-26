@@ -14,6 +14,7 @@ import {
 } from "../services/highlights";
 import { findRelatedOutcome, type RelatedReason } from "../services/enrich-service";
 import { makeQuoteCardPreview } from "./flashcard-dialog";
+import { openQuoteCardDialog } from "./quote-card-dialog";
 import type { GleanSettings } from "../services/settings";
 import { loadUiPrefs } from "../services/prefs";
 import { getBridgeSafely } from "../libs/ecosystem-bridge-kit";
@@ -308,6 +309,16 @@ async function card(item: HighlightItem) {
     }
 }
 
+function quoteCard(item: HighlightItem): void {
+    openQuoteCardDialog(facade, {
+        quote: item.text,
+        title: item.title || docTitle,
+        site: item.site,
+        color: item.color,
+        docId: item.rootId,
+    });
+}
+
 async function exam(item: HighlightItem): Promise<void> {
     const examBridge = getBridgeSafely<Record<string, unknown>>("exam");
     if (examBridge && typeof examBridge.quickGenerateQuestion === "function") {
@@ -600,6 +611,7 @@ function focusHighlightRow(id: string): void {
                                 <svg class="glean-icon" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
                                 {t(i18n, "highlight.copyShare")}
                             </button>
+                            <button type="button" onclick={() => quoteCard(item)} title={t(i18n, "quoteCard.action")} aria-label={t(i18n, "quoteCard.action")}>🖼️ {t(i18n, "quoteCard.action")}</button>
                             <button type="button" class:glean-ghost-btn={!hasCardsInstalled} aria-busy={cardingKey === item.id} disabled={Boolean(cardingKey)} onclick={() => void card(item)} title={t(i18n, "flashcard.make")} aria-label={hasCardsInstalled ? t(i18n, "flashcard.make") : t(i18n, "reader.cardGhostHint")}><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanCard" /></svg>{t(i18n, "flashcard.make")}</button>
                             <button type="button" class="glean-btn glean-btn--ghost" class:glean-ghost-btn={!hasExamInstalled} disabled={exportBusy} onclick={() => void exam(item)} title={hasExamInstalled ? t(i18n, "reader.examMake") : t(i18n, "reader.examGhostHint")} aria-label={t(i18n, "reader.examMake")}>📝 {t(i18n, "reader.examMake")}</button>
                         </div>
@@ -656,6 +668,7 @@ function focusHighlightRow(id: string): void {
                                             <svg class="glean-icon" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
                                             {t(i18n, "highlight.copyShare")}
                                         </button>
+                                        <button type="button" onclick={() => quoteCard(item)} title={t(i18n, "quoteCard.action")} aria-label={t(i18n, "quoteCard.action")}>🖼️ {t(i18n, "quoteCard.action")}</button>
                                         <button type="button" class:glean-ghost-btn={!hasCardsInstalled} aria-busy={cardingKey === item.id} disabled={Boolean(cardingKey)} onclick={() => void card(item)} title={t(i18n, "flashcard.make")} aria-label={hasCardsInstalled ? t(i18n, "flashcard.make") : t(i18n, "reader.cardGhostHint")}><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanCard" /></svg>{t(i18n, "flashcard.make")}</button>
                             <button type="button" class="glean-btn glean-btn--ghost" class:glean-ghost-btn={!hasExamInstalled} disabled={exportBusy} onclick={() => void exam(item)} title={hasExamInstalled ? t(i18n, "reader.examMake") : t(i18n, "reader.examGhostHint")} aria-label={t(i18n, "reader.examMake")}>📝 {t(i18n, "reader.examMake")}</button>
                                     </div>

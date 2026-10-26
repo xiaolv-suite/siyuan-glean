@@ -1381,5 +1381,17 @@
   "reader.shortcutNextHighlight": "跳转到下一处批注",
   "reader.shortcutPrevHighlight": "跳转到上一处批注",
   "reader.copyAllHighlights": "复制全部批注",
-  "reader.allHighlightsCopied": "已复制本文全部批注（Markdown 格式）"
+  "reader.allHighlightsCopied": "已复制本文全部批注（Markdown 格式）",
+  "quoteCard.title": "金句卡片生成器",
+  "quoteCard.action": "金句卡片",
+  "quoteCard.themeTeal": "北欧冷杉",
+  "quoteCard.themePaper": "麦香纸墨",
+  "quoteCard.themeObsidian": "深邃曜黑",
+  "quoteCard.themeMinimal": "极简素白",
+  "quoteCard.copyImage": "复制图片",
+  "quoteCard.saveImage": "保存 PNG",
+  "quoteCard.copyText": "复制文本",
+  "quoteCard.copiedImage": "已复制金句图片到剪贴板",
+  "quoteCard.copiedText": "已复制金句文本",
+  "quoteCard.watermark": "小驴拾遗 · 思源笔记"
 }

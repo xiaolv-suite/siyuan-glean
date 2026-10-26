@@ -36,6 +36,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
     import { recordReadingDone } from "../services/checkin-bridge";
     import { excerptFromSelection, insertQuoteExcerpt, selectionBelongsToHost } from "../services/excerpt-service";
     import { makeQuoteCardPreview } from "./flashcard-dialog";
+    import { openQuoteCardDialog } from "./quote-card-dialog";
     import { findRelatedOutcome, type RelatedReason } from "../services/enrich-service";
     import { pickNextUnread } from "../services/resurface-service";
     import { articleQuestionEnabled, clearReaderMarkdownCache, insertAiCalloutToDocument, readerAiEnabled, readerArticleQuestion, readerSummarize, readerTranslate, saveReaderSummary } from "../services/reader-ai";
@@ -528,6 +529,18 @@ import { aiFailureKey } from "../libs/ai-feedback";
             console.warn("[glean] 摘录制卡失败:", error);
             showMessage(t(i18n, "reader.actionFailed"), 3000);
         }
+    }
+
+    function quoteCardFromHighlight(item: HighlightItem): void {
+        if (!item.text || !context) return;
+        openQuoteCardDialog(facade, {
+            quote: item.text,
+            title: context.title,
+            author: context.author,
+            site: context.site,
+            color: item.color,
+            docId: context.id,
+        });
     }
 
     async function examFromHighlight(item: HighlightItem): Promise<void> {
@@ -2129,6 +2142,9 @@ import { aiFailureKey } from "../libs/ai-feedback";
                                     <div class="glean-reader__highlight-footer">
                                         <button class="glean-op-btn" type="button" title={t(i18n, "highlight.copyShare")} aria-label={t(i18n, "highlight.copyShare")} onclick={(e) => { e.stopPropagation(); void copyHighlightQuote(hl); }}>
                                             <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
+                                        </button>
+                                        <button class="glean-op-btn" type="button" title={t(i18n, "quoteCard.action")} aria-label={t(i18n, "quoteCard.action")} onclick={(e) => { e.stopPropagation(); quoteCardFromHighlight(hl); }}>
+                                            🖼️
                                         </button>
                                         <button class="glean-op-btn" type="button" class:glean-ghost-btn={!hasCardsInstalled} title={hasCardsInstalled ? t(i18n, "flashcard.make") : t(i18n, "reader.cardGhostHint")} aria-label={t(i18n, "flashcard.make")} onclick={(e) => { e.stopPropagation(); void cardFromHighlight(hl); }}>
                                             <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg>

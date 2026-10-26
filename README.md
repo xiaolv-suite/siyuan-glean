@@ -8,6 +8,16 @@
 
 [English](README.en-US.md) · [下载最新版](https://github.com/ai68298100/siyuan-glean/releases/latest) · [能力矩阵](docs/CAPABILITY-MATRIX.md) · [反馈与问题](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.30 更新（2026-10-27）
+
+本次版本实现微信公众号合集/专栏（Series）自动识别与智能标签聚合、金句卡片生成器与四种质感主题 Canvas 2x 高清图片导出。
+
+**新增与体验增强：**
+
+- **微信公众号合集/专栏自动识别聚合**：`wechat-service.ts` 后台扫描时自动提取文章所属的话题/专栏合集（如《大模型前沿深度实践》），并写入 `custom-clip-ai-tags` 属性，侧栏一键即可聚合筛选同一专栏下的全部微信历史文章。
+- **金句卡片生成器与高清图片导出**：全新设计 `QuoteCardDialog.svelte`，支持四种经典设计主题（北欧冷杉 Teal、麦香纸墨 Paper、深邃曜黑 Obsidian、极简素白 Minimal）；原生 Canvas 2x 超采样高清渲染，支持多行智能排印、色彩微标与出处，支持「复制图片」与「保存 PNG」。
+- **全库摘录墙与伴生栏接入金句卡片动作入口**：`HighlightView.svelte` 与 `ReaderTab.svelte` 批注操作条均增设「🖼️ 金句卡片」快捷入口。
+
 ## v1.3.29 更新（2026-10-27）
 
 本次版本实现热力图单元格直接下钻联动、完成明细自动展开、预览区作者筛选联动与全场景链接防长链优化。
@@ -472,7 +482,7 @@
 
 ## 兼容性与验收
 
-本次发布为 [v1.3.29](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.29)。自动门禁与发布证据见[发布候选复核](docs/RELEASE-CANDIDATE.md)；这不代表所有真实环境都已验收。
+本次发布为 [v1.3.30](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.30)。自动门禁与发布证据见[发布候选复核](docs/RELEASE-CANDIDATE.md)；这不代表所有真实环境都已验收。
 
 桌面宿主、Android/移动端、浏览器前端、真实模型、官方剪藏、外部文件和订阅服务仍按环境分别验收。使用前提、降级方式和阻塞项以[能力矩阵](docs/CAPABILITY-MATRIX.md)及[已知阻塞](docs/BLOCKERS.md)为准；请勿把单元测试或隔离 E2E 当作真机通过。
 

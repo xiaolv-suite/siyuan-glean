@@ -34,6 +34,7 @@ test("scanAndFillWechatAuthor：从传入的正文或 DOM 片段精准提取微�
     };
     const markdown = `# 行业重磅动态
 <meta property="og:description" content="这是一篇关于大语言模型架构创新的深度独家报道。" />
+收录于合集 #大模型深度前沿
 <div class="rich_media_meta_list">
     <a href="javascript:void(0);" id="js_name">量子位</a>
 </div>
@@ -48,6 +49,7 @@ test("scanAndFillWechatAuthor：从传入的正文或 DOM 片段精准提取微�
     assert.equal(written.length, 1);
     assert.equal(written[0].attrs["custom-clip-author"], "量子位");
     assert.equal(written[0].attrs["custom-clip-summary"], "这是一篇关于大语言模型架构创新的深度独家报道。");
+    assert.match(written[0].attrs["custom-clip-ai-tags"], /大模型深度前沿/);
 });
 
 test("batchRecognizeWechatAuthors：精准过滤已有作者或非微信文章，只针对未识别的微信文章进行批处理", async () => {

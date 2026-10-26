@@ -1,6 +1,6 @@
 import type { Plugin } from "siyuan";
 import { exportMdContent } from "../api/client";
-import { extractWechatAuthor, isWechatUrl, extractWechatDescription } from "../domain/wechat";
+import { extractWechatAuthor, isWechatUrl, extractWechatDescription, extractWechatSeries } from "../domain/wechat";
 import { readClip, writeClip } from "./clip-store";
 
 /**
@@ -28,6 +28,7 @@ export async function scanAndFillWechatAuthor(
     let targetUrl = options.url;
     let targetSite = options.site;
     let existingSummary = "";
+    let existingAiTags: string[] = [];
 
     if (!targetUrl && !targetSite) {
         try {
@@ -36,6 +37,7 @@ export async function scanAndFillWechatAuthor(
             targetUrl = clip.url;
             targetSite = clip.site;
             existingSummary = clip.summary || "";
+            existingAiTags = clip.aiTags || [];
         } catch {
             return null;
         }
@@ -61,13 +63,20 @@ export async function scanAndFillWechatAuthor(
     const snippet = contentToScan.slice(0, 3500);
     const detected = extractWechatAuthor(snippet);
     const desc = extractWechatDescription(snippet);
+    const series = extractWechatSeries(snippet);
 
-    const patch: { author?: string; summary?: string } = {};
+    const patch: { author?: string; summary?: string; aiTags?: string[] } = {};
     if (detected && detected.trim()) {
         patch.author = detected.trim();
     }
     if (desc && desc.trim() && !existingSummary) {
         patch.summary = desc.trim();
+    }
+    if (series && series.trim()) {
+        const cleanSeries = series.trim();
+        if (!existingAiTags.includes(cleanSeries)) {
+            patch.aiTags = [...existingAiTags, cleanSeries];
+        }
     }
 
     if (Object.keys(patch).length > 0) {

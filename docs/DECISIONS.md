@@ -2182,3 +2182,16 @@ T-3416 承接方向五（有依据的阅读 AI）与同类产品对标（Readwis
 3. 全场景作者与来源链接微标精美化：
    - `ReadingContext.svelte` 与 `ResurfaceView.svelte` 统一接入 `displayWechatAuthor` 深度防范长链接泄露；
    - 原生编辑器常驻阅读上下文（ReadingContext）来源 URL 重构为极简域名微标，彻底消灭生硬长 URL 字符串破坏页面布局的问题。
+
+## D-0342（2026-10-27）微信公众号合集标签自动聚合、金句卡片生成器与高清图片导出（T-3463）
+
+深度借鉴顶级阅读工具（微信读书、Readwise Reader）视觉分享能力并打通专栏下钻：
+1. 微信公众号合集/专栏自动识别聚合：
+   - `src/services/wechat-service.ts` 扫描微信文章时自动提取专栏合集名称（`extractWechatSeries`），写入 `custom-clip-ai-tags` 属性；
+   - 侧栏分面自动透出微信专栏标签，一键聚合全库同一合集文章；
+2. 金句卡片生成器与高清图片导出：
+   - 新增 `src/domain/quote-card.ts` 纯函数领域层与 `src/ui/QuoteCardDialog.svelte` 弹窗；
+   - 提供四款经典设计主题（北欧冷杉 Teal、麦香纸墨 Paper、深邃曜黑 Obsidian、极简素白 Minimal）；
+   - 采用纯前端 HTML5 Canvas 2x 超采样高清排版渲染，支持一键复制高清 PNG 到系统剪贴板、下载图片及复制纯文本；
+3. 全库摘录墙与伴生栏接入金句卡片动作：
+   - `HighlightView.svelte` 与 `ReaderTab.svelte` 批注操作条均增设「🖼️ 金句卡片」快捷入口。

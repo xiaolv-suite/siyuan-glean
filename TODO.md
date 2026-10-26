@@ -169,6 +169,8 @@
 
 - [◐] **T-3462**（P2，2026-10-27）热力图单元格直接下钻、预览区作者筛选联动与全场景链接防长链优化：`StatsView.svelte` 热力图单元格（`.glean-stats__day`）支持鼠标直接点击与键盘回车下钻，平滑展开完成文章列表并呈现重置横幅；`WorkbenchPreview.svelte` 点击公众号作者名称秒级触发全库精确分面筛选；`ReadingContext.svelte` 与 `ResurfaceView.svelte` 统一防范长链接泄露，原生编辑器常驻上下文来源 URL 重构为极简域名微标；单测与门禁完备。代码状态：完成；隔离验证：`tests/stats.test.ts` 24/24、`tests/accessibility.test.ts` 32/32、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实多端大屏与移动宿主走查；延后原因：真实多端环境仍归 B-0002。
 
+- [◐] **T-3463**（P2，2026-10-27）微信公众号合集标签自动聚合、金句卡片生成器与高清图片导出：`wechat-service.ts` 扫描时提取微信话题合集（`extractWechatSeries`）写入 `aiTags` 实现合集下钻；新增 `domain/quote-card.ts` 纯函数层；新增 `QuoteCardDialog.svelte` 原生 Canvas 2x 超采样高清卡片渲染弹窗，支持四款质感主题、一键复制图片与保存 PNG；`HighlightView.svelte` 与 `ReaderTab.svelte` 批注操作条接入「🖼️ 金句卡片」入口；单测与门禁完备。代码状态：完成；隔离验证：`tests/quote-card.test.ts` 3/3、`tests/wechat-service.test.mjs` 5/5、`tests/i18n.test.ts` 5/5、`tests/architecture.test.ts` 3/3、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实剪贴板图片粘贴验证；延后原因：真实操作系统剪贴板与高分屏仍归 B-0002。
+
 
 - [◐] **T-3367**（P1，2026-10-18）批量选择范围与底部操作可达性：保留跨筛选选择，显示总数及筛选外数量，提供仅保留当前筛选、追加已显示文章和清空入口；三画布共用正常流批量条，获焦时按 Escape 快捷取消选择并安全回退焦点；移动窄屏保留左右安全区。代码状态：实现完成，契约见 D-0247/D-0292，不新增属性、端点或持久化；隔离验证：定向 51/51、完整 `pnpm test` 1517/1517、`pnpm check` 0 错误/0 警告、`pnpm build`、`pnpm check:release`、`pnpm perf:check`、`pnpm visual:check`、`pnpm task:ledger -- --check` 与 `git diff --check` 通过；Chrome 原型已点验宽/窄 Dock、筛选外提示、显式保留和清空，窄布局批量区 `738px` 宽、`142px` 高且无横溢出。真实验收：待 B-0002 原工作区、触控和系统读屏；延后原因：Chrome 原型与隔离样本不替代真实设备与视觉矩阵，视觉登记仍为 24 项待真实宿主。
 

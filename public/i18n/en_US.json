@@ -1381,5 +1381,17 @@
   "reader.shortcutNextHighlight": "Jump to next highlight",
   "reader.shortcutPrevHighlight": "Jump to previous highlight",
   "reader.copyAllHighlights": "Copy all highlights",
-  "reader.allHighlightsCopied": "All highlights copied in Markdown"
+  "reader.allHighlightsCopied": "All highlights copied in Markdown",
+  "quoteCard.title": "Quote Card Generator",
+  "quoteCard.action": "Quote Card",
+  "quoteCard.themeTeal": "Nordic Teal",
+  "quoteCard.themePaper": "Wheat & Paper",
+  "quoteCard.themeObsidian": "Obsidian",
+  "quoteCard.themeMinimal": "Minimal White",
+  "quoteCard.copyImage": "Copy Image",
+  "quoteCard.saveImage": "Save PNG",
+  "quoteCard.copyText": "Copy Text",
+  "quoteCard.copiedImage": "Quote card image copied to clipboard",
+  "quoteCard.copiedText": "Quote text copied",
+  "quoteCard.watermark": "Lv Glean · SiYuan"
 }
