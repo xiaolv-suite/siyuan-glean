@@ -3,7 +3,7 @@
 > **统领下发方**：小驴快门中枢（`siyuan-quickgate`）
 > **执行接收方**：小驴拾遗（`siyuan-glean`）开发 Agent
 > **当前状态**：底座测试全绿 · 规范评分 80% ➔ 目标 100%
-> **核心原则**：零强依赖 · 深松绿+金杏麦珠 Bento 美学 · 严禁私有存储穿透
+> **核心原则**：零强依赖 · 深松绿+金杏麦珠 Bento 美学 · 渐进学习分片与断点续读
 
 ---
 
@@ -24,31 +24,27 @@
 
 ---
 
-### 【P1 级：样式防污染治理与顶栏图标升级】
-3. **【高危样式污染修复】消灭顶层裸类选择器 (`src/index.scss`)**：
-   - 目前 `src/index.scss` 顶层存在 `.dialog-content input`、`.dialog-content .b3-select` 等裸选择器，会污染思源原生弹窗与其他插件表单！
-   - **必须将所有样式严格包裹在 `.lv-glean` 或 `#glean-*` 命名空间内！**
-4. **顶栏单色矢量图标升级 (`src/index.ts`)**：
-   - 将 `this.addIcons(...)` 中的 `iconGleanWheat` 替换为在 16px 下依然清晰锐利的标准 32×32 SVG：
-   ```xml
-   <symbol id="iconGleanWheat" viewBox="0 0 32 32">
-     <path d="M5 24c4-1.8 8-1 11 1 3-2 7-2.8 11-1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-     <path d="M16 8v16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
-     <path d="M16 11c2.8-1.5 5.5 0 5.5 2s-2.7 2-5.5 2M16 16c2.8-1.5 5.5 0 5.5 2s-2.7 2-5.5 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-     <path d="M16 13.5c-2.8-1.5-5.5 0-5.5 2s2.7 2 5.5 2M16 18.5c-2.8-1.5-5.5 0-5.5 2s2.7 2 5.5 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-     <circle cx="16" cy="5" r="2.5" fill="currentColor"/>
-   </symbol>
-   ```
+### 【P1 级：渐进阅读革命性升级（长文分片 + 视口断点续读）】
+3. **视口相交高精度断点续读（Read-Point Engine）**：
+   - 解决用户读长文退出后下次找不到位置的痛点：阅读滚动时，用 `IntersectionObserver` 监听视口中心段落，停留 1 秒记录 `custom-lv-read-point: <blockId>`；
+   - 下次打开文章自动平滑滚动定位到该块，实现像素级断点续读！
+4. **长文按大纲一键渐进切片（Doc Slicing）**：
+   - 长文详情工具栏提供“渐进切片”按钮，自动按 H2/H3 目录将长文拆为每日推荐阅读的轻量切片，彻底消除“长文读不完”的心理负担。
+5. **划词快速渐进摘录通道 (`Alt+E`) 联动小驴闪卡**：
+   - 划词菜单增加“摘录到闪卡”快捷动作（快捷键 `Alt+E`），生成带原文块引用反链的摘录卡块，向闪卡派发 `IncrementalExtractPayload` 事件；
+   - 未安装闪卡时呈 45% 透明度幽灵按钮并悬停提示，不报错。
 
 ---
 
-### 【P2 级：联动落地与快捷键纠偏】
-5. **已读自动打卡 & 划词转闪卡幽灵按钮降级**：
-   - 文章状态标记为 `done` 时调用 `logCheckinEventSafely`（`externalRef: "glean:<docId>:<date>"`）；
-   - 划词菜单增加“制成闪卡”：未安装小驴闪卡时呈 45% 透明度幽灵按钮并悬停提示，不报错。
-6. **跨平台快捷键纠偏与补齐更新日志**：
-   - 将硬编码的 Mac 专有符号 `hotkey: "⌥⌘G"` 规范为跨平台标准格式；
-   - 补齐根目录缺失的 `CHANGELOG.md`。
+### 【P2 级：样式防污染与顶栏单色图标升级】
+6. **【高危样式污染修复】消灭顶层裸类选择器 (`src/index.scss`)**：
+   - 目前顶层裸写了 `.dialog-content input`、`.dialog-content .b3-select`，会直接污染思源原生弹窗！
+   - **必须将所有样式严格包裹在 `.lv-glean` 或 `#glean-*` 专有命名空间内！**
+7. **顶栏单色矢量图标升级 (`src/index.ts`)**：
+   - 更新 `this.addIcons(...)` 中的 `iconGleanWheat` 为标准 32×32 展卷麦穗矢量图（详见中枢 `FLEET-ICONS.md`）。
+8. **UI 微触感与 Bento 软性美学注入**：
+   - 注入变量 `--lv-brand: #0D9488;` 与 `--lv-accent-wheat: #FB923C;`；
+   - 弹窗标题栏统一采用 `.lv-dialog-title-wrap`。
 
 ---
 

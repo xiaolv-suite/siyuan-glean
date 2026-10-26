@@ -8,6 +8,17 @@ Lv Glean organizes clippings and articles already in SiYuan. It does not crawl t
 
 [中文说明](README.md) · [Latest Release](https://github.com/ai68298100/siyuan-glean/releases/latest) · [Capability matrix](docs/CAPABILITY-MATRIX.md) · [Feedback](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.27 update (2026-10-27)
+
+This release implements a 4-color quick highlighter palette on the selection bar, WeRead accessible reader links, and batch tag/author actions.
+
+**New features & improvements:**
+
+- **Quick 4-Color Highlighter Palette**: Directly click yellow, red, blue, or green dots on the selection toolbar to instantly create and colorize excerpts with block IAL properties.
+- **WeRead Web Quick Launch**: Added a dedicated WeRead capsule badge in `WorkbenchPreview.svelte` for one-click distraction-free reading of WeChat articles.
+- **Batch Add Tag & Set Author**: `LibraryBatchBar.svelte` adds quick actions to append tags and assign authors across multiple articles simultaneously.
+- **4-Color Accent Border for Highlights**: Highlight cards in both `HighlightView.svelte` and companion sidebars now feature 3px color stripes for clear visual categorization.
+
 ## v1.3.26 update (2026-10-25)
 
 This release implements strict long-URL suppression for WeChat authors, concise source pill capsules in the workbench preview, and deep palette harmonization.
@@ -439,7 +450,7 @@ Ordinary notes are not bulk-captured just because of their location, and opening
 
 ## Compatibility and acceptance
 
-This release is [v1.3.26](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.26). See the [release candidate record](docs/RELEASE-CANDIDATE.md) for automated gates and release evidence; this does not mean every real environment has been accepted.
+This release is [v1.3.27](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.27). See the [release candidate record](docs/RELEASE-CANDIDATE.md) for automated gates and release evidence; this does not mean every real environment has been accepted.
 
 Desktop host, Android/mobile, browser frontend, real models, the official clipper, external files, and subscription services still require environment-specific checks. Prerequisites, fallbacks, and open blockers are listed in the [capability matrix](docs/CAPABILITY-MATRIX.md) and [known blockers](docs/BLOCKERS.md). Unit tests and isolated E2E are not device acceptance.
 

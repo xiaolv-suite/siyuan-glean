@@ -8,6 +8,17 @@
 
 [English](README.en-US.md) · [下载最新版](https://github.com/ai68298100/siyuan-glean/releases/latest) · [能力矩阵](docs/CAPABILITY-MATRIX.md) · [反馈与问题](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.27 更新（2026-10-27）
+
+本次版本实现划词悬浮四色即时高亮色盘、微信文章微信读书无障碍跳转、批量打标与设作者流，以及摘录卡片四色指示彩条。
+
+**新增与体验增强：**
+
+- **划词悬浮条四色即时高亮色盘**：`ReaderTab.svelte` 划词悬浮条直接内嵌黄/红/蓝/绿四色快捷圆点选择器，选中文本点选色彩一步完成引述块创建并打上 `custom-clip-hl-color` 属性。
+- **微信文章「📖 微信读书」极简无障碍跳转**：`WorkbenchPreview.svelte` 来源微标旁增设「📖 微信读书」直达胶囊，一键无缝唤起微信读书网页版大屏排版。
+- **批量操作栏新增「＋ 加标签」与「👤 设作者」**：`LibraryBatchBar.svelte` 与 `DockPanel.svelte` 新增批量追加标签与批量统一设置作者操作，面对上百篇未分拣文章支持批量极速整理归档。
+- **摘录卡片与批注列表四色指示彩条**：`HighlightView.svelte` 摘录卡片与 `ReaderTab.svelte` 伴生栏批注卡片左侧增加对应高亮颜色的 3px 竖向指示彩条，四色研读流视觉一目了然。
+
 ## v1.3.26 更新（2026-10-25）
 
 本次版本实现微信公众号作者长链接过滤防范、预览区短来源微胶囊重塑以及全表面色彩深度协调调和。
@@ -440,7 +451,7 @@
 
 ## 兼容性与验收
 
-本次发布为 [v1.3.26](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.26)。自动门禁与发布证据见[发布候选复核](docs/RELEASE-CANDIDATE.md)；这不代表所有真实环境都已验收。
+本次发布为 [v1.3.27](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.27)。自动门禁与发布证据见[发布候选复核](docs/RELEASE-CANDIDATE.md)；这不代表所有真实环境都已验收。
 
 桌面宿主、Android/移动端、浏览器前端、真实模型、官方剪藏、外部文件和订阅服务仍按环境分别验收。使用前提、降级方式和阻塞项以[能力矩阵](docs/CAPABILITY-MATRIX.md)及[已知阻塞](docs/BLOCKERS.md)为准；请勿把单元测试或隔离 E2E 当作真机通过。
 

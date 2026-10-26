@@ -966,6 +966,53 @@ function keepFilteredArticles(origin: Element | null = document.activeElement): 
     });
 }
 
+async function batchAddTag(tag: string): Promise<void> {
+    if (batchBusy || selection.size === 0) return;
+    batchBusy = true;
+    const ids = Array.from(selection);
+    try {
+        let count = 0;
+        for (const id of ids) {
+            const clip = index.clips[id];
+            if (!clip) continue;
+            const currentAiTags = clip.aiTags || [];
+            if (!currentAiTags.includes(tag)) {
+                await writeClip(facade.pluginInstance, id, { aiTags: [...currentAiTags, tag] });
+                count += 1;
+            }
+        }
+        facade.notifyDataChanged();
+        await reload();
+        showMessage(t(i18n, "library.batchTagsApplied", { count }), 3000);
+    } catch (err) {
+        console.warn("[LvGlean] 批量打标签失败:", err);
+        showMessage(t(i18n, "msg.actionFailed"), 3000);
+    } finally {
+        batchBusy = false;
+    }
+}
+
+async function batchSetAuthor(author: string): Promise<void> {
+    if (batchBusy || selection.size === 0) return;
+    batchBusy = true;
+    const ids = Array.from(selection);
+    try {
+        let count = 0;
+        for (const id of ids) {
+            await writeClip(facade.pluginInstance, id, { author: author.trim() });
+            count += 1;
+        }
+        facade.notifyDataChanged();
+        await reload();
+        showMessage(t(i18n, "library.batchAuthorApplied", { count }), 3000);
+    } catch (err) {
+        console.warn("[LvGlean] 批量设置作者失败:", err);
+        showMessage(t(i18n, "msg.actionFailed"), 3000);
+    } finally {
+        batchBusy = false;
+    }
+}
+
 function clearSelection(): void {
     if (batchBusy) return;
     const origin = document.activeElement;
@@ -3382,6 +3429,8 @@ function metaLine(entry: Row): string {
             onSelectDisplayed={selectDisplayedArticles}
             onKeepFiltered={keepFilteredArticles}
             onClear={clearSelection}
+            onAddTag={batchAddTag}
+            onSetAuthor={batchSetAuthor}
         />
     {:else if view === "resurface"}
         <ResurfaceView

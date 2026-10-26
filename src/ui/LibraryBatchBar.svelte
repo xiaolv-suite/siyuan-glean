@@ -16,9 +16,11 @@
         onClear: () => void;
         onSelectDisplayed: () => void;
         onKeepFiltered: (origin: Element | null) => void;
+        onAddTag?: (tag: string) => void | Promise<void>;
+        onSetAuthor?: (author: string) => void | Promise<void>;
     }
 
-    let { i18n, selectedCount, hiddenCount, displayedCount, displayedSelectedCount, busy = false, onApply, onOpenAi, onClear, onSelectDisplayed, onKeepFiltered }: Props = $props();
+    let { i18n, selectedCount, hiddenCount, displayedCount, displayedSelectedCount, busy = false, onApply, onOpenAi, onClear, onSelectDisplayed, onKeepFiltered, onAddTag, onSetAuthor }: Props = $props();
     const filteredSelectedCount = $derived(Math.max(0, selectedCount - hiddenCount));
     let summaryEl = $state<HTMLElement | null>(null);
     let barEl = $state<HTMLElement | null>(null);
@@ -45,6 +47,20 @@
             }
         }
     }
+
+    function triggerAddTag(): void {
+        const tag = window.prompt(t(i18n, "library.tagPrompt"));
+        if (tag && tag.trim() && onAddTag) {
+            void onAddTag(tag.trim().replace(/^#/, ""));
+        }
+    }
+
+    function triggerSetAuthor(): void {
+        const author = window.prompt(t(i18n, "library.authorPrompt"));
+        if (author && author.trim() && onSetAuthor) {
+            void onSetAuthor(author.trim());
+        }
+    }
 </script>
 
 <svelte:window onkeydown={handleWindowKeydown} />
@@ -68,6 +84,12 @@
             <button type="button" class="glean-bb" disabled={busy} onclick={() => void onApply("reading")}>{t(i18n, "status.reading")}</button>
             <button type="button" class="glean-bb" disabled={busy} onclick={() => void onApply("done")}>{t(i18n, "status.done")}</button>
             <button type="button" class="glean-bb glean-bb--pri" disabled={busy} onclick={() => void onApply("archived")}>{t(i18n, "action.batchArchive")}</button>
+            {#if onAddTag}
+                <button type="button" class="glean-bb" disabled={busy} onclick={triggerAddTag}>＋ {t(i18n, "library.batchAddTag")}</button>
+            {/if}
+            {#if onSetAuthor}
+                <button type="button" class="glean-bb" disabled={busy} onclick={triggerSetAuthor}>👤 {t(i18n, "library.batchSetAuthor")}</button>
+            {/if}
             <button type="button" class="glean-bb glean-bb--ai" disabled={busy} onclick={onOpenAi}>{t(i18n, "aiBatch.title")}</button>
         </div>
     </footer>

@@ -1064,11 +1064,18 @@ import { aiFailureKey } from "../libs/ai-feedback";
         excerpt = null;
     }
 
-    async function quoteExcerpt(memo?: string): Promise<void> {
+    async function quoteExcerpt(memo?: string, color?: string): Promise<void> {
         if (!excerpt?.blockId || !context || context.id !== docId || excerptBusy) return;
         excerptBusy = true;
         try {
-            await insertQuoteExcerpt(excerpt.blockId, excerpt.text, memo);
+            const newBlockId = await insertQuoteExcerpt(excerpt.blockId, excerpt.text, memo);
+            if (color) {
+                try {
+                    await writeHighlightColor(newBlockId, color);
+                } catch (err) {
+                    console.debug("[LvGlean] 高亮色彩写入异常:", err);
+                }
+            }
             showMessage(t(i18n, memo ? "reader.memoDone" : "reader.excerptDone"), 2500);
             if (docId) void loadDocHighlights(docId);
             facade.notifyDataChanged();
@@ -1632,6 +1639,20 @@ import { aiFailureKey } from "../libs/ai-feedback";
                         <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanEdit" /></svg>
                         {t(i18n, "reader.excerptQuote")}
                     </button>
+                    <div class="glean-reader__selection-colors" role="group" aria-label={t(i18n, "reader.filterByColor")}>
+                        {#each ["yellow", "red", "blue", "green"] as color}
+                            <button
+                                type="button"
+                                class="glean-reader__selection-color-btn"
+                                title={t(i18n, `reader.color.${color}`)}
+                                aria-label={t(i18n, `reader.color.${color}`)}
+                                disabled={excerptBusy}
+                                onclick={() => void quoteExcerpt(undefined, color)}
+                            >
+                                <span class="glean-reader__highlight-dot glean-reader__highlight-dot--{color}"></span>
+                            </button>
+                        {/each}
+                    </div>
                     {#if !memoInputOpen}
                         <button type="button" class="glean-btn glean-btn--ghost glean-reader__selection-btn" disabled={excerptBusy} onclick={() => { memoInputOpen = true; memoDraft = ""; }} title={t(i18n, "reader.memoAction")}>
                             💬 {t(i18n, "reader.memoAction")}
@@ -2068,7 +2089,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
                         {/if}
                         <div class="glean-reader__highlights-list">
                             {#each visibleDocHighlights as hl (hl.id)}
-                                <div class="glean-reader__highlight-card" role="button" tabindex="0" onclick={() => scrollToHighlight(hl.id)} onkeydown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); scrollToHighlight(hl.id); } }}>
+                                <div class="glean-reader__highlight-card glean-reader__highlight-card--color-{hl.color || 'yellow'}" role="button" tabindex="0" onclick={() => scrollToHighlight(hl.id)} onkeydown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); scrollToHighlight(hl.id); } }}>
                                     <div class="glean-reader__highlight-header">
                                         <button
                                             type="button"

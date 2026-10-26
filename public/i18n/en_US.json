@@ -1366,5 +1366,16 @@
   "wechat.startAutoRecognize": "✨ Auto-recognize All Publishers",
   "wechat.batchScanDone": "Successfully recognized and filled ${count} WeChat publishers",
   "wechat.scanningProgress": "Recognizing (${current}/${total})",
-  "wechat.recognizeSingle": "Recognize Publisher"
+  "wechat.recognizeSingle": "Recognize Publisher",
+  "reader.color.yellow": "Yellow highlight",
+  "reader.color.red": "Red critical",
+  "reader.color.blue": "Blue insight",
+  "reader.color.green": "Green action",
+  "wechat.openInWeread": "WeRead",
+  "library.batchAddTag": "Add Tag",
+  "library.batchSetAuthor": "Set Author",
+  "library.tagPrompt": "Enter tag name to append:",
+  "library.authorPrompt": "Enter author / publisher name:",
+  "library.batchTagsApplied": "Tags applied to ${count} article(s)",
+  "library.batchAuthorApplied": "Author updated for ${count} article(s)"
 }

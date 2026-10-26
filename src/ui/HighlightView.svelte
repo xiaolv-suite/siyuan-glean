@@ -580,7 +580,7 @@ function focusHighlightRow(id: string): void {
         {#if viewMode === "timeline"}
             <div class="glean-highlights__items">
                 {#each visible.items as item (item.id)}
-                    <article class="glean-highlights__item" data-glean-highlight-id={item.id} class:glean-highlights__item--cursor={cursorId === item.id} aria-current={cursorId === item.id ? "true" : undefined} aria-busy={cardingKey === item.id}>
+                    <article class="glean-highlights__item glean-highlights__item--color-{item.color || 'yellow'}" data-glean-highlight-id={item.id} class:glean-highlights__item--cursor={cursorId === item.id} aria-current={cursorId === item.id ? "true" : undefined} aria-busy={cardingKey === item.id}>
                         <div class="glean-highlights__item-head">
                             <span class="glean-reader__highlight-dot glean-reader__highlight-dot--{item.color || 'yellow'}" aria-hidden="true"></span>
                             <span class="glean-highlights__item-label">{t(i18n, "highlight.quoteTag")}</span>
@@ -641,7 +641,7 @@ function focusHighlightRow(id: string): void {
                         </summary>
                         <div class="glean-highlights__items glean-highlights__items--grouped">
                             {#each group.items as item, itemIndex (item.id)}
-                                <article class="glean-highlights__item" data-glean-highlight-id={item.id} class:glean-highlights__item--cursor={cursorId === item.id} aria-current={cursorId === item.id ? "true" : undefined} aria-busy={cardingKey === item.id}>
+                                <article class="glean-highlights__item glean-highlights__item--color-{item.color || 'yellow'}" data-glean-highlight-id={item.id} class:glean-highlights__item--cursor={cursorId === item.id} aria-current={cursorId === item.id ? "true" : undefined} aria-busy={cardingKey === item.id}>
                                     <div class="glean-highlights__item-head">
                                         <span class="glean-reader__highlight-dot glean-reader__highlight-dot--{item.color || 'yellow'}" aria-hidden="true"></span>
                                         <span class="glean-highlights__item-label">{t(i18n, "highlight.quoteTag")}</span>

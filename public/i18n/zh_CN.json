@@ -1366,5 +1366,16 @@
   "wechat.startAutoRecognize": "✨ 自动识别全部公众号",
   "wechat.batchScanDone": "已自动识别并回填 ${count} 篇微信公众号作者",
   "wechat.scanningProgress": "正在识别 (${current}/${total})",
-  "wechat.recognizeSingle": "识别公众号"
+  "wechat.recognizeSingle": "识别公众号",
+  "reader.color.yellow": "黄色标注",
+  "reader.color.red": "红色重要",
+  "reader.color.blue": "蓝色洞察",
+  "reader.color.green": "绿色行动",
+  "wechat.openInWeread": "微信读书",
+  "library.batchAddTag": "加标签",
+  "library.batchSetAuthor": "设作者",
+  "library.tagPrompt": "输入要追加的标签名：",
+  "library.authorPrompt": "输入统一作者/公众号名称：",
+  "library.batchTagsApplied": "已为 ${count} 篇文章追加标签",
+  "library.batchAuthorApplied": "已为 ${count} 篇文章设置作者"
 }

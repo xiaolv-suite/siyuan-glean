@@ -2550,9 +2550,19 @@ mark.glean-search-highlight {
     padding: var(--glean-space-2);
     border-radius: var(--glean-radius-sm);
     background: var(--b3-theme-surface);
-    border: 1px solid var(--b3-border-color);
+    border: 1px solid var(--glean-border-soft);
+    border-left: 3px solid #EAB308;
     cursor: pointer;
-    transition: border-color var(--glean-duration-fast) ease, background var(--glean-duration-fast) ease;
+    transition: border-color var(--glean-duration-fast) ease, background var(--glean-duration-fast) ease, transform var(--glean-duration-micro) ease;
+
+    &:hover {
+        transform: translateX(1px);
+    }
+
+    &--color-yellow { border-left-color: #EAB308; }
+    &--color-red { border-left-color: #EF4444; }
+    &--color-blue { border-left-color: #3B82F6; }
+    &--color-green { border-left-color: #10B981; }
 }
 
 .glean-reader__highlight-header {
@@ -2735,6 +2745,33 @@ mark.glean-search-highlight {
         width: 24px;
         height: 24px;
         justify-content: center;
+    }
+}
+
+.glean-reader__selection-colors {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 6px;
+    border-left: 1px solid var(--glean-border-soft);
+    border-right: 1px solid var(--glean-border-soft);
+}
+
+.glean-reader__selection-color-btn {
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform var(--glean-duration-micro) var(--glean-ease-spring);
+
+    &:hover:not(:disabled) {
+        transform: scale(1.3);
     }
 }
 
@@ -9851,6 +9888,12 @@ mark.glean-search-highlight {
 .glean-highlights__item {
     background: var(--glean-section-surface);
     transition: border-color var(--glean-duration-fast) var(--glean-ease-out), box-shadow var(--glean-duration-fast) var(--glean-ease-out), transform var(--glean-duration-fast) var(--glean-ease-out);
+    border-left: 3px solid #EAB308;
+
+    &--color-yellow { border-left-color: #EAB308; }
+    &--color-red { border-left-color: #EF4444; }
+    &--color-blue { border-left-color: #3B82F6; }
+    &--color-green { border-left-color: #10B981; }
 }
 
 .glean-highlights__item:hover {

@@ -15,7 +15,7 @@
     import ProtyleHost from "./ProtyleHost.svelte";
     import AuthorEditor from "./AuthorEditor.svelte";
     import { exportArticleMarkdown } from "../services/library-export-service";
-    import { isWechatUrl, displayWechatAuthor } from "../domain/wechat";
+    import { isWechatUrl, displayWechatAuthor, wechatArticleToWereadUrl } from "../domain/wechat";
     import { scanAndFillWechatAuthor } from "../services/wechat-service";
 
     type PreviewItem = ({ kind: "clip" } & ClipIndexEntry) | ({ kind: "candidate" } & CandidateEntry);
@@ -251,6 +251,14 @@
                 <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanExternal" /></svg>
                 <span>{previewSourceLabel()}</span>
             </a>
+            {#if isWechatUrl(sourceUrl)}
+                {@const wereadUrl = wechatArticleToWereadUrl(sourceUrl)}
+                {#if wereadUrl}
+                    <a href={wereadUrl} target="_blank" rel="noopener noreferrer" class="glean-preview__source-link glean-preview__source-link--weread" title={t(i18n, "wechat.openInWeread")}>
+                        📖 {t(i18n, "wechat.openInWeread")}
+                    </a>
+                {/if}
+            {/if}
         {:else if sourceUrl}
             <span class="glean-preview__source-link">{previewSourceLabel()}</span>
         {/if}

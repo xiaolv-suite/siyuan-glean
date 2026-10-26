@@ -203,5 +203,8 @@ test("ReaderTab 正文搜索与高亮批注伴生栏接线（T-3419 与批注优
     assert.match(tab, /class="glean-reader__floating-speech"/);
     assert.match(tab, /class="glean-reader__speech-pulse"/);
     assert.match(tab, /onclick=\{toggleSpeechPause\}/);
+    assert.match(tab, /class="glean-reader__selection-colors"/);
+    assert.match(tab, /class="glean-reader__selection-color-btn"/);
+    assert.match(tab, /onclick=\{\(\) => void quoteExcerpt\(undefined, color\)\}/);
     assert.match(tab, /onclick=\{stopSpeech\}/);
 });
