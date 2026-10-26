@@ -25,8 +25,9 @@
         onClose: () => void;
         onProcessed: () => Promise<void>;
         onRefresh: () => Promise<void>;
+        onFilterAuthor?: (author: string) => void;
     }
-    let { facade, entry, onClose, onProcessed, onRefresh }: Props = $props();
+    let { facade, entry, onClose, onProcessed, onRefresh, onFilterAuthor }: Props = $props();
     const instanceId = $props.id();
     const titleId = `glean-preview-title-${instanceId}`;
     const metaId = `glean-preview-meta-${instanceId}`;
@@ -299,7 +300,18 @@
         </div>
     {/if}
     {#if confirmed}
-        {#if safeAuthor}<span class="glean-preview__author">{attrs?.site ? `${attrs.site} · ` : ""}{safeAuthor}</span>{/if}
+        {#if safeAuthor}
+            <span class="glean-preview__author">
+                {attrs?.site ? `${attrs.site} · ` : ""}
+                {#if onFilterAuthor}
+                    <button type="button" class="glean-source-author glean-preview__author-btn" onclick={() => onFilterAuthor?.(safeAuthor)} title={safeAuthor}>
+                        {safeAuthor}
+                    </button>
+                {:else}
+                    {safeAuthor}
+                {/if}
+            </span>
+        {/if}
         <AuthorEditor {facade} docId={entry.id} onSaved={onRefresh} />
     {/if}
     <ProtyleHost app={facade.pluginInstance.app} docId={entry.id} mode="preview" {i18n} bind:host onOpenDocument={() => facade.openReadingDocument(entry.id)} />

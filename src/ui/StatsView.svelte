@@ -37,6 +37,11 @@ const freshnessStamp = $derived(Number.isFinite(Date.parse(index.updatedAt))
 let period = $state<ReviewPeriodKind>("week");
 let referenceDate = $state(reviewDateInput());
 let selectedDayDate = $state("");
+let completedListOpen = $state(false);
+
+$effect(() => {
+    if (selectedDayDate) completedListOpen = true;
+});
 let session = $state.raw<ReadingReviewSession | null>(null);
 let saveState = $state<ReadingReviewSession["state"]>("ready");
 let busy = $state(false);
@@ -347,7 +352,9 @@ function onWindowKeyDown(event: KeyboardEvent): void {
                 <div class="glean-stats__heatmap">
                     {#each Array.from({ length: heatmapPadding }, (_, index) => index) as padding (padding)}<span></span>{/each}
                     {#each stats.heatmap as day (day.date)}
-                        <span class="glean-stats__day" role="img" aria-label={t(i18n, "review.heatmapDay", { date: day.date, n: day.count })} class:glean-stats__day--selected={selectedDayDate === day.date} title={`${day.date}: ${day.count}`} style={`background:${day.count ? "var(--b3-theme-primary)" : "var(--b3-theme-surface)"};opacity:${day.count ? 0.25 + 0.75 * day.count / maxHeat : 1}`}></span>
+                        <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+                        <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+                        <span class="glean-stats__day" role="img" aria-label={t(i18n, "review.heatmapDay", { date: day.date, n: day.count })} class:glean-stats__day--selected={selectedDayDate === day.date} tabindex="0" onclick={() => selectedDayDate = selectedDayDate === day.date ? "" : day.date} onkeydown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); selectedDayDate = selectedDayDate === day.date ? "" : day.date; } }} title={`${day.date}: ${day.count}`} style={`background:${day.count ? "var(--b3-theme-primary)" : "var(--b3-theme-surface)"};opacity:${day.count ? 0.25 + 0.75 * day.count / maxHeat : 1}`}></span>
                     {/each}
                 </div>
                 <div class="glean-stats__heatmap-legend" aria-hidden="true">
@@ -398,7 +405,7 @@ function onWindowKeyDown(event: KeyboardEvent): void {
         <p class="glean-stats__hint">{t(i18n, "review.authorHint")}</p>
       </section>
     </details>
-    <details class="glean-stats__completed-detail">
+    <details class="glean-stats__completed-detail" bind:open={completedListOpen}>
         <summary>{t(i18n, "review.completedList")}</summary>
         <section class="glean-stats__completed-section" aria-labelledby={idFor("completed-title")}>
             <h3 id={idFor("completed-title")} class="glean-sr-only">{t(i18n, "review.completedList")}</h3>

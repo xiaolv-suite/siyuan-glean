@@ -14,7 +14,7 @@
     import { batchSetStatusDetailed, measureClipBody, readClipContext, type ReadingClipContext } from "../services/clip-store";
     import type { ClipStatus } from "../domain/schema";
     import { recordReadingDone } from "../services/checkin-bridge";
-    import { isWechatUrl } from "../domain/wechat";
+    import { isWechatUrl, displayWechatAuthor } from "../domain/wechat";
     import ClipStatusActions from "./ClipStatusActions.svelte";
     import { openFormattingDialog } from "./formatting-dialog";
 
@@ -109,6 +109,17 @@
 
     function statusLabel(value: ClipStatus): string {
         return t(i18n, `status.${value}`);
+    }
+
+    function contextDisplaySource(url?: string, site?: string): string {
+        if (!url) return "";
+        if (isWechatUrl(url) || isWechatUrl(site)) return "";
+        if (site && site.trim()) return site.trim();
+        try {
+            return new URL(url).hostname;
+        } catch {
+            return url.slice(0, 40);
+        }
     }
 
     let bodyState = $derived<FulltextBodyState>(context ? fulltextBodyState(context.contentType, context.words) : "na");
@@ -238,12 +249,12 @@
                 </span>
                 <span class="glean-reading-context__status">{statusLabel(context.status)}</span>
                 {#if isWechat}
-                    <span class="glean-badge glean-source-wechat" title={context?.author || t(i18n, "wechat.officialAccount")}>
-                        微信{#if context?.author} · {context.author}{/if}
+                    <span class="glean-badge glean-source-wechat" title={displayWechatAuthor(context?.author) || t(i18n, "wechat.officialAccount")}>
+                        微信{#if displayWechatAuthor(context?.author)} · {displayWechatAuthor(context?.author)}{/if}
                     </span>
                 {/if}
-                {#if context.url}
-                    <span class="glean-reading-context__source" title={context.url}>{context.url}</span>
+                {#if context.url && contextDisplaySource(context.url, context.site)}
+                    <span class="glean-reading-context__source" title={context.url}>{contextDisplaySource(context.url, context.site)}</span>
                 {/if}
             </div>
         </div>

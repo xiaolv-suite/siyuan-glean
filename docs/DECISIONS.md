@@ -2170,3 +2170,15 @@ T-3416 承接方向五（有依据的阅读 AI）与同类产品对标（Readwis
    - `ReaderTab.svelte` 伴生栏批注流顶部增设「📋 复制全部批注」按钮，一键把整篇文章的四色批注以规范 Markdown 引用与思源块链接复制到剪贴板；
 4. 微信公众号作者安全显示全场景防御：
    - `ReaderTab.svelte` 伴生栏公众号微标接入 `displayWechatAuthor` 严防长链接泄露，全场景彻底告别任何 URL 格式作者。
+
+## D-0341（2026-10-27）热力图单元格直接下钻、预览区作者筛选联动与全场景链接防长链优化（T-3462）
+
+全面优化数据呈现交互与全场景作者/链接干净度：
+1. 年度热力图单元格直接下钻与完成清单自动展开：
+   - `StatsView.svelte` 热力图单元格（`.glean-stats__day`）支持直接鼠标点击与键盘 Enter/Space 键，秒级激活日期高亮并联动下钻筛选该日完成文章；
+   - 选中日期时，下方原本折叠的完成文章清单（`.glean-stats__completed-detail`）自动平滑展开并呈现清晰重置横幅；
+2. 工作台预览区作者一键联动筛选全库文章：
+   - `WorkbenchPreview.svelte` 接入 `onFilterAuthor` 路由回调；点击右侧预览区的公众号或作者名称，秒级触发全库按该作者进行精确分面筛选；
+3. 全场景作者与来源链接微标精美化：
+   - `ReadingContext.svelte` 与 `ResurfaceView.svelte` 统一接入 `displayWechatAuthor` 深度防范长链接泄露；
+   - 原生编辑器常驻阅读上下文（ReadingContext）来源 URL 重构为极简域名微标，彻底消灭生硬长 URL 字符串破坏页面布局的问题。

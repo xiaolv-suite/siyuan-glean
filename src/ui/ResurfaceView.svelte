@@ -16,7 +16,7 @@ import { projectActiveRecentReadings, type RecentReadingEntry } from "../domain/
 import { moveLibraryCursor, resolveLibraryShortcut } from "../domain/library-keyboard";
 import { cyclePriorityValue, cycleRatingValue } from "../domain/library-keyboard";
 import { writeClip } from "../services/clip-store";
-import { isWechatUrl } from "../domain/wechat";
+import { isWechatUrl, displayWechatAuthor } from "../domain/wechat";
 import { resolveReadingTimeTier } from "../domain/library-view";
 
 interface Props {
@@ -878,8 +878,8 @@ function focusCard(id: string): void {
                     <div class="glean-surf__meta">
                         <span class={`glean-carrier-badge glean-carrier-badge--${resolveCarrier(pick.item.contentType)}`}>{carrierLabel(pick)}</span>
                         {#if isWechatUrl(pick.item.url) || isWechatUrl(pick.item.site)}
-                            <span class="glean-badge glean-source-wechat" title={pick.item.author || t(i18n, "wechat.officialAccount")}>
-                                微信{#if pick.item.author} · {pick.item.author}{/if}
+                            <span class="glean-badge glean-source-wechat" title={displayWechatAuthor(pick.item.author) || t(i18n, "wechat.officialAccount")}>
+                                微信{#if displayWechatAuthor(pick.item.author)} · {displayWechatAuthor(pick.item.author)}{/if}
                             </span>
                         {/if}
                         {#if isPinnedToday(pick)}<span class="glean-surf__pinned"><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanPin" /></svg>{t(i18n, "resurface.pinnedToday")}</span>{/if}

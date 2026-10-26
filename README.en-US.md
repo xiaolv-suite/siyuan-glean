@@ -8,6 +8,16 @@ Lv Glean organizes clippings and articles already in SiYuan. It does not crawl t
 
 [中文说明](README.md) · [Latest Release](https://github.com/ai68298100/siyuan-glean/releases/latest) · [Capability matrix](docs/CAPABILITY-MATRIX.md) · [Feedback](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.29 update (2026-10-27)
+
+This release implements direct interactive heatmap drill-down, auto-expanding completed lists, preview-to-library author filtering, and concise domain pills in editor context.
+
+**New features & improvements:**
+
+- **Interactive Heatmap Cell Drill-down**: Click or press Enter/Space on any heatmap cell in `StatsView.svelte` to instantly highlight and filter completed articles for that day with auto-expanded list.
+- **Preview Author Drill-down**: Click publisher or author names in `WorkbenchPreview.svelte` to instantly filter the entire library by that author.
+- **Concise Domain Pills in Editor Context**: Replaced raw, overflowing URLs in `ReadingContext.svelte` with clean, concise host pills and full URL tooltips.
+
 ## v1.3.28 update (2026-10-27)
 
 This release implements keyboard shortcut highlight hopping (h/H), zero-token WeChat official description backfill, one-click copy of all article highlights, and author URL defensive rendering.
@@ -461,7 +471,7 @@ Ordinary notes are not bulk-captured just because of their location, and opening
 
 ## Compatibility and acceptance
 
-This release is [v1.3.28](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.28). See the [release candidate record](docs/RELEASE-CANDIDATE.md) for automated gates and release evidence; this does not mean every real environment has been accepted.
+This release is [v1.3.29](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.29). See the [release candidate record](docs/RELEASE-CANDIDATE.md) for automated gates and release evidence; this does not mean every real environment has been accepted.
 
 Desktop host, Android/mobile, browser frontend, real models, the official clipper, external files, and subscription services still require environment-specific checks. Prerequisites, fallbacks, and open blockers are listed in the [capability matrix](docs/CAPABILITY-MATRIX.md) and [known blockers](docs/BLOCKERS.md). Unit tests and isolated E2E are not device acceptance.
 

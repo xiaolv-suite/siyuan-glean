@@ -3211,7 +3211,7 @@ function metaLine(entry: Row): string {
                     <input type="range" class="glean-preview-separator" min="25" max="65" step="1" value={Math.round(previewRatio * 100)} aria-label={t(i18n, "preview.resize")} oninput={(event) => { previewRatio = normalizePreviewRatio(Number(event.currentTarget.value) / 100); void savePreviewPrefs({ workbenchPreviewRatio: previewRatio }); }} onpointerdown={startPreviewResize} onpointermove={resizePreview} onpointerup={(event) => finishPreviewResize(event)} onpointercancel={(event) => finishPreviewResize(event, true)} onlostpointercapture={(event) => finishPreviewResize(event)} onkeydown={previewResizeKey} />
                     <div class="glean-preview-pane" style:--glean-preview-ratio={previewRatio}>
                         {#key previewId}
-                            <WorkbenchPreview {facade} entry={previewEntry} onClose={closePreview} onProcessed={processedCallback(previewId, previewRevision)} onRefresh={reload} />
+                            <WorkbenchPreview {facade} entry={previewEntry} onClose={closePreview} onProcessed={processedCallback(previewId, previewRevision)} onRefresh={reload} onFilterAuthor={selectAuthor} />
                         {/key}
                     </div>
                 {/if}
@@ -3456,7 +3456,7 @@ function metaLine(entry: Row): string {
     {#if facade.isMobile && previewEntry && view === "library"}
         <div class="glean-preview-sheet" bind:this={previewDialog} role="dialog" aria-modal="true" aria-label={t(i18n, "preview.title")} tabindex="-1">
             {#key previewId}
-                <WorkbenchPreview {facade} entry={previewEntry} onClose={closePreview} onProcessed={processedCallback(previewId, previewRevision)} onRefresh={reload} />
+                <WorkbenchPreview {facade} entry={previewEntry} onClose={closePreview} onProcessed={processedCallback(previewId, previewRevision)} onRefresh={reload} onFilterAuthor={selectAuthor} />
             {/key}
         </div>
     {/if}

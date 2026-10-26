@@ -167,6 +167,8 @@
 
 - [◐] **T-3461**（P2，2026-10-27）阅读器批注键盘飞速跳转、微信文章零 Token 官方摘要自动回填与一键导出全部批注：`domain/reader-shortcuts.ts` 扩展 `h`（跳转到下一处批注）与 `H`（跳转到上一处批注）单键导航；`ReaderTab.svelte` 接入平滑滚动与呼吸聚焦微动效，伴生栏批注流顶部增设「📋 复制全部批注」快捷动作；`wechat-service.ts` 扫描微信文章时联动提取官方 `<meta og:description>` 自动回填 `custom-clip-summary` 属性；单测与门禁完备。代码状态：完成；隔离验证：`tests/reader.test.ts` 14/14、`tests/wechat-service.test.mjs` 5/5、`tests/i18n.test.ts` 5/5、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实键盘快捷穿梭走查；延后原因：真实宿主编辑器键盘滚动仍归 B-0002。
 
+- [◐] **T-3462**（P2，2026-10-27）热力图单元格直接下钻、预览区作者筛选联动与全场景链接防长链优化：`StatsView.svelte` 热力图单元格（`.glean-stats__day`）支持鼠标直接点击与键盘回车下钻，平滑展开完成文章列表并呈现重置横幅；`WorkbenchPreview.svelte` 点击公众号作者名称秒级触发全库精确分面筛选；`ReadingContext.svelte` 与 `ResurfaceView.svelte` 统一防范长链接泄露，原生编辑器常驻上下文来源 URL 重构为极简域名微标；单测与门禁完备。代码状态：完成；隔离验证：`tests/stats.test.ts` 24/24、`tests/accessibility.test.ts` 32/32、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实多端大屏与移动宿主走查；延后原因：真实多端环境仍归 B-0002。
+
 
 - [◐] **T-3367**（P1，2026-10-18）批量选择范围与底部操作可达性：保留跨筛选选择，显示总数及筛选外数量，提供仅保留当前筛选、追加已显示文章和清空入口；三画布共用正常流批量条，获焦时按 Escape 快捷取消选择并安全回退焦点；移动窄屏保留左右安全区。代码状态：实现完成，契约见 D-0247/D-0292，不新增属性、端点或持久化；隔离验证：定向 51/51、完整 `pnpm test` 1517/1517、`pnpm check` 0 错误/0 警告、`pnpm build`、`pnpm check:release`、`pnpm perf:check`、`pnpm visual:check`、`pnpm task:ledger -- --check` 与 `git diff --check` 通过；Chrome 原型已点验宽/窄 Dock、筛选外提示、显式保留和清空，窄布局批量区 `738px` 宽、`142px` 高且无横溢出。真实验收：待 B-0002 原工作区、触控和系统读屏；延后原因：Chrome 原型与隔离样本不替代真实设备与视觉矩阵，视觉登记仍为 24 项待真实宿主。
 

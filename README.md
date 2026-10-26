@@ -8,6 +8,16 @@
 
 [English](README.en-US.md) · [下载最新版](https://github.com/ai68298100/siyuan-glean/releases/latest) · [能力矩阵](docs/CAPABILITY-MATRIX.md) · [反馈与问题](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.29 更新（2026-10-27）
+
+本次版本实现热力图单元格直接下钻联动、完成明细自动展开、预览区作者筛选联动与全场景链接防长链优化。
+
+**新增与体验增强：**
+
+- **年度热力图单元格直接下钻与完成明细自展开**：`StatsView.svelte` 热力图单元格（`.glean-stats__day`）支持鼠标直接点击与键盘回车下钻，平滑展开完成文章列表并呈现重置横幅。
+- **工作台预览区作者一键联动筛选全库文章**：`WorkbenchPreview.svelte` 点击公众号作者名称秒级触发全库精确分面筛选，打通预览区与读库检索链路。
+- **全场景作者与来源链接微标精美化**：`ReadingContext.svelte` 与 `ResurfaceView.svelte` 统一防范长链接泄露，原生编辑器常驻上下文来源 URL 重构为极简域名微标。
+
 ## v1.3.28 更新（2026-10-27）
 
 本次版本实现阅读器批注键盘飞速跳转（h/H）、微信文章零 Token 官方摘要自动回填、伴生栏一键复制全部批注，以及微信公众号作者全场景安全显示。
@@ -462,7 +472,7 @@
 
 ## 兼容性与验收
 
-本次发布为 [v1.3.28](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.28)。自动门禁与发布证据见[发布候选复核](docs/RELEASE-CANDIDATE.md)；这不代表所有真实环境都已验收。
+本次发布为 [v1.3.29](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.29)。自动门禁与发布证据见[发布候选复核](docs/RELEASE-CANDIDATE.md)；这不代表所有真实环境都已验收。
 
 桌面宿主、Android/移动端、浏览器前端、真实模型、官方剪藏、外部文件和订阅服务仍按环境分别验收。使用前提、降级方式和阻塞项以[能力矩阵](docs/CAPABILITY-MATRIX.md)及[已知阻塞](docs/BLOCKERS.md)为准；请勿把单元测试或隔离 E2E 当作真机通过。
 

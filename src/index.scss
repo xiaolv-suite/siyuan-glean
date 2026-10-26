@@ -10235,6 +10235,18 @@ mark.glean-search-highlight {
 .glean-stats__day {
     border: 1px solid var(--b3-border-color);
     border-radius: var(--glean-radius-2);
+    cursor: pointer;
+    transition: transform var(--glean-duration-micro) ease, outline var(--glean-duration-micro) ease;
+
+    &:hover {
+        transform: scale(1.3);
+        z-index: 2;
+    }
+
+    &--selected {
+        outline: 2px solid var(--lv-brand);
+        outline-offset: 1px;
+    }
 }
 
 .glean-stats__days summary,
