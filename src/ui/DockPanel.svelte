@@ -983,6 +983,7 @@ async function batchAddTag(tag: string): Promise<void> {
         }
         facade.notifyDataChanged();
         await reload();
+        selection = new Set();
         showMessage(t(i18n, "library.batchTagsApplied", { count }), 3000);
     } catch (err) {
         console.warn("[LvGlean] 批量打标签失败:", err);
@@ -1004,6 +1005,7 @@ async function batchSetAuthor(author: string): Promise<void> {
         }
         facade.notifyDataChanged();
         await reload();
+        selection = new Set();
         showMessage(t(i18n, "library.batchAuthorApplied", { count }), 3000);
     } catch (err) {
         console.warn("[LvGlean] 批量设置作者失败:", err);
