@@ -1377,5 +1377,9 @@
   "library.tagPrompt": "输入要追加的标签名：",
   "library.authorPrompt": "输入统一作者/公众号名称：",
   "library.batchTagsApplied": "已为 ${count} 篇文章追加标签",
-  "library.batchAuthorApplied": "已为 ${count} 篇文章设置作者"
+  "library.batchAuthorApplied": "已为 ${count} 篇文章设置作者",
+  "reader.shortcutNextHighlight": "跳转到下一处批注",
+  "reader.shortcutPrevHighlight": "跳转到上一处批注",
+  "reader.copyAllHighlights": "复制全部批注",
+  "reader.allHighlightsCopied": "已复制本文全部批注（Markdown 格式）"
 }

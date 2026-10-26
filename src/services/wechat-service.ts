@@ -1,6 +1,6 @@
 import type { Plugin } from "siyuan";
 import { exportMdContent } from "../api/client";
-import { extractWechatAuthor, isWechatUrl } from "../domain/wechat";
+import { extractWechatAuthor, isWechatUrl, extractWechatDescription } from "../domain/wechat";
 import { readClip, writeClip } from "./clip-store";
 
 /**
@@ -27,6 +27,7 @@ export async function scanAndFillWechatAuthor(
 
     let targetUrl = options.url;
     let targetSite = options.site;
+    let existingSummary = "";
 
     if (!targetUrl && !targetSite) {
         try {
@@ -34,6 +35,7 @@ export async function scanAndFillWechatAuthor(
             if (clip.author?.trim()) return clip.author.trim();
             targetUrl = clip.url;
             targetSite = clip.site;
+            existingSummary = clip.summary || "";
         } catch {
             return null;
         }
@@ -58,14 +60,22 @@ export async function scanAndFillWechatAuthor(
     // 截取前 3500 字符进行高密度模式提取
     const snippet = contentToScan.slice(0, 3500);
     const detected = extractWechatAuthor(snippet);
+    const desc = extractWechatDescription(snippet);
 
+    const patch: { author?: string; summary?: string } = {};
     if (detected && detected.trim()) {
-        const cleanAuthor = detected.trim();
+        patch.author = detected.trim();
+    }
+    if (desc && desc.trim() && !existingSummary) {
+        patch.summary = desc.trim();
+    }
+
+    if (Object.keys(patch).length > 0) {
         try {
-            await writeClip(plugin, docId, { author: cleanAuthor }, { force: true });
-            return cleanAuthor;
+            await writeClip(plugin, docId, patch, { force: true });
+            return patch.author ?? null;
         } catch (error) {
-            console.warn("[LvGlean] 微信公众号作者回填写入失败:", docId, error);
+            console.warn("[LvGlean] 微信公众号回填写入失败:", docId, error);
             return null;
         }
     }

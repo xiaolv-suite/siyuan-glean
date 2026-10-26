@@ -8,6 +8,17 @@ Lv Glean organizes clippings and articles already in SiYuan. It does not crawl t
 
 [中文说明](README.md) · [Latest Release](https://github.com/ai68298100/siyuan-glean/releases/latest) · [Capability matrix](docs/CAPABILITY-MATRIX.md) · [Feedback](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.28 update (2026-10-27)
+
+This release implements keyboard shortcut highlight hopping (h/H), zero-token WeChat official description backfill, one-click copy of all article highlights, and author URL defensive rendering.
+
+**New features & improvements:**
+
+- **Keyboard Shortcut Highlight Hopping**: Navigate smoothly across article highlights using single key `h` (next) and `H` (previous) with automatic center-scrolling and soft breath animations.
+- **Zero-Token WeChat Description Auto-fill**: Automatically extracts official `<meta og:description>` during background scan and populates `custom-clip-summary` without calling LLMs.
+- **Copy All Article Highlights in Companion Bar**: One-click action in the companion notes header copies all highlights in standard Markdown format with SiYuan block references.
+- **All-Surface WeChat Author URL Defense**: Companion publisher badge leverages `displayWechatAuthor` to prevent raw link exposure everywhere.
+
 ## v1.3.27 update (2026-10-27)
 
 This release implements a 4-color quick highlighter palette on the selection bar, WeRead accessible reader links, and batch tag/author actions.
@@ -450,7 +461,7 @@ Ordinary notes are not bulk-captured just because of their location, and opening
 
 ## Compatibility and acceptance
 
-This release is [v1.3.27](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.27). See the [release candidate record](docs/RELEASE-CANDIDATE.md) for automated gates and release evidence; this does not mean every real environment has been accepted.
+This release is [v1.3.28](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.28). See the [release candidate record](docs/RELEASE-CANDIDATE.md) for automated gates and release evidence; this does not mean every real environment has been accepted.
 
 Desktop host, Android/mobile, browser frontend, real models, the official clipper, external files, and subscription services still require environment-specific checks. Prerequisites, fallbacks, and open blockers are listed in the [capability matrix](docs/CAPABILITY-MATRIX.md) and [known blockers](docs/BLOCKERS.md). Unit tests and isolated E2E are not device acceptance.
 

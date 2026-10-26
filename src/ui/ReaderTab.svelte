@@ -19,7 +19,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
     import { fulltextBodyState } from "../domain/content";
     import { canCountReading, createReadingTimer, readingTimerMinutes, setReadingTimerActive, type ReadingTimerState } from "../domain/reading-timer";
     import { hasSourceAction, resolveCarrier, sourceUrlForCarrier } from "../domain/carrier";
-    import { isWechatUrl, cleanWechatArticleUrl, wechatArticleToWereadUrl, extractWechatAuthor } from "../domain/wechat";
+    import { isWechatUrl, cleanWechatArticleUrl, wechatArticleToWereadUrl, extractWechatAuthor, displayWechatAuthor } from "../domain/wechat";
     import { chunkSpeechText, clampSpeechRate, resumeSpeechChunkIndex, speechLanguage } from "../domain/speech";
     import type { ClipStatus } from "../domain/schema";
     import { DEFAULT_SETTINGS } from "../services/settings";
@@ -483,6 +483,20 @@ import { aiFailureKey } from "../libs/ai-feedback";
         }
     }
 
+    let currentHighlightIndex = $state(-1);
+
+    function jumpToNextHighlight(): void {
+        if (!docHighlights.length) return;
+        currentHighlightIndex = (currentHighlightIndex + 1) % docHighlights.length;
+        scrollToHighlight(docHighlights[currentHighlightIndex].id);
+    }
+
+    function jumpToPrevHighlight(): void {
+        if (!docHighlights.length) return;
+        currentHighlightIndex = (currentHighlightIndex - 1 + docHighlights.length) % docHighlights.length;
+        scrollToHighlight(docHighlights[currentHighlightIndex].id);
+    }
+
     function scrollToHighlight(id: string): void {
         const escaped = typeof CSS !== "undefined" && typeof CSS.escape === "function" ? CSS.escape(id) : id;
         const target = protyleHost?.querySelector<HTMLElement>(`[data-node-id="${escaped}"]`);
@@ -803,6 +817,14 @@ import { aiFailureKey } from "../libs/ai-feedback";
         }
         event.preventDefault();
         event.stopPropagation();
+        if (action === "nextHighlight") {
+            jumpToNextHighlight();
+            return;
+        }
+        if (action === "prevHighlight") {
+            jumpToPrevHighlight();
+            return;
+        }
         if (action === "scrollDown" || action === "scrollUp") {
             const scroller = Array.from(protyleHost?.querySelectorAll<HTMLElement>(".protyle-content, .protyle-preview") ?? [])
                 .find((element) => element.clientHeight > 0 && element.scrollHeight > element.clientHeight + 1) ?? protyleHost;
@@ -1615,6 +1637,8 @@ import { aiFailureKey } from "../libs/ai-feedback";
                     <div><dt><kbd>a</kbd></dt><dd>{t(i18n, "reader.shortcutLater")}</dd></div>
                     <div><dt><kbd>o</kbd></dt><dd>{t(i18n, "reader.shortcutOpenSource")}</dd></div>
                     <div><dt><kbd>x</kbd></dt><dd>{t(i18n, "reader.shortcutExcerpt")}</dd></div>
+                    <div><dt><kbd>h</kbd></dt><dd>{t(i18n, "reader.shortcutNextHighlight")}</dd></div>
+                    <div><dt><kbd>Shift+h</kbd></dt><dd>{t(i18n, "reader.shortcutPrevHighlight")}</dd></div>
                     <div><dt><kbd>Ctrl+F</kbd></dt><dd>{t(i18n, "reader.searchTitle")}</dd></div>
                     <div><dt><kbd>?</kbd></dt><dd>{t(i18n, "reader.shortcutHelp")}</dd></div>
                     <div><dt><kbd>Esc</kbd></dt><dd>{t(i18n, "reader.shortcutEscape")}</dd></div>
@@ -1806,7 +1830,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
                                 {t(i18n, "wechat.badge")}
                             </div>
                             <div class="glean-wechat-publisher__name-row">
-                                <div class="glean-wechat-publisher__name">{context?.author || t(i18n, "wechat.officialAccount")}</div>
+                                <div class="glean-wechat-publisher__name">{displayWechatAuthor(context?.author) || t(i18n, "wechat.officialAccount")}</div>
                                 <button
                                     type="button"
                                     class="glean-icon-btn glean-wechat-publisher__rescan-btn"
@@ -2028,7 +2052,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
                                     title={t(i18n, "reader.copyAllHighlights")}
                                 >
                                     <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
-                                    {t(i18n, "highlight.copyArticleQuotes")}
+                                    {t(i18n, "reader.copyAllHighlights")}
                                 </button>
                                 <button
                                     type="button"

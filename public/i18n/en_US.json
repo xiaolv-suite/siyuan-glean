@@ -1377,5 +1377,9 @@
   "library.tagPrompt": "Enter tag name to append:",
   "library.authorPrompt": "Enter author / publisher name:",
   "library.batchTagsApplied": "Tags applied to ${count} article(s)",
-  "library.batchAuthorApplied": "Author updated for ${count} article(s)"
+  "library.batchAuthorApplied": "Author updated for ${count} article(s)",
+  "reader.shortcutNextHighlight": "Jump to next highlight",
+  "reader.shortcutPrevHighlight": "Jump to previous highlight",
+  "reader.copyAllHighlights": "Copy all highlights",
+  "reader.allHighlightsCopied": "All highlights copied in Markdown"
 }

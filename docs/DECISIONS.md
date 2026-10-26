@@ -2156,3 +2156,17 @@ T-3416 承接方向五（有依据的阅读 AI）与同类产品对标（Readwis
    - `LibraryBatchBar.svelte` 与 `DockPanel.svelte` 新增批量追加标签（`batchAddTag`）与批量统一设置作者（`batchSetAuthor`），上百篇未分拣文章极速整理归档；
 4. 摘录卡片四色指示彩条：
    - `HighlightView.svelte` 摘录卡片与 `ReaderTab.svelte` 批注卡片左侧增加对应高亮颜色的 3px 竖向指示彩条，四色研读流视觉一目了然。
+
+## D-0340（2026-10-27）阅读器批注键盘飞速跳转、微信文章零 Token 官方摘要自动回填与一键导出全部批注（T-3461）
+
+多维度增强批注键盘导航与微信文章零成本官方摘要自愈：
+1. 阅读器批注键盘飞速跳转：
+   - `src/domain/reader-shortcuts.ts` 扩展 `h`（跳转到下一处批注）与 `H`（跳转到上一处批注）单键导航；
+   - `ReaderTab.svelte` 接入平滑滚动至块中心并触发柔和聚焦呼吸微动效，帮助抽屉同步补齐说明；
+2. 微信公众号文章零 Token 官方摘要自动回填：
+   - `src/services/wechat-service.ts` 后台扫描微信文章时，在回填作者的同时智能提取官方 `<meta og:description>` 简介；
+   - 在摘要为空时自动写入 `custom-clip-summary` 属性，零 Token、零延迟生成高质量导读摘要；
+3. 伴生栏批注流顶部增设「📋 复制全部批注」快捷动作：
+   - `ReaderTab.svelte` 伴生栏批注流顶部增设「📋 复制全部批注」按钮，一键把整篇文章的四色批注以规范 Markdown 引用与思源块链接复制到剪贴板；
+4. 微信公众号作者安全显示全场景防御：
+   - `ReaderTab.svelte` 伴生栏公众号微标接入 `displayWechatAuthor` 严防长链接泄露，全场景彻底告别任何 URL 格式作者。

@@ -8,6 +8,17 @@
 
 [English](README.en-US.md) · [下载最新版](https://github.com/ai68298100/siyuan-glean/releases/latest) · [能力矩阵](docs/CAPABILITY-MATRIX.md) · [反馈与问题](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.28 更新（2026-10-27）
+
+本次版本实现阅读器批注键盘飞速跳转（h/H）、微信文章零 Token 官方摘要自动回填、伴生栏一键复制全部批注，以及微信公众号作者全场景安全显示。
+
+**新增与体验增强：**
+
+- **阅读器批注键盘飞速跳转**：`src/domain/reader-shortcuts.ts` 扩展 `h`（下一处批注）与 `H`（上一处批注）单键导航；研读长文时单手敲击键盘即可顺畅在各处金句之间穿梭并激活呼吸聚焦微动效。
+- **微信公众号文章零 Token 官方摘要自动回填**：`wechat-service.ts` 后台扫描时智能提取官方 `<meta og:description>` 简介，自动写入 `custom-clip-summary` 属性，免调大模型零延迟生成高质量导读摘要。
+- **伴生栏批注流顶部增设「📋 复制全部批注」快捷动作**：一键把整篇文章的四色批注以规范 Markdown 引用与思源块链接复制到剪贴板，极速投喂大模型或外发分享。
+- **微信公众号作者安全显示全场景防御**：伴生栏公众号微标接入 `displayWechatAuthor` 严防长链接泄露，全场景彻底告别任何 URL 格式作者。
+
 ## v1.3.27 更新（2026-10-27）
 
 本次版本实现划词悬浮四色即时高亮色盘、微信文章微信读书无障碍跳转、批量打标与设作者流，以及摘录卡片四色指示彩条。
@@ -451,7 +462,7 @@
 
 ## 兼容性与验收
 
-本次发布为 [v1.3.27](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.27)。自动门禁与发布证据见[发布候选复核](docs/RELEASE-CANDIDATE.md)；这不代表所有真实环境都已验收。
+本次发布为 [v1.3.28](https://github.com/ai68298100/siyuan-glean/releases/tag/v1.3.28)。自动门禁与发布证据见[发布候选复核](docs/RELEASE-CANDIDATE.md)；这不代表所有真实环境都已验收。
 
 桌面宿主、Android/移动端、浏览器前端、真实模型、官方剪藏、外部文件和订阅服务仍按环境分别验收。使用前提、降级方式和阻塞项以[能力矩阵](docs/CAPABILITY-MATRIX.md)及[已知阻塞](docs/BLOCKERS.md)为准；请勿把单元测试或隔离 E2E 当作真机通过。
 

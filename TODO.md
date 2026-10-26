@@ -165,6 +165,8 @@
 
 - [◐] **T-3460**（P2，2026-10-27）划词悬浮四色即时色盘、微信读书无障碍跳转与批量打标设作者：`ReaderTab.svelte` 划词悬浮条内嵌四色快捷圆点选择器（黄/红/蓝/绿），选中文本点击色彩一步落库；`WorkbenchPreview.svelte` 来源微标旁增设「📖 微信读书」直达胶囊；`LibraryBatchBar.svelte` 与 `DockPanel.svelte` 新增批量追加标签与批量统一设置作者操作；`HighlightView.svelte` 摘录卡片与 `ReaderTab.svelte` 批注卡片左侧增加对应高亮颜色的 3px 竖向指示彩条；单测与门禁完备。代码状态：完成；隔离验证：`tests/reader.test.ts` 14/14、`tests/header-actions.test.ts` 27/27、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实多设备深度研读走查；延后原因：真实思源多端宿主仍归 B-0002。
 
+- [◐] **T-3461**（P2，2026-10-27）阅读器批注键盘飞速跳转、微信文章零 Token 官方摘要自动回填与一键导出全部批注：`domain/reader-shortcuts.ts` 扩展 `h`（跳转到下一处批注）与 `H`（跳转到上一处批注）单键导航；`ReaderTab.svelte` 接入平滑滚动与呼吸聚焦微动效，伴生栏批注流顶部增设「📋 复制全部批注」快捷动作；`wechat-service.ts` 扫描微信文章时联动提取官方 `<meta og:description>` 自动回填 `custom-clip-summary` 属性；单测与门禁完备。代码状态：完成；隔离验证：`tests/reader.test.ts` 14/14、`tests/wechat-service.test.mjs` 5/5、`tests/i18n.test.ts` 5/5、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实键盘快捷穿梭走查；延后原因：真实宿主编辑器键盘滚动仍归 B-0002。
+
 
 - [◐] **T-3367**（P1，2026-10-18）批量选择范围与底部操作可达性：保留跨筛选选择，显示总数及筛选外数量，提供仅保留当前筛选、追加已显示文章和清空入口；三画布共用正常流批量条，获焦时按 Escape 快捷取消选择并安全回退焦点；移动窄屏保留左右安全区。代码状态：实现完成，契约见 D-0247/D-0292，不新增属性、端点或持久化；隔离验证：定向 51/51、完整 `pnpm test` 1517/1517、`pnpm check` 0 错误/0 警告、`pnpm build`、`pnpm check:release`、`pnpm perf:check`、`pnpm visual:check`、`pnpm task:ledger -- --check` 与 `git diff --check` 通过；Chrome 原型已点验宽/窄 Dock、筛选外提示、显式保留和清空，窄布局批量区 `738px` 宽、`142px` 高且无横溢出。真实验收：待 B-0002 原工作区、触控和系统读屏；延后原因：Chrome 原型与隔离样本不替代真实设备与视觉矩阵，视觉登记仍为 24 项待真实宿主。
 

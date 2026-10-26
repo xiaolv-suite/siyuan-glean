@@ -87,10 +87,15 @@ test("阅读单键：IME、宿主已处理事件和组合修饰键不会写入�
         { isComposing: true }, { keyCode: 229 }, { defaultPrevented: true },
         { ctrlKey: true }, { altKey: true }, { metaKey: true }, { shiftKey: true },
     ]) {
-        for (const key of ["j", "k", "e", "m", "a", "o", "x"]) {
+        for (const key of ["j", "k", "e", "m", "a", "o", "x", "h"]) {
             assert.equal(readerShortcut({ ...readerKey, key, ...patch }), null);
         }
+        if (!patch.shiftKey) {
+            assert.equal(readerShortcut({ ...readerKey, key: "H", ...patch }), null);
+        }
     }
+    assert.equal(readerShortcut({ ...readerKey, key: "h" }), "nextHighlight");
+    assert.equal(readerShortcut({ ...readerKey, key: "H", shiftKey: true }), "prevHighlight");
     assert.equal(readerShortcut({ ...readerKey, key: "?", shiftKey: true }), "help");
     assert.equal(readerShortcut({ ...readerKey, key: "?", shiftKey: true, ctrlKey: true }), null);
 });
@@ -98,7 +103,7 @@ test("阅读单键：IME、宿主已处理事件和组合修饰键不会写入�
 test("阅读单键：长按只允许滚动，不重复状态、编辑和摘录动作", () => {
     assert.equal(readerShortcut({ ...readerKey, repeat: true }), "scrollDown");
     assert.equal(readerShortcut({ ...readerKey, key: "k", repeat: true }), "scrollUp");
-    for (const key of ["e", "m", "a", "o", "x", "?"]) {
+    for (const key of ["e", "m", "a", "o", "x", "?", "h", "H"]) {
         assert.equal(readerShortcut({ ...readerKey, key, repeat: true }), null);
     }
 });
@@ -206,5 +211,7 @@ test("ReaderTab 正文搜索与高亮批注伴生栏接线（T-3419 与批注优
     assert.match(tab, /class="glean-reader__selection-colors"/);
     assert.match(tab, /class="glean-reader__selection-color-btn"/);
     assert.match(tab, /onclick=\{\(\) => void quoteExcerpt\(undefined, color\)\}/);
+    assert.match(tab, /action === "nextHighlight"/);
+    assert.match(tab, /action === "prevHighlight"/);
     assert.match(tab, /onclick=\{stopSpeech\}/);
 });
