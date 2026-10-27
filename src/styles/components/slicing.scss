@@ -1,4 +1,11 @@
 /* 渐进阅读长文切片（Doc Slicing）样式 · 严格作用域内 */
+.glean-reader__outline-head-ops {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
 .glean-reader__slice-btn {
     margin-left: auto;
     font-size: 11px;

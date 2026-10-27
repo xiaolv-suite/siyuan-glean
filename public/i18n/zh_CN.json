@@ -1433,5 +1433,8 @@
   "reader.copyCleanMarkdownHint": "一键复制清洗提纯后的纯净正文（剥除噪点与修复插图），极速投喂大模型",
   "reader.copyCleanDone": "已将纯净正文复制到剪贴板！",
   "reader.copyCleanFailed": "获取正文失败，请稍后重试",
-  "reader.copying": "正在复制…"
+  "reader.copying": "正在复制…",
+  "reader.copyOutline": "复制大纲",
+  "reader.copyOutlineHint": "一键复制 Markdown 缩进大纲层级，供思维导图或大纲软件使用",
+  "reader.outlineCopied": "已复制大纲层级到剪贴板！"
 }

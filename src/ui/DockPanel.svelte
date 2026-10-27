@@ -36,7 +36,7 @@ import { deleteSavedViewPref, deleteTagAliasPref, loadUiPrefs, saveLastViewPref,
 import { ageDays, todayStamp } from "../domain/resurface.ts";
 import { recordReadingDone } from "../services/checkin-bridge";
 import { hasSourceAction, openTargetForCarrier, resolveCarrier, sourceUrlForCarrier } from "../domain/carrier";
-import { isWechatUrl, displayWechatAuthor } from "../domain/wechat";
+import { isWechatUrl, displayWechatAuthor, isWechatSeriesTag } from "../domain/wechat";
 import { batchRecognizeWechatAuthors, scanAndFillWechatAuthor, purifyWechatArticle } from "../services/wechat-service";
 import ClipStatusActions from "./ClipStatusActions.svelte";
 import ClipRankControls from "./ClipRankControls.svelte";
@@ -3046,7 +3046,12 @@ function metaLine(entry: Row): string {
                                                 <button type="button" class="glean-mini-tag" onclick={(e) => { e.stopPropagation(); selectTag(tg); }}>#{tg}</button>
                                             {/each}
                                             {#each (entry.aiTags || []).slice(0, 1) as atg}
-                                                <button type="button" class="glean-mini-tag glean-mini-tag--ai" onclick={(e) => { e.stopPropagation(); selectAiTag(atg); }}>✨{atg}</button>
+                                                <button
+                                                    type="button"
+                                                    class="glean-mini-tag glean-mini-tag--ai"
+                                                    class:glean-mini-tag--series={isWechatSeriesTag(atg, isWechatUrl(entry.url) || isWechatUrl(entry.site))}
+                                                    onclick={(e) => { e.stopPropagation(); selectAiTag(atg); }}
+                                                >{isWechatSeriesTag(atg, isWechatUrl(entry.url) || isWechatUrl(entry.site)) ? "📚 " : "✨"}{atg}</button>
                                             {/each}
                                         </div>
                                     {/if}
@@ -3222,7 +3227,12 @@ function metaLine(entry: Row): string {
                                                             <button type="button" class="glean-mini-tag" onclick={(event) => { event.stopPropagation(); selectTag(tg); }}>#{tg}</button>
                                                         {/each}
                                                         {#each (entry.aiTags || []).slice(0, 1) as atg}
-                                                            <button type="button" class="glean-mini-tag glean-mini-tag--ai" onclick={(event) => { event.stopPropagation(); selectAiTag(atg); }}>✨{atg}</button>
+                                                            <button
+                                                                type="button"
+                                                                class="glean-mini-tag glean-mini-tag--ai"
+                                                                class:glean-mini-tag--series={isWechatSeriesTag(atg, isWechatUrl(entry.url) || isWechatUrl(entry.site))}
+                                                                onclick={(event) => { event.stopPropagation(); selectAiTag(atg); }}
+                                                            >{isWechatSeriesTag(atg, isWechatUrl(entry.url) || isWechatUrl(entry.site)) ? "📚 " : "✨"}{atg}</button>
                                                         {/each}
                                                     </span>
                                                 {/if}
@@ -3404,7 +3414,12 @@ function metaLine(entry: Row): string {
                                                     <button type="button" class="glean-mini-tag" onclick={(event) => { event.stopPropagation(); selectTag(tg); }}>#{tg}</button>
                                                 {/each}
                                                 {#each (entry.aiTags || []).slice(0, 1) as atg}
-                                                    <button type="button" class="glean-mini-tag glean-mini-tag--ai" onclick={(event) => { event.stopPropagation(); selectAiTag(atg); }}>✨{atg}</button>
+                                                    <button
+                                                        type="button"
+                                                        class="glean-mini-tag glean-mini-tag--ai"
+                                                        class:glean-mini-tag--series={isWechatSeriesTag(atg, isWechatUrl(entry.url) || isWechatUrl(entry.site))}
+                                                        onclick={(event) => { event.stopPropagation(); selectAiTag(atg); }}
+                                                    >{isWechatSeriesTag(atg, isWechatUrl(entry.url) || isWechatUrl(entry.site)) ? "📚 " : "✨"}{atg}</button>
                                                 {/each}
                                             </div>
                                         {/if}

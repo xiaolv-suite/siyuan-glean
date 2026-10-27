@@ -494,6 +494,20 @@ import { aiFailureKey } from "../libs/ai-feedback";
         });
     }
 
+    async function copyOutlineMarkdown(): Promise<void> {
+        if (!outline.length) return;
+        const lines = outline.map((item) => {
+            const indent = "  ".repeat(Math.max(0, item.level - 1));
+            return `${indent}- ${item.title}`;
+        });
+        try {
+            await navigator.clipboard.writeText(lines.join("\n"));
+            showMessage(t(i18n, "reader.outlineCopied"), 2500);
+        } catch {
+            showMessage(t(i18n, "msg.actionFailed"), 2500);
+        }
+    }
+
     async function selectPalette(id: ThemePaletteId): Promise<void> {
         currentThemePalette = id;
         applyThemePaletteToDom(null, id);
@@ -2208,14 +2222,24 @@ import { aiFailureKey } from "../libs/ai-feedback";
                     <summary id={outlineTitleId} class="glean-reader__section-title">
                         <span>📑 {t(i18n, "reader.outlineTitle")} ({outline.length})</span>
                         {#if outline.length > 0}
-                            <button
-                                type="button"
-                                class="glean-btn glean-btn--ghost glean-btn--xs glean-reader__slice-btn"
-                                title={t(i18n, "docSlicing.actionBtnHint")}
-                                onclick={(e) => { e.stopPropagation(); openSlicing(); }}
-                            >
-                                {t(i18n, "docSlicing.actionBtn")}
-                            </button>
+                            <div class="glean-reader__outline-head-ops">
+                                <button
+                                    type="button"
+                                    class="glean-btn glean-btn--ghost glean-btn--xs glean-reader__slice-btn"
+                                    title={t(i18n, "reader.copyOutlineHint")}
+                                    onclick={(e) => { e.stopPropagation(); void copyOutlineMarkdown(); }}
+                                >
+                                    📋 {t(i18n, "reader.copyOutline")}
+                                </button>
+                                <button
+                                    type="button"
+                                    class="glean-btn glean-btn--ghost glean-btn--xs glean-reader__slice-btn"
+                                    title={t(i18n, "docSlicing.actionBtnHint")}
+                                    onclick={(e) => { e.stopPropagation(); openSlicing(); }}
+                                >
+                                    {t(i18n, "docSlicing.actionBtn")}
+                                </button>
+                            </div>
                         {/if}
                     </summary>
                     {#if outline.length >= 6}

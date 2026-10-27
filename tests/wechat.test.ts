@@ -4,7 +4,7 @@ import {
     isWechatUrl, isWechatImage, extractWechatAuthor, cleanWechatNoise, extractWechatTime, extractWechatSeries,
     repairWechatImages, extractWechatCover, extractWechatDescription, cleanWechatArticleUrl, wechatArticleToWereadUrl,
     repairWechatMath, repairWechatCode, repairWechatVoice, repairWechatContent, extractWechatAvatar, extractWechatBiz,
-    repairWechatBackgroundImages, repairWechatVideos, displayWechatAuthor, repairWechatSvg, repairWechatCards, canonicalWechatUrlKey,
+    repairWechatBackgroundImages, repairWechatVideos, displayWechatAuthor, repairWechatSvg, repairWechatCards, canonicalWechatUrlKey, isWechatSeriesTag,
 } from "../src/domain/wechat.ts";
 
 test("isWechatUrl：准确识别 mp.weixin.qq.com 及子域名", () => {
@@ -373,6 +373,15 @@ test("canonicalWechatUrlKey：跨渠道微信链接生成唯一绝对查重指�
 
     const urlSnOnly = "https://mp.weixin.qq.com/s?sn=abcdef987654321&chksm=111";
     assert.equal(canonicalWechatUrlKey(urlSnOnly), "wechat:sn:abcdef987654321");
+});
+
+test("isWechatSeriesTag：智能识别微信专栏合集标签", () => {
+    assert.equal(isWechatSeriesTag("《大模型前沿深度实践》"), true);
+    assert.equal(isWechatSeriesTag("机器学习合集"), true);
+    assert.equal(isWechatSeriesTag("深度学习系统设计", true), true);
+    assert.equal(isWechatSeriesTag("微信", true), false);
+    assert.equal(isWechatSeriesTag("渐进切片", true), false);
+    assert.equal(isWechatSeriesTag("", false), false);
 });
 
 

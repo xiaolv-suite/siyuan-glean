@@ -265,6 +265,17 @@ export function extractWechatSeries(markdown: string): string | null {
 }
 
 
+/**
+ * 判断是否应作为微信专栏合集微标渲染
+ */
+export function isWechatSeriesTag(tag: string, isWechat = false): boolean {
+    if (!tag) return false;
+    const clean = tag.trim();
+    if (clean.startsWith("《") && clean.endsWith("》")) return true;
+    if (clean.includes("合集") || clean.includes("专栏") || clean.includes("专题") || clean.includes("系列")) return true;
+    return isWechat && !GENERIC_SERIES_BLACKLIST.has(clean) && clean !== "微信" && clean !== "微信公众号" && clean !== "渐进切片";
+}
+
 const WECHAT_NOISE_LINE_PATTERNS: readonly RegExp[] = [
     /^(?:[-*+]\s*)?收录于[合话专][集题栏]\s*#?[^#\n]+#?/i,
     /^(?:[-*+]\s*)?点击上方.*关注.*/i,

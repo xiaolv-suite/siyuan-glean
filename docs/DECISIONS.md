@@ -2298,3 +2298,11 @@ T-3416 承接方向五（有依据的阅读 AI）与同类产品对标（Readwis
    - 伴生栏操作区增设一键复制纯净正文按钮；调用 `exportMdContent` 并实时串联 `repairWechatContent` 与 `cleanWechatNoise`，将剔除广告噪点与修复插图后的最高质量 Markdown 直接写入系统剪贴板，极速投喂 LLM 或跨工具笔记引用；
 2. 阅读搜索浮条样式模块化（`src/styles/components/reader-search.scss`）：
    - 独立拆分阅读器搜索控制器样式，主样式单文件再减 70 行。
+
+## D-0352（2026-10-27）微信专栏专属书册微标与伴生栏一键导出大纲树（T-3473）
+
+增强系列文章研读组织力与知识结构复用：
+1. 微信专栏专属书册微标（`domain/wechat.ts` & `DockPanel.svelte`）：
+   - 新增 `isWechatSeriesTag`，读库卡片与列表行自动识别微信专栏合集标签，赋予专属「📚 专栏」书册微标（`.glean-mini-tag--series`），点击秒级聚合下钻同一专栏全部文章；
+2. 伴生栏大纲树一键「复制大纲」（`ReaderTab.svelte`）：
+   - 大纲树头部增设快捷复制按钮，自动将文章 H1-H6 目录格式化为 Markdown 缩进树形列表，轻松导入思维导图软件。

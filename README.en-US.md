@@ -8,6 +8,15 @@ Lv Glean organizes clippings and articles already in SiYuan. It does not crawl t
 
 [中文说明](README.md) · [Latest Release](https://github.com/ai68298100/siyuan-glean/releases/latest) · [Capability matrix](docs/CAPABILITY-MATRIX.md) · [Feedback](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.39 update (2026-10-27)
+
+This release implements WeChat series book badges and 1-click outline tree export in the companion bar.
+
+**New features & improvements:**
+
+- **WeChat Series Book Badge**: Library cards automatically distinguish WeChat series with a dedicated "📚 Series" badge; clicking instantly filters the whole library for that collection.
+- **1-Click Copy Outline Tree**: Companion outline adds a quick copy button to format H1-H6 headings into indented Markdown, ready for mindmaps.
+
 ## v1.3.38 update (2026-10-27)
 
 This release implements 1-click clean markdown copying in the companion bar and reader search modular styling.

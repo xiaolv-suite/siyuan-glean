@@ -1433,5 +1433,8 @@
   "reader.copyCleanMarkdownHint": "Copy purified markdown without noise, ready for LLMs",
   "reader.copyCleanDone": "Clean markdown copied to clipboard!",
   "reader.copyCleanFailed": "Failed to get article body",
-  "reader.copying": "Copying…"
+  "reader.copying": "Copying…",
+  "reader.copyOutline": "Copy Outline",
+  "reader.copyOutlineHint": "Copy hierarchical outline in Markdown, ready for mindmaps",
+  "reader.outlineCopied": "Outline hierarchy copied to clipboard!"
 }
