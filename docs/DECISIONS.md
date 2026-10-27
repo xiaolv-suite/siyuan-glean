@@ -2374,3 +2374,13 @@ T-3416 承接方向五（有依据的阅读 AI）与同类产品对标（Readwis
    - 概览工具栏增设「📋 复制报告」快捷按钮，调用 `buildReadingReviewMarkdown` 自动格式化当前周期完成清单、总览指标、站点/作者分布及连续阅读天数并存入剪贴板，支持零门槛贴入周报或日记；
 2. Bento 统计与卡片样式模块化（`src/styles/components/bento.scss`）：
    - 拆分 `.glean-bento`、`.glean-tile`、`.glean-bar-row` 等组件样式为独立模块并在主样式中 `@use` 引入，主文件再减 170 余行，持续优化构建性能。
+
+## D-0361（2026-10-27）修复微信读书跳转 404、加入转存书架引导并增设拾遗纯净阅读入口（T-3482）
+
+彻底解决微信读书 404 故障并打通纯净阅读闭环：
+1. 微信读书 404 故障根治（`domain/wechat.ts`）：
+   - 排查定位根因：微信读书 Web 端仅支持内部电子书 `bookId`，直接拼接外部 URL 到 `/web/reader/{url}` 必然触发服务端 404；`wechatArticleToWereadUrl` 规范化定位至官方书架端点 `https://weread.qq.com/web/shelf`，彻底根除 404；
+2. 转存书架操作引导与剪贴板自动复制（`WorkbenchPreview.svelte` & `ReaderTab.svelte`）：
+   - 点击「微信读书」时，自动提取剥除追踪参数的纯净短链复制到剪贴板，并向读者展示清晰的操作指引提示（“已复制文章纯净短链！可在微信中发送给【微信读书】公众号，即可自动同步至书架并阅读”）；
+3. 快速预览区直达拾遗纯净阅读（`WorkbenchPreview.svelte`）：
+   - 来源微标旁增设「📖 拾遗纯净阅读」胶囊按钮，读者在工作台快速预览微信文章时，单点击即可无缝调起小驴拾遗内置的沉浸伴读器（ReaderTab）。

@@ -747,12 +747,17 @@ import { aiFailureKey } from "../libs/ai-feedback";
         void openTab({ app: facade.pluginInstance.app, doc: { id: docId }, keepCursor: false });
     }
 
-    function openWeread(): void {
+    async function openWeread(): Promise<void> {
         if (!context?.url) return;
-        const wereadUrl = wechatArticleToWereadUrl(context.url);
-        if (wereadUrl) {
-            window.open(wereadUrl, "_blank");
+        const clean = cleanWechatArticleUrl(context.url);
+        try {
+            await navigator.clipboard.writeText(clean);
+            showMessage(t(i18n, "wechat.wereadGuide"), 4000);
+        } catch {
+            // ignore
         }
+        const wereadUrl = wechatArticleToWereadUrl(context.url) || "https://weread.qq.com/web/shelf";
+        window.open(wereadUrl, "_blank");
     }
 
     async function runPurifyWechat(): Promise<void> {

@@ -8,6 +8,15 @@ Lv Glean organizes clippings and articles already in SiYuan. It does not crawl t
 
 [中文说明](README.md) · [Latest Release](https://github.com/ai68298100/siyuan-glean/releases/latest) · [Capability matrix](docs/CAPABILITY-MATRIX.md) · [Feedback](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.48 update (2026-10-27)
+
+This release fixes the WeRead 404 issue, adds shelf-sync guidance, and provides a direct Glean Reader shortcut.
+
+**New features & improvements:**
+
+- **Fixed WeRead 404 Issue**: Replaced fictitious article reader URLs with the valid WeRead bookshelf endpoint, auto-copying clean links with friendly sync guidance.
+- **Direct Glean Reader Entry in Preview**: Added a "📖 Glean Reader" badge next to WeChat sources for 1-click distraction-free reading inside SiYuan.
+
 ## v1.3.47 update (2026-10-27)
 
 This release implements 1-click Markdown copying for review reports and modular Bento SCSS decoupling.

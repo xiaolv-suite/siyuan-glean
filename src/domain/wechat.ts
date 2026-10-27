@@ -493,13 +493,11 @@ export function cleanWechatArticleUrl(rawUrl: string): string {
 }
 
 /**
- * 转换微信公众号文章为微信读书网页阅读链接
+ * 转换微信公众号文章为微信读书书架链接（官方网页端无外部直达阅读器端点，直拼会导致404，规范引导至书架）
  */
 export function wechatArticleToWereadUrl(rawUrl: string): string | null {
     if (!rawUrl || !isWechatUrl(rawUrl)) return null;
-    const clean = cleanWechatArticleUrl(rawUrl);
-    if (!clean) return null;
-    return `https://weread.qq.com/web/reader/${encodeURIComponent(clean)}`;
+    return "https://weread.qq.com/web/shelf";
 }
 
 function decodeHtmlEntities(raw: string): string {

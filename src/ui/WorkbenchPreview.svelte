@@ -15,7 +15,7 @@
     import ProtyleHost from "./ProtyleHost.svelte";
     import AuthorEditor from "./AuthorEditor.svelte";
     import { exportArticleMarkdown } from "../services/library-export-service";
-    import { isWechatUrl, displayWechatAuthor, wechatArticleToWereadUrl } from "../domain/wechat";
+    import { isWechatUrl, displayWechatAuthor, wechatArticleToWereadUrl, cleanWechatArticleUrl } from "../domain/wechat";
     import { scanAndFillWechatAuthor } from "../services/wechat-service";
 
     type PreviewItem = ({ kind: "clip" } & ClipIndexEntry) | ({ kind: "candidate" } & CandidateEntry);
@@ -229,6 +229,20 @@
         }
     }
 
+    async function handleOpenWeread(event?: MouseEvent): Promise<void> {
+        event?.preventDefault();
+        if (!sourceUrl) return;
+        const clean = isWechatUrl(sourceUrl) ? cleanWechatArticleUrl(sourceUrl) : sourceUrl;
+        try {
+            await navigator.clipboard.writeText(clean);
+            showMessage(t(i18n, "wechat.wereadGuide"), 4000);
+        } catch {
+            // ignore
+        }
+        const wereadUrl = wechatArticleToWereadUrl(sourceUrl) || "https://weread.qq.com/web/shelf";
+        window.open(wereadUrl, "_blank");
+    }
+
     async function downloadMarkdown(): Promise<void> {
         if (exporting || entry.kind !== "clip") return;
         exporting = true;
@@ -274,12 +288,22 @@
                 <span>{previewSourceLabel()}</span>
             </a>
             {#if isWechatUrl(sourceUrl)}
-                {@const wereadUrl = wechatArticleToWereadUrl(sourceUrl)}
-                {#if wereadUrl}
-                    <a href={wereadUrl} target="_blank" rel="noopener noreferrer" class="glean-preview__source-link glean-preview__source-link--weread" title={t(i18n, "wechat.openInWeread")}>
-                        📖 {t(i18n, "wechat.openInWeread")}
-                    </a>
-                {/if}
+                <button
+                    type="button"
+                    class="glean-preview__source-link glean-preview__source-link--reader"
+                    title={t(i18n, "reading.openInReader")}
+                    onclick={() => facade.openReadingDocument(entry.id)}
+                >
+                    📖 {t(i18n, "reading.openInReader")}
+                </button>
+                <button
+                    type="button"
+                    class="glean-preview__source-link glean-preview__source-link--weread"
+                    title={t(i18n, "wechat.wereadGuide")}
+                    onclick={handleOpenWeread}
+                >
+                    📚 {t(i18n, "wechat.openInWeread")}
+                </button>
             {/if}
         {:else if sourceUrl}
             <span class="glean-preview__source-link">{previewSourceLabel()}</span>
@@ -365,16 +389,28 @@
         align-items: center;
         gap: 4px;
         padding: 2px 8px;
+        border: none;
         border-radius: var(--glean-radius-pill);
         background: color-mix(in srgb, var(--lv-brand) 10%, var(--b3-theme-surface));
         color: var(--lv-brand);
         text-decoration: none;
+        font: inherit;
+        cursor: pointer;
         font-weight: var(--glean-weight-medium);
         transition: all var(--glean-duration-fast) ease;
 
         &:hover {
             background: color-mix(in srgb, var(--lv-brand) 18%, var(--b3-theme-surface));
             color: var(--lv-brand-hover);
+        }
+    }
+    .glean-preview__source-link--weread {
+        background: color-mix(in srgb, #07c160 10%, var(--b3-theme-surface));
+        color: #07c160;
+
+        &:hover {
+            background: color-mix(in srgb, #07c160 18%, var(--b3-theme-surface));
+            color: color-mix(in srgb, #07c160 85%, #000);
         }
     }
     .glean-preview__meta,

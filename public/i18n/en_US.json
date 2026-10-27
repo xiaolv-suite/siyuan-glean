@@ -1444,5 +1444,6 @@
   "reader.blockRefCopied": "Block reference copied to clipboard!",
   "reader.shortcutImmersive": "Toggle Immersive Focus",
   "stats.copyReport": "Copy Report",
-  "stats.reportCopied": "Review report Markdown copied to clipboard!"
+  "stats.reportCopied": "Review report Markdown copied to clipboard!",
+  "wechat.wereadGuide": "Clean article link copied! Send it to the 'WeRead' official account in WeChat to sync to your bookshelf."
 }

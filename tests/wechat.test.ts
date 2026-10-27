@@ -257,7 +257,7 @@ test("cleanWechatArticleUrl：剥离微信长参数生成永久纯净短链", ()
 test("wechatArticleToWereadUrl：生成微信读书网页版无障碍阅读链接", () => {
     const url = "https://mp.weixin.qq.com/s/abcdef123?chksm=test";
     const weread = wechatArticleToWereadUrl(url);
-    assert.equal(weread, "https://weread.qq.com/web/reader/https%3A%2F%2Fmp.weixin.qq.com%2Fs%2Fabcdef123");
+    assert.equal(weread, "https://weread.qq.com/web/shelf");
     assert.equal(wechatArticleToWereadUrl("https://zhihu.com/question/1"), null);
 });
 
