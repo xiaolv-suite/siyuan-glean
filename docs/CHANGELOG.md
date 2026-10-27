@@ -1,5 +1,17 @@
 # 更新日志（CHANGELOG）
 
+## v1.3.51（2026-10-27）
+
+### Task Horizon 待办提炼联动与长文大纲原生思源脑图化
+
+- **Task Horizon (任务视界) 联动：划词提炼下一步行动待办（T-3485）**：
+  - `ReaderTab.svelte` 划词选区悬浮条新增「✅ 提炼待办」动作（支持快捷键 `Alt+T`）；
+  - 自动提炼选区核心引言，生成带确切段落块引用反链的标准 GTD 任务：`- [ ] 落地阅读行动项：... 来源：(( blockId '标题' )) {: custom-status="todo" custom-priority="medium" }`；
+  - 自动存入剪贴板并向外部派发标准 `horizon:action-created` 与 `siyuan-horizon:new-task` 事件，彻底打通“长文研读到 GTD 行动落地”全闭环。
+- **长文大纲思源原生折叠脑图化挂载（T-3485）**：
+  - `doc-slicing.ts` 与 `doc-slicing-service.ts` 新增 `buildOutlineMindmapMarkdown` 与 `createOutlineMindmapDocument`；
+  - 伴生栏大纲树头部新增「🧠 思源脑图」一键建稿动作，自动生成挂载 `{: custom-sy-list-mindmap="true" }` 原生属性的脑图文档并在新标签页秒级打开，直接享受思源官方可折叠交互思维导图。
+
 ## v1.3.50（2026-10-27）
 
 ### 读库分面筛选微信来源自适应融合与智能视图「公众号精选」预设

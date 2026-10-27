@@ -2404,3 +2404,11 @@ T-3416 承接方向五（有依据的阅读 AI）与同类产品对标（Readwis
    - 扩充 `SMART_VIEW_PRESETS` 模板；支持一键创建聚焦全库微信公众号文章的动态保存视图，系列文章聚合管理一触即达；
 3. 微信读书向导细节打磨（`WeReadGuideDialog.svelte`）：
    - 接入 Escape 快捷键退出，并在步骤 2 中智能代入当前文章作者名称。
+
+## D-0364（2026-10-27）Task Horizon 待办提炼联动与长文大纲原生思源脑图化（T-3485）
+
+打通精读行动落地与大纲思维导图化：
+1. Task Horizon 待办提炼联动（`ecosystem-bridge-kit.ts` & `ReaderTab.svelte`）：
+   - 划词悬浮条增设「✅ 提炼待办」动作（支持 `Alt+T`），自动生成带原文块引用反链的 GTD 待办（`- [ ] 落地行动：... 来源：(( blockId '标题' )) {: custom-status="todo" custom-priority="medium" }`），存入剪贴板并派发标准 `horizon:action-created` 事件，打通从长文研读到行动项闭环；
+2. 长文大纲思源原生折叠脑图化挂载（`doc-slicing.ts` & `doc-slicing-service.ts`）：
+   - 新增 `buildOutlineMindmapMarkdown` 与 `createOutlineMindmapDocument`；伴生栏大纲树头部增设「🧠 思源脑图」一键建稿，挂载 `{: custom-sy-list-mindmap="true" }` 原生脑图属性并在新标签页秒级打开。

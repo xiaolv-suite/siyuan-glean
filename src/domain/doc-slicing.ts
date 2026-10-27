@@ -174,3 +174,28 @@ export function formatSliceMarkdown(
     lines.push("");
     return lines.join("\n");
 }
+
+/**
+ * 将文章大纲转化为思源原生折叠思维导图的 Markdown 格式（挂载 custom-sy-list-mindmap）
+ */
+export function buildOutlineMindmapMarkdown(
+    articleTitle: string,
+    articleId: string,
+    outline: readonly OutlineItem[],
+): string {
+    const title = articleTitle.trim() || "文章大纲";
+    const lines: string[] = [];
+    lines.push(`# 《${title}》· 思维导图`);
+    lines.push("");
+    lines.push(`> 📖 原文长文：[${title}](siyuan://blocks/${articleId})`);
+    lines.push("");
+    lines.push(`{: custom-sy-list-mindmap="true" }`);
+    lines.push(`- 🧠 ${title}`);
+    for (const item of outline) {
+        const indent = "  ".repeat(Math.max(1, item.level));
+        const refSnippet = item.id ? ` (( ${item.id} '直达正文' ))` : "";
+        lines.push(`${indent}- ${item.title}${refSnippet}`);
+    }
+    lines.push("");
+    return lines.join("\n");
+}

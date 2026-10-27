@@ -67,6 +67,8 @@ export const ECOSYSTEM_EVENTS = Object.freeze({
     // 闪卡
     CARDS_REVIEWED: "lv-cards:reviewed",
     CARDS_INCREMENTAL_EXTRACT: "lv-cards:incremental-extract",
+    // 任务视界 (Task Horizon) 联动
+    HORIZON_ACTION_CREATED: "horizon:action-created",
     // 常用
     COMMON_CREATED: "xiaolv:common:item-created",
     COMMON_UPDATED: "xiaolv:common:item-updated",
@@ -264,6 +266,25 @@ export interface IncrementalExtractPayload {
     sourceUrl?: string;
     tags?: string[];
     createdAt?: string;
+}
+
+/** 任务视界 (Task Horizon) 联动行动项载荷 */
+export interface TaskHorizonActionPayload {
+    taskMarkdown: string;
+    quoteText: string;
+    sourceDocId: string;
+    sourceBlockId?: string;
+    sourceTitle?: string;
+    sourceUrl?: string;
+    priority?: string;
+    createdAt?: string;
+}
+
+export function formatTaskHorizonItem(quote: string, docId: string, title: string, blockId?: string): string {
+    const cleanQuote = quote.replace(/[\r\n]+/g, " ").trim().slice(0, 80);
+    const refId = blockId || docId;
+    const cleanTitle = title || "文章";
+    return `- [ ] 落地阅读行动项：${cleanQuote} 来源：(( ${refId} '${cleanTitle}' )) {: custom-status="todo" custom-priority="medium" }`;
 }
 
 export interface CardsBridgeApi {

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { planDocSlices, formatSliceMarkdown, buildSliceStartMap } from "../src/domain/doc-slicing.ts";
+import { planDocSlices, formatSliceMarkdown, buildSliceStartMap, buildOutlineMindmapMarkdown } from "../src/domain/doc-slicing.ts";
 import type { OutlineItem } from "../src/domain/outline.ts";
 
 test("planDocSlices 在空大纲时平滑降级为单片全篇", () => {
@@ -63,4 +63,19 @@ test("buildSliceStartMap 构建起始块映射索引", () => {
     assert.equal(map.get("blk-1")?.index, 1);
     assert.equal(map.get("blk-2")?.index, 2);
     assert.equal(map.get("non-exist"), undefined);
+});
+
+test("buildOutlineMindmapMarkdown 生成挂载 custom-sy-list-mindmap 的思源原生思维导图 Markdown", () => {
+    const outline = [
+        { id: "blk-h1", title: "核心论点", level: 1, depth: 1, count: 100 },
+        { id: "blk-h2-1", title: "实践方法A", level: 2, depth: 2, count: 50 },
+        { id: "blk-h2-2", title: "实践方法B", level: 2, depth: 2, count: 50 },
+    ];
+    const md = buildOutlineMindmapMarkdown("大模型架构思考", "20261027120000-doc0001", outline);
+    assert.ok(md.includes('# 《大模型架构思考》· 思维导图'));
+    assert.ok(md.includes('{: custom-sy-list-mindmap="true" }'));
+    assert.ok(md.includes('- 🧠 大模型架构思考'));
+    assert.ok(md.includes("  - 核心论点 (( blk-h1 '直达正文' ))"));
+    assert.ok(md.includes("    - 实践方法A (( blk-h2-1 '直达正文' ))"));
+    assert.ok(md.includes("    - 实践方法B (( blk-h2-2 '直达正文' ))"));
 });

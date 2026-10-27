@@ -55,7 +55,8 @@ import { aiFailureKey } from "../libs/ai-feedback";
     import { loadReadingOutline } from "../services/outline-service";
     import { listDocHighlights, type HighlightItem } from "../services/highlights";
     import { createArticleHighlightsDoc } from "../services/highlights";
-    import type { IncrementalExtractPayload } from "../libs/ecosystem-bridge-kit";
+    import { createOutlineMindmapDocument } from "../services/doc-slicing-service";
+    import { formatTaskHorizonItem, type IncrementalExtractPayload, type TaskHorizonActionPayload } from "../libs/ecosystem-bridge-kit";
     import { createReadPointObserver, scrollAndPulseReadPoint, type ReadPointObserverHandle } from "../libs/read-point-observer";
     import { saveReadPoint } from "../services/clip-store";
     import { formatHighlightShare, formatHighlightTime } from "../domain/highlights";
@@ -495,6 +496,23 @@ import { aiFailureKey } from "../libs/ai-feedback";
         });
     }
 
+    async function createMindmapDoc(): Promise<void> {
+        if (!context || !docId || !outline.length) return;
+        try {
+            const res = await createOutlineMindmapDocument(facade.pluginInstance, context, outline);
+            if (res.ok && res.docId) {
+                showMessage(t(i18n, "reader.mindmapCreated"), 2500);
+                void openTab({ app: facade.pluginInstance.app, doc: { id: res.docId } });
+                facade.notifyDataChanged();
+            } else {
+                showMessage(res.error || t(i18n, "msg.actionFailed"), 3000);
+            }
+        } catch (error) {
+            console.warn("[glean] 创建脑图失败:", error);
+            showMessage(t(i18n, "msg.actionFailed"), 3000);
+        }
+    }
+
     async function copyOutlineMarkdown(): Promise<void> {
         if (!outline.length) return;
         const lines = outline.map((item) => {
@@ -867,6 +885,14 @@ import { aiFailureKey } from "../libs/ai-feedback";
                 event.preventDefault();
                 event.stopPropagation();
                 void incrementalExtractToCards();
+                return;
+            }
+        }
+        if (event.altKey && (event.key === "t" || event.key === "T")) {
+            if (excerpt?.text) {
+                event.preventDefault();
+                event.stopPropagation();
+                void extractToHorizonTask();
                 return;
             }
         }
@@ -1352,6 +1378,35 @@ import { aiFailureKey } from "../libs/ai-feedback";
             } catch {
                 showMessage(t(i18n, "reader.cardGhostHint"), 3000);
             }
+        }
+    }
+
+    /** 划词提炼下一步行动待办（Task Horizon 联动） */
+    async function extractToHorizonTask(): Promise<void> {
+        if (!excerpt?.text || !context || context.id !== docId) return;
+        const taskMarkdown = formatTaskHorizonItem(excerpt.text, context.id, context.title, excerpt.blockId);
+        try {
+            await navigator.clipboard.writeText(taskMarkdown);
+            if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+                try { navigator.vibrate?.(15); } catch { /* noop */ }
+            }
+            if (typeof window !== "undefined") {
+                const payload: TaskHorizonActionPayload = {
+                    taskMarkdown,
+                    quoteText: excerpt.text,
+                    sourceDocId: context.id,
+                    sourceBlockId: excerpt.blockId,
+                    sourceTitle: context.title,
+                    sourceUrl: context.url,
+                    priority: "medium",
+                    createdAt: new Date().toISOString(),
+                };
+                window.dispatchEvent(new CustomEvent("horizon:action-created", { detail: payload }));
+                window.dispatchEvent(new CustomEvent("siyuan-horizon:new-task", { detail: payload }));
+            }
+            showMessage(t(i18n, "reader.extractedToTask"), 2500);
+        } catch {
+            showMessage(t(i18n, "msg.actionFailed"), 2500);
         }
     }
 
@@ -1893,6 +1948,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
                     <div><dt><kbd>o</kbd></dt><dd>{t(i18n, "reader.shortcutOpenSource")}</dd></div>
                     <div><dt><kbd>x</kbd></dt><dd>{t(i18n, "reader.shortcutExcerpt")}</dd></div>
                     <div><dt><kbd>Alt+E</kbd></dt><dd>{t(i18n, "reader.extractToCards")}</dd></div>
+                    <div><dt><kbd>Alt+T</kbd></dt><dd>{t(i18n, "reader.extractToTask")}</dd></div>
                     <div><dt><kbd>h</kbd></dt><dd>{t(i18n, "reader.shortcutNextHighlight")}</dd></div>
                     <div><dt><kbd>Shift+h</kbd></dt><dd>{t(i18n, "reader.shortcutPrevHighlight")}</dd></div>
                     <div><dt><kbd>Shift+F</kbd></dt><dd>{t(i18n, "reader.shortcutImmersive")}</dd></div>
@@ -1961,6 +2017,14 @@ import { aiFailureKey } from "../libs/ai-feedback";
                     >
                         <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg>
                         {t(i18n, "reader.extractToCards")}
+                    </button>
+                    <button
+                        type="button"
+                        class="glean-btn glean-btn--ghost glean-reader__selection-btn"
+                        onclick={() => void extractToHorizonTask()}
+                        title={t(i18n, "reader.extractToTaskHint")}
+                    >
+                        ✅ {t(i18n, "reader.extractToTask")}
                     </button>
                     <button
                         type="button"
@@ -2284,6 +2348,14 @@ import { aiFailureKey } from "../libs/ai-feedback";
                                     onclick={(e) => { e.stopPropagation(); void copyOutlineMarkdown(); }}
                                 >
                                     📋 {t(i18n, "reader.copyOutline")}
+                                </button>
+                                <button
+                                    type="button"
+                                    class="glean-btn glean-btn--ghost glean-btn--xs glean-reader__slice-btn"
+                                    title={t(i18n, "reader.createMindmapHint")}
+                                    onclick={(e) => { e.stopPropagation(); void createMindmapDoc(); }}
+                                >
+                                    🧠 {t(i18n, "reader.createMindmap")}
                                 </button>
                                 <button
                                     type="button"

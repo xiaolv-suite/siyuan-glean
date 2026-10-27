@@ -8,6 +8,15 @@ Lv Glean organizes clippings and articles already in SiYuan. It does not crawl t
 
 [中文说明](README.md) · [Latest Release](https://github.com/ai68298100/siyuan-glean/releases/latest) · [Capability matrix](docs/CAPABILITY-MATRIX.md) · [Feedback](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.51 update (2026-10-27)
+
+This release implements Task Horizon GTD action extraction and native SiYuan mindmap generation from outlines.
+
+**New features & improvements:**
+
+- **Task Horizon Action Extraction**: Selection toolbar adds an "✅ Extract to Task" action (supported via `Alt+T`) generating backlinked GTD action tasks and dispatching event payloads.
+- **Native SiYuan Mindmap Generation**: Companion outline adds a "🧠 SiYuan Mindmap" 1-click generator mounting `custom-sy-list-mindmap="true"` for interactive visual folding mindmaps.
+
 ## v1.3.50 update (2026-10-27)
 
 This release implements adaptive WeChat source matching in library filters and a new "WeChat Articles" smart preset.

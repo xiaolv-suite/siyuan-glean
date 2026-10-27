@@ -1461,5 +1461,11 @@
   "wechat.openWereadShelf": "前往微信读书网页版（扫码登录 / 书架）",
   "wechat.localReaderOption": "无需微信登录，直接在思源中纯净阅读",
   "wechat.localReaderDesc": "小驴拾遗已自动完成排版清洗、插图修复与去噪，无需扫码即可享受专注沉浸阅读",
-  "wechat.openLocalReader": "在拾遗阅读器中直接打开"
+  "wechat.openLocalReader": "在拾遗阅读器中直接打开",
+  "reader.extractToTask": "提炼待办",
+  "reader.extractToTaskHint": "提炼为 GTD 行动项待办（Task Horizon 联动，Alt+T）",
+  "reader.extractedToTask": "已提炼为待办行动项并存入剪贴板！",
+  "reader.createMindmap": "思源脑图",
+  "reader.createMindmapHint": "按大纲生成思源原生思维导图文档（挂载 custom-sy-list-mindmap）",
+  "reader.mindmapCreated": "思维导图文档创建成功并已在新标签打开！"
 }

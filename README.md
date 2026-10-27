@@ -8,6 +8,15 @@
 
 [English](README.en-US.md) · [下载最新版](https://github.com/ai68298100/siyuan-glean/releases/latest) · [能力矩阵](docs/CAPABILITY-MATRIX.md) · [反馈与问题](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.51 更新（2026-10-27）
+
+本次版本实现 Task Horizon 待办提炼联动与长文大纲原生思源脑图化。
+
+**新增与体验增强：**
+
+- **Task Horizon 待办提炼联动**：阅读器划词浮条增设「✅ 提炼待办」（支持 `Alt+T`），生成带原文块引用反链的 GTD 待办并自动派发任务事件。
+- **长文大纲思源脑图化挂载**：伴生栏大纲树提供「🧠 思源脑图」一键建稿，挂载 `custom-sy-list-mindmap="true"` 属性秒级生成思源原生折叠交互思维导图。
+
 ## v1.3.50 更新（2026-10-27）
 
 本次版本实现读库分面筛选微信来源自适应融合与智能视图「公众号精选」预设。

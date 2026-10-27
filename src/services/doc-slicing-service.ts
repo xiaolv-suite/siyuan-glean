@@ -1,6 +1,7 @@
 import type { Plugin } from "siyuan";
 import { createDocWithMd } from "../api/client.ts";
-import { formatSliceMarkdown, type DocSlicePlan } from "../domain/doc-slicing.ts";
+import { formatSliceMarkdown, buildOutlineMindmapMarkdown, type DocSlicePlan } from "../domain/doc-slicing.ts";
+import type { OutlineItem } from "../domain/outline.ts";
 import { writeClip, type ReadingClipContext } from "./clip-store.ts";
 
 export interface CreateSliceDocsResult {
@@ -84,4 +85,39 @@ export async function createSliceSubDocuments(
         createdDocIds,
         errors,
     };
+}
+
+/**
+ * 为文章创建思源原生思维导图文档（挂载 custom-sy-list-mindmap）
+ */
+export async function createOutlineMindmapDocument(
+    plugin: Plugin,
+    context: ReadingClipContext,
+    outline: readonly OutlineItem[],
+): Promise<{ ok: boolean; docId?: string; error?: string }> {
+    const box = context.location?.box;
+    const parentHpath = context.location?.hpath;
+    if (!box || !parentHpath) {
+        return { ok: false, error: "无法获取原文档所在的笔记本或存储路径" };
+    }
+
+    const title = (context.title || "未命名长文").replace(/[\\/\u0000-\u001f]/g, " ").trim().slice(0, 80);
+    const targetPath = `${parentHpath}/《${title}》· 思维导图`;
+    const markdown = buildOutlineMindmapMarkdown(context.title, context.id, outline);
+
+    try {
+        const docId = await createDocWithMd(box, targetPath, markdown);
+        if (!/^\d{14}-[0-9a-z]{7}$/.test(docId)) {
+            throw new Error("创建脑图文档返回的 ID 非法");
+        }
+        await writeClip(plugin, docId, {
+            status: "done",
+            aiTags: ["思维导图", "大纲脑图"],
+            summary: `从长文《${context.title}》提取的原生思维导图`,
+        }, { force: true });
+        return { ok: true, docId };
+    } catch (error) {
+        console.warn("[glean] 创建脑图文档失败:", error);
+        return { ok: false, error: String(error) };
+    }
 }

@@ -1461,5 +1461,11 @@
   "wechat.openWereadShelf": "Open WeRead Web (Login / Shelf)",
   "wechat.localReaderOption": "Read locally in SiYuan without login",
   "wechat.localReaderDesc": "Lv Glean has purified the layout, images and ads locally for instant offline reading",
-  "wechat.openLocalReader": "Open in Glean Reader"
+  "wechat.openLocalReader": "Open in Glean Reader",
+  "reader.extractToTask": "Extract to Task",
+  "reader.extractToTaskHint": "Extract as a GTD action task (Task Horizon bridge, Alt+T)",
+  "reader.extractedToTask": "Extracted as action task and copied to clipboard!",
+  "reader.createMindmap": "SiYuan Mindmap",
+  "reader.createMindmapHint": "Generate native SiYuan mindmap doc from outline",
+  "reader.mindmapCreated": "Mindmap document created and opened in new tab!"
 }
