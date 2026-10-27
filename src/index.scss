@@ -4,6 +4,8 @@
  * 弹簧微动效。颜色只用 b3 CSS 变量 + 品牌琥珀渐变（--glean-grad），明暗主题自适应。
  */
 
+@use "./styles/tokens.scss" as *;
+
 .glean-source-author {
     border: 0;
     background: transparent;
