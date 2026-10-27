@@ -8,6 +8,15 @@ Lv Glean organizes clippings and articles already in SiYuan. It does not crawl t
 
 [中文说明](README.md) · [Latest Release](https://github.com/ai68298100/siyuan-glean/releases/latest) · [Capability matrix](docs/CAPABILITY-MATRIX.md) · [Feedback](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.37 update (2026-10-27)
+
+This release implements batch WeChat content purification on the workbench and modular SCSS architectural decoupling.
+
+**New features & improvements:**
+
+- **Batch WeChat Content Purification**: `LibraryBatchBar.svelte` adds WeChat awareness; when selected items contain WeChat clippings, the batch bar exposes a 1-click "✨ Purify WeChat" action to repair multiple legacy articles simultaneously.
+- **Modular SCSS Architecture**: Established the `src/styles/components/` modular system, decoupling `wechat.scss`, `slicing.scss`, and `palette.scss` for improved maintainability and faster hot reloading.
+
 ## v1.3.36 update (2026-10-27)
 
 This release implements WeChat deep content purification, SVG interactive layout extraction, component cards conversion, and canonical deduplication fingerprints.

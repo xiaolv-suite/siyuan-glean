@@ -37,7 +37,7 @@ import { ageDays, todayStamp } from "../domain/resurface.ts";
 import { recordReadingDone } from "../services/checkin-bridge";
 import { hasSourceAction, openTargetForCarrier, resolveCarrier, sourceUrlForCarrier } from "../domain/carrier";
 import { isWechatUrl, displayWechatAuthor } from "../domain/wechat";
-import { batchRecognizeWechatAuthors, scanAndFillWechatAuthor } from "../services/wechat-service";
+import { batchRecognizeWechatAuthors, scanAndFillWechatAuthor, purifyWechatArticle } from "../services/wechat-service";
 import ClipStatusActions from "./ClipStatusActions.svelte";
 import ClipRankControls from "./ClipRankControls.svelte";
 import { installMobileViewportVars } from "../libs/mobile-viewport";
@@ -998,6 +998,41 @@ async function batchAddTag(tag: string): Promise<void> {
         showMessage(t(i18n, "library.batchTagsApplied", { count }), 3000);
     } catch (err) {
         console.warn("[LvGlean] 批量打标签失败:", err);
+        showMessage(t(i18n, "msg.actionFailed"), 3000);
+    } finally {
+        batchBusy = false;
+    }
+}
+
+const hasWechatSelected = $derived.by(() => {
+    for (const id of selection) {
+        const entry = index.clips[id];
+        if (entry && (isWechatUrl(entry.url) || isWechatUrl(entry.site))) {
+            return true;
+        }
+    }
+    return false;
+});
+
+async function batchPurifyWechat(): Promise<void> {
+    if (batchBusy || selection.size === 0) return;
+    const wechatDocIds = [...selection].filter((id) => {
+        const entry = index.clips[id];
+        return entry && (isWechatUrl(entry.url) || isWechatUrl(entry.site));
+    });
+    if (wechatDocIds.length === 0) return;
+    batchBusy = true;
+    let count = 0;
+    try {
+        for (const docId of wechatDocIds) {
+            const res = await purifyWechatArticle(facade.pluginInstance, docId);
+            if (res.ok) count += 1;
+        }
+        showMessage(t(i18n, "wechat.batchPurifyDone", { count }), 3000);
+        selection = new Set();
+        facade.notifyDataChanged();
+    } catch (err) {
+        console.warn("[glean] 批量提纯失败:", err);
         showMessage(t(i18n, "msg.actionFailed"), 3000);
     } finally {
         batchBusy = false;
@@ -3484,6 +3519,8 @@ function metaLine(entry: Row): string {
             onClear={clearSelection}
             onAddTag={batchAddTag}
             onSetAuthor={batchSetAuthor}
+            {hasWechatSelected}
+            onPurifyWechat={batchPurifyWechat}
         />
     {:else if view === "resurface"}
         <ResurfaceView

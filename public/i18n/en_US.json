@@ -1426,5 +1426,7 @@
   "wechat.purifyAction": "Purify Article",
   "wechat.purifying": "Purifying…",
   "wechat.purifyTitle": "Deep purify WeChat content (images, math, code, background images, and noise)",
-  "wechat.purifyDone": "Content purified! Pure body: ~${count} words"
+  "wechat.purifyDone": "Content purified! Pure body: ~${count} words",
+  "wechat.batchPurify": "Purify WeChat",
+  "wechat.batchPurifyDone": "Purified ${count} WeChat articles"
 }

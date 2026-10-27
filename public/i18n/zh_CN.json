@@ -1426,5 +1426,7 @@
   "wechat.purifyAction": "提纯正文",
   "wechat.purifying": "正在提纯…",
   "wechat.purifyTitle": "深度提纯微信正文（修复懒加载/抢救背景长图/逆向公式与代码块/清除噪点）",
-  "wechat.purifyDone": "正文提纯完成！当前纯净正文约 ${count} 字"
+  "wechat.purifyDone": "正文提纯完成！当前纯净正文约 ${count} 字",
+  "wechat.batchPurify": "提纯公众号",
+  "wechat.batchPurifyDone": "已完成 ${count} 篇微信文章正文深度提纯"
 }

@@ -18,9 +18,11 @@
         onKeepFiltered: (origin: Element | null) => void;
         onAddTag?: (tag: string) => void | Promise<void>;
         onSetAuthor?: (author: string) => void | Promise<void>;
+        onPurifyWechat?: () => void | Promise<void>;
+        hasWechatSelected?: boolean;
     }
 
-    let { i18n, selectedCount, hiddenCount, displayedCount, displayedSelectedCount, busy = false, onApply, onOpenAi, onClear, onSelectDisplayed, onKeepFiltered, onAddTag, onSetAuthor }: Props = $props();
+    let { i18n, selectedCount, hiddenCount, displayedCount, displayedSelectedCount, busy = false, onApply, onOpenAi, onClear, onSelectDisplayed, onKeepFiltered, onAddTag, onSetAuthor, onPurifyWechat, hasWechatSelected = false }: Props = $props();
     const filteredSelectedCount = $derived(Math.max(0, selectedCount - hiddenCount));
     let summaryEl = $state<HTMLElement | null>(null);
     let barEl = $state<HTMLElement | null>(null);
@@ -89,6 +91,9 @@
             {/if}
             {#if onSetAuthor}
                 <button type="button" class="glean-bb" disabled={busy} onclick={triggerSetAuthor}>👤 {t(i18n, "library.batchSetAuthor")}</button>
+            {/if}
+            {#if onPurifyWechat && hasWechatSelected}
+                <button type="button" class="glean-bb" disabled={busy} onclick={() => void onPurifyWechat?.()}>✨ {t(i18n, "wechat.batchPurify")}</button>
             {/if}
             <button type="button" class="glean-bb glean-bb--ai" disabled={busy} onclick={onOpenAi}>{t(i18n, "aiBatch.title")}</button>
         </div>

@@ -8,6 +8,15 @@
 
 [English](README.en-US.md) · [下载最新版](https://github.com/ai68298100/siyuan-glean/releases/latest) · [能力矩阵](docs/CAPABILITY-MATRIX.md) · [反馈与问题](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.37 更新（2026-10-27）
+
+本次版本实现读库工作台批量微信正文提纯与 SCSS 模块化解耦重构。
+
+**新增与体验增强：**
+
+- **批量操作栏微信正文批量提纯**：`LibraryBatchBar.svelte` 新增微信感知；当选中文章中包含微信剪藏时，底栏自动浮现「✨ 提纯公众号」快捷动作，一键批量修复老旧剪藏的裂图、代码块与噪点。
+- **SCSS 样式系统工程化解耦**：建立 `src/styles/components/` 模块化目录体系，拆分 `wechat.scss`、`slicing.scss`、`palette.scss` 独立样式，主文件大幅瘦身并优化热重载性能。
+
 ## v1.3.36 更新（2026-10-27）
 
 本次版本实现微信公众号正文深度提纯服务、SVG 交互长图动画清洗、名片转换与跨渠道绝对查重指纹。

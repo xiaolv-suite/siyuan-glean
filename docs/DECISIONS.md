@@ -2281,3 +2281,12 @@ T-3416 承接方向五（有依据的阅读 AI）与同类产品对标（Readwis
    - 新增 `repairWechatCards`，将 `<mp-common-profile>` 和 `<mp-miniprogram>` 转换为结构化 Markdown 优雅引述卡；
 4. 跨终端渠道绝对查重指纹（`src/domain/wechat.ts`）：
    - 新增 `canonicalWechatUrlKey`，依据核心三元组（`__biz`, `mid`, `idx`）或短码生成指纹，彻底消灭随机跟踪参数引发的重复收录。
+
+## D-0350（2026-10-27）读库批量微信正文提纯与 SCSS 模块化解耦重构（T-3471）
+
+工程架构瘦身与批量自愈体验飞跃：
+1. 读库批量微信提纯（`LibraryBatchBar.svelte` & `DockPanel.svelte`）：
+   - 批量底栏新增微信类型感知（`hasWechatSelected`），选中微信文章时自动展示「✨ 提纯公众号」批量动作；
+   - 一键串联批量执行 `purifyWechatArticle`，批量修复老旧微信剪藏的裂图与格式，效率大幅跃升；
+2. SCSS 样式系统工程化解耦（`src/styles/components/`）：
+   - 建立 `wechat.scss`、`slicing.scss`、`palette.scss` 独立样式模块并在主文件中 `@use` 引入，消除单文件臃肿，优化 Vite 热重载性能与代码可维护性。

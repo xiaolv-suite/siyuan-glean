@@ -1,0 +1,166 @@
+/* 全插件色彩主题切换体系样式（Theme Palette System） */
+.glean-theme-palette-group {
+    margin-bottom: var(--glean-space-3, 12px);
+}
+
+.glean-palette-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: var(--glean-space-2, 8px);
+    margin-top: var(--glean-space-2, 8px);
+}
+
+.glean-palette-card {
+    display: flex;
+    align-items: center;
+    gap: var(--glean-space-2, 8px);
+    padding: var(--glean-space-2, 8px) var(--glean-space-2-5, 10px);
+    background: var(--glean-inset-surface, var(--b3-theme-surface));
+    border: 1px solid var(--glean-border-soft, var(--b3-border-color));
+    border-radius: var(--glean-radius-md, 8px);
+    cursor: pointer;
+    text-align: left;
+    transition: all 150ms ease;
+    position: relative;
+    color: inherit;
+    font: inherit;
+}
+
+.glean-palette-card:hover {
+    border-color: var(--lv-brand);
+    background: color-mix(in srgb, var(--lv-brand) 6%, var(--b3-theme-surface));
+    transform: translateY(-1px);
+}
+
+.glean-palette-card--active {
+    border-color: var(--lv-brand);
+    background: color-mix(in srgb, var(--lv-brand) 12%, var(--b3-theme-surface));
+    box-shadow: 0 0 0 1px var(--lv-brand);
+}
+
+.glean-palette-preview {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+    padding: 2px;
+    box-sizing: border-box;
+    box-shadow: 0 1px 3px rgba(16, 24, 40, 0.25);
+}
+
+.glean-palette-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.85);
+}
+
+.glean-palette-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.glean-palette-name {
+    font-size: var(--glean-text-sm, 13px);
+    font-weight: 600;
+    color: var(--b3-theme-on-background);
+}
+
+.glean-palette-desc {
+    font-size: 11px;
+    color: var(--b3-theme-on-surface);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.glean-palette-check {
+    font-weight: 700;
+    font-size: 12px;
+    color: var(--lv-brand);
+}
+
+/* 阅读器与工作台快捷色盘微菜单 */
+.glean-reader__palette-picker,
+.glean-palette-quick-wrap {
+    position: relative;
+    display: inline-flex;
+}
+
+.glean-reader__toolbar-palette {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 6px;
+}
+
+.glean-palette-preview-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.85);
+}
+
+.glean-head-palette-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255, 255, 255, 0.85);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.glean-reader__palette-dropdown,
+.glean-palette-quick-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    z-index: 100;
+    background: var(--b3-theme-surface);
+    border: 1px solid var(--b3-border-color);
+    border-radius: var(--glean-radius-md, 8px);
+    padding: 4px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 140px;
+}
+
+.glean-reader__palette-opt,
+.glean-palette-quick-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 8px;
+    border: none;
+    background: transparent;
+    border-radius: var(--glean-radius-sm, 4px);
+    cursor: pointer;
+    font-size: var(--glean-text-xs, 12px);
+    color: var(--b3-theme-on-surface);
+    text-align: left;
+    transition: all 120ms ease;
+}
+
+.glean-reader__palette-opt:hover,
+.glean-palette-quick-item:hover {
+    background: rgba(0, 0, 0, 0.06);
+    color: var(--b3-theme-on-background);
+}
+
+.glean-reader__palette-opt--active,
+.glean-palette-quick-item--active {
+    background: var(--glean-primary-soft, rgba(13, 148, 136, 0.12));
+    color: var(--lv-brand);
+    font-weight: 600;
+}
+
+.glean-palette-dot-mini {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
