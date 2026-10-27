@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { planDocSlices, formatSliceMarkdown } from "../src/domain/doc-slicing.ts";
+import { planDocSlices, formatSliceMarkdown, buildSliceStartMap } from "../src/domain/doc-slicing.ts";
 import type { OutlineItem } from "../src/domain/outline.ts";
 
 test("planDocSlices 在空大纲时平滑降级为单片全篇", () => {
@@ -51,4 +51,16 @@ test("formatSliceMarkdown 生成包含标准思源块引用与原长文链接的
     assert.ok(md.includes("((20261027120000-blk0001 '点击直达正文小节'))"));
     assert.ok(md.includes("https://example.com/article"));
     assert.ok(md.includes("1.1 发展历程"));
+});
+
+test("buildSliceStartMap 构建起始块映射索引", () => {
+    const slices = [
+        { index: 1, title: "切片1", startBlockId: "blk-1", sectionIds: ["blk-1"], sectionTitles: ["T1"], estimatedWords: 100, estimatedMinutes: 1 },
+        { index: 2, title: "切片2", startBlockId: "blk-2", sectionIds: ["blk-2"], sectionTitles: ["T2"], estimatedWords: 200, estimatedMinutes: 2 },
+    ];
+    const map = buildSliceStartMap(slices);
+    assert.equal(map.size, 2);
+    assert.equal(map.get("blk-1")?.index, 1);
+    assert.equal(map.get("blk-2")?.index, 2);
+    assert.equal(map.get("non-exist"), undefined);
 });

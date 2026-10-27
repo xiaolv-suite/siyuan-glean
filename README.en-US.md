@@ -8,6 +8,15 @@ Lv Glean organizes clippings and articles already in SiYuan. It does not crawl t
 
 [中文说明](README.md) · [Latest Release](https://github.com/ai68298100/siyuan-glean/releases/latest) · [Capability matrix](docs/CAPABILITY-MATRIX.md) · [Feedback](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.33 update (2026-10-27)
+
+This release implements the quick theme palette picker on the reader toolbar and progressive slice markers in the outline tree.
+
+**New features & improvements:**
+
+- **Quick Theme Palette Picker on Toolbar**: Added a dedicated "🎨" theme palette menu to `ReaderTab.svelte` top toolbar, allowing readers to instantly switch between all 6 color palettes while reading without opening settings.
+- **Progressive Slice Markers in Outline Tree**: The companion outline tree automatically annotates slice starting sections with estimated reading time pills (`✂️ Slice 1 · ~8m`), delivering clear pacing for longform reading.
+
 ## v1.3.32 update (2026-10-27)
 
 This release implements the plugin-wide Theme Palette System, offering 6 curated high-quality color themes with instant live preview.

@@ -134,8 +134,17 @@ export function planDocSlices(
 }
 
 /**
- * 格式化切片子文档初始 Markdown 内容（含思源标准块引用反链）
+ * 构建起始块 ID 到切片对象的快速查找表（供大纲树与阅读器导轨秒级渲染）
  */
+export function buildSliceStartMap(slices: readonly DocSlice[]): Map<string, DocSlice> {
+    const map = new Map<string, DocSlice>();
+    for (const slice of slices) {
+        if (slice.startBlockId) {
+            map.set(slice.startBlockId, slice);
+        }
+    }
+    return map;
+}
 export function formatSliceMarkdown(
     slice: DocSlice,
     articleTitle: string,

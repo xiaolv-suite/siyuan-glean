@@ -38,6 +38,9 @@ import { aiFailureKey } from "../libs/ai-feedback";
     import { makeQuoteCardPreview } from "./flashcard-dialog";
     import { openQuoteCardDialog } from "./quote-card-dialog";
     import { openDocSlicingDialog } from "./doc-slicing-dialog";
+    import { THEME_PALETTES, type ThemePaletteId } from "../domain/theme-palette";
+    import { applyThemePaletteToDom } from "../libs/theme-palette-controller";
+    import { buildSliceStartMap, planDocSlices } from "../domain/doc-slicing";
     import { findRelatedOutcome, type RelatedReason } from "../services/enrich-service";
     import { pickNextUnread } from "../services/resurface-service";
     import { articleQuestionEnabled, clearReaderMarkdownCache, insertAiCalloutToDocument, readerAiEnabled, readerArticleQuestion, readerSummarize, readerTranslate, saveReaderSummary } from "../services/reader-ai";
@@ -93,6 +96,8 @@ import { aiFailureKey } from "../libs/ai-feedback";
     let protyleHost = $state<HTMLDivElement | null>(null);
     let readPointHandle: ReadPointObserverHandle | null = null;
     let readPointRestoredDocId = "";
+    let paletteMenuOpen = $state(false);
+    let currentThemePalette = $state<ThemePaletteId>("teal");
     let readerRoot = $state<HTMLDivElement | null>(null);
     let sidebarCollapsed = $state(false);
     let immersive = $state(false);
@@ -130,6 +135,8 @@ import { aiFailureKey } from "../libs/ai-feedback";
             ? outline.filter((item) => item.title.toLowerCase().includes(outlineFilter.trim().toLowerCase()))
             : outline
     );
+    const docSlices = $derived(planDocSlices(outline, { totalWords: context?.words }).slices);
+    const sliceStartMap = $derived(buildSliceStartMap(docSlices));
     let outlineLoading = $state(false);
     let outlineError = $state(false);
     let outlineGeneration = 0;
@@ -239,6 +246,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
             if (!appearanceTouched) readerAppearance = prefs.readerAppearance;
             if (!sidebarTouched) sidebarCollapsed = prefs.readerSidebarCollapsed;
             if (!speechRateTouched && prefs.speechRate) speechRate = prefs.speechRate;
+            currentThemePalette = prefs.themePalette || "teal";
         }).catch(() => undefined);
         const root = readerRoot;
         root?.addEventListener("keydown", onReaderKey);
@@ -480,6 +488,18 @@ import { aiFailureKey } from "../libs/ai-feedback";
         openDocSlicingDialog(facade, context, outline, (blockId) => {
             scrollToHighlight(blockId);
         });
+    }
+
+    async function selectPalette(id: ThemePaletteId): Promise<void> {
+        currentThemePalette = id;
+        applyThemePaletteToDom(null, id);
+        paletteMenuOpen = false;
+        try {
+            await saveUiPrefs(facade.pluginInstance, { themePalette: id });
+            facade.notifyDataChanged();
+        } catch (error) {
+            console.warn("[glean] 保存主题色彩失败:", error);
+        }
     }
 
     async function loadDocHighlights(id: string): Promise<void> {
@@ -1709,6 +1729,33 @@ import { aiFailureKey } from "../libs/ai-feedback";
                 <span class={`glean-reader__theme-dot glean-reader__theme-dot--${readerAppearance.theme}`} aria-hidden="true"></span>
                 <span>{themeLabel(readerAppearance.theme)}</span>
             </button>
+            <div class="glean-reader__palette-picker">
+                <button
+                    type="button"
+                    class="glean-btn glean-btn--ghost glean-reader__toolbar-palette"
+                    title={t(i18n, "settings.themePalette")}
+                    aria-label={t(i18n, "settings.themePalette")}
+                    onclick={() => { paletteMenuOpen = !paletteMenuOpen; }}
+                >
+                    🎨 <span class="glean-palette-preview-dot" style="background: var(--lv-brand);"></span>
+                </button>
+                {#if paletteMenuOpen}
+                    <div class="glean-reader__palette-dropdown" role="menu">
+                        {#each THEME_PALETTES as p}
+                            <button
+                                type="button"
+                                class="glean-reader__palette-opt"
+                                class:glean-reader__palette-opt--active={currentThemePalette === p.id}
+                                title={t(i18n, p.nameKey)}
+                                onclick={() => void selectPalette(p.id)}
+                            >
+                                <span class="glean-palette-dot-mini" style="background: {p.brand};"></span>
+                                <span>{t(i18n, p.nameKey)}</span>
+                            </button>
+                        {/each}
+                    </div>
+                {/if}
+            </div>
             {#if immersive}
                 <button type="button" class="glean-btn glean-btn--ghost glean-reader__toolbar-native" title={t(i18n, "reader.openNative")} onclick={openNativeTab}>{t(i18n, "reader.openNative")}</button>
                 <button type="button" class="glean-btn glean-btn--pri glean-reader__toolbar-exit" onclick={exitImmersive}>{t(i18n, "reader.immersiveExit")}</button>
@@ -2140,6 +2187,16 @@ import { aiFailureKey } from "../libs/ai-feedback";
                     {:else}
                         <nav class="glean-reader__outline" aria-label={t(i18n, "reader.outlineTitle")}>
                             {#each visibleOutline as item (item.id)}
+                                {#if sliceStartMap.has(item.id)}
+                                    {@const slice = sliceStartMap.get(item.id)}
+                                    {#if slice}
+                                        <div class="glean-reader__outline-slice-marker" role="separator">
+                                            <span class="glean-reader__outline-slice-pill">
+                                                ✂️ {slice.title} · 约 {slice.estimatedMinutes}m
+                                            </span>
+                                        </div>
+                                    {/if}
+                                {/if}
                                 <button
                                     class="glean-reader__outline-item"
                                     class:glean-reader__outline-item--active={activeOutlineId === item.id}

@@ -13616,3 +13616,90 @@ body.b3-theme-dark .glean-panel--mobile,
     font-size: 12px;
     color: var(--lv-brand);
 }
+
+/* 阅读器工具栏快捷色彩切换与大纲切片节奏导轨 */
+.glean-reader__palette-picker {
+    position: relative;
+    display: inline-flex;
+}
+
+.glean-reader__toolbar-palette {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 6px;
+}
+
+.glean-palette-preview-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.85);
+}
+
+.glean-reader__palette-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    z-index: 100;
+    background: var(--b3-theme-surface);
+    border: 1px solid var(--b3-border-color);
+    border-radius: var(--glean-radius-md, 8px);
+    padding: 4px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 130px;
+}
+
+.glean-reader__palette-opt {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    border: none;
+    background: transparent;
+    border-radius: var(--glean-radius-sm, 4px);
+    cursor: pointer;
+    font-size: var(--glean-text-xs, 12px);
+    color: var(--b3-theme-on-surface);
+    text-align: left;
+    transition: all 120ms ease;
+}
+
+.glean-reader__palette-opt:hover {
+    background: rgba(0, 0, 0, 0.06);
+    color: var(--b3-theme-on-background);
+}
+
+.glean-reader__palette-opt--active {
+    background: var(--glean-primary-soft, rgba(13, 148, 136, 0.12));
+    color: var(--lv-brand);
+    font-weight: 600;
+}
+
+.glean-palette-dot-mini {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.glean-reader__outline-slice-marker {
+    display: flex;
+    align-items: center;
+    padding: var(--glean-space-1, 4px) 0;
+    margin-top: var(--glean-space-1-5, 6px);
+}
+
+.glean-reader__outline-slice-pill {
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 1px 8px;
+    border-radius: 9999px;
+    background: var(--glean-primary-soft, rgba(13, 148, 136, 0.12));
+    color: var(--lv-brand);
+    border: 1px dashed color-mix(in srgb, var(--lv-brand) 40%, transparent);
+    letter-spacing: 0.02em;
+}
