@@ -8,6 +8,16 @@ Lv Glean organizes clippings and articles already in SiYuan. It does not crawl t
 
 [中文说明](README.md) · [Latest Release](https://github.com/ai68298100/siyuan-glean/releases/latest) · [Capability matrix](docs/CAPABILITY-MATRIX.md) · [Feedback](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.41 update (2026-10-27)
+
+This release implements WeChat avatar badges across views, the T-key pin today shortcut, and 1-click block reference copying.
+
+**New features & improvements:**
+
+- **WeChat Avatar Badges in Preview**: Preview area source links now showcase the publisher's circular avatar.
+- **T-Key Pin Shortcut in Resurfacing**: Readers can press `T` to quickly pin/unpin cards during keyboard triage.
+- **1-Click Copy Block Reference**: Added block reference copying in both preview and companion bars for easy note-taking.
+
 ## v1.3.40 update (2026-10-27)
 
 This release implements read-point resume badges on library cards and hardened WeChat word count noise filtering.

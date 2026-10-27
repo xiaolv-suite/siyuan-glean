@@ -526,6 +526,11 @@ function handleResurfaceShortcut(event: KeyboardEvent): void {
             event.stopPropagation();
             void act(pick, "archive");
             break;
+        case "togglePin":
+            event.preventDefault();
+            event.stopPropagation();
+            void togglePin(pick);
+            break;
         case "cyclePriority": {
             event.preventDefault();
             event.stopPropagation();
@@ -837,6 +842,7 @@ function focusCard(id: string): void {
                     <kbd>A</kbd> {t(i18n, "resurface.later")}
                     <kbd>E</kbd> {t(i18n, "resurface.archive")}
                     <kbd>H</kbd> {t(i18n, "resurface.replace")}
+                    <kbd>T</kbd> {t(i18n, "resurface.shortcutPin")}
                     <kbd>P</kbd><kbd>1-5</kbd> {t(i18n, "library.keyboardPriority")}
                     <kbd>M</kbd> {t(i18n, "library.keyboardRating")}
                     <kbd>Esc</kbd> {t(i18n, "library.keyboardExit")}

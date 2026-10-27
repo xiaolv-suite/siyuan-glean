@@ -1438,5 +1438,8 @@
   "reader.copyOutlineHint": "一键复制 Markdown 缩进大纲层级，供思维导图或大纲软件使用",
   "reader.outlineCopied": "已复制大纲层级到剪贴板！",
   "reading.resumePoint": "已记录高精度阅读断点，点击打开可平滑续读",
-  "reading.resumePointShort": "续读"
+  "reading.resumePointShort": "续读",
+  "resurface.shortcutPin": "T 置顶",
+  "action.copyBlockRef": "复制块引用",
+  "reader.blockRefCopied": "已复制思源块引用到剪贴板！"
 }

@@ -798,6 +798,18 @@ import { aiFailureKey } from "../libs/ai-feedback";
         }
     }
 
+    async function copyArticleBlockRef(): Promise<void> {
+        if (!docId) return;
+        const title = context?.title || t(i18n, "panel.untitled");
+        const refText = `((${docId} '${title}'))`;
+        try {
+            await navigator.clipboard.writeText(refText);
+            showMessage(t(i18n, "reader.blockRefCopied"), 2500);
+        } catch {
+            showMessage(t(i18n, "msg.actionFailed"), 2500);
+        }
+    }
+
     function enterImmersive(): void {
         if (mode !== "read") setMode("read");
         shortcutHelp = false;
@@ -2079,6 +2091,9 @@ import { aiFailureKey } from "../libs/ai-feedback";
                         </button>
                         <button type="button" class="glean-btn glean-btn--ghost glean-wechat-publisher__btn" disabled={copyingCleanBody} onclick={() => void copyCleanMarkdown()} title={t(i18n, "reader.copyCleanMarkdownHint")}>
                             📋 {copyingCleanBody ? t(i18n, "reader.copying") : t(i18n, "reader.copyCleanMarkdown")}
+                        </button>
+                        <button type="button" class="glean-btn glean-btn--ghost glean-wechat-publisher__btn" onclick={() => void copyArticleBlockRef()} title={t(i18n, "action.copyBlockRef")}>
+                            🔗 {t(i18n, "action.copyBlockRef")}
                         </button>
                         <button type="button" class="glean-btn glean-btn--ghost glean-wechat-publisher__btn" onclick={backToLibrary} title={t(i18n, "reading.backToLibrary")}>
                             <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArrowLeft" /></svg>

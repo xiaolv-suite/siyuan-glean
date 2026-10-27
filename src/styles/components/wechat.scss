@@ -29,7 +29,6 @@
     flex-shrink: 0;
     border: 1px solid color-mix(in srgb, #07c160 40%, transparent);
 }
-
 .glean-wechat-publisher__info {
     display: flex;
     flex-direction: column;
@@ -153,4 +152,13 @@
         background: color-mix(in srgb, #07c160 20%, var(--b3-theme-surface));
         border-color: #07c160;
     }
+}
+
+.glean-preview__avatar {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 1px solid color-mix(in srgb, #07c160 40%, transparent);
 }

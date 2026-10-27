@@ -1438,5 +1438,8 @@
   "reader.copyOutlineHint": "Copy hierarchical outline in Markdown, ready for mindmaps",
   "reader.outlineCopied": "Outline hierarchy copied to clipboard!",
   "reading.resumePoint": "Read-point recorded, open to smooth resume",
-  "reading.resumePointShort": "Resume"
+  "reading.resumePointShort": "Resume",
+  "resurface.shortcutPin": "T Pin",
+  "action.copyBlockRef": "Copy Block Ref",
+  "reader.blockRefCopied": "Block reference copied to clipboard!"
 }

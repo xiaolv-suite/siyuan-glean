@@ -41,6 +41,7 @@
     let urlDraft = $state("");
     let expectedUrl = "";
     let excerpt = $state<ExcerptSelection | null>(null);
+    let wechatAvatar = $state<string | null>(null);
     let mounted = false;
     const requests = createLatestRequestGate();
     const candidate = $derived(entry.kind === "candidate" && attrs && !attrs.status && !attrs.internal && !attrs.excluded);
@@ -89,6 +90,10 @@
             if (host) {
                 const jsName = host.querySelector("#js_name");
                 if (jsName?.textContent?.trim()) domSnippet = jsName.textContent.trim();
+                const avatarImg = host.querySelector<HTMLImageElement>('img.radius_avatar, img.profile_avatar, img[data-src*="avatar"], img[src*="avatar"]');
+                if (avatarImg) {
+                    wechatAvatar = avatarImg.src || avatarImg.getAttribute("data-src") || null;
+                }
                 if (!domSnippet) {
                     const nickname = host.querySelector(".profile_nickname, .profile_meta_value");
                     if (nickname?.textContent?.trim()) domSnippet = nickname.textContent.trim();
@@ -213,6 +218,17 @@
         catch (error) { fail(error); }
     }
 
+    async function copyBlockRef(): Promise<void> {
+        const title = entry.title || t(i18n, "panel.untitled");
+        const refText = `((${entry.id} '${title}'))`;
+        try {
+            await navigator.clipboard.writeText(refText);
+            showMessage(t(i18n, "reader.blockRefCopied"), 2500);
+        } catch {
+            showMessage(t(i18n, "msg.actionFailed"), 2500);
+        }
+    }
+
     async function downloadMarkdown(): Promise<void> {
         if (exporting || entry.kind !== "clip") return;
         exporting = true;
@@ -240,6 +256,7 @@
     <div class="glean-preview__header">
         <h2 id={titleId} title={entry.title}>{entry.title || t(i18n, "panel.untitled")}</h2>
         <div class="glean-preview__header-actions" role="group" aria-label={t(i18n, "preview.title")}>
+            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyBlockRef()}>{t(i18n, "action.copyBlockRef")}</button>
             <button type="button" class="glean-btn glean-btn--ghost" onclick={() => facade.openReadingDocument(entry.id)}>{t(i18n, "preview.openDocument")}</button>
             {#if entry.kind === "clip"}<button type="button" class="glean-btn glean-btn--ghost" disabled={busy || exporting} onclick={() => void downloadMarkdown()}>{exporting ? t(i18n, "settings.exporting") : t(i18n, "export.markdown")}</button>{/if}
             <button type="button" class="glean-btn glean-btn--ghost" onclick={onClose}>{t(i18n, "preview.close")}</button>
@@ -249,7 +266,11 @@
         <span class="glean-preview__readonly-tag">📖 {t(i18n, "preview.readonly")}</span>
         {#if normalizeUrl(sourceUrl)}
             <a href={sourceUrl} target="_blank" rel="noopener noreferrer" class="glean-preview__source-link" title={sourceUrl}>
-                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanExternal" /></svg>
+                {#if wechatAvatar}
+                    <img class="glean-preview__avatar" src={wechatAvatar} alt="" referrerpolicy="no-referrer" />
+                {:else}
+                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanExternal" /></svg>
+                {/if}
                 <span>{previewSourceLabel()}</span>
             </a>
             {#if isWechatUrl(sourceUrl)}
