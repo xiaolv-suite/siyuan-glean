@@ -7,7 +7,7 @@ import type { GleanFacade } from "../types";
 import { t } from "../libs/i18n";
 import { actOnSurface, computeDailyFromIndex, pickSurfaceReplacementFromIndex, setSurfacePinned, undoSurfaceAction, type SurfaceAction, type SurfaceUndoToken } from "../services/resurface-service";
 import type { GleanIndex } from "../services/index-store";
-import { todayStamp, type SurfacePick, type SurfaceReason } from "../domain/resurface";
+import { todayStamp, type SurfacePick, type SurfaceReason, type SurfaceItem } from "../domain/resurface";
 import { computeRecent7DaysStatus } from "../domain/stats";
 import { hasSourceAction, openTargetForCarrier, resolveCarrier, sourceUrlForCarrier } from "../domain/carrier";
 import { clampSurfaceSwipe, resolveSurfaceSwipe, type SurfaceSwipeAction } from "../domain/surface-swipe";
@@ -162,6 +162,17 @@ function openSource(pick: SurfacePick) {
         return;
     }
     window.open(url, "_blank", "noopener,noreferrer");
+}
+
+async function copyPickBlockRef(item: SurfaceItem): Promise<void> {
+    const title = item.title || t(i18n, "panel.untitled");
+    const refText = `((${item.id} '${title}'))`;
+    try {
+        await navigator.clipboard.writeText(refText);
+        showMessage(t(i18n, "reader.blockRefCopied"), 2000);
+    } catch {
+        showMessage(t(i18n, "msg.actionFailed"), 2000);
+    }
 }
 
 function openReading(pick: SurfacePick) {
@@ -916,6 +927,9 @@ function focusCard(id: string): void {
                     <div class="glean-surf__acts">
                         <button class="glean-surf-act" aria-pressed={isPinnedToday(pick)} aria-busy={actingId === pick.item.id} aria-disabled={!!actingId || !!undoingId} onclick={() => void togglePin(pick)}>
                             <svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanPin" /></svg>{t(i18n, isPinnedToday(pick) ? "resurface.unpinToday" : "resurface.pinToday")}
+                        </button>
+                        <button class="glean-surf-act" title={t(i18n, "action.copyBlockRef")} aria-label={t(i18n, "action.copyBlockRef")} onclick={() => void copyPickBlockRef(pick.item)}>
+                            🔗 {t(i18n, "action.copyBlockRef")}
                         </button>
                         {#if hasSourceAction(pick.item.contentType, pick.item.url)}
                             <button class="glean-surf-act" aria-busy={actingId === pick.item.id} disabled={actingId === pick.item.id} onclick={() => openSource(pick)}>

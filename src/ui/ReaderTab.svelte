@@ -640,6 +640,17 @@ import { aiFailureKey } from "../libs/ai-feedback";
         }
     }
 
+    async function copyHighlightBlockRef(item: HighlightItem): Promise<void> {
+        const textSnippet = item.text.replace(/[\r\n]+/g, " ").trim().slice(0, 30);
+        const refText = `((${item.id} '${textSnippet}'))`;
+        try {
+            await navigator.clipboard.writeText(refText);
+            showMessage(t(i18n, "reader.blockRefCopied"), 2000);
+        } catch {
+            showMessage(t(i18n, "reader.actionFailed"), 3000);
+        }
+    }
+
     async function copyAllDocHighlights(): Promise<void> {
         if (!docHighlights.length) return;
         try {
@@ -2417,6 +2428,9 @@ import { aiFailureKey } from "../libs/ai-feedback";
                                     <div class="glean-reader__highlight-footer">
                                         <button class="glean-op-btn" type="button" title={t(i18n, "highlight.copyShare")} aria-label={t(i18n, "highlight.copyShare")} onclick={(e) => { e.stopPropagation(); void copyHighlightQuote(hl); }}>
                                             <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
+                                        </button>
+                                        <button class="glean-op-btn" type="button" title={t(i18n, "action.copyBlockRef")} aria-label={t(i18n, "action.copyBlockRef")} onclick={(e) => { e.stopPropagation(); void copyHighlightBlockRef(hl); }}>
+                                            🔗
                                         </button>
                                         <button class="glean-op-btn" type="button" title={t(i18n, "quoteCard.action")} aria-label={t(i18n, "quoteCard.action")} onclick={(e) => { e.stopPropagation(); quoteCardFromHighlight(hl); }}>
                                             🖼️

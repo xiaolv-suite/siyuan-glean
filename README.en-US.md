@@ -8,6 +8,15 @@ Lv Glean organizes clippings and articles already in SiYuan. It does not crawl t
 
 [中文说明](README.md) · [Latest Release](https://github.com/ai68298100/siyuan-glean/releases/latest) · [Capability matrix](docs/CAPABILITY-MATRIX.md) · [Feedback](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.44 update (2026-10-27)
+
+This release implements ubiquitous SiYuan native block reference copying across resurfacing cards, highlights wall, and companion notes.
+
+**New features & improvements:**
+
+- **1-Click Block Ref on Resurface Cards**: Resurfacing cards feature a 1-click button to copy a titled block reference (`((docId 'title'))`).
+- **Direct Block Ref for Highlights and Quotes**: Every highlight on the wall and companion panel supports 1-click block ref copying (`((blockId 'snippet...'))`) for instant note-linking.
+
 ## v1.3.43 update (2026-10-27)
 
 This release implements WeChat publisher green badge indicators in the sidebar rail, interactive 5-star rating, and a circular progress ring.
