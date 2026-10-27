@@ -8,6 +8,17 @@ Lv Glean organizes clippings and articles already in SiYuan. It does not crawl t
 
 [中文说明](README.md) · [Latest Release](https://github.com/ai68298100/siyuan-glean/releases/latest) · [Capability matrix](docs/CAPABILITY-MATRIX.md) · [Feedback](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.31 update (2026-10-27)
+
+This release implements progressive document slicing (Doc Slicing), the high-precision Read-Point Engine, and selection Alt+E card creation, alongside resolving onboarding dialog screen flicker.
+
+**New features & improvements:**
+
+- **Progressive Doc Slicing by Outline**: For long articles, the companion outline header provides a "✂️ Slice Doc" shortcut and `DocSlicingDialog.svelte`. It divides long articles into 5~15 min reading slices based on H2/H3 headings, generating sub-documents with native block reference backlinks into the later queue.
+- **High-Precision Read-Point Engine**: Added `read-point-observer.ts` using `IntersectionObserver` to track the viewport center line (10% slice). Dwell times over 1 second save `custom-lv-read-point` block IDs; opening articles automatically smooth-scrolls to the block with 1.5s pulse glow (`.glean-pulse-highlight`).
+- **Quick Selection Extract (Alt+E) to Lv Cards**: Selection toolbar adds a 1-click "Extract to Cards" action and global `Alt+E` shortcut, dispatching backlink cards to Lv Cards with 45% ghost button fallback when uninstalled.
+- **Onboarding Dialog Anti-Flicker Overhaul (Issue #16)**: Introduced asynchronous pre-resolution and smooth skeleton transitions, removing layout jumps between steps and immediately dismissing completed dialogs without ghost frames.
+
 ## v1.3.30 update (2026-10-27)
 
 This release implements WeChat article series/collection auto-tagging, a brand-new Quote Card generator, and high-DPI 2x Canvas PNG export.

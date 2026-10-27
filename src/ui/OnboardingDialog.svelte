@@ -38,7 +38,7 @@ let disposed = false;
 let progressTouched = false;
 let completionRequested = false;
 let doneBeforeOpen = false;
-let prefsLoaded = false;
+let prefsLoaded = $state(false);
 /** 用户已请求的目标步骤：moveTo 的 await 期间关窗时，onDestroy 保存意图步骤而非旧值 */
 let requestedStep: OnboardingStep = 1;
 
@@ -47,14 +47,18 @@ onMount(() => {
     let active = true;
     void loadUiPrefs(facade.pluginInstance).then((prefs) => {
         if (!active || disposed || completed) return;
-        prefsLoaded = true;
         if (prefs.onboardingDone && !progressTouched) {
             doneBeforeOpen = true;
+            onClose();
             return;
         }
-        if (progressTouched) return;
+        if (progressTouched) {
+            prefsLoaded = true;
+            return;
+        }
         // 扫描预览是派生数据，关闭后不落盘；从第 4 步恢复时回到第 3 步重算。
         step = prefs.onboardingStep === 4 ? 3 : prefs.onboardingStep;
+        prefsLoaded = true;
         if (step === 3) void runScan();
     }).catch((error) => {
         if (!active || disposed || completed) return;
@@ -283,7 +287,16 @@ function handleWindowKeydown(event: KeyboardEvent): void {
         <div class="glean-empty glean-onb-empty glean-onb-empty--error" role="alert">{t(i18n, "msg.actionFailed")}</div>
     {/if}
 
-    {#if step === 1}
+    {#if !prefsLoaded}
+        <div class="glean-onb-hero" role="region" aria-busy="true">
+            <div class="glean-panel__loading" role="status" style="min-height: 120px; display: flex; align-items: center; justify-content: center;">
+                {t(i18n, "panel.loading")}
+            </div>
+        </div>
+        <div class="glean-migrate__ops">
+            <button class="glean-linkish glean-onb-pause" disabled>{t(i18n, "onboarding.continueLater")}</button>
+        </div>
+    {:else if step === 1}
         <div class="glean-onb-hero" role="region" aria-labelledby={`${idPrefix}-welcome-title`}>
             <div class="glean-empty__art"><svg aria-hidden="true"><use href="#iconGleanWheat" /></svg></div>
             <h3 id={`${idPrefix}-welcome-title`} class="glean-empty__title">{t(i18n, "onboarding.welcomeTitle")}</h3>

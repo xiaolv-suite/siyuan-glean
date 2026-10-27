@@ -8,6 +8,17 @@
 
 [English](README.en-US.md) · [下载最新版](https://github.com/ai68298100/siyuan-glean/releases/latest) · [能力矩阵](docs/CAPABILITY-MATRIX.md) · [反馈与问题](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.31 更新（2026-10-27）
+
+本次版本实现长文按大纲一键渐进切片（Doc Slicing）、视口相交高精度断点续读引擎（Read-Point Engine）与划词 Alt+E 闪卡联动，并彻底根除首启引导页面闪烁。
+
+**新增与体验增强：**
+
+- **长文按大纲一键渐进切片（Doc Slicing）**：针对万字长文，伴生栏大纲树提供「✂️ 渐进切片」快捷入口与 `DocSlicingDialog.svelte` 弹窗；自动按 H2/H3 大纲将长文划分为 5~15 分钟轻量阅读切片，并支持一键在父目录下生成带思源原生块引用反链的切片子文档，自动进入稍后读队列。
+- **视口相交高精度断点续读（Read-Point Engine）**：新增 `read-point-observer.ts`，基于 `IntersectionObserver` 监听视口中轴线 10% 核心阅读区域；停留超过 1 秒防抖记录 `custom-lv-read-point` 块 ID；下次打开长文自动平滑滚动定位并施加 1.5 秒脉冲聚焦高亮（`.glean-pulse-highlight`）。
+- **划词快速渐进摘录通道（Alt+E）联动小驴闪卡**：划词选区条增加一键「摘录到闪卡」动作并接入全局 `Alt+E` 快捷键，派发带原文块引用反链的摘录卡块；未安装闪卡时保持 45% 透明度幽灵按钮并优雅降级为内置制卡预览，绝不报错。
+- **首启引导页面防闪烁重构（解决 Issue #16）**：引入异步预决议与平滑骨架过渡，彻底消除从 Step 1 闪现突变到 Step 2/3 的二次布局跳跃；已完成引导时立即静默关闭，杜绝任何残影闪现。
+
 ## v1.3.30 更新（2026-10-27）
 
 本次版本实现微信公众号合集/专栏（Series）自动识别与智能标签聚合、金句卡片生成器与四种质感主题 Canvas 2x 高清图片导出。

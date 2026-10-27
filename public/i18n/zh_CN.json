@@ -1353,6 +1353,9 @@
   "reader.examMake": "AI 出题",
   "reader.examStarted": "已发送至小驴考试生成题目",
   "reader.cardGhostHint": "💡 安装小驴闪卡后可一键制卡",
+  "reader.extractToCards": "摘录到闪卡",
+  "reader.extractToCardsHint": "摘录到小驴闪卡 (Alt+E)",
+  "reader.extractedToCards": "已摘录到小驴闪卡",
   "reader.examGhostHint": "💡 安装小驴考试后可一键出题",
   "wechat.rescanAuthor": "重新识别公众号",
   "wechat.authorRecognized": "已识别公众号：${name}",
@@ -1393,5 +1396,15 @@
   "quoteCard.copyText": "复制文本",
   "quoteCard.copiedImage": "已复制金句图片到剪贴板",
   "quoteCard.copiedText": "已复制金句文本",
-  "quoteCard.watermark": "小驴拾遗 · 思源笔记"
+  "quoteCard.watermark": "小驴拾遗 · 思源笔记",
+  "docSlicing.title": "长文渐进切片 (Doc Slicing)",
+  "docSlicing.targetMinutes": "目标每片用时",
+  "docSlicing.summary": "共规划 ${count} 个切片 · 原文约 ${words} 字 / ${minutes} 分钟",
+  "docSlicing.createSubDocs": "生成切片子文档 (${count} 篇)",
+  "docSlicing.creating": "正在生成切片…",
+  "docSlicing.createdSuccess": "已成功创建 ${count} 篇切片子文档并加入待读流",
+  "docSlicing.previewBlock": "定位小节",
+  "docSlicing.emptyOutline": "当前文章暂无大纲章节，将按整篇规划",
+  "docSlicing.actionBtn": "✂️ 渐进切片",
+  "docSlicing.actionBtnHint": "长文按大纲一键渐进切片 (Issue #17)"
 }

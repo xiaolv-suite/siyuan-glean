@@ -37,6 +37,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
     import { excerptFromSelection, insertQuoteExcerpt, selectionBelongsToHost } from "../services/excerpt-service";
     import { makeQuoteCardPreview } from "./flashcard-dialog";
     import { openQuoteCardDialog } from "./quote-card-dialog";
+    import { openDocSlicingDialog } from "./doc-slicing-dialog";
     import { findRelatedOutcome, type RelatedReason } from "../services/enrich-service";
     import { pickNextUnread } from "../services/resurface-service";
     import { articleQuestionEnabled, clearReaderMarkdownCache, insertAiCalloutToDocument, readerAiEnabled, readerArticleQuestion, readerSummarize, readerTranslate, saveReaderSummary } from "../services/reader-ai";
@@ -48,6 +49,9 @@ import { aiFailureKey } from "../libs/ai-feedback";
     import { loadReadingOutline } from "../services/outline-service";
     import { listDocHighlights, type HighlightItem } from "../services/highlights";
     import { createArticleHighlightsDoc } from "../services/highlights";
+    import type { IncrementalExtractPayload } from "../libs/ecosystem-bridge-kit";
+    import { createReadPointObserver, scrollAndPulseReadPoint, type ReadPointObserverHandle } from "../libs/read-point-observer";
+    import { saveReadPoint } from "../services/clip-store";
     import { formatHighlightShare, formatHighlightTime } from "../domain/highlights";
     import { estimateReadingPercentage } from "../domain/reading-position";
     import { findMatchingOutlineItemId, type OutlineItem } from "../domain/outline";
@@ -87,6 +91,8 @@ import { aiFailureKey } from "../libs/ai-feedback";
     let docId = $state<string | null>(null);
     let mode = $state<"read" | "edit">(DEFAULT_SETTINGS.reader.defaultMode);
     let protyleHost = $state<HTMLDivElement | null>(null);
+    let readPointHandle: ReadPointObserverHandle | null = null;
+    let readPointRestoredDocId = "";
     let readerRoot = $state<HTMLDivElement | null>(null);
     let sidebarCollapsed = $state(false);
     let immersive = $state(false);
@@ -241,6 +247,8 @@ import { aiFailureKey } from "../libs/ai-feedback";
             mounted = false;
             sessionGeneration += 1;
             contextRequests.invalidate();
+            readPointHandle?.disconnect();
+            readPointHandle = null;
             root?.removeEventListener("keydown", onReaderKey);
         };
     });
@@ -465,6 +473,13 @@ import { aiFailureKey } from "../libs/ai-feedback";
             return;
         }
         if (docId) void openTab({ app: facade.pluginInstance.app, doc: { id: item.id }, keepCursor: false });
+    }
+
+    function openSlicing(): void {
+        if (!context || !docId) return;
+        openDocSlicingDialog(facade, context, outline, (blockId) => {
+            scrollToHighlight(blockId);
+        });
     }
 
     async function loadDocHighlights(id: string): Promise<void> {
@@ -741,6 +756,14 @@ import { aiFailureKey } from "../libs/ai-feedback";
     }
 
     function onReaderKey(event: KeyboardEvent): void {
+        if (event.altKey && (event.key === "e" || event.key === "E")) {
+            if (excerpt?.text) {
+                event.preventDefault();
+                event.stopPropagation();
+                void incrementalExtractToCards();
+                return;
+            }
+        }
         const root = readerRoot;
         const target = event.target instanceof Element ? event.target : null;
         const active = document.activeElement;
@@ -985,6 +1008,52 @@ import { aiFailureKey } from "../libs/ai-feedback";
         }
     });
 
+    // 视口相交高精度断点续读引擎联动（Issue #17 / D-0343）
+    $effect(() => {
+        if (!docId || !protyleHost || !context) {
+            if (readPointHandle) {
+                readPointHandle.disconnect();
+                readPointHandle = null;
+            }
+            return;
+        }
+
+        let restoreTimer: number | null = null;
+        if (readPointRestoredDocId !== docId && context.readPoint) {
+            readPointRestoredDocId = docId;
+            const targetBlockId = context.readPoint;
+            restoreTimer = window.setTimeout(() => {
+                if (mounted && docId) {
+                    scrollAndPulseReadPoint(protyleHost, targetBlockId);
+                }
+            }, 400);
+        }
+
+        if (readPointHandle) {
+            readPointHandle.disconnect();
+        }
+        readPointHandle = createReadPointObserver({
+            host: protyleHost,
+            docId,
+            dwellMs: 1000,
+            onReadPointChange(blockId) {
+                if (mounted && docId) {
+                    void saveReadPoint(facade.pluginInstance, docId, blockId);
+                }
+            },
+        });
+
+        return () => {
+            if (restoreTimer !== null) {
+                window.clearTimeout(restoreTimer);
+            }
+            if (readPointHandle) {
+                readPointHandle.disconnect();
+                readPointHandle = null;
+            }
+        };
+    });
+
     function scanWechatAvatar(): void {
         if (!isWechatArticle || !protyleHost) {
             wechatAvatar = null;
@@ -1139,6 +1208,32 @@ import { aiFailureKey } from "../libs/ai-feedback";
 
     function submitMemo(): void {
         if (memoDraft.trim()) void quoteExcerpt(memoDraft.trim());
+    }
+
+    /** 渐进阅读快捷划词摘录到小驴闪卡（Issue #17 标准，Alt+E） */
+    async function incrementalExtractToCards(): Promise<void> {
+        if (!excerpt?.text || !context || context.id !== docId) return;
+        const payload: IncrementalExtractPayload = {
+            text: excerpt.text,
+            sourceBlockId: excerpt.blockId || "",
+            docId: context.id,
+            docTitle: context.title,
+            sourceUrl: context.url,
+            tags: context.tags || [],
+            createdAt: new Date().toISOString(),
+        };
+        if (hasCardsInstalled) {
+            if (typeof window !== "undefined") {
+                window.dispatchEvent(new CustomEvent("lv-cards:incremental-extract", { detail: payload }));
+            }
+            showMessage(t(i18n, "reader.extractedToCards"), 2500);
+        } else {
+            try {
+                makeQuoteCardPreview(facade, { title: context.title, quote: excerpt.text, docId: context.id, blockId: excerpt.blockId });
+            } catch {
+                showMessage(t(i18n, "reader.cardGhostHint"), 3000);
+            }
+        }
     }
 
     async function cardFromExcerpt(): Promise<void> {
@@ -1711,11 +1806,11 @@ import { aiFailureKey } from "../libs/ai-feedback";
                         type="button"
                         class="glean-btn glean-btn--ghost glean-reader__selection-btn"
                         class:glean-ghost-btn={!hasCardsInstalled}
-                        onclick={() => void cardFromExcerpt()}
-                        title={hasCardsInstalled ? t(i18n, "flashcard.make") : t(i18n, "reader.cardGhostHint")}
+                        onclick={() => void incrementalExtractToCards()}
+                        title={hasCardsInstalled ? t(i18n, "reader.extractToCardsHint") : t(i18n, "reader.cardGhostHint")}
                     >
                         <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg>
-                        {t(i18n, "flashcard.make")}
+                        {t(i18n, "reader.extractToCards")}
                     </button>
                     <button
                         type="button"
@@ -2009,7 +2104,19 @@ import { aiFailureKey } from "../libs/ai-feedback";
 
             {#if (companionTab === "all" || companionTab === "outline") && (outline.length > 0 || outlineLoading)}
                 <details id={outlineTitleId} class="glean-reader__section glean-reader__section--card glean-reader__fold" aria-labelledby={outlineTitleId} open>
-                    <summary id={outlineTitleId} class="glean-reader__section-title">📑 {t(i18n, "reader.outlineTitle")} ({outline.length})</summary>
+                    <summary id={outlineTitleId} class="glean-reader__section-title">
+                        <span>📑 {t(i18n, "reader.outlineTitle")} ({outline.length})</span>
+                        {#if outline.length > 0}
+                            <button
+                                type="button"
+                                class="glean-btn glean-btn--ghost glean-btn--xs glean-reader__slice-btn"
+                                title={t(i18n, "docSlicing.actionBtnHint")}
+                                onclick={(e) => { e.stopPropagation(); openSlicing(); }}
+                            >
+                                {t(i18n, "docSlicing.actionBtn")}
+                            </button>
+                        {/if}
+                    </summary>
                     {#if outline.length >= 6}
                         <div class="glean-reader__outline-filter-box">
                             <input

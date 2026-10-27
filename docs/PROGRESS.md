@@ -1,5 +1,57 @@
 # 进度（PROGRESS）
 
+## T-3463 微信公众号合集标签自动聚合、金句卡片生成器与高清图片导出（2026-10-27）
+
+- [x] 微信合集标签提取与回填：`wechat-service.ts` 扫描时提取微信话题专栏合集（`extractWechatSeries`）写入 `custom-clip-ai-tags` 属性，实现侧栏专栏一键下钻聚合。
+- [x] 金句卡片领域模型与高清渲染：新增 `src/domain/quote-card.ts` 纯函数领域层；新增 `QuoteCardDialog.svelte` 原生 Canvas 2x 超采样高清卡片渲染弹窗，支持四款质感主题（北欧冷杉/麦香纸墨/深邃曜黑/极简素白）、一键复制图片与保存 PNG。
+- [x] 摘录墙与伴生栏入口贯通：`HighlightView.svelte` 与 `ReaderTab.svelte` 批注操作条接入「🖼️ 金句卡片」入口。
+
+## T-3462 热力图单元格直接下钻、预览区作者筛选联动与全场景防长链优化（2026-10-27）
+
+- [x] 热力图下钻与明细展开：`StatsView.svelte` 热力图单元格（`.glean-stats__day`）支持鼠标直接点击与键盘回车下钻，平滑展开完成文章列表并呈现重置横幅。
+- [x] 预览区作者下钻筛选：`WorkbenchPreview.svelte` 点击公众号作者名称秒级触发全库精确分面筛选。
+- [x] 全场景链接微标化：`ReadingContext.svelte` 与 `ResurfaceView.svelte` 统一防范长链接泄露，原生编辑器常驻上下文来源 URL 重构为极简域名微标。
+
+## T-3461 阅读器批注键盘飞速跳转、微信文章零 Token 官方摘要自动回填与一键导出全部批注（2026-10-27）
+
+- [x] 批注键盘穿梭：`src/domain/reader-shortcuts.ts` 扩展 `h`（跳转到下一处批注）与 `H`（跳转到上一处批注）单键导航；`ReaderTab.svelte` 接入平滑滚动与呼吸聚焦微动效。
+- [x] 零 Token 官方摘要回填：`wechat-service.ts` 扫描微信文章时联动提取官方 `<meta og:description>` 自动回填 `custom-clip-summary` 属性。
+- [x] 伴生栏复制全部批注：伴生栏批注流顶部增设「📋 复制全部批注」快捷动作，一键把整篇文章的四色批注以规范 Markdown 引用与思源块链接复制到剪贴板。
+
+## T-3460 划词悬浮四色即时色盘、微信读书无障碍跳转与批量打标设作者（2026-10-27）
+
+- [x] 划词四色即时色盘：`ReaderTab.svelte` 划词悬浮条内嵌四色快捷圆点选择器（黄/红/蓝/绿），选中文本点击色彩一步落库引述块并写入 `custom-clip-hl-color`。
+- [x] 微信读书直达：`WorkbenchPreview.svelte` 来源微标旁增设「📖 微信读书」直达胶囊。
+- [x] 批量加标签与设作者：`LibraryBatchBar.svelte` 与 `DockPanel.svelte` 新增批量追加标签与批量统一设置作者操作。
+- [x] 摘录卡片四色指示彩条：`HighlightView.svelte` 摘录卡片与 `ReaderTab.svelte` 批注卡片左侧增加对应高亮颜色的 3px 竖向指示彩条。
+
+## T-3459 微信公众号作者防长链过滤与全表面色彩深度协调优化（2026-10-25）
+
+- [x] 作者长链过滤：`domain/wechat.ts` 纯函数 `cleanExtractedName` 与 `displayWechatAuthor` 严防长链接泄露，拒绝将 URL 识别为作者；全表面接入防御性显示。
+- [x] 预览区来源微胶囊重塑：`WorkbenchPreview.svelte` 消除顶部裸露原始 URL，重塑为雅致来源微胶囊徽标。
+- [x] 全表面色彩调和：全文剪藏等载体徽标与 AI 标签全面融入青绿柔美质感。
+
+## T-3458 读库后台静默微信公众号自动识别队列与分面侧栏微信站点投影（2026-10-25）
+
+- [x] 后台静默自愈队列：`DockPanel.svelte` 新增轻量静默扫描调度（`triggerSilentWechatScan`），工作台载入 2.5 秒后自动以每批 6 篇温和节奏静默提取正文回填公众号。
+- [x] 站点项中文投影：`LibraryRailGroup.svelte` 站点项接入 `siteItemLabel` 将 `mp.weixin.qq.com` 映射为中文「微信」。
+
+## T-3457 北欧文库雅致青绿色彩美学重构与全表面 UI 质感飞跃（2026-10-25）
+
+- [x] 核心令牌升级：核心品牌渐变 `--glean-grad` 升级为北欧文库青绿（`#0D9488` → `#0F766E`）；主按钮注入青绿微光与弥散阴影。
+- [x] 队列与分面视觉降噪：待分拣胶囊升级为呼吸感微透底衬与精致数字药丸；批量底栏接入 12px 毛玻璃与立体软阴影；暗黑模式对比度自适应微调。
+
+## T-3456 微信公众号作者全自动强行识别回填与收集箱不可用静默隐藏（2026-10-25）
+
+- [x] 微信作者全自动识别：新增 `src/services/wechat-service.ts` 专属服务；`WorkbenchPreview.svelte` 接入预览自动静默识别回填；工作台接入并发批处理横幅。
+- [x] 收集箱不可用静默隐藏：`InboxSection.svelte` 严格落地不可用时 UI 整块隐藏契约消除错误横条。
+
+## T-3418 分面侧栏未读与待办动态角标计数投影（2026-10-20）
+
+- [x] 侧栏角标纯函数：新增 `src/domain/library-rail-badges.ts` 与 `buildRailBadgeMap` 纯函数，支持排除当前筛选维度的高效多维分类数量统计。
+- [x] 徽标组件与无障碍：`LibraryRailGroup.svelte` 在分类项右侧渲染 `.glean-rail-item__badge`，提供零值抑制与 `aria-label` 计数语义补充。
+
+
 ## T-3417 分面侧栏手风琴互斥折叠与全展开/全收起顶部工具栏支持（2026-10-20）
 
 - [x] 分面折叠纯函数状态机：`src/domain/library-rail.ts` 新增 `RailGroupStateMap` 类型，提供 `toggleRailGroupState`（手风琴模式激活时自动互斥折叠其余分组，普通模式独立切换）、`collapseAllRailGroups`（一键全收起）与 `expandAllRailGroups`（一键全展开）纯函数。

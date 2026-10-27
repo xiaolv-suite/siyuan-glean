@@ -1,5 +1,22 @@
 # 更新日志（CHANGELOG）
 
+## v1.3.31（2026-10-27）
+
+### 长文按大纲一键渐进切片、高精度视口断点续读与首启引导防闪烁重构
+
+- **长文按大纲一键渐进切片引擎（Doc Slicing，T-3465）**：
+  - 新增 `src/domain/doc-slicing.ts` 纯函数算法与 `src/services/doc-slicing-service.ts` 服务层；自动根据 H1-H6 标题层级与目标时长（5~15 分钟/片）将长文智能划分为若干轻量阅读切片，消除心理负担；
+  - 支持一键在长文父目录下创建切片子文档，内嵌标准思源块引用反链（`((blockId '直达正文小节'))`）与长文回跳链接，继承来源与作者，打上 `later` 待读状态并同步派生索引，成为可独立分拣与重浮的轻量文章；
+  - 新增 `DocSlicingDialog.svelte` 弹窗；`ReaderTab.svelte` 伴生栏大纲树头部增设「✂️ 渐进切片」快捷入口，支持就地调节用时、预览大纲小节与直接定位正文对应块。
+- **视口相交高精度断点续读引擎（Read-Point Engine，T-3464）**：
+  - 新增 `src/libs/read-point-observer.ts`，基于 `IntersectionObserver` 监听视口中轴线 10% 核心阅读区域；读者在段落停留超过 1000ms（防抖过滤快速滚动）时，自动调用 `saveReadPoint` 将块 ID 写入 `custom-lv-read-point` 属性（对齐 Issue #17 统领指令与 `DATA-CONTRACT` 契约事实源）；
+  - `ReaderTab.svelte` 打开长文就绪后，自动平滑滚动居中定位至上次断点块并施加 1.5 秒脉冲聚焦高亮反馈（`.glean-pulse-highlight`），实现像素级断点续读。
+- **划词快速渐进摘录通道（Alt+E）联动小驴闪卡（T-3464）**：
+  - `src/libs/ecosystem-bridge-kit.ts` 扩展 `IncrementalExtractPayload` 与 `CARDS_INCREMENTAL_EXTRACT` 事件；
+  - `ReaderTab.svelte` 选区悬浮条接入 `incrementalExtractToCards` 快捷动作与全局 `Alt+E` 键盘监听，派发带原文块引用反链的摘录卡块；未安装闪卡时保持 45% 透明度幽灵按钮并优雅降级为内置制卡预览，绝不报错。
+- **首启引导向导防闪烁重构（解决 Issue #16，T-3464）**：
+  - `OnboardingDialog.svelte` 引入 `$state(false)` 异步预决议与平滑骨架过渡，彻底消除从 Step 1 闪现突变到 Step 2/3 的二次布局跳跃；若用户已完成引导（`onboardingDone`）立即静默关闭，杜绝任何残影闪现；为扫描阶段增加稳定尺寸与平滑过渡。
+
 ## v1.3.30（2026-10-27）
 
 ### 微信公众号合集标签自动聚合、金句卡片生成器与高清图片导出

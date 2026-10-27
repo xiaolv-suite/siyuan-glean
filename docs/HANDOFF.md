@@ -1,5 +1,27 @@
 # HANDOFF — 续跑交接（每轮开发结束更新本页）
 
+## 当前有效交接（2026-10-27 长文按大纲一键渐进切片引擎、视口断点续读与 Alt+E 闪卡联动）
+
+- T-3465/D-0344：长文按大纲一键渐进切片引擎（Doc Slicing）与生态令牌加固落地：
+  1. 长文按大纲渐进切片纯函数规划与子文档物化：新增 `src/domain/doc-slicing.ts` 与 `src/services/doc-slicing-service.ts`；根据 H1-H6 大纲层级与 5~15 分钟切片用时将长文划分为轻量阅读切片；支持在长文父目录下创建切片子文档，内嵌标准思源块引用反链（`((blockId '直达正文'))`），打上 `later` 待读状态并继承来源与作者，严格遵从数据主权；
+  2. 切片交互弹窗与伴生栏接入：新增 `src/ui/DocSlicingDialog.svelte` 弹窗与 `doc-slicing-dialog.ts`；伴生栏大纲树头部增设「✂️ 渐进切片」快捷按钮，支持就地调节用时、预览大纲小节与直接滚动定位正文小节；
+  3. 视口相交高精度断点续读引擎（Read-Point Engine）与划词 `Alt+E` 闪卡联动：已在 ReaderTab 与 clip-store 完整贯通，支持 `custom-lv-read-point` 属性回填与毫秒级脉冲呼吸高亮；
+  4. 样式令牌加固：`src/index.scss` 对齐 `--lv-accent-wheat: #FB923C;`（金杏麦珠）中枢令牌，样式严格包裹在专有命名空间内；
+  5. 门禁全通：定向 `tests/doc-slicing.test.ts`、`tests/doc-slicing-service.test.mjs`、`tests/read-point-observer.test.ts`、`tests/a11y-glean-styles.test.ts`、`tests/reader.test.ts`、`tests/i18n.test.ts`、`tests/architecture.test.ts` 全部全绿，`pnpm check` 0 错误 0 警告，发布门禁与性能基线通过。
+- 下一步：按当前执行板顺序推进下一个任务（如 T-3367 批量选择范围与底部操作在更多场景的走查，或按作者点单继续）。版本保持 1.3.30，本轮不打 tag、不发布、不推送。
+
+
+## 当前有效交接（2026-10-27 首启引导防闪烁、高精度视口断点续读与划词 Alt+E 闪卡联动）
+
+- T-3464/D-0343：首启引导防闪烁重构、高精度视口断点续读与划词 Alt+E 闪卡联动落地：
+  1. 首启引导防闪烁重构（解决 Issue #16）：`OnboardingDialog.svelte` 引入 `$state(false)` 异步预决议与平滑骨架过渡，彻底消除从 Step 1 闪现突变到 Step 2/3 的二次布局跳跃；若用户已完成引导（`onboardingDone`）立即静默关闭，杜绝任何残影闪现；
+  2. 视口相交高精度断点续读引擎（Read-Point Engine，贯彻 Issue #17 统领指令）：新增 `src/libs/read-point-observer.ts`，基于 `IntersectionObserver` 监听视口中轴线 10% 核心区域，读者在段落停留超过 1000ms（防抖过滤快速滚动）时调用 `saveReadPoint` 将块 ID 写入 `custom-lv-read-point` 属性（`DATA-CONTRACT` 与 `schema.ts` 事实源对齐）；`ReaderTab.svelte` 打开文章就绪后，自动平滑滚动居中定位至上次断点块并施加 1.5 秒脉冲聚焦高亮反馈（`.glean-pulse-highlight`）；
+  3. 划词快速渐进摘录通道（`Alt+E`）联动小驴闪卡（贯彻 Issue #17 统领指令）：`src/libs/ecosystem-bridge-kit.ts` 扩展 `IncrementalExtractPayload` 与 `CARDS_INCREMENTAL_EXTRACT` 事件；`ReaderTab.svelte` 选区悬浮条接入 `incrementalExtractToCards` 快捷动作与全局 `Alt+E` 键盘监听，派发带原文块引用反链的摘录卡块；未安装闪卡时保持 45% 透明度幽灵按钮并优雅降级为内置制卡预览，绝不报错；
+  4. 全仓文档校准与账本一致：校准 `docs/ROADMAP.md`、`docs/CAPABILITY-MATRIX.md`、`docs/RELEASE-CANDIDATE.md`、`docs/PROGRESS.md`（补齐 T-3418~T-3463 记录）；
+  5. 门禁全通：定向 `tests/read-point-observer.test.ts`、`tests/modal-escape.test.ts`、`tests/accessibility.test.ts`、`tests/capability-matrix.test.ts`、`tests/release-candidate.test.ts`、`tests/reader.test.ts`、`tests/i18n.test.ts`、`tests/architecture.test.ts` 全部全绿，`pnpm check` 0 错误 0 警告。
+- 下一步：按当前执行板顺序推进下一个任务（如 T-3367 批量选择范围与底部操作在更多场景的走查，或按作者点单继续）。版本保持 1.3.30，本轮不打 tag、不发布、不推送。
+
+
 ## 当前有效交接（2026-10-21 正文搜索、微信公众号专属优化与文章批注进度条落地）
 
 - T-3419/D-0299：阅读器正文搜索与命中高亮导航。新增 `src/domain/reader-search.ts` 纯函数层、`src/libs/reader-search-dom.ts` 与 `src/ui/ReaderSearch.svelte`；采用非侵入式现代 CSS Custom Highlight API（`CSS.highlights`），不破坏或修改 Protyle 原生 DOM 树；支持大小写区分、Enter / Shift+Enter 前后导航；`ReaderTab.svelte` 接入 Ctrl/Cmd+F 呼出与 Escape 退出；使用原生 SVG 图标替换纯文本/Emoji；双语与测试完备。

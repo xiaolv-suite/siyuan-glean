@@ -39,6 +39,20 @@ Markdown 导出是用户显式触发的只读下载，不新增文章属性、�
 
 批量补拍是用户显式触发的逐篇串行操作，只提交对账时仍缺快照的文档。单篇导出、资产写入或属性核对失败只保留失败项，继续处理后续文档；维护页提供失败项重试。已有快照不会被覆盖，写属性时必须以 `custom-clip-snapshot = null` 做并发核对。快照资产写入成功但属性回写失败时不删除资产（沿用现有资产失败恢复边界），再次补拍仍以文档属性为准。该功能不新增文章属性、不写正文、不把 HTML 写入插件 saveData。
 
+### 0.4 长文渐进切片（Doc Slicing）契约（D-0344，Issue #17）
+
+长文渐进切片旨在消除长文一次读不完的认知负担，化整为零：
+1. **切片纯函数规划（`domain/doc-slicing.ts`）**：
+   - 依赖文章已有大纲树（H1-H6）与正文估算字数/时长，以章节边界为天然锚点；
+   - 支持按目标阅读时长（默认 5~10 分钟/片）或按顶级章节（H2）智能聚类生成分片清单（`DocSlice`）；
+   - 每个切片包含：序号、标题、起始块 ID、包含章节列表与预估字数/时长。
+2. **虚拟视图切片（Virtual Slices）**：
+   - 伴生栏轻量展示切片进度与章节指示，点击直接平滑滚动定位正文对应块，纯客户端计算，不写任何文档与属性。
+3. **实体衍生子文档切片（Physical Slices）**：
+   - 用户显式确认后，在当前文章父路径下创建子文档，正文使用思源原生 Markdown 块引用反链指向原文章章节起始块；
+   - 继承原文章的 `author`、`site`、`url`、`tags`，打上 `custom-clip-status: later`，并标记 `custom-clip-ai-tags: 渐进切片,原标题`；
+   - 原文根块属性与正文完整保留，不产生破坏性修改，严格遵从数据主权。
+
 ## 1. 属性规范（文档级，根块 IAL）
 
 `src/domain/schema.ts` 为唯一事实源；本表与其同步维护。
@@ -50,6 +64,7 @@ Markdown 导出是用户显式触发的只读下载，不新增文章属性、�
 | `custom-clip-author` | string | 来源作者/公众号/频道/专栏名称；用户可编辑，非 AI 标签；首尾空白去除，最多 120 个 Unicode 码点，单行且无控制字符；缺键表示未知 |
 | `custom-clip-reading-position` | JSON string | D-0095版本1显式阅读书签 `{version:1,blockId,offset,at}`；合法块ID、块内像素偏移0–10000整数、UTC ISO时间；不是百分比或实读时长 |
 | `custom-clip-reading-pos` | string | 历史块级断点兼容读取位；新代码不再写入，现行写入统一使用上面的 JSON 书签属性 |
+| `custom-lv-read-point` | string | 小驴生态联邦统一高精度视口断点续读块 ID（Issue #17 / D-0343），合法块 ID `\d{14}-[0-9a-z]{7}`；滚动视口中心停留超过 1 秒防抖记录；打开文章自动平滑滚动定位并施加脉冲聚焦高亮 |
 | `custom-clip-favorite` | boolean | 用户显式收藏标记；缺键表示未收藏 |
 | `custom-clip-hl-color` | enum | 引述块级视觉颜色（`yellow`/`red`/`blue`/`green`）；只作用于引述块，不进入文章根块 `ClipAttrs`，读写经 `clip-store.readHighlightColor/writeHighlightColor` |
 | `custom-clip-time` | string | 待阅读等待时间的基准时刻 `YYYYMMDDHHmmss`（本地时区）：外部导入/收集箱优先原服务收藏时间；旧文回填使用文档 ID 创建时间作为估计；普通显式收录或无可用来源时使用首次收录时刻。与 `time-source` 一起解释，不把所有值称为“首次入库时间” |

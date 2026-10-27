@@ -41,6 +41,8 @@ export const ATTR = {
     readingPosition: "custom-clip-reading-position",
     /** 旧块级断点兼容读取字段；现行阅读服务只写 readingPosition 的 JSON 书签，不双写。 */
     readingPos: "custom-clip-reading-pos",
+    /** 小驴生态联邦统一高精度视口断点续读（Read-Point Engine，符合 Issue #17 统领指令） */
+    readPoint: "custom-lv-read-point",
     favorite: "custom-clip-favorite",
     /** 引述块级颜色标记（不参与文章根块 ClipAttrs 投影）。 */
     highlightColor: "custom-clip-hl-color",
@@ -78,6 +80,7 @@ export interface ClipAttrs {
     author?: string;
     readingPosition?: ReadingPosition;
     readingPos?: string;
+    readPoint?: string;
     favorite?: boolean;
     time?: string;
     status?: ClipStatus;
@@ -193,6 +196,7 @@ export function parseClipAttrs(ial: Record<string, string | undefined>): ClipAtt
         author: normalizeAuthor(ial[ATTR.author]) || undefined,
         readingPosition: parseReadingPosition(ial[ATTR.readingPosition]) ?? undefined,
         readingPos: optionalString(ial[ATTR.readingPos]),
+        readPoint: optionalString(ial[ATTR.readPoint]),
         favorite: parseFlag(ial[ATTR.favorite]),
         time: optionalString(ial[ATTR.time]),
         status: parseStatus(ial[ATTR.status]),
@@ -268,6 +272,7 @@ export function serializePatch(patch: ClipPatch): AttrPatch {
     if (patch.time !== undefined) put(ATTR.time, patch.time || null);
     if (patch.readingPosition !== undefined) put(ATTR.readingPosition, patch.readingPosition === null ? null : serializeReadingPosition(patch.readingPosition));
     if (patch.readingPos !== undefined) put(ATTR.readingPos, patch.readingPos || null);
+    if (patch.readPoint !== undefined) put(ATTR.readPoint, patch.readPoint || null);
     if (patch.favorite !== undefined) put(ATTR.favorite, patch.favorite ? "true" : null);
     if (patch.status !== undefined) put(ATTR.status, patch.status ?? null);
     if (patch.doneTime !== undefined) put(ATTR.doneTime, patch.doneTime || null);

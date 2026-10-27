@@ -129,6 +129,7 @@ export interface ReadingClipContext {
     priority?: number;
     rating?: number;
     readingPosition?: ReadingPosition;
+    readPoint?: string;
     tags?: string[];
     aiTags?: string[];
 }
@@ -154,9 +155,22 @@ export async function readClipContext(docId: string): Promise<ReadingClipContext
         priority: attrs.priority ?? 3,
         rating: attrs.rating ?? 0,
         readingPosition: attrs.readingPosition,
+        readPoint: attrs.readPoint,
         tags: parseUserTags(ial.tags),
         aiTags: attrs.aiTags ?? [],
     };
+}
+
+/** 记录视口断点续读块 ID（Issue #17 / D-0343），写入 custom-lv-read-point */
+export async function saveReadPoint(plugin: Plugin, docId: string, blockId: string): Promise<boolean> {
+    if (!/^\d{14}-[0-9a-z]{7}$/.test(docId) || !/^\d{14}-[0-9a-z]{7}$/.test(blockId)) return false;
+    try {
+        await writeClip(plugin, docId, { readPoint: blockId });
+        return true;
+    } catch (e) {
+        console.debug("[glean] 视口断点保存失败:", docId, blockId, e);
+        return false;
+    }
 }
 
 /** 批量读取原始 IAL，供迁移预检与导入去重使用；属性端点仍只经本服务进入。 */

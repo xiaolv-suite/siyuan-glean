@@ -66,6 +66,7 @@ export const ECOSYSTEM_EVENTS = Object.freeze({
     EXAM_STATS: "lv-exam:stats",
     // 闪卡
     CARDS_REVIEWED: "lv-cards:reviewed",
+    CARDS_INCREMENTAL_EXTRACT: "lv-cards:incremental-extract",
     // 常用
     COMMON_CREATED: "xiaolv:common:item-created",
     COMMON_UPDATED: "xiaolv:common:item-updated",
@@ -252,6 +253,17 @@ export interface CardsDueSummary {
     unreviewedNewCardCount: number;
     unreviewedOldCardCount: number;
     updatedAt: string;
+}
+
+/** 渐进阅读划词摘录载荷（Issue #17 标准） */
+export interface IncrementalExtractPayload {
+    text: string;
+    sourceBlockId: string;
+    docId: string;
+    docTitle?: string;
+    sourceUrl?: string;
+    tags?: string[];
+    createdAt?: string;
 }
 
 export interface CardsBridgeApi {

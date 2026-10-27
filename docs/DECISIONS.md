@@ -2195,3 +2195,33 @@ T-3416 承接方向五（有依据的阅读 AI）与同类产品对标（Readwis
    - 采用纯前端 HTML5 Canvas 2x 超采样高清排版渲染，支持一键复制高清 PNG 到系统剪贴板、下载图片及复制纯文本；
 3. 全库摘录墙与伴生栏接入金句卡片动作：
    - `HighlightView.svelte` 与 `ReaderTab.svelte` 批注操作条均增设「🖼️ 金句卡片」快捷入口。
+
+## D-0343（2026-10-27）首启引导防闪烁重构、高精度视口断点续读与划词 Alt+E 闪卡联动（T-3464）
+
+彻底解决 Issue #16 引导闪烁缺陷并深度贯彻落实 Issue #17 统领指令：
+1. 首启引导防闪烁重构（解决 Issue #16）：
+   - `OnboardingDialog.svelte` 引入 `prefsLoaded = $state(false)` 与平滑骨架过渡；消除挂载初期从 Step 1 闪现突变到 Step 2/3 的二次布局跳跃；
+   - 若用户已完成引导（`prefs.onboardingDone`），立即静默关闭，杜绝任何残影闪现；
+   - 扫描过程设置最小稳定高度与平滑过渡，消灭 DOM 抖动。
+2. 视口相交高精度断点续读引擎（Read-Point Engine，对标 Issue #17 统领指令）：
+   - 新增 `src/libs/read-point-observer.ts`；使用 `IntersectionObserver` 聚焦视口中轴线 10% 核心区域；
+   - 读者在段落停留超过 1000ms（防抖过滤快速滚动）时，自动调用 `saveReadPoint` 将块 ID 写入 `custom-lv-read-point` 属性（`schema.ts` 契约事实源对齐）；
+   - `ReaderTab.svelte` 打开文章就绪后，自动平滑滚动居中定位至上次断点块并施加 1.5 秒脉冲聚焦高亮反馈（`.glean-pulse-highlight`）。
+3. 划词快速渐进摘录通道（`Alt+E`）联动小驴闪卡（对标 Issue #17 统领指令）：
+   - `src/libs/ecosystem-bridge-kit.ts` 扩展 `IncrementalExtractPayload` 与 `CARDS_INCREMENTAL_EXTRACT` 事件；
+   - `ReaderTab.svelte` 选区悬浮条接入 `incrementalExtractToCards` 快捷动作与全局 `Alt+E` 键盘监听，派发带原文块引用反链的摘录卡块；
+   - 未安装闪卡时保持 45% 透明度幽灵按钮并优雅降级为内置制卡预览，绝不报错。
+
+## D-0344（2026-10-27）长文按大纲一键渐进切片引擎（Doc Slicing）与生态令牌加固（T-3465）
+
+全面落实 Issue #17 渐进阅读核心指令第 4 条与样式防污染规范：
+1. 长文按大纲渐进切片领域模型（`src/domain/doc-slicing.ts`）：
+   - 新增 `planDocSlices` 纯函数算法，基于大纲树（H1-H6）与目标用时（5~15 分钟/片）将长文智能划分为若干轻量阅读切片，消除长文心理负担；
+   - 新增 `formatSliceMarkdown`，为切片生成带思源原生块引用反链（`((blockId '直达正文'))`）与长文回跳链接的标准正文；
+2. 切片子文档物化与稍后读流转（`src/services/doc-slicing-service.ts`）：
+   - `createSliceSubDocuments` 在长文父路径下创建切片子文档，继承原文 `author`、`site`、`url`，打上 `custom-clip-status: later` 属性并同步派生索引，成为可独立分拣与重浮的轻量文章；
+3. 切片弹窗与伴生栏交互闭环（`DocSlicingDialog.svelte` & `ReaderTab.svelte`）：
+   - 新增 `DocSlicingDialog.svelte` 弹窗，支持 5/8/12/15 分钟切片用时调节、大纲小节分布预览与正文快速定位；
+   - `ReaderTab.svelte` 伴生栏大纲树头部增设「✂️ 渐进切片」快捷入口；
+4. 样式令牌与防污染加固：
+   - `src/index.scss` 对齐 `--lv-accent-wheat: #FB923C;`（金杏麦珠）中枢令牌，所有切片样式严格包裹在专有命名空间内。
