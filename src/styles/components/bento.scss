@@ -1,0 +1,166 @@
+/* Bento 统计与可视化展示组件（Bento Stats & Visualizations） */
+.glean-bento {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--glean-space-2);
+}
+
+.glean-tile {
+    border-radius: var(--glean-radius-18);
+    padding: var(--glean-space-3-25) var(--glean-space-3-5);
+    background: var(--b3-theme-surface);
+    border: 1px solid var(--b3-border-color);
+    position: relative;
+    overflow: hidden;
+
+    .glean-tile__glow {
+        position: absolute;
+        right: -22px;
+        top: -22px;
+        width: 74px;
+        height: 74px;
+        border-radius: var(--glean-radius-circle);
+        filter: blur(2px);
+        pointer-events: none;
+    }
+
+    .glean-tile__k {
+        font-size: var(--glean-text-caption-plus);
+        color: var(--b3-theme-on-surface);
+        display: flex;
+        align-items: center;
+        gap: var(--glean-space-1-25);
+    }
+
+    .glean-tile__v {
+        font-size: var(--glean-text-metric-lg);
+        font-weight: var(--glean-weight-display);
+        margin-top: var(--glean-space-1-5);
+        letter-spacing: var(--glean-tracking-tight-px);
+        font-variant-numeric: tabular-nums;
+        background: linear-gradient(135deg, var(--b3-theme-on-background) 20%, var(--glean-accent-b) 130%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .glean-tile__u {
+        font-size: var(--glean-text-caption);
+        color: var(--b3-theme-on-surface);
+        font-weight: var(--glean-weight-medium);
+        margin-left: var(--glean-space-micro);
+    }
+
+    .glean-tile__spark {
+        margin-top: var(--glean-space-2-5);
+        display: flex;
+        align-items: flex-end;
+        gap: var(--glean-space-micro);
+        height: 26px;
+
+        i {
+            flex: 1;
+            border-radius: var(--glean-radius-2) var(--glean-radius-2) var(--glean-radius-none) var(--glean-radius-none);
+            background: color-mix(in srgb, var(--b3-theme-on-surface) 14%, transparent);
+
+            &.glean-tile__spark--hot {
+                background: var(--glean-grad);
+                opacity: 0.9;
+                box-shadow: 0 0 6px color-mix(in srgb, var(--glean-accent-b) 35%, transparent);
+            }
+        }
+    }
+}
+
+.glean-sect {
+    font-size: var(--glean-text-caption-plus);
+    font-weight: var(--glean-weight-bold);
+    color: var(--b3-theme-on-surface);
+    letter-spacing: var(--glean-tracking-0-6);
+    margin-top: var(--glean-space-1);
+    text-transform: uppercase;
+}
+
+.glean-block {
+    border-radius: var(--glean-radius-18);
+    padding: var(--glean-space-3) var(--glean-space-3-5);
+    background: var(--b3-theme-surface);
+    border: 1px solid var(--b3-border-color);
+}
+
+.glean-bar-row {
+    display: flex;
+    align-items: center;
+    gap: var(--glean-space-2);
+    font-size: var(--glean-text-xs-plus);
+    padding: var(--glean-space-1) var(--glean-space-0);
+
+    .glean-bar-row__nm {
+        width: 76px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: var(--b3-theme-on-surface);
+        flex-shrink: 0;
+    }
+
+    .glean-bar-row__bar {
+        flex: 1;
+        height: 6px;
+        border-radius: var(--glean-radius-3);
+        background: color-mix(in srgb, var(--b3-theme-on-surface) 14%, transparent);
+        overflow: hidden;
+
+        i {
+            display: block;
+            height: 100%;
+            border-radius: var(--glean-radius-3);
+            background: var(--glean-grad);
+            transition: width var(--glean-duration-normal) var(--glean-ease-out);
+        }
+    }
+
+    .glean-bar-row__ct {
+        width: 28px;
+        text-align: right;
+        font-weight: var(--glean-weight-semibold);
+        font-variant-numeric: tabular-nums;
+    }
+}
+
+.glean-tagcloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--glean-space-1-5);
+}
+
+.glean-tag {
+    font-size: var(--glean-text-xs);
+    padding: var(--glean-space-1) var(--glean-space-2-5);
+    border-radius: var(--glean-radius-pill);
+    background: var(--b3-theme-background-light);
+    border: 1px solid var(--b3-border-color);
+    transition: all var(--glean-duration-base);
+
+    &:hover {
+        border-color: var(--glean-accent-b);
+        color: var(--glean-accent-b);
+    }
+}
+
+.glean-primary-btn {
+    border: none;
+    font-size: var(--glean-text-sm-plus);
+    font-weight: var(--glean-weight-semibold);
+    color: var(--b3-theme-on-primary);
+    padding: var(--glean-space-2-5);
+    border-radius: var(--glean-radius-14);
+    background: var(--glean-grad);
+    cursor: pointer;
+    box-shadow: var(--glean-shadow-accent);
+    transition: transform var(--glean-duration-base) var(--glean-ease-spring);
+
+    &:active {
+        transform: scale(0.97);
+    }
+}

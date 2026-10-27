@@ -8,6 +8,15 @@
 
 [English](README.en-US.md) · [下载最新版](https://github.com/ai68298100/siyuan-glean/releases/latest) · [能力矩阵](docs/CAPABILITY-MATRIX.md) · [反馈与问题](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.47 更新（2026-10-27）
+
+本次版本实现统计回顾报告一键复制 Markdown 与 Bento 样式模块化解耦。
+
+**新增与体验增强：**
+
+- **一键「📋 复制报告」Markdown**：统计回顾页增设快捷复制按钮，将周期报告秒级写入剪贴板，贴入周报或日记毫无负担。
+- **Bento 统计样式模块化**：拆分 `bento.scss`，主样式文件持续瘦身解耦。
+
 ## v1.3.46 更新（2026-10-27）
 
 本次版本实现原生阅读条块引用直通、微信品牌绿点与阅读器顶栏原生跳转常驻。

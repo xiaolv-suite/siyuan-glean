@@ -1442,5 +1442,7 @@
   "resurface.shortcutPin": "T 置顶",
   "action.copyBlockRef": "复制块引用",
   "reader.blockRefCopied": "已复制思源块引用到剪贴板！",
-  "reader.shortcutImmersive": "沉浸全屏阅读"
+  "reader.shortcutImmersive": "沉浸全屏阅读",
+  "stats.copyReport": "复制报告",
+  "stats.reportCopied": "已复制阅读回顾报告 Markdown 到剪贴板！"
 }

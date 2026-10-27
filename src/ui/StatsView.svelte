@@ -12,7 +12,7 @@ import DistributionList from "./DistributionList.svelte";
 import { t } from "../libs/i18n";
 import type { GleanIndex } from "../services/index-store";
 import { buildReadingReview, previewReadingReview, resolveUnknownReadingReview, saveReadingReviewReport, type ReadingReviewSession } from "../services/stats-service";
-import { computeConversionFunnel, computeReadingMilestones, filterCompletedItemsByDate, parseReviewDate, reviewDateInput, type ReadingReviewLabels, type ReviewPeriodKind } from "../domain/stats";
+import { buildReadingReviewMarkdown, computeConversionFunnel, computeReadingMilestones, filterCompletedItemsByDate, parseReviewDate, reviewDateInput, type ReadingReviewLabels, type ReviewPeriodKind } from "../domain/stats";
 
 interface Props {
     facade: GleanFacade;
@@ -193,6 +193,17 @@ function downloadCsv(): void {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+async function copyReportMarkdown(): Promise<void> {
+    if (busy) return;
+    try {
+        const md = buildReadingReviewMarkdown(review, reportLabels());
+        await navigator.clipboard.writeText(md);
+        showMessage(t(i18n, "stats.reportCopied"), 2500);
+    } catch {
+        showMessage(t(i18n, "msg.actionFailed"), 2500);
+    }
+}
+
 function onWindowKeyDown(event: KeyboardEvent): void {
     if (event.key !== "Escape" || event.defaultPrevented || event.isComposing || event.keyCode === 229 || event.repeat) return;
     if (session && !busy && (saveState === "ready" || saveState === "saved")) {
@@ -256,8 +267,10 @@ function onWindowKeyDown(event: KeyboardEvent): void {
         <div class="glean-stats__toolbar glean-stats__toolbar--actions">
             {#if !session}
                 <button class="glean-btn glean-btn--pri" disabled={busy || !reference} onclick={() => void preview()}>{t(i18n, "review.preview")}</button>
+                <button type="button" class="glean-btn glean-btn--ghost" disabled={busy} onclick={() => void copyReportMarkdown()}>📋 {t(i18n, "stats.copyReport")}</button>
             {:else}
                 <button class="glean-btn glean-btn--ghost" disabled={busy} onclick={downloadCsv}>{t(i18n, "review.csv")}</button>
+                <button type="button" class="glean-btn glean-btn--ghost" disabled={busy} onclick={() => void copyReportMarkdown()}>📋 {t(i18n, "stats.copyReport")}</button>
                 {#if saveState === "ready" || saveState === "created"}
                     <button class="glean-btn glean-btn--pri" disabled={busy} onclick={() => void save()}>{t(i18n, saveState === "created" ? "review.retryMark" : "review.confirm")}</button>
                 {/if}

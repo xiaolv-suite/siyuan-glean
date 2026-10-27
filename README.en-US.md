@@ -8,6 +8,15 @@ Lv Glean organizes clippings and articles already in SiYuan. It does not crawl t
 
 [中文说明](README.md) · [Latest Release](https://github.com/ai68298100/siyuan-glean/releases/latest) · [Capability matrix](docs/CAPABILITY-MATRIX.md) · [Feedback](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.47 update (2026-10-27)
+
+This release implements 1-click Markdown copying for review reports and modular Bento SCSS decoupling.
+
+**New features & improvements:**
+
+- **1-Click Copy Review Markdown**: Stats overview adds a quick copy button to format the full review report in Markdown, ready for weekly logs.
+- **Bento Stats SCSS Modularization**: Decoupled `bento.scss` into components.
+
 ## v1.3.46 update (2026-10-27)
 
 This release implements block reference copying on the native reading bar, WeChat green dot indicator, and persistent native tab opening.
