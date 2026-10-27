@@ -154,8 +154,9 @@ test("HighlightView 行级键盘导航复用读库仲裁层（T-3399）", () => 
     assert.match(view, /setCursor\(moveLibraryCursor\(visibleIds, cursorId, action\.delta\)\)/);
     assert.match(view, /if \(action\.type === "toggleSelect"\) toggle\(item\.id\)/);
     assert.match(view, /if \(action\.type === "activate"\) openDoc\(item\.id\)/);
-    // 只接管 move/toggleSelect/activate，方向键仍交给原生滚动
-    assert.match(view, /if \(!\["move", "toggleSelect", "activate"\]\.includes\(action\.type\)\) return;/);
+    // 只接管 move/toggleSelect/activate/copyBlockRef，方向键仍交给原生滚动
+    assert.match(view, /if \(!\["move", "toggleSelect", "activate", "copyBlockRef"\]\.includes\(action\.type\)\) return;/);
+    assert.match(view, /if \(action\.type === "copyBlockRef"\) void copyQuoteBlockRef\(item\)/);
     assert.match(view, /data-glean-highlight-id=\{item\.id\}/);
     assert.match(view, /class:glean-highlights__item--cursor=\{cursorId === item\.id\}/);
 });

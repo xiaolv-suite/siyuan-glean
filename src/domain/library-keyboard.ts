@@ -24,7 +24,8 @@ export type LibraryKeyboardAction =
     | { type: "cyclePriority" }
     | { type: "setPriority"; value: number }
     | { type: "cycleRating" }
-    | { type: "togglePin" };
+    | { type: "togglePin" }
+    | { type: "copyBlockRef" };
 
 export interface LibraryKeyboardEventLike {
     key: string;
@@ -54,7 +55,7 @@ export interface LibraryKeyboardContext {
 const REPEAT_SENSITIVE = new Set<LibraryKeyboardAction["type"]>([
     "activate", "openDocument", "startReading", "later", "archive", "toggleSelect",
     "selectDisplayed", "keepFiltered", "clearSelection",
-    "cyclePriority", "setPriority", "cycleRating", "togglePin",
+    "cyclePriority", "setPriority", "cycleRating", "togglePin", "copyBlockRef",
 ]);
 
 /**
@@ -103,6 +104,7 @@ export function resolveLibraryShortcut(
     if (lower === "x") return repeatOrNull(event, { type: "toggleSelect" });
     if (lower === "p") return repeatOrNull(event, { type: "cyclePriority" });
     if (lower === "t") return repeatOrNull(event, { type: "togglePin" });
+    if (lower === "y") return repeatOrNull(event, { type: "copyBlockRef" });
     if (key >= "1" && key <= "5") return repeatOrNull(event, { type: "setPriority", value: Number(key) });
     if (lower === "m") return repeatOrNull(event, { type: "cycleRating" });
     return null;

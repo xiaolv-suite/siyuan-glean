@@ -55,13 +55,15 @@ test("字母动作只在光标激活后生效，长按不重复执行破坏性�
     assert.deepEqual(resolveLibraryShortcut(key("j", { repeat: true }), active), { type: "move", delta: 1 });
 });
 
-test("O/R/A/E/X/T 映射到对应动作，Escape 只在光标激活时消费", () => {
+test("O/R/A/E/X/T/Y 映射到对应动作，Escape 只在光标激活时消费", () => {
     assert.deepEqual(resolveLibraryShortcut(key("o"), active), { type: "openDocument" });
     assert.deepEqual(resolveLibraryShortcut(key("r"), active), { type: "startReading" });
     assert.deepEqual(resolveLibraryShortcut(key("a"), active), { type: "later" });
     assert.deepEqual(resolveLibraryShortcut(key("e"), active), { type: "archive" });
     assert.deepEqual(resolveLibraryShortcut(key("x"), active), { type: "toggleSelect" });
     assert.deepEqual(resolveLibraryShortcut(key("t"), active), { type: "togglePin" });
+    assert.deepEqual(resolveLibraryShortcut(key("y"), active), { type: "copyBlockRef" });
+    assert.deepEqual(resolveLibraryShortcut(key("Y"), active), { type: "copyBlockRef" });
     assert.deepEqual(resolveLibraryShortcut(key("Escape"), active), { type: "clearCursor" });
     assert.equal(resolveLibraryShortcut(key("Escape"), {}), null);
     assert.equal(resolveLibraryShortcut(key("z"), active), null);

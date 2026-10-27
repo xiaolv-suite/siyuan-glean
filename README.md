@@ -8,6 +8,15 @@
 
 [English](README.en-US.md) · [下载最新版](https://github.com/ai68298100/siyuan-glean/releases/latest) · [能力矩阵](docs/CAPABILITY-MATRIX.md) · [反馈与问题](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.45 更新（2026-10-27）
+
+本次版本实现全场景 Y 键（Yank）一键复制思源块引用与快捷键矩阵全覆盖。
+
+**新增与体验增强：**
+
+- **全场景 Y 键（Yank）一键复制块引用**：遵循经典 Yank 习惯，在读库、今日拾遗、摘录墙与阅读器中，光标获焦时单手轻敲 `Y` 键即可一键复制思源块引用（`((id '标题/摘要'))`）。
+- **快捷键矩阵与提示条同步对齐**：读库与拾遗底部提示条、阅读器帮助浮层全量补齐 `Y` 键指示。
+
 ## v1.3.44 更新（2026-10-27）
 
 本次版本实现全场景思源原生块引用（Block Ref）贯通与摘录引用联动。

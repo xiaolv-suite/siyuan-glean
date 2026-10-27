@@ -8,6 +8,15 @@ Lv Glean organizes clippings and articles already in SiYuan. It does not crawl t
 
 [中文说明](README.md) · [Latest Release](https://github.com/ai68298100/siyuan-glean/releases/latest) · [Capability matrix](docs/CAPABILITY-MATRIX.md) · [Feedback](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.45 update (2026-10-27)
+
+This release implements the universal Y-key (Yank) shortcut for SiYuan block reference copying and shortcut matrix alignment.
+
+**New features & improvements:**
+
+- **Universal Y-Key (Yank) Block Ref Shortcut**: Following classic Yank conventions, press `Y` across library lists, cards, resurfacing picks, quotes, or inside the reader to instantly copy the block reference (`((id 'title/text'))`).
+- **Shortcut Matrix & Hints Alignment**: The keyboard hint bar and reader shortcut dialog fully expose the `Y` shortcut.
+
 ## v1.3.44 update (2026-10-27)
 
 This release implements ubiquitous SiYuan native block reference copying across resurfacing cards, highlights wall, and companion notes.

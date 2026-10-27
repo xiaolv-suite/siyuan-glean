@@ -478,9 +478,9 @@ function handleHighlightShortcut(event: KeyboardEvent): void {
         overlay: Boolean(document.querySelector("dialog[open], .b3-menu")),
         cursorActive: Boolean(cursorId),
     });
-    // 只接管 J/K/X/Enter；方向键仍交给列表原生滚动。
+    // 只接管 J/K/X/Enter/Y；方向键仍交给列表原生滚动。
     if (!action || action.type === "clearCursor") return;
-    if (!["move", "toggleSelect", "activate"].includes(action.type)) return;
+    if (!["move", "toggleSelect", "activate", "copyBlockRef"].includes(action.type)) return;
     event.preventDefault();
     event.stopPropagation();
     if (action.type === "move") {
@@ -491,6 +491,7 @@ function handleHighlightShortcut(event: KeyboardEvent): void {
     if (!item) return;
     if (action.type === "toggleSelect") toggle(item.id);
     if (action.type === "activate") openDoc(item.id);
+    if (action.type === "copyBlockRef") void copyQuoteBlockRef(item);
 }
 
 function setCursor(id: string): void {

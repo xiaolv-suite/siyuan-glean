@@ -2155,6 +2155,17 @@ async function runKeyboardAction(action: LibraryKeyboardAction): Promise<void> {
     }
     const entry = keyboardEntry;
     if (!entry) return;
+    if (action.type === "copyBlockRef") {
+        const title = entry.title || t(i18n, "panel.untitled");
+        const refText = `((${entry.id} '${title}'))`;
+        try {
+            await navigator.clipboard.writeText(refText);
+            showMessage(t(i18n, "reader.blockRefCopied"), 2000);
+        } catch {
+            showMessage(t(i18n, "msg.actionFailed"), 2000);
+        }
+        return;
+    }
     if (entry.kind === "candidate") {
         // 候选没有五态：Enter/O 查看证据，X 可勾选，其余状态动作不适用。
         if (action.type === "activate" || action.type === "openDocument") selectPreview(entry.id);
@@ -2682,6 +2693,7 @@ function metaLine(entry: Row): string {
                     <kbd>C</kbd> {t(i18n, "library.keyboardClearSelection")}
                     <kbd>P</kbd><kbd>1-5</kbd> {t(i18n, "library.keyboardPriority")}
                     <kbd>M</kbd> {t(i18n, "library.keyboardRating")}
+                    <kbd>Y</kbd> {t(i18n, "action.copyBlockRef")}
                     <kbd>Esc</kbd> {t(i18n, "library.keyboardExit")}
                 </span>
                 <span class="glean-sr-only" role="status" aria-live="polite">

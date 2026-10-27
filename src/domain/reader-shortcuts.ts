@@ -1,4 +1,4 @@
-export type ReaderShortcut = "scrollDown" | "scrollUp" | "edit" | "done" | "later" | "openSource" | "excerpt" | "help" | "nextHighlight" | "prevHighlight" | "toggleImmersive";
+export type ReaderShortcut = "scrollDown" | "scrollUp" | "edit" | "done" | "later" | "openSource" | "excerpt" | "help" | "nextHighlight" | "prevHighlight" | "toggleImmersive" | "copyBlockRef";
 
 export interface ReaderKeyInput {
     key: string;
@@ -29,6 +29,7 @@ export function readerShortcut(input: ReaderKeyInput): ReaderShortcut | null {
         : input.key === "h" ? "nextHighlight"
         : input.key === "H" ? "prevHighlight"
         : input.key === "F" ? "toggleImmersive"
+        : input.key === "y" ? "copyBlockRef"
         : input.key === "?" ? "help" : null;
     if (input.repeat && shortcut !== "scrollDown" && shortcut !== "scrollUp") return null;
     return shortcut;
