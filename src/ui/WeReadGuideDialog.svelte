@@ -44,6 +44,8 @@
     }
 </script>
 
+<svelte:window onkeydown={(e) => { if (e.key === "Escape") onClose?.(); }} />
+
 <div class="glean-weread-guide">
     <div class="glean-weread-guide__head">
         <div class="glean-weread-guide__title">{article.title || t(i18n, "panel.untitled")}</div>
@@ -71,7 +73,7 @@
             <div class="glean-weread-step__badge">2</div>
             <div class="glean-weread-step__body">
                 <div class="glean-weread-step__title">{t(i18n, "wechat.step2Title")}</div>
-                <div class="glean-weread-step__desc">{t(i18n, "wechat.step2Desc")}</div>
+                <div class="glean-weread-step__desc">{article.author ? t(i18n, "wechat.step2DescAuthor", { author: article.author }) : t(i18n, "wechat.step2Desc")}</div>
             </div>
         </div>
 

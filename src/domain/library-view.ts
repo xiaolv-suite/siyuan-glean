@@ -7,6 +7,7 @@
  */
 import type { ClipContentType, ClipSource, ClipStatus, ClipTimeSource } from "./schema.ts";
 import { applySessionOrder } from "./session-order.ts";
+import { isWechatUrl } from "./wechat.ts";
 
 export type LibraryItemKind = "clip" | "candidate";
 /** "session"（T-1903，D-0034）：按 ui-prefs 的会话顺序展示；direction 不适用（忽略）。 */
@@ -132,6 +133,17 @@ function matchesExact(actual: string | undefined, expected: string | undefined):
     return key(actual) === key(expected);
 }
 
+function matchesSite(item: LibraryItem, expectedSite: string | undefined): boolean {
+    if (!expectedSite) return true;
+    if (matchesExact(item.site, expectedSite)) return true;
+    // 微信公众号自适应融合：当按“微信”、“微信公众号”或“mp.weixin.qq.com”筛选时，
+    // 无论是记录为站点名、域名或 URL 为微信的文章，均自适应命中，彻底消灭筛选盲区。
+    if (isWechatUrl(expectedSite)) {
+        return isWechatUrl(item.site) || isWechatUrl(item.url);
+    }
+    return false;
+}
+
 function hasTag(item: LibraryItem, expected: string): boolean {
     const wanted = key(expected);
     if (!wanted) return true;
@@ -173,7 +185,7 @@ export function matchesLibraryFilter(item: LibraryItem, filter: LibraryFilter = 
             return false;
         }
     }
-    if (!matchesExact(item.site, filter.site)) return false;
+    if (!matchesSite(item, filter.site)) return false;
     if (!matchesExact(item.author, filter.author)) return false;
     if (filter.tag && !hasTag(item, filter.tag)) return false;
     if (filter.aiTag && !hasAiTag(item, filter.aiTag)) return false;

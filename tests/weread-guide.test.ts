@@ -47,6 +47,7 @@ test("双语 i18n 覆盖：微信读书向导文案全集合对齐", () => {
         "wechat.copiedLink",
         "wechat.step2Title",
         "wechat.step2Desc",
+        "wechat.step2DescAuthor",
         "wechat.step3Title",
         "wechat.step3Desc",
         "wechat.openWereadShelf",

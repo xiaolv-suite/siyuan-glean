@@ -1,5 +1,16 @@
 # 更新日志（CHANGELOG）
 
+## v1.3.50（2026-10-27）
+
+### 读库分面筛选微信来源自适应融合与智能视图「公众号精选」预设
+
+- **读库分面筛选微信来源自适应融合（T-3484）**：
+  - `src/domain/library-view.ts` 纯函数 `matchesLibraryFilter` 升级 `matchesSite` 判定；当按“微信”、“微信公众号”或 `mp.weixin.qq.com` 筛选时，无论是标记为域名、中文名还是纯 URL 来源的微信文章，均自适应精准命中，彻底消灭剪藏来源格式不一致导致的筛选盲区。
+- **智能动态视图新增「公众号精选」预设（T-3484）**：
+  - `src/domain/ui-prefs.ts` 扩充 `SMART_VIEW_PRESETS` 模板；支持一键创建聚焦全库微信公众号文章的动态保存视图，系列文章聚合管理一触即达。
+- **微信读书向导体验打磨（T-3484）**：
+  - `src/ui/WeReadGuideDialog.svelte` 接入 `<svelte:window>` 级别 Escape 快捷关闭，并在步骤 2 中精准呈现当前文章作者（公众号名称），操作流更加自然贴心。
+
 ## v1.3.49（2026-10-27）
 
 ### 微信读书网页版同步阅读向导（WeRead Guide Dialog）与全流程闭环

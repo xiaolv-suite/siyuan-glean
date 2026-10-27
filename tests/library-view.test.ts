@@ -338,3 +338,24 @@ test("resolveReadingTimeTier：准确归档为 short, medium, long 或 unknown",
     assert.equal(resolveReadingTimeTier(16), "long");
     assert.equal(resolveReadingTimeTier(120), "long");
 });
+
+test("matchesLibraryFilter：微信公众号来源跨形态自适应融合匹配", () => {
+    const items = [
+        clip({ id: "wechat-1", site: "mp.weixin.qq.com", url: "https://mp.weixin.qq.com/s/abc" }),
+        clip({ id: "wechat-2", site: "微信", url: "https://mp.weixin.qq.com/s/def" }),
+        clip({ id: "wechat-3", site: "", url: "https://mp.weixin.qq.com/s/ghi" }),
+        clip({ id: "zhihu", site: "zhihu.com", url: "https://zhihu.com/question/1" }),
+    ];
+
+    // 当用户按“微信”筛选时，上述三篇不同标记形态的微信文章均应自适应命中
+    const filterByChinese = filterAndSortLibrary(items, { site: "微信" });
+    assert.deepEqual(filterByChinese.map((i) => i.id), ["wechat-3", "wechat-2", "wechat-1"]);
+
+    // 当用户按“mp.weixin.qq.com”筛选时，同样全部自适应命中
+    const filterByHost = filterAndSortLibrary(items, { site: "mp.weixin.qq.com" });
+    assert.deepEqual(filterByHost.map((i) => i.id), ["wechat-3", "wechat-2", "wechat-1"]);
+
+    // 其他站点正常精确匹配
+    const filterZhihu = filterAndSortLibrary(items, { site: "zhihu.com" });
+    assert.deepEqual(filterZhihu.map((i) => i.id), ["zhihu"]);
+});

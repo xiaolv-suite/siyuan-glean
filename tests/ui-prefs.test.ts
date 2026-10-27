@@ -112,6 +112,16 @@ test("smart view presets instantiate with unique names and respect capacity (T-3
     assert.ok(second);
     assert.equal(second.name, "短文速读 2");
 
+    // 微信公众号精选智能预设
+    const wechatPreset = instantiateSmartViewPreset("wechat-articles", [], undefined, "smart-wechat");
+    assert.ok(wechatPreset);
+    assert.equal(wechatPreset.name, "公众号精选");
+    assert.deepEqual(wechatPreset.filter, {
+        site: "微信",
+        sortBy: "time",
+        direction: "desc",
+    });
+
     // 不存在的预设返回 null
     assert.equal(instantiateSmartViewPreset("non-existent", []), null);
 

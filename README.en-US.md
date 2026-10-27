@@ -8,6 +8,16 @@ Lv Glean organizes clippings and articles already in SiYuan. It does not crawl t
 
 [中文说明](README.md) · [Latest Release](https://github.com/ai68298100/siyuan-glean/releases/latest) · [Capability matrix](docs/CAPABILITY-MATRIX.md) · [Feedback](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.50 update (2026-10-27)
+
+This release implements adaptive WeChat source matching in library filters and a new "WeChat Articles" smart preset.
+
+**New features & improvements:**
+
+- **Adaptive WeChat Source Matching**: Filtering by "微信" or domain adapts across all naming variants (URL, hostname, or localized name), eliminating blind spots.
+- **Smart Preset "WeChat Articles"**: 1-click creation of a dynamic view aggregating all WeChat articles in the library.
+- **WeRead Guide Polish**: Added Escape key dismissal and article author interpolation in Step 2.
+
 ## v1.3.49 update (2026-10-27)
 
 This release launches the WeRead Web Sync & Reading Guide dialog for seamless shelf-syncing and login guidance.

@@ -69,6 +69,13 @@ export const SMART_VIEW_PRESETS: readonly SmartViewPreset[] = [
         filter: { status: "inbox", sortBy: "time", direction: "asc" },
         layout: "list",
     },
+    {
+        key: "wechat-articles",
+        nameKey: "library.smartPresetWechat",
+        defaultName: "公众号精选",
+        filter: { site: "微信", sortBy: "time", direction: "desc" },
+        layout: "list",
+    },
 ] as const;
 
 export const DEFAULT_READER_APPEARANCE: ReaderAppearance = {
