@@ -8,6 +8,15 @@ Lv Glean organizes clippings and articles already in SiYuan. It does not crawl t
 
 [中文说明](README.md) · [Latest Release](https://github.com/ai68298100/siyuan-glean/releases/latest) · [Capability matrix](docs/CAPABILITY-MATRIX.md) · [Feedback](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.40 update (2026-10-27)
+
+This release implements read-point resume badges on library cards and hardened WeChat word count noise filtering.
+
+**New features & improvements:**
+
+- **Read-Point Resume Badges on Cards**: Library cards display a concise "🔖 Resume" badge for articles with saved read-points; clicking smoothly resumes reading at the exact block.
+- **Hardened WeChat Word Count Filtering**: Strips third-party layout ads and trailing noise before word counting to eliminate inflated reading time.
+
 ## v1.3.39 update (2026-10-27)
 
 This release implements WeChat series book badges and 1-click outline tree export in the companion bar.

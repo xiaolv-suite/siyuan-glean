@@ -1436,5 +1436,7 @@
   "reader.copying": "Copying…",
   "reader.copyOutline": "Copy Outline",
   "reader.copyOutlineHint": "Copy hierarchical outline in Markdown, ready for mindmaps",
-  "reader.outlineCopied": "Outline hierarchy copied to clipboard!"
+  "reader.outlineCopied": "Outline hierarchy copied to clipboard!",
+  "reading.resumePoint": "Read-point recorded, open to smooth resume",
+  "reading.resumePointShort": "Resume"
 }

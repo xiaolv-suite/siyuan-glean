@@ -53,7 +53,8 @@ function articleBody(markdown: string): string {
         if (/^(?:[-*+]\s*)?(?:来源|收藏于|已读于|标签|由迁移导入器带入)\s*[：:]/.test(trimmed)) continue;
         if (/^>\s*由迁移导入器带入/.test(trimmed)) continue;
         if (/^(?:[-*+]\s*)?收录于[合话专][集题栏]/i.test(trimmed)) continue;
-        if (/^(?:[-*+]\s*)?(?:点击上方.*关注|长按二维码.*关注|喜欢本文.*点赞|预览时标签不可点|后台回复.*领取|商务合作\s*[:：]|点击.*?阅读原文|排版设计\s*[:：])/i.test(trimmed)) continue;
+        if (/^(?:[-*+]\s*)?(?:点击上方.*关注|长按二维码.*关注|喜欢本文.*点赞|预览时标签不可点|后台回复.*领取|商务合作\s*[:：]|点击.*?阅读原文|排版设计\s*[:：]|秀米XIUMI|135编辑器|新媒体管家|壹伴|往期推荐|精彩回顾|延伸阅读|推荐阅读|赞赏作者|喜欢作者)/i.test(trimmed)) continue;
+        if (/^<(?:mpvoice|mpvideo|mp-common-profile|mp-miniprogram)\b/i.test(trimmed)) continue;
         body.push(line);
     }
     return stripMarkdown(body.join("\n")).replace(/\s+/g, " ").trim();

@@ -43,6 +43,7 @@ export interface ClipIndexEntry {
     contentType: string;
     timeSource: string;
     updated: string;
+    readPoint?: string;
 }
 
 /** 未收录候选：无有效状态；可能已有来源 URL，显式收录时补齐缺失字段。 */
@@ -222,6 +223,7 @@ export function applyAttrsToIndex(
             aiTags: attrs.aiTags,
             contentType: attrs.contentType ?? "",
             timeSource: attrs.timeSource ?? "",
+            readPoint: attrs.readPoint,
             updated: doc.updated,
         };
     } else {
