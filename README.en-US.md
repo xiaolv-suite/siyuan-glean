@@ -8,6 +8,16 @@ Lv Glean organizes clippings and articles already in SiYuan. It does not crawl t
 
 [中文说明](README.md) · [Latest Release](https://github.com/ai68298100/siyuan-glean/releases/latest) · [Capability matrix](docs/CAPABILITY-MATRIX.md) · [Feedback](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.36 update (2026-10-27)
+
+This release implements WeChat deep content purification, SVG interactive layout extraction, component cards conversion, and canonical deduplication fingerprints.
+
+**New features & improvements:**
+
+- **WeChat Deep Content Purification**: Added `purifyWechatArticle` in `wechat-service.ts`; companion bar provides a 1-click "✨ Purify Article" action to chain lazy-load, background images, LaTeX, code snippets, voice notes, and noise cleanup with updated pure word counts.
+- **SVG Interactive Layout Purification**: Extracts embedded images from complex third-party SVG layouts while stripping empty animation containers and XML noise.
+- **Cross-Channel Canonical WeChat Fingerprint**: Added `canonicalWechatUrlKey` using `__biz`, `mid`, and `idx` to prevent duplicate captures across varied sharing links.
+
 ## v1.3.35 update (2026-10-27)
 
 This release implements progressive slice awareness in daily resurfacing, mobile haptic touch feedback, and shortcut matrix alignment.

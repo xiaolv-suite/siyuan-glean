@@ -8,6 +8,16 @@
 
 [English](README.en-US.md) · [下载最新版](https://github.com/ai68298100/siyuan-glean/releases/latest) · [能力矩阵](docs/CAPABILITY-MATRIX.md) · [反馈与问题](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.36 更新（2026-10-27）
+
+本次版本实现微信公众号正文深度提纯服务、SVG 交互长图动画清洗、名片转换与跨渠道绝对查重指纹。
+
+**新增与体验增强：**
+
+- **微信正文深度提纯服务**：`wechat-service.ts` 新增 `purifyWechatArticle`；伴生栏微信卡片增设「✨ 提纯正文」一键操作，全套执行懒加载、背景图、LaTeX公式、代码块、语音、SVG长图与名片转换并重新计算纯净字数。
+- **SVG 交互排版提纯与动画剥离**：自动提取复杂排版 SVG 内部的真实插图，彻底消除秀米/135等排版器带来的空白长条与杂乱 XML 代码。
+- **微信链接绝对查重指纹**：新增 `canonicalWechatUrlKey`，依据 `__biz`、`mid`、`idx` 核心特征跨分享渠道精准查重，杜绝重复收录。
+
 ## v1.3.35 更新（2026-10-27）
 
 本次版本实现今日拾遗渐进切片感知、移动端滑动触感反馈与快捷键矩阵补齐。

@@ -38,6 +38,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
     import { makeQuoteCardPreview } from "./flashcard-dialog";
     import { openQuoteCardDialog } from "./quote-card-dialog";
     import { openDocSlicingDialog } from "./doc-slicing-dialog";
+    import { purifyWechatArticle } from "../services/wechat-service";
     import { THEME_PALETTES, type ThemePaletteId } from "../domain/theme-palette";
     import { applyThemePaletteToDom } from "../libs/theme-palette-controller";
     import { buildSliceStartMap, planDocSlices } from "../domain/doc-slicing";
@@ -98,6 +99,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
     let readPointRestoredDocId = "";
     let paletteMenuOpen = $state(false);
     let currentThemePalette = $state<ThemePaletteId>("teal");
+    let purifying = $state(false);
     let readerRoot = $state<HTMLDivElement | null>(null);
     let sidebarCollapsed = $state(false);
     let immersive = $state(false);
@@ -723,6 +725,26 @@ import { aiFailureKey } from "../libs/ai-feedback";
         const wereadUrl = wechatArticleToWereadUrl(context.url);
         if (wereadUrl) {
             window.open(wereadUrl, "_blank");
+        }
+    }
+
+    async function runPurifyWechat(): Promise<void> {
+        if (!docId || purifying) return;
+        purifying = true;
+        try {
+            const result = await purifyWechatArticle(facade.pluginInstance, docId);
+            if (result.ok) {
+                showMessage(t(i18n, "wechat.purifyDone", { count: result.words ?? 0 }), 3000);
+                await loadContext(docId);
+                facade.notifyDataChanged();
+            } else {
+                showMessage(t(i18n, "msg.actionFailed"), 3000);
+            }
+        } catch (err) {
+            console.warn("[glean] 微信文章提纯失败:", err);
+            showMessage(t(i18n, "msg.actionFailed"), 3000);
+        } finally {
+            purifying = false;
         }
     }
 
@@ -2008,6 +2030,9 @@ import { aiFailureKey } from "../libs/ai-feedback";
                         {/if}
                         <button type="button" class="glean-btn glean-btn--ghost glean-wechat-publisher__btn" onclick={openWeread} title={t(i18n, "reader.openWeread")}>
                             {t(i18n, "reader.openWeread")}
+                        </button>
+                        <button type="button" class="glean-btn glean-btn--ghost glean-wechat-publisher__btn" disabled={purifying} onclick={() => void runPurifyWechat()} title={t(i18n, "wechat.purifyTitle")}>
+                            ✨ {purifying ? t(i18n, "wechat.purifying") : t(i18n, "wechat.purifyAction")}
                         </button>
                         <button type="button" class="glean-btn glean-btn--ghost glean-wechat-publisher__btn" onclick={() => void copyCleanUrl()} title={t(i18n, "reader.copyCleanUrl")}>
                             <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg>

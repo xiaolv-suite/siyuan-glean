@@ -1422,5 +1422,9 @@
   "theme.rose": "Crimson Rose",
   "theme.roseDesc": "Elegant, distinctive, warm accent",
   "resurface.reasonSlice": "✂️ Progressive slice · ~${minutes} min quick read",
-  "resurface.sliceBadge": "Slice"
+  "resurface.sliceBadge": "Slice",
+  "wechat.purifyAction": "Purify Article",
+  "wechat.purifying": "Purifying…",
+  "wechat.purifyTitle": "Deep purify WeChat content (images, math, code, background images, and noise)",
+  "wechat.purifyDone": "Content purified! Pure body: ~${count} words"
 }

@@ -15,7 +15,7 @@ registerHooks({
     },
 });
 
-const { scanAndFillWechatAuthor, batchRecognizeWechatAuthors } = await import("../src/services/wechat-service.ts");
+const { scanAndFillWechatAuthor, batchRecognizeWechatAuthors, purifyWechatArticle } = await import("../src/services/wechat-service.ts");
 
 test("scanAndFillWechatAuthor：从传入的正文或 DOM 片段精准提取微信公众号并回填作者", async () => {
     const written = [];
@@ -92,4 +92,50 @@ test("WorkbenchPreview 预览区接入微信公众号自动强行识别", () => 
     const preview = fs.readFileSync(new URL("../src/ui/WorkbenchPreview.svelte", import.meta.url), "utf8");
     assert.match(preview, /autoDetectWechatAuthor/);
     assert.match(preview, /scanAndFillWechatAuthor/);
+});
+
+test("purifyWechatArticle：执行微信文章深度提纯与字数时长重新校准", async () => {
+    const written = [];
+    globalThis.__gleanWechatPost = async (route, body) => {
+        if (route === "/api/export/exportMdContent") {
+            return {
+                code: 0,
+                data: {
+                    content: `# 微信文章标题
+<img data-src="https://mmbiz.qpic.cn/img001.png" alt="配图" />
+<div class="rich_media_meta_list"><a id="js_name">差评君</a></div>
+<mp-common-profile nickname="差评君" desc="探索科技世界"></mp-common-profile>
+正文核心内容段落。
+点击上方蓝字关注我们
+`,
+                },
+            };
+        }
+        if (route === "/api/attr/getBlockAttrs") {
+            return {
+                code: 0,
+                data: {
+                    "custom-clip-url": "https://mp.weixin.qq.com/s/sample001",
+                    "custom-clip-status": "reading",
+                },
+            };
+        }
+        if (route === "/api/attr/setBlockAttrs") {
+            written.push(body);
+            return { code: 0, data: null };
+        }
+        return { code: 0, data: null };
+    };
+
+    const fakePlugin = {
+        loadData: async () => ({ version: 1, updatedAt: new Date().toISOString(), clips: {}, candidates: {} }),
+        saveData: async () => {},
+    };
+
+    const res = await purifyWechatArticle(fakePlugin, "20261027120000-wechat2");
+    assert.equal(res.ok, true);
+    assert.equal(res.modified, true);
+    assert.equal(res.author, "差评君");
+    assert.ok(res.words > 0);
+    assert.ok(written.length > 0);
 });

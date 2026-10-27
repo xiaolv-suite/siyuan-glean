@@ -2268,3 +2268,16 @@ T-3416 承接方向五（有依据的阅读 AI）与同类产品对标（Readwis
    - 滑动分拣达到触发阈值并锁定动作时，调用 `navigator.vibrate?.(12)` 产生 12ms 的柔和触感震动反馈，赋予媲美原生 App 的实体交互质感；
 3. 快捷键矩阵对齐（`ReaderTab.svelte`）：
    - 快捷键帮助浮层增补 `Alt+E`（摘录到闪卡）指示。
+
+## D-0349（2026-10-27）微信公众号正文深度提纯服务、SVG长图动画清洗与绝对查重指纹（T-3470）
+
+将微信公众号专属研读体验推向极致：
+1. 微信文章正文深度提纯服务（`src/services/wechat-service.ts`）：
+   - 新增 `purifyWechatArticle` 服务；串联执行懒加载还原、背景图抢救、LaTeX公式逆向、代码块提纯、语音组件转引述、SVG长图提取、名片小程序组件转换与模板噪点清除，重新核算纯净字数与预估时长；
+   - `ReaderTab.svelte` 伴生栏微信卡片增设「✨ 提纯正文」一键操作；
+2. SVG 复杂交互排版提取与动画剥离（`src/domain/wechat.ts`）：
+   - 新增 `repairWechatSvg`，自动从复杂 SVG 中提取内嵌插图，并安全清除秀米/135 等排版器的空动画代码，彻底消灭空白长条与杂乱 XML 标签；
+3. 结构化名片与小程序卡片转换（`src/domain/wechat.ts`）：
+   - 新增 `repairWechatCards`，将 `<mp-common-profile>` 和 `<mp-miniprogram>` 转换为结构化 Markdown 优雅引述卡；
+4. 跨终端渠道绝对查重指纹（`src/domain/wechat.ts`）：
+   - 新增 `canonicalWechatUrlKey`，依据核心三元组（`__biz`, `mid`, `idx`）或短码生成指纹，彻底消灭随机跟踪参数引发的重复收录。

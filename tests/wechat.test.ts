@@ -4,7 +4,7 @@ import {
     isWechatUrl, isWechatImage, extractWechatAuthor, cleanWechatNoise, extractWechatTime, extractWechatSeries,
     repairWechatImages, extractWechatCover, extractWechatDescription, cleanWechatArticleUrl, wechatArticleToWereadUrl,
     repairWechatMath, repairWechatCode, repairWechatVoice, repairWechatContent, extractWechatAvatar, extractWechatBiz,
-    repairWechatBackgroundImages, repairWechatVideos, displayWechatAuthor,
+    repairWechatBackgroundImages, repairWechatVideos, displayWechatAuthor, repairWechatSvg, repairWechatCards, canonicalWechatUrlKey,
 } from "../src/domain/wechat.ts";
 
 test("isWechatUrl：准确识别 mp.weixin.qq.com 及子域名", () => {
@@ -342,6 +342,37 @@ test("repairWechatContent：串联执行全套正文提纯（图片懒加载/背
     assert.ok(repaired.includes("$x^2 + y^2 = r^2$"));
     assert.ok(repaired.includes('```js\nconsole.log("ok");\n```'));
     assert.ok(repaired.includes("🎙️ **音频**：作者说 (1:00)"));
+});
+
+test("repairWechatSvg：提取 SVG 交互长图真实图片并剔除空动画容器", () => {
+    const svgWithImage = '<svg class="svg_container"><g><image href="https://mmbiz.qpic.cn/long_image.png"></image></g></svg>';
+    const resImg = repairWechatSvg(svgWithImage);
+    assert.ok(resImg.includes("![插图](https://mmbiz.qpic.cn/long_image.png)"));
+
+    const emptyAnimationSvg = '<svg class="interactive"><animateTransform></animateTransform></svg>';
+    const resEmpty = repairWechatSvg(emptyAnimationSvg);
+    assert.equal(resEmpty, "");
+});
+
+test("repairWechatCards：名片卡与小程序卡转换为结构化 Markdown 引用", () => {
+    const profile = '<mp-common-profile nickname="差评君" desc="带你探索有趣的科技世界"></mp-common-profile>';
+    const resProfile = repairWechatCards(profile);
+    assert.ok(resProfile.includes("👤 **推荐关注**：差评君 —— *带你探索有趣的科技世界*"));
+
+    const miniprogram = '<mp-miniprogram title="微信读书精选小卡"></mp-miniprogram>';
+    const resMini = repairWechatCards(miniprogram);
+    assert.ok(resMini.includes("📱 **微信小程序**：微信读书精选小卡"));
+});
+
+test("canonicalWechatUrlKey：跨渠道微信链接生成唯一绝对查重指纹", () => {
+    const urlShort = "https://mp.weixin.qq.com/s/ABCDEF123456?chksm=999&scene=21";
+    assert.equal(canonicalWechatUrlKey(urlShort), "wechat:short:ABCDEF123456");
+
+    const urlBiz = "https://mp.weixin.qq.com/s?__biz=Mzg2MzY1MjE0MQ==&mid=2247483650&idx=1&sn=9e0a817441#rd";
+    assert.equal(canonicalWechatUrlKey(urlBiz), "wechat:biz:Mzg2MzY1MjE0MQ==:2247483650:1");
+
+    const urlSnOnly = "https://mp.weixin.qq.com/s?sn=abcdef987654321&chksm=111";
+    assert.equal(canonicalWechatUrlKey(urlSnOnly), "wechat:sn:abcdef987654321");
 });
 
 

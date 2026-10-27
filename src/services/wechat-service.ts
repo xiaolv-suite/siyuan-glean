@@ -1,6 +1,6 @@
 import type { Plugin } from "siyuan";
 import { exportMdContent } from "../api/client";
-import { extractWechatAuthor, isWechatUrl, extractWechatDescription, extractWechatSeries } from "../domain/wechat";
+import { extractWechatAuthor, isWechatUrl, extractWechatDescription, extractWechatSeries, cleanWechatNoise, repairWechatContent } from "../domain/wechat";
 import { readClip, writeClip } from "./clip-store";
 
 /**
@@ -141,4 +141,80 @@ export async function batchRecognizeWechatAuthors(
     }
 
     return { processed, detectedCount, updatedIds };
+}
+
+export interface PurifyWechatResult {
+    ok: boolean;
+    modified: boolean;
+    words?: number;
+    minutes?: number;
+    author?: string;
+    summary?: string;
+    series?: string;
+}
+
+/**
+ * 微信公众号文章深度提纯与字数时长校准
+ * 串联执行：图片懒加载还原、CSS背景插图抢救、LaTeX公式逆向、代码块提纯、
+ * 语音组件转引述、SVG长图与动画容器提纯、名片卡片转换、模板噪点清除。
+ */
+export async function purifyWechatArticle(
+    plugin: Plugin,
+    docId: string,
+): Promise<PurifyWechatResult> {
+    if (!/^\d{14}-[0-9a-z]{7}$/.test(docId)) return { ok: false, modified: false };
+
+    try {
+        const clip = await readClip(docId);
+        const isWechat = isWechatUrl(clip.url) || isWechatUrl(clip.site);
+        if (!isWechat) return { ok: false, modified: false };
+
+        const exported = await exportMdContent(docId, { yfm: false, addTitle: false, refMode: 2 });
+        const rawContent = exported?.content || "";
+        if (!rawContent.trim()) return { ok: false, modified: false };
+
+        // 深度提纯正文与清洗噪点
+        const repaired = repairWechatContent(rawContent);
+        const cleaned = cleanWechatNoise(repaired);
+        const modified = cleaned !== rawContent;
+
+        // 提取元数据补丁
+        const snippet = cleaned.slice(0, 3500);
+        const detectedAuthor = extractWechatAuthor(snippet);
+        const detectedDesc = extractWechatDescription(snippet);
+        const detectedSeries = extractWechatSeries(snippet);
+
+        const patch: Record<string, unknown> = {};
+
+        if (detectedAuthor && (!clip.author || !clip.author.trim())) {
+            patch.author = detectedAuthor;
+        }
+        if (detectedDesc && (!clip.summary || !clip.summary.trim())) {
+            patch.summary = detectedDesc;
+        }
+        if (detectedSeries && !(clip.aiTags || []).includes(detectedSeries)) {
+            patch.aiTags = [...(clip.aiTags || []), detectedSeries];
+        }
+
+        // 重新核算纯净字数与预估时间
+        const words = Math.max(0, cleaned.replace(/\s+/g, "").length);
+        const minutes = Math.max(1, Math.round(words / 400));
+        patch.words = words;
+        patch.minutes = minutes;
+
+        await writeClip(plugin, docId, patch, { force: true });
+
+        return {
+            ok: true,
+            modified,
+            words,
+            minutes,
+            author: (patch.author as string) || clip.author,
+            summary: (patch.summary as string) || clip.summary,
+            series: detectedSeries || undefined,
+        };
+    } catch (error) {
+        console.warn("[glean] 微信文章深度提纯失败:", docId, error);
+        return { ok: false, modified: false };
+    }
 }

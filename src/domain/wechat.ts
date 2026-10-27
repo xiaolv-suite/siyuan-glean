@@ -630,8 +630,59 @@ export function repairWechatVideos(markdown: string): string {
 }
 
 /**
+ * 修复微信复杂 SVG 交互长图并剔除动画容器噪点：
+ * 秀米/135 等公众号编辑器常将整张信息长图内嵌在 <svg> 的 <image> 标签中，或用于点击/滑动动画排版。
+ * 提取内嵌真实插图转为 Markdown 图片，并清除无正文意义的动画干扰代码。
+ */
+export function repairWechatSvg(markdown: string): string {
+    if (!markdown || typeof markdown !== "string") return "";
+
+    return markdown.replace(/<svg\b([^>]*)>([\s\S]*?)<\/svg>/gi, (match, attrs, inner) => {
+        // 1. 尝试从 <image> 中提取实际插图
+        const imgMatches = [...inner.matchAll(/<image\b[^>]*\b(?:xlink:href|href)=["'](https?:\/\/[^"']+)["'][^>]*>/gi)];
+        if (imgMatches.length > 0) {
+            const extractedImages = imgMatches.map((m) => `\n\n![插图](${m[1]})\n\n`).join("");
+            return extractedImages;
+        }
+
+        // 2. 如果包含动画标签或大量交互代码且无文字内容，安全剔除
+        const isInteractiveSvg = /<(?:animate|animateTransform|set)\b/i.test(inner) || /\b(?:svg_container|interactive)\b/i.test(attrs);
+        const textContent = inner.replace(/<[^>]+>/g, "").trim();
+        if (isInteractiveSvg && (!textContent || textContent.length < 5)) {
+            return "";
+        }
+
+        return match;
+    });
+}
+
+/**
+ * 结构化提纯微信内嵌的名片组件与小程序推荐卡：
+ * 将 <mp-common-profile> 与 <mp-miniprogram> 转换为优雅的 Markdown 结构化引述卡。
+ */
+export function repairWechatCards(markdown: string): string {
+    if (!markdown || typeof markdown !== "string") return "";
+
+    let res = markdown.replace(/<mp-common-profile\b([^>]*)>(?:[\s\S]*?<\/mp-common-profile>)?/gi, (_match, attrs) => {
+        const nicknameMatch = /\bnickname=["']([^"']+)["']/i.exec(attrs);
+        const nickname = nicknameMatch ? decodeHtmlEntities(nicknameMatch[1]).trim() : "微信公众号";
+        const descMatch = /\bdesc=["']([^"']+)["']/i.exec(attrs);
+        const desc = descMatch ? decodeHtmlEntities(descMatch[1]).trim() : "";
+        return `\n\n> 👤 **推荐关注**：${nickname}${desc ? ` —— *${desc}*` : ""}\n\n`;
+    });
+
+    res = res.replace(/<mp-miniprogram\b([^>]*)>(?:[\s\S]*?<\/mp-miniprogram>)?/gi, (_match, attrs) => {
+        const titleMatch = /\b(?:title|name)=["']([^"']+)["']/i.exec(attrs);
+        const title = titleMatch ? decodeHtmlEntities(titleMatch[1]).trim() : "微信小程序";
+        return `\n\n> 📱 **微信小程序**：${title}\n\n`;
+    });
+
+    return res;
+}
+
+/**
  * 微信文章正文深度清洗与提纯一键入口：
- * 串联执行图片懒加载修复、CSS 背景插图抢救、内嵌视频转换、LaTeX 数学公式还原、代码块提取与语音条组件转换。
+ * 串联执行图片懒加载修复、CSS 背景插图抢救、内嵌视频转换、LaTeX 数学公式还原、代码块提取、语音条组件转换、SVG 长图提纯与名片卡片转换。
  */
 export function repairWechatContent(markdown: string): string {
     if (!markdown || typeof markdown !== "string") return "";
@@ -641,6 +692,8 @@ export function repairWechatContent(markdown: string): string {
     result = repairWechatMath(result);
     result = repairWechatCode(result);
     result = repairWechatVoice(result);
+    result = repairWechatSvg(result);
+    result = repairWechatCards(result);
     return result;
 }
 
@@ -678,6 +731,45 @@ export function extractWechatBiz(markdownOrUrl: string): string | null {
     if (appuinMatch) return appuinMatch[1];
 
     return null;
+}
+
+/**
+ * 生成跨分享渠道与多终端形态的微信公众号文章唯一绝对查重指纹（Canonical Fingerprint）
+ * 彻底解决不同来源同一篇微信文章因随机跟踪参数不同导致重复收录的问题。
+ */
+export function canonicalWechatUrlKey(rawUrl: string): string {
+    if (!rawUrl || typeof rawUrl !== "string") return "";
+    const trimmed = rawUrl.trim();
+    if (!isWechatUrl(trimmed)) return "";
+
+    try {
+        const candidate = trimmed.includes("://") ? trimmed : `https://${trimmed}`;
+        const parsed = new URL(candidate);
+
+        // 1. /s/xxxx 短链永久形式
+        const shortMatch = /^\/s\/([a-zA-Z0-9_-]+)/.exec(parsed.pathname);
+        if (shortMatch) {
+            return `wechat:short:${shortMatch[1]}`;
+        }
+
+        // 2. /s 动态三元组形式：__biz, mid, idx
+        const biz = parsed.searchParams.get("__biz") || "";
+        const mid = parsed.searchParams.get("mid") || "";
+        const idx = parsed.searchParams.get("idx") || "1";
+        if (biz && mid) {
+            return `wechat:biz:${biz}:${mid}:${idx}`;
+        }
+
+        // 3. 签名 sn 形式
+        const sn = parsed.searchParams.get("sn");
+        if (sn) {
+            return `wechat:sn:${sn}`;
+        }
+
+        return `wechat:path:${parsed.pathname}`;
+    } catch {
+        return "";
+    }
 }
 
 

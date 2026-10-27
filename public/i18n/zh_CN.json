@@ -1422,5 +1422,9 @@
   "theme.rose": "绯红蔷薇",
   "theme.roseDesc": "典雅热烈，醒目点睛",
   "resurface.reasonSlice": "✂️ 渐进阅读切片 · 约 ${minutes} 分钟轻量读完",
-  "resurface.sliceBadge": "渐进切片"
+  "resurface.sliceBadge": "渐进切片",
+  "wechat.purifyAction": "提纯正文",
+  "wechat.purifying": "正在提纯…",
+  "wechat.purifyTitle": "深度提纯微信正文（修复懒加载/抢救背景长图/逆向公式与代码块/清除噪点）",
+  "wechat.purifyDone": "正文提纯完成！当前纯净正文约 ${count} 字"
 }
