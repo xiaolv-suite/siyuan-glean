@@ -8,6 +8,15 @@ Lv Glean organizes clippings and articles already in SiYuan. It does not crawl t
 
 [中文说明](README.md) · [Latest Release](https://github.com/ai68298100/siyuan-glean/releases/latest) · [Capability matrix](docs/CAPABILITY-MATRIX.md) · [Feedback](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.32 update (2026-10-27)
+
+This release implements the plugin-wide Theme Palette System, offering 6 curated high-quality color themes with instant live preview.
+
+**New features & improvements:**
+
+- **Plugin-Wide Theme Palette System**: Added `theme-palette.ts` and `theme-palette-controller.ts`, featuring 6 distinct palettes: Nordic Teal, Warm Amber, Deep Violet, Ocean Blue, Obsidian Dark, and Crimson Rose.
+- **Bento Theme Cards in Settings**: `SettingsView.svelte` features a visual color palette grid on the general settings page; clicking any theme immediately switches all brand CSS variables live and persists your preference.
+
 ## v1.3.31 update (2026-10-27)
 
 This release implements progressive document slicing (Doc Slicing), the high-precision Read-Point Engine, and selection Alt+E card creation, alongside resolving onboarding dialog screen flicker.

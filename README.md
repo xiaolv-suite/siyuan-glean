@@ -8,6 +8,15 @@
 
 [English](README.en-US.md) · [下载最新版](https://github.com/ai68298100/siyuan-glean/releases/latest) · [能力矩阵](docs/CAPABILITY-MATRIX.md) · [反馈与问题](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.32 更新（2026-10-27）
+
+本次版本实现全插件色彩主题切换体系（Theme Palette System），内置 6 款高质感精美主题预设，并支持在设置中实时秒级换肤。
+
+**新增与体验增强：**
+
+- **全插件色彩主题切换体系**：新增 `src/domain/theme-palette.ts` 与 `theme-palette-controller.ts`；内置北欧深松绿（Teal）、金麦暖阳（Amber）、极客紫罗兰（Violet）、澄海天蓝（Blue）、黑曜极简（Obsidian）、绯红蔷薇（Rose）六款精美色彩主题。
+- **设置页 Bento 色彩卡片展台**：`SettingsView.svelte` 常规设置首屏呈现主题选择器，点击任意色卡瞬间全屏热更新 CSS 品牌变量并持久化，彻底告别单调色彩，满足个性化审美。
+
 ## v1.3.31 更新（2026-10-27）
 
 本次版本实现长文按大纲一键渐进切片（Doc Slicing）、视口相交高精度断点续读引擎（Read-Point Engine）与划词 Alt+E 闪卡联动，并彻底根除首启引导页面闪烁。

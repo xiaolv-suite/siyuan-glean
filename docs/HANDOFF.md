@@ -1,5 +1,15 @@
 # HANDOFF — 续跑交接（每轮开发结束更新本页）
 
+## 当前有效交接（2026-10-27 全插件色彩主题切换体系与 6 款高质感预设落地）
+
+- T-3466/D-0345：全插件色彩主题切换体系（Theme Palette System）落地：
+  1. 纯函数领域模型与动态注入：新增 `src/domain/theme-palette.ts` 与 `src/libs/theme-palette-controller.ts`；精选 6 款经典预设（北欧深松绿 Teal、金麦暖阳 Amber、极客紫罗兰 Violet、澄海天蓝 Blue、黑曜极简 Obsidian、绯红蔷薇 Rose），支持全插件 CSS 品牌变量动态热更新；
+  2. 偏好记忆与设置面板交互：`UiPrefs` 新增 `themePalette` 字段；`SettingsView.svelte` 常规设置首屏呈现 Bento 风格色彩选择器，点击任意卡片瞬间热生效并落盘保存；
+  3. 插件生命周期联动：`src/index.ts` 布局就绪时自动拉取并应用已存主题；
+  4. 门禁全通：新增 `tests/theme-palette.test.ts`（4/4），`tests/prefs.test.ts`、`tests/ui-prefs.test.ts`、全套架构/i18n/无障碍全部全绿，`pnpm check` 0 错误 0 警告，发布门禁与性能基线通过。
+- 下一步：按当前执行板顺序推进下一个任务（如 T-3367 批量选择范围与底部操作在更多场景的走查，或按作者点单继续）。版本保持 1.3.32，本轮不打 tag、不发布、不推送。
+
+
 ## 当前有效交接（2026-10-27 长文按大纲一键渐进切片引擎、视口断点续读与 Alt+E 闪卡联动）
 
 - T-3465/D-0344：长文按大纲一键渐进切片引擎（Doc Slicing）与生态令牌加固落地：

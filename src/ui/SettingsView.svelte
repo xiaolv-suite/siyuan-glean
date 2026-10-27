@@ -12,6 +12,8 @@ import { inspectCustomEndpointSecurity } from "../domain/ai-direct";
 import { t } from "../libs/i18n";
 import { DEFAULT_SETTINGS, cloneSettings, loadSettings, mergeSettingsDraft, normalizeSettings, SettingsConflictError, settingsEqual, type GleanSettings } from "../services/settings";
 import { loadUiPrefs, saveUiPrefs } from "../services/prefs";
+import { THEME_PALETTES, type ThemePaletteId } from "../domain/theme-palette";
+import { applyThemePaletteToDom } from "../libs/theme-palette-controller";
 import type { GleanFacade } from "../types";
 import { exportAnonymousDiagnostic, exportLibraryCsv, exportLibraryMarkdownArchive } from "../services/library-export-service";
 import { installEscapeHandler } from "../libs/modal-focus";
@@ -67,6 +69,7 @@ let aiArticleQuestion = $state(DEFAULT_SETTINGS.ai.articleQuestionEnabled);
 let aiActions = $state(DEFAULT_SETTINGS.ai.presetActions);
 let usageCount = $state<number | null>(null);
 let dailyCount = $state(DEFAULT_SETTINGS.resurface.dailyCount);
+let currentThemePalette = $state<ThemePaletteId>("teal");
 let includeDone = $state(DEFAULT_SETTINGS.resurface.includeDoneHighlights);
 let inboxQuota = $state(DEFAULT_SETTINGS.inboxQuota);
 let staleDays = $state(DEFAULT_SETTINGS.staleDays);
@@ -258,7 +261,10 @@ onMount(() => {
     originalSettings = cloneSettings(facade.settings);
     loadDraft(originalSettings);
     void loadUiPrefs(facade.pluginInstance).then((prefs) => {
-        if (active) showNewbieHint = !prefs.onboardingDone && !prefs.onboardingHintDismissed;
+        if (active) {
+            showNewbieHint = !prefs.onboardingDone && !prefs.onboardingHintDismissed;
+            currentThemePalette = prefs.themePalette || "teal";
+        }
     }).catch(() => undefined);
     void loadNotebookOptions();
     if (originalSettings.integration.checkinEnabled) {
@@ -283,6 +289,17 @@ onMount(() => {
         document.removeEventListener("glean:data-changed", refreshUsage);
     };
 });
+
+async function selectThemePalette(id: ThemePaletteId): Promise<void> {
+    currentThemePalette = id;
+    applyThemePaletteToDom(null, id);
+    try {
+        await saveUiPrefs(facade.pluginInstance, { themePalette: id });
+        facade.notifyDataChanged();
+    } catch (error) {
+        console.warn("[glean] 保存主题色彩失败:", error);
+    }
+}
 
 async function loadNotebookOptions(): Promise<void> {
     if (notebookLoading) return;
@@ -663,6 +680,36 @@ async function doMountBoard() {
             {/if}
             {#if activeSection === "workspace"}
     <div class="glean-settings__section glean-settings__section--core glean-settings__section--workspace">
+        <div class="glean-set-group glean-theme-palette-group">
+            <div class="glean-set-row">
+                <div class="glean-set-row__lb">
+                    {t(i18n, "settings.themePalette")}
+                    <div class="glean-set-row__desc">{t(i18n, "settings.themePaletteDesc")}</div>
+                </div>
+            </div>
+            <div class="glean-palette-grid" role="radiogroup" aria-label={t(i18n, "settings.themePalette")}>
+                {#each THEME_PALETTES as palette (palette.id)}
+                    <button
+                        type="button"
+                        class="glean-palette-card"
+                        class:glean-palette-card--active={currentThemePalette === palette.id}
+                        onclick={() => void selectThemePalette(palette.id)}
+                    >
+                        <div class="glean-palette-preview" style="background: linear-gradient(135deg, {palette.brand} 0%, {palette.brandHover} 100%);">
+                            <span class="glean-palette-dot" style="background: {palette.accentWheat};"></span>
+                        </div>
+                        <div class="glean-palette-info">
+                            <div class="glean-palette-name">{t(i18n, palette.nameKey)}</div>
+                            <div class="glean-palette-desc">{t(i18n, palette.descriptionKey)}</div>
+                        </div>
+                        {#if currentThemePalette === palette.id}
+                            <span class="glean-palette-check">✓</span>
+                        {/if}
+                    </button>
+                {/each}
+            </div>
+        </div>
+
         <div class="glean-set-group">
             <div class="glean-set-row">
                 <div class="glean-set-row__lb">

@@ -20,6 +20,7 @@ import {
     type TagAlias,
     type GovernanceMuted,
 } from "../domain/ui-prefs.ts";
+import { normalizeThemePaletteId, type ThemePaletteId } from "../domain/theme-palette.ts";
 
 export type OnboardingStep = 1 | 2 | 3 | 4;
 
@@ -46,6 +47,7 @@ export interface UiPrefs {
     tagAliases: TagAlias[];
     defaultSavedViewId: string;
     governanceMuted: GovernanceMuted;
+    themePalette: ThemePaletteId;
 }
 
 const PREFS_FILE = "ui-prefs.json";
@@ -68,6 +70,7 @@ const DEFAULTS: UiPrefs = {
     tagAliases: [],
     defaultSavedViewId: "",
     governanceMuted: { ...EMPTY_GOVERNANCE_MUTED },
+    themePalette: "teal",
 };
 
 const saveQueues = new WeakMap<object, Promise<unknown>>();
@@ -100,6 +103,7 @@ export function normalizeUiPrefs(raw: unknown): UiPrefs {
         tagAliases: normalizeTagAliases(partial.tagAliases),
         defaultSavedViewId: savedViews.some((view) => view.id === requestedDefault) ? requestedDefault : "",
         governanceMuted: normalizeGovernanceMuted(partial.governanceMuted),
+        themePalette: normalizeThemePaletteId(partial.themePalette),
     };
 }
 

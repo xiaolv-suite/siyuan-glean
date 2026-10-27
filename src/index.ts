@@ -15,6 +15,7 @@ import RestoreDialog from "./ui/RestoreDialog.svelte";
 import ImportDialog from "./ui/ImportDialog.svelte";
 import OnboardingDialog from "./ui/OnboardingDialog.svelte";
 import { loadUiPrefs } from "./services/prefs";
+import { applyThemePaletteToDom } from "./libs/theme-palette-controller";
 import SettingsView from "./ui/SettingsView.svelte";
 import { svelteDialog } from "./libs/dialog";
 import { createDialogSingleton } from "./libs/dialog-singleton";
@@ -333,16 +334,15 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
     }
 
     onLayoutReady() {
-        // 首启引导：无锚点且未完成过引导自动弹出；已有锚点但进度未完成时仍恢复。
-        if (!this.isMobile) {
-            void (async () => {
-                const prefs = await loadUiPrefs(this);
-                if (!this.loaded) return;
-                const onboardingInProgress = prefs.onboardingInterrupted || prefs.onboardingStep !== 1;
-                if (prefs.onboardingDone || (this.settings.anchorNotebooks.length > 0 && !onboardingInProgress)) return;
-                this.onboardingTimer = window.setTimeout(() => this.openOnboarding(), 800);
-            })();
-        }
+        void (async () => {
+            const prefs = await loadUiPrefs(this);
+            if (!this.loaded) return;
+            applyThemePaletteToDom(null, prefs.themePalette);
+            if (this.isMobile) return;
+            const onboardingInProgress = prefs.onboardingInterrupted || prefs.onboardingStep !== 1;
+            if (prefs.onboardingDone || (this.settings.anchorNotebooks.length > 0 && !onboardingInProgress)) return;
+            this.onboardingTimer = window.setTimeout(() => this.openOnboarding(), 800);
+        })();
 
         if (this.isMobile) return;
         if (this.topBarElement) return;

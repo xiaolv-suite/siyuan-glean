@@ -1406,5 +1406,19 @@
   "docSlicing.previewBlock": "定位小节",
   "docSlicing.emptyOutline": "当前文章暂无大纲章节，将按整篇规划",
   "docSlicing.actionBtn": "✂️ 渐进切片",
-  "docSlicing.actionBtnHint": "长文按大纲一键渐进切片 (Issue #17)"
+  "docSlicing.actionBtnHint": "长文按大纲一键渐进切片 (Issue #17)",
+  "settings.themePalette": "全插件色彩主题",
+  "settings.themePaletteDesc": "自由选择插件全局色彩风格，实时生效无缝保存",
+  "theme.teal": "北欧深松绿",
+  "theme.tealDesc": "沉静书卷，温润护眼（默认）",
+  "theme.amber": "金麦暖阳",
+  "theme.amberDesc": "经典麦穗，羊皮纸暖调",
+  "theme.violet": "极客紫罗兰",
+  "theme.violetDesc": "专注思考，极客深邃",
+  "theme.blue": "澄海天蓝",
+  "theme.blueDesc": "清澈理性，干净利落",
+  "theme.obsidian": "黑曜极简",
+  "theme.obsidianDesc": "低饱和纯粹，克制无扰",
+  "theme.rose": "绯红蔷薇",
+  "theme.roseDesc": "典雅热烈，醒目点睛"
 }

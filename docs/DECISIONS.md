@@ -2225,3 +2225,20 @@ T-3416 承接方向五（有依据的阅读 AI）与同类产品对标（Readwis
    - `ReaderTab.svelte` 伴生栏大纲树头部增设「✂️ 渐进切片」快捷入口；
 4. 样式令牌与防污染加固：
    - `src/index.scss` 对齐 `--lv-accent-wheat: #FB923C;`（金杏麦珠）中枢令牌，所有切片样式严格包裹在专有命名空间内。
+
+## D-0345（2026-10-27）全插件色彩主题切换体系（Theme Palette System）与 6 款高质感预设（T-3466）
+
+彻底解决不同用户对视觉配色的个性化需求：
+1. 全插件色彩主题切换领域模型（`src/domain/theme-palette.ts`）：
+   - 新增 `THEME_PALETTES` 纯函数领域定义，精选 6 款经典高品质主题色彩方案：
+     1. 北欧深松绿（Teal · 默认）：`#0D9488` 沉静书卷，温润护眼；
+     2. 金麦暖阳（Amber）：`#D97706` 经典麦穗，羊皮纸暖调；
+     3. 极客紫罗兰（Violet）：`#7C3AED` 深度思考，极客深邃；
+     4. 澄海天蓝（Blue）：`#2563EB` 清澈理性，现代干净；
+     5. 黑曜极简（Obsidian）：`#4B5563` 低饱和纯粹，克制无扰；
+     6. 绯红蔷薇（Rose）：`#E11D48` 典雅热烈，醒目点睛。
+2. 全局动态 CSS 变量注入机制（`src/libs/theme-palette-controller.ts`）：
+   - `applyThemePaletteToDom` 实时将选定主题的 `--lv-brand`、`--lv-brand-hover`、`--lv-brand-active`、`--lv-accent-wheat`、`--glean-grad` 动态注入至宿主根节点，全插件所有微标、按钮、边框、阴影瞬时全局热变色；
+3. 偏好持久化与常规设置页 Bento 展台（`src/services/prefs.ts` & `SettingsView.svelte`）：
+   - `UiPrefs` 新增 `themePalette` 偏好，启动与布局就绪时自动恢复；
+   - `SettingsView.svelte` 常规设置首屏呈现 Bento 色彩展台，支持读者点击实时预览与无缝落盘保存。

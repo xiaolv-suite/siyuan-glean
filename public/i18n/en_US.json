@@ -1406,5 +1406,19 @@
   "docSlicing.previewBlock": "Locate section",
   "docSlicing.emptyOutline": "No outline headings found; whole article planned",
   "docSlicing.actionBtn": "✂️ Slice Doc",
-  "docSlicing.actionBtnHint": "Progressive slicing by outline (Issue #17)"
+  "docSlicing.actionBtnHint": "Progressive slicing by outline (Issue #17)",
+  "settings.themePalette": "Theme Palette",
+  "settings.themePaletteDesc": "Choose plugin-wide theme color, applied and saved instantly",
+  "theme.teal": "Nordic Teal",
+  "theme.tealDesc": "Serene, scholarly, eye-friendly (Default)",
+  "theme.amber": "Warm Amber",
+  "theme.amberDesc": "Classic wheat, parchment warmth",
+  "theme.violet": "Deep Violet",
+  "theme.violetDesc": "Focused, intellectual, digital deep",
+  "theme.blue": "Ocean Blue",
+  "theme.blueDesc": "Crisp, rational, modern clarity",
+  "theme.obsidian": "Obsidian Dark",
+  "theme.obsidianDesc": "Minimalist mono, distraction-free",
+  "theme.rose": "Crimson Rose",
+  "theme.roseDesc": "Elegant, distinctive, warm accent"
 }
