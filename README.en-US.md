@@ -8,6 +8,15 @@ Lv Glean organizes clippings and articles already in SiYuan. It does not crawl t
 
 [中文说明](README.md) · [Latest Release](https://github.com/ai68298100/siyuan-glean/releases/latest) · [Capability matrix](docs/CAPABILITY-MATRIX.md) · [Feedback](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.46 update (2026-10-27)
+
+This release implements block reference copying on the native reading bar, WeChat green dot indicator, and persistent native tab opening.
+
+**New features & improvements:**
+
+- **1-Click Block Ref on Native Reading Bar**: `ReadingContext.svelte` adds a 1-click block ref copying action.
+- **Persistent Open Native Document in Reader**: Reader toolbar keeps the native document opener button available in all modes with words and reading time hints.
+
 ## v1.3.45 update (2026-10-27)
 
 This release implements the universal Y-key (Yank) shortcut for SiYuan block reference copying and shortcut matrix alignment.

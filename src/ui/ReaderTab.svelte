@@ -1811,7 +1811,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
                 <span class="glean-reader__toolbar-title" title={context?.title}>{context?.title || t(i18n, "panel.untitled")}</span>
                 {#if context}
                     <span class="glean-reader__toolbar-meta">
-                        {carrierLabel(context.contentType)}{#if context.site} · {context.site}{/if} · {t(i18n, `status.${context.status}`)}
+                        {carrierLabel(context.contentType)}{#if context.site} · {context.site}{/if} · {t(i18n, `status.${context.status}`)}{#if (context.words ?? 0) > 0} · {t(i18n, "panel.words", { n: context.words ?? 0 })}{/if}{#if estReadingMinutes} · 约 {estReadingMinutes}m{/if}
                     </span>
                 {/if}
             </span>
@@ -1857,6 +1857,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
                 <button type="button" class="glean-btn glean-btn--ghost glean-reader__toolbar-native" title={t(i18n, "reader.openNative")} onclick={openNativeTab}>{t(i18n, "reader.openNative")}</button>
                 <button type="button" class="glean-btn glean-btn--pri glean-reader__toolbar-exit" onclick={exitImmersive}>{t(i18n, "reader.immersiveExit")}</button>
             {:else}
+                <button type="button" class="glean-btn glean-btn--ghost glean-reader__toolbar-native" title={t(i18n, "reader.openNative")} onclick={openNativeTab}>{t(i18n, "reader.openNative")}</button>
                 <button type="button" class="glean-btn glean-btn--ghost glean-reader__toolbar-immersive" disabled={mode !== "read" || !docId} title={t(i18n, "reader.immersiveStart")} onclick={enterImmersive}>{t(i18n, "reader.immersiveStart")}</button>
             {/if}
             {#if context && hasSourceAction(context.contentType, context.url)}

@@ -218,6 +218,18 @@
         else facade.openReadingDocument(current.id);
     }
 
+    async function copyDocBlockRef(): Promise<void> {
+        if (!context) return;
+        const title = context.title || t(i18n, "panel.untitled");
+        const refText = `((${context.id} '${title}'))`;
+        try {
+            await navigator.clipboard.writeText(refText);
+            showMessage(t(i18n, "reader.blockRefCopied"), 2000);
+        } catch {
+            showMessage(t(i18n, "msg.actionFailed"), 2000);
+        }
+    }
+
     function backToLibrary(): void {
         if (context) void facade.openLibraryArticle(context.id);
     }
@@ -250,7 +262,7 @@
                 <span class="glean-reading-context__status">{statusLabel(context.status)}</span>
                 {#if isWechat}
                     <span class="glean-badge glean-source-wechat" title={displayWechatAuthor(context?.author) || t(i18n, "wechat.officialAccount")}>
-                        微信{#if displayWechatAuthor(context?.author)} · {displayWechatAuthor(context?.author)}{/if}
+                        <span class="glean-wechat-dot" aria-hidden="true"></span>微信{#if displayWechatAuthor(context?.author)} · {displayWechatAuthor(context?.author)}{/if}
                     </span>
                 {/if}
                 {#if context.url && contextDisplaySource(context.url, context.site)}
@@ -259,6 +271,9 @@
             </div>
         </div>
         <div class="glean-reading-context__actions">
+            <button type="button" class="glean-reading-context__source-btn" title={t(i18n, "action.copyBlockRef")} onclick={() => void copyDocBlockRef()}>
+                🔗 {t(i18n, "action.copyBlockRef")}
+            </button>
             <button type="button" class="glean-reading-context__source-btn" title={t(i18n, "reading.openInReader")} onclick={() => { if (context) facade.openReadingDocument(context.id); }}>
                 📖 {t(i18n, "reading.openInReader")}
             </button>
