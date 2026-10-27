@@ -201,3 +201,54 @@
     color: var(--lv-brand);
     border: 1px solid color-mix(in srgb, var(--lv-brand) 28%, transparent);
 }
+
+/* 交互式五星评分微组件（Interactive 5-Star Picker） */
+.glean-stars-picker {
+    display: inline-flex;
+    align-items: center;
+    gap: 1px;
+}
+
+.glean-star-btn {
+    border: none;
+    background: transparent;
+    padding: 0 1px;
+    font-size: 13px;
+    line-height: 1;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.45;
+    cursor: pointer;
+    transition: transform 120ms ease, opacity 120ms ease, color 120ms ease;
+
+    &:hover:not(:disabled) {
+        transform: scale(1.2);
+        opacity: 1;
+        color: #F59E0B;
+    }
+}
+
+.glean-star-btn--on {
+    color: #F59E0B;
+    opacity: 1;
+}
+
+/* 伴生栏微型圆环进度条（Circular Progress Ring） */
+.glean-progress-ring {
+    transform: rotate(-90deg);
+    margin-right: 4px;
+    flex-shrink: 0;
+
+    &__bg {
+        fill: none;
+        stroke: var(--glean-border-soft, rgba(0, 0, 0, 0.12));
+        stroke-width: 2.2;
+    }
+
+    &__bar {
+        fill: none;
+        stroke: var(--lv-brand);
+        stroke-width: 2.2;
+        stroke-linecap: round;
+        transition: stroke-dashoffset 200ms ease;
+    }
+}

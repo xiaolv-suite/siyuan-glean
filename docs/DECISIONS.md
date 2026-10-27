@@ -2332,3 +2332,13 @@ T-3416 承接方向五（有依据的阅读 AI）与同类产品对标（Readwis
    - 扩展 `toggleImmersive` 键盘映射与长按防抖保护，阅读长文时单手轻敲 `Shift+F` 即可秒级切换大屏专注阅读；
 2. 今日拾遗微信来源微标视觉升级（`ResurfaceView.svelte` & `wechat.scss`）：
    - 拾遗卡片注入绿色品牌圆点指示（`.glean-wechat-dot`），全表面达成统一的视觉设计语言。
+
+## D-0356（2026-10-27）读库侧栏微信公众号微标、五星交互评分与微型进度环（T-3477）
+
+微交互与视觉质感升级：
+1. 读库侧栏微信作者专属绿色微标（`DockPanel.svelte` & `LibraryRailGroup.svelte`）：
+   - 侧栏分面作者列表自动识别微信公众号作者，注入绿色品牌圆点指示（`.glean-wechat-dot`），与普通作者一目了然区分；
+2. 读库卡片直观五星交互打分（`ClipRankControls.svelte`）：
+   - 升级为交互式五星点选评分（`glean-stars-picker`），支持读者鼠标划过/点击直观评级（1~5星），点击当前星级复位清空，评分流畅度显著提升；
+3. 伴生栏阅读看板微型圆环进度条（`ReaderTab.svelte`）：
+   - 伴生栏指标胶囊增设动态 SVG 圆环进度条（`glean-progress-ring`），百分比与环形弧度联动，极具数码科技质感。

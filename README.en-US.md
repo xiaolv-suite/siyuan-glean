@@ -8,6 +8,16 @@ Lv Glean organizes clippings and articles already in SiYuan. It does not crawl t
 
 [中文说明](README.md) · [Latest Release](https://github.com/ai68298100/siyuan-glean/releases/latest) · [Capability matrix](docs/CAPABILITY-MATRIX.md) · [Feedback](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.43 update (2026-10-27)
+
+This release implements WeChat publisher green badge indicators in the sidebar rail, interactive 5-star rating, and a circular progress ring.
+
+**New features & improvements:**
+
+- **WeChat Publisher Green Badge in Rail**: Sidebar authors list displays a green indicator dot for WeChat official accounts for instant visual distinction.
+- **Interactive 5-Star Rating Picker**: Rank controls feature an interactive 5-star rating component for 1-click evaluation.
+- **Circular Progress Ring in Companion Bar**: Reading metric capsule adds a dynamic SVG circular progress ring visualizing reading ratio smoothly.
+
 ## v1.3.42 update (2026-10-27)
 
 This release implements the Shift+F shortcut for immersive reading and polishes the WeChat badge visual styling in daily resurfacing.

@@ -2177,7 +2177,17 @@ import { aiFailureKey } from "../libs/ai-feedback";
                     </div>
                     <div class="glean-reader__metric-sep"></div>
                     <div class="glean-reader__metric-item">
-                        <span class="glean-reader__metric-val">{readingPercentage !== null ? `${readingPercentage}%` : "0%"}</span>
+                        <span class="glean-reader__metric-val">
+                            <svg class="glean-progress-ring" width="12" height="12" viewBox="0 0 16 16" aria-hidden="true">
+                                <circle class="glean-progress-ring__bg" cx="8" cy="8" r="6" />
+                                <circle
+                                    class="glean-progress-ring__bar"
+                                    cx="8" cy="8" r="6"
+                                    style="stroke-dasharray: 37.7; stroke-dashoffset: {37.7 - (37.7 * (readingPercentage ?? 0)) / 100}"
+                                />
+                            </svg>
+                            {readingPercentage !== null ? `${readingPercentage}%` : "0%"}
+                        </span>
                         <span class="glean-reader__metric-lbl">{t(i18n, "reader.metricProgress")}</span>
                     </div>
                 </div>

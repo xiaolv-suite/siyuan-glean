@@ -32,19 +32,26 @@
             {/each}
         </select>
     </label>
-    <label class="glean-rank-controls__field">
+    <div class="glean-rank-controls__field glean-rank-stars-field">
         <span>{t(i18n, "action.rating")}</span>
-        <select
-            class="b3-select"
-            aria-label={t(i18n, "action.rating")}
-            value={rating ?? 0}
-            disabled={disabled}
-            onclick={(event) => event.stopPropagation()}
-            onchange={(event) => { event.stopPropagation(); void onRating(Number((event.currentTarget as HTMLSelectElement).value)); }}
-        >
-            {#each [0, 1, 2, 3, 4, 5] as value}
-                <option value={value}>{value === 0 ? "—" : `${value} ★`}</option>
+        <div class="glean-stars-picker" role="radiogroup" aria-label={t(i18n, "action.rating")}>
+            {#each [1, 2, 3, 4, 5] as star}
+                <button
+                    type="button"
+                    class="glean-star-btn"
+                    class:glean-star-btn--on={(rating ?? 0) >= star}
+                    title={`${star} ★`}
+                    aria-label={`${star} ★`}
+                    disabled={disabled}
+                    onclick={(event) => {
+                        event.stopPropagation();
+                        const next = (rating === star) ? 0 : star;
+                        void onRating(next);
+                    }}
+                >
+                    {(rating ?? 0) >= star ? "★" : "☆"}
+                </button>
             {/each}
-        </select>
-    </label>
+        </div>
+    </div>
 </div>

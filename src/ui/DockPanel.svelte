@@ -1014,6 +1014,20 @@ const hasWechatSelected = $derived.by(() => {
     return false;
 });
 
+const wechatAuthorsSet = $derived.by(() => {
+    const set = new Set<string>();
+    for (const clip of Object.values(index.clips)) {
+        if (clip.author && (isWechatUrl(clip.url) || isWechatUrl(clip.site))) {
+            set.add(clip.author.toLowerCase().trim());
+        }
+    }
+    return set;
+});
+
+function authorDotClass(author: string): string {
+    return wechatAuthorsSet.has(author.toLowerCase().trim()) ? "glean-wechat-dot" : "";
+}
+
 async function batchPurifyWechat(): Promise<void> {
     if (batchBusy || selection.size === 0) return;
     const wechatDocIds = [...selection].filter((id) => {
@@ -3125,7 +3139,7 @@ function metaLine(entry: Row): string {
                     </div>
                     <LibraryRailGroup plugin={facade.pluginInstance} {i18n} group="queues" label={t(i18n, "rail.queues")} items={queues.map((queue) => ({ value: queue, count: queueCount(queue) }))} selected={authorTimeline ? "" : activeQueue} itemLabel={(value) => queueLabel(value as ClipStatus)} dotClass={(value) => statusDotClass(value as ClipStatus)} onSelect={(value) => selectQueue(value as ClipStatus)} groupPrefs={railGroups.queues} onToggleGroup={handleToggleRailGroup} />
                     {#if railStats.authors.length > 0 || selectedAuthor}
-                        <LibraryRailGroup plugin={facade.pluginInstance} {i18n} group="authors" label={t(i18n, "rail.authors")} items={railStats.authors} selected={selectedAuthor} onSelect={selectAuthor} groupPrefs={railGroups.authors} onToggleGroup={handleToggleRailGroup} />
+                        <LibraryRailGroup plugin={facade.pluginInstance} {i18n} group="authors" label={t(i18n, "rail.authors")} items={railStats.authors} selected={selectedAuthor} dotClass={authorDotClass} onSelect={selectAuthor} groupPrefs={railGroups.authors} onToggleGroup={handleToggleRailGroup} />
                     {/if}
                     {#if railStats.sites.length > 0 || selectedSite}
                         <LibraryRailGroup plugin={facade.pluginInstance} {i18n} group="sites" label={t(i18n, "rail.sites")} items={railStats.sites} selected={selectedSite} itemLabel={siteItemLabel} onSelect={(value) => { markPrefsInteraction(); selectedSite = selectedSite.toLocaleLowerCase() === value.toLocaleLowerCase() ? "" : value; }} groupPrefs={railGroups.sites} onToggleGroup={handleToggleRailGroup} />
