@@ -8,6 +8,7 @@
 @use "./styles/components/wechat.scss" as *;
 @use "./styles/components/slicing.scss" as *;
 @use "./styles/components/palette.scss" as *;
+@use "./styles/components/reader-search.scss" as *;
 
 .glean-source-author {
     border: 0;
@@ -1829,76 +1830,6 @@ mark.glean-search-highlight {
         color: var(--b3-theme-on-primary);
         outline: 2px solid var(--b3-theme-primary-light, var(--b3-theme-primary));
         outline-offset: 1px;
-    }
-}
-
-.glean-reader-search {
-    position: absolute;
-    top: 12px;
-    right: 24px;
-    z-index: 50;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 8px;
-    background: var(--b3-theme-surface, #fff);
-    border: 1px solid var(--b3-theme-surface-lighter, var(--b3-border-color));
-    border-radius: var(--b3-border-radius, 6px);
-    box-shadow: var(--b3-dialog-shadow, 0 4px 16px rgba(0, 0, 0, 0.15));
-    backdrop-filter: blur(8px);
-    font-size: var(--glean-text-xs, 12px);
-
-    &__icon {
-        font-size: 13px;
-        opacity: 0.6;
-        user-select: none;
-    }
-
-    &__input {
-        width: 160px;
-        height: 24px;
-        padding: 0 6px;
-        font-size: var(--glean-text-xs, 12px);
-    }
-
-    &__count {
-        min-width: 48px;
-        text-align: center;
-        font-size: 11px;
-        color: var(--b3-theme-on-surface);
-        opacity: 0.8;
-        user-select: none;
-
-        &--empty {
-            color: var(--b3-theme-error, #e53935);
-            opacity: 1;
-        }
-    }
-
-    &__btn {
-        width: 24px;
-        height: 24px;
-        padding: 0;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 11px;
-        line-height: 1;
-
-        &--active {
-            color: var(--b3-theme-primary);
-            font-weight: bold;
-            background: var(--b3-theme-primary-lightest, rgba(0, 0, 0, 0.05));
-        }
-
-        &--close {
-            margin-left: 2px;
-            opacity: 0.7;
-
-            &:hover {
-                opacity: 1;
-            }
-        }
     }
 }
 

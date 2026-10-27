@@ -2290,3 +2290,11 @@ T-3416 承接方向五（有依据的阅读 AI）与同类产品对标（Readwis
    - 一键串联批量执行 `purifyWechatArticle`，批量修复老旧微信剪藏的裂图与格式，效率大幅跃升；
 2. SCSS 样式系统工程化解耦（`src/styles/components/`）：
    - 建立 `wechat.scss`、`slicing.scss`、`palette.scss` 独立样式模块并在主文件中 `@use` 引入，消除单文件臃肿，优化 Vite 热重载性能与代码可维护性。
+
+## D-0351（2026-10-27）伴生栏一键复制纯净正文与阅读搜索样式模块化（T-3472）
+
+进一步提升知识向大模型流转效率与样式解耦：
+1. 伴生栏一键「复制纯净正文」（`ReaderTab.svelte`）：
+   - 伴生栏操作区增设一键复制纯净正文按钮；调用 `exportMdContent` 并实时串联 `repairWechatContent` 与 `cleanWechatNoise`，将剔除广告噪点与修复插图后的最高质量 Markdown 直接写入系统剪贴板，极速投喂 LLM 或跨工具笔记引用；
+2. 阅读搜索浮条样式模块化（`src/styles/components/reader-search.scss`）：
+   - 独立拆分阅读器搜索控制器样式，主样式单文件再减 70 行。

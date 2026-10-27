@@ -8,6 +8,15 @@
 
 [English](README.en-US.md) · [下载最新版](https://github.com/ai68298100/siyuan-glean/releases/latest) · [能力矩阵](docs/CAPABILITY-MATRIX.md) · [反馈与问题](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.38 更新（2026-10-27）
+
+本次版本实现伴生栏一键复制纯净正文与阅读搜索样式模块化。
+
+**新增与体验增强：**
+
+- **伴生栏一键「📋 复制纯净正文」快捷动作**：`ReaderTab.svelte` 伴生栏增设快捷按钮，一键将提纯清洗后的纯净 Markdown 复制到剪贴板，极大简化投喂大模型与分享流程。
+- **阅读搜索浮条 SCSS 模块化**：拆分 `reader-search.scss`，主样式文件持续解耦。
+
 ## v1.3.37 更新（2026-10-27）
 
 本次版本实现读库工作台批量微信正文提纯与 SCSS 模块化解耦重构。

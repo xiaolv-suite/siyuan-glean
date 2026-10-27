@@ -8,6 +8,15 @@ Lv Glean organizes clippings and articles already in SiYuan. It does not crawl t
 
 [中文说明](README.md) · [Latest Release](https://github.com/ai68298100/siyuan-glean/releases/latest) · [Capability matrix](docs/CAPABILITY-MATRIX.md) · [Feedback](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.38 update (2026-10-27)
+
+This release implements 1-click clean markdown copying in the companion bar and reader search modular styling.
+
+**New features & improvements:**
+
+- **1-Click Copy Clean Markdown**: `ReaderTab.svelte` adds a dedicated action to copy purified markdown (stripped noise & repaired media) directly to clipboard, ready for LLMs.
+- **Modular Reader Search SCSS**: Decoupled `reader-search.scss` into components.
+
 ## v1.3.37 update (2026-10-27)
 
 This release implements batch WeChat content purification on the workbench and modular SCSS architectural decoupling.

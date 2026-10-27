@@ -1428,5 +1428,10 @@
   "wechat.purifyTitle": "深度提纯微信正文（修复懒加载/抢救背景长图/逆向公式与代码块/清除噪点）",
   "wechat.purifyDone": "正文提纯完成！当前纯净正文约 ${count} 字",
   "wechat.batchPurify": "提纯公众号",
-  "wechat.batchPurifyDone": "已完成 ${count} 篇微信文章正文深度提纯"
+  "wechat.batchPurifyDone": "已完成 ${count} 篇微信文章正文深度提纯",
+  "reader.copyCleanMarkdown": "复制纯净正文",
+  "reader.copyCleanMarkdownHint": "一键复制清洗提纯后的纯净正文（剥除噪点与修复插图），极速投喂大模型",
+  "reader.copyCleanDone": "已将纯净正文复制到剪贴板！",
+  "reader.copyCleanFailed": "获取正文失败，请稍后重试",
+  "reader.copying": "正在复制…"
 }

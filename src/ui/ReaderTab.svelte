@@ -8,6 +8,7 @@
      * 按真实成功数反馈。编辑/标注经 Protyle 走内核事务，插件不另存正文副本。
      */
     import { showMessage, openTab } from "siyuan";
+    import { exportMdContent } from "../api/client";
     import type { ProtyleController } from "../libs/protyle-controller";
     import ProtyleHost from "./ProtyleHost.svelte";
     import ReadingPositionControls from "./ReadingPositionControls.svelte";
@@ -19,7 +20,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
     import { fulltextBodyState } from "../domain/content";
     import { canCountReading, createReadingTimer, readingTimerMinutes, setReadingTimerActive, type ReadingTimerState } from "../domain/reading-timer";
     import { hasSourceAction, resolveCarrier, sourceUrlForCarrier } from "../domain/carrier";
-    import { isWechatUrl, cleanWechatArticleUrl, wechatArticleToWereadUrl, extractWechatAuthor, displayWechatAuthor } from "../domain/wechat";
+    import { isWechatUrl, cleanWechatArticleUrl, wechatArticleToWereadUrl, extractWechatAuthor, displayWechatAuthor, cleanWechatNoise, repairWechatContent } from "../domain/wechat";
     import { chunkSpeechText, clampSpeechRate, resumeSpeechChunkIndex, speechLanguage } from "../domain/speech";
     import type { ClipStatus } from "../domain/schema";
     import { DEFAULT_SETTINGS } from "../services/settings";
@@ -100,6 +101,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
     let paletteMenuOpen = $state(false);
     let currentThemePalette = $state<ThemePaletteId>("teal");
     let purifying = $state(false);
+    let copyingCleanBody = $state(false);
     let readerRoot = $state<HTMLDivElement | null>(null);
     let sidebarCollapsed = $state(false);
     let immersive = $state(false);
@@ -756,6 +758,29 @@ import { aiFailureKey } from "../libs/ai-feedback";
             showMessage(t(i18n, "reader.cleanUrlCopied"), 2000);
         } catch {
             showMessage(t(i18n, "reader.actionFailed"), 3000);
+        }
+    }
+
+    async function copyCleanMarkdown(): Promise<void> {
+        if (!docId || copyingCleanBody) return;
+        copyingCleanBody = true;
+        try {
+            const exported = await exportMdContent(docId, { yfm: false, addTitle: false, refMode: 2 });
+            let md = exported?.content || "";
+            if (!md.trim()) {
+                showMessage(t(i18n, "reader.copyCleanFailed"), 3000);
+                return;
+            }
+            if (isWechatArticle) {
+                md = cleanWechatNoise(repairWechatContent(md));
+            }
+            await navigator.clipboard.writeText(md);
+            showMessage(t(i18n, "reader.copyCleanDone"), 2500);
+        } catch (err) {
+            console.warn("[glean] 复制纯净正文失败:", err);
+            showMessage(t(i18n, "msg.actionFailed"), 3000);
+        } finally {
+            copyingCleanBody = false;
         }
     }
 
@@ -2037,6 +2062,9 @@ import { aiFailureKey } from "../libs/ai-feedback";
                         <button type="button" class="glean-btn glean-btn--ghost glean-wechat-publisher__btn" onclick={() => void copyCleanUrl()} title={t(i18n, "reader.copyCleanUrl")}>
                             <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
                             {t(i18n, "reader.copyCleanUrl")}
+                        </button>
+                        <button type="button" class="glean-btn glean-btn--ghost glean-wechat-publisher__btn" disabled={copyingCleanBody} onclick={() => void copyCleanMarkdown()} title={t(i18n, "reader.copyCleanMarkdownHint")}>
+                            📋 {copyingCleanBody ? t(i18n, "reader.copying") : t(i18n, "reader.copyCleanMarkdown")}
                         </button>
                         <button type="button" class="glean-btn glean-btn--ghost glean-wechat-publisher__btn" onclick={backToLibrary} title={t(i18n, "reading.backToLibrary")}>
                             <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArrowLeft" /></svg>

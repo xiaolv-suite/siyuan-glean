@@ -1428,5 +1428,10 @@
   "wechat.purifyTitle": "Deep purify WeChat content (images, math, code, background images, and noise)",
   "wechat.purifyDone": "Content purified! Pure body: ~${count} words",
   "wechat.batchPurify": "Purify WeChat",
-  "wechat.batchPurifyDone": "Purified ${count} WeChat articles"
+  "wechat.batchPurifyDone": "Purified ${count} WeChat articles",
+  "reader.copyCleanMarkdown": "Copy Clean Markdown",
+  "reader.copyCleanMarkdownHint": "Copy purified markdown without noise, ready for LLMs",
+  "reader.copyCleanDone": "Clean markdown copied to clipboard!",
+  "reader.copyCleanFailed": "Failed to get article body",
+  "reader.copying": "Copying…"
 }
