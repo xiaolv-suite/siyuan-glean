@@ -43,6 +43,8 @@ import ClipRankControls from "./ClipRankControls.svelte";
 import { installMobileViewportVars } from "../libs/mobile-viewport";
 import { installEscapeHandler, installModalFocus } from "../libs/modal-focus";
 import { createRefreshQueue } from "../libs/refresh-queue";
+import { THEME_PALETTES, type ThemePaletteId } from "../domain/theme-palette";
+import { applyThemePaletteToDom } from "../libs/theme-palette-controller";
 import { kernelErrorKind } from "../api/client";
 import { applySavedView, createSavedView, deleteSavedView, displayTagAlias, governanceCueMuted, localDateStamp, setDefaultSavedView, normalizeTagAliases, SMART_VIEW_PRESETS, instantiateSmartViewPreset, type GovernanceCueKey, type GovernanceMuted, type SavedView, type TagAlias } from "../domain/ui-prefs";
 
@@ -57,6 +59,8 @@ let { facade, initialPreviewId = "", tabId = "" }: Props = $props();
 const i18n = $derived(facade.i18n);
 let currentTime = $state(new Date());
 let dayRefreshTimer: number | null = null;
+let paletteMenuOpen = $state(false);
+let currentThemePalette = $state<ThemePaletteId>("teal");
 
 function scheduleDayRefresh(): void {
     if (typeof window === "undefined") return;
@@ -196,8 +200,15 @@ onMount(() => {
     document.addEventListener("visibilitychange", onVisibilityChange);
     window.addEventListener("focus", syncDayClock);
     const onTagAliasesChanged = () => {
-        void loadUiPrefs(facade.pluginInstance).then((prefs) => { tagAliases = prefs.tagAliases; }).catch(() => undefined);
+        void loadUiPrefs(facade.pluginInstance).then((prefs) => {
+            tagAliases = prefs.tagAliases;
+            currentThemePalette = prefs.themePalette || "teal";
+        }).catch(() => undefined);
     };
+    void loadUiPrefs(facade.pluginInstance).then((prefs) => {
+        tagAliases = prefs.tagAliases;
+        currentThemePalette = prefs.themePalette || "teal";
+    }).catch(() => undefined);
     document.addEventListener("glean:tag-aliases-changed", onTagAliasesChanged);
     const cleanup = () => {
         disposed = true;
@@ -1816,6 +1827,18 @@ function matchBadge(item: LibraryMatchTarget): string | null {
     }
 }
 
+async function selectThemePalette(id: ThemePaletteId): Promise<void> {
+    currentThemePalette = id;
+    applyThemePaletteToDom(null, id);
+    paletteMenuOpen = false;
+    try {
+        await saveUiPrefs(facade.pluginInstance, { themePalette: id });
+        facade.notifyDataChanged();
+    } catch (error) {
+        console.warn("[glean] 保存主题色彩失败:", error);
+    }
+}
+
 function openDoc(docId: string) {
     facade.openReadingDocument(docId);
 }
@@ -2453,6 +2476,34 @@ function metaLine(entry: Row): string {
                         <svg aria-hidden="true"><use href="#iconGleanRefresh" /></svg>
                         <span class="glean-head-action__label">{t(i18n, "panel.migrateShort")}</span>
                     </button>
+                    <div class="glean-palette-quick-wrap">
+                        <button
+                            type="button"
+                            class="glean-icon-btn glean-head-action"
+                            title={t(i18n, "settings.themePalette")}
+                            aria-label={t(i18n, "settings.themePalette")}
+                            onclick={() => { paletteMenuOpen = !paletteMenuOpen; }}
+                        >
+                            <span class="glean-head-palette-dot" style="background: var(--lv-brand);"></span>
+                            <span class="glean-head-action__label">🎨</span>
+                        </button>
+                        {#if paletteMenuOpen}
+                            <div class="glean-palette-quick-menu" role="menu">
+                                {#each THEME_PALETTES as p}
+                                    <button
+                                        type="button"
+                                        class="glean-palette-quick-item"
+                                        class:glean-palette-quick-item--active={currentThemePalette === p.id}
+                                        title={t(i18n, p.nameKey)}
+                                        onclick={() => void selectThemePalette(p.id)}
+                                    >
+                                        <span class="glean-palette-dot-mini" style="background: {p.brand};"></span>
+                                        <span>{t(i18n, p.nameKey)}</span>
+                                    </button>
+                                {/each}
+                            </div>
+                        {/if}
+                    </div>
                     <button type="button" class="glean-icon-btn glean-head-action" title={t(i18n, "panel.settings")} aria-label={t(i18n, "panel.settings")} onclick={() => facade.openSettings()}>
                         <svg aria-hidden="true"><use href="#iconGleanGear" /></svg>
                         <span class="glean-head-action__label">{t(i18n, "panel.settings")}</span>

@@ -8,6 +8,15 @@
 
 [English](README.en-US.md) · [下载最新版](https://github.com/ai68298100/siyuan-glean/releases/latest) · [能力矩阵](docs/CAPABILITY-MATRIX.md) · [反馈与问题](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.34 更新（2026-10-27）
+
+本次版本实现读库工作台顶栏快捷色彩切换与金句卡片主题联动。
+
+**新增与体验增强：**
+
+- **读库工作台顶栏快捷色彩选择器**：`DockPanel.svelte` 顶栏设置按钮旁增设快捷调色盘，读者在读库主工作台浏览、分拣文章时可直接在 6 款主题色彩之间秒级切换，全屏瞬间热生效。
+- **金句卡片与当前插件色彩深度联动**：`QuoteCardDialog.svelte` 自动识别并继承插件当前激活的主题色，让视觉卡片导出与读库整体风格浑然一体。
+
 ## v1.3.33 更新（2026-10-27）
 
 本次版本实现阅读器工具栏快捷色彩切换色盘与伴生栏大纲切片节奏导轨。

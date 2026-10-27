@@ -1,6 +1,8 @@
 <script lang="ts">
+    import { onMount } from "svelte";
     import { showMessage } from "siyuan";
     import { t } from "../libs/i18n";
+    import { loadUiPrefs } from "../services/prefs";
     import type { GleanFacade } from "../types";
     import {
         QUOTE_CARD_THEMES,
@@ -21,6 +23,14 @@
     let activeThemeKey = $state<QuoteCardTheme>("teal");
     let copying = $state(false);
     let downloading = $state(false);
+
+    onMount(() => {
+        void loadUiPrefs(facade.pluginInstance).then((prefs) => {
+            if (prefs.themePalette === "amber") activeThemeKey = "paper";
+            else if (prefs.themePalette === "obsidian") activeThemeKey = "obsidian";
+            else if (prefs.themePalette === "teal") activeThemeKey = "teal";
+        }).catch(() => undefined);
+    });
 
     const activeTheme = $derived(
         QUOTE_CARD_THEMES.find((theme) => theme.key === activeThemeKey) ?? QUOTE_CARD_THEMES[0]
