@@ -1420,5 +1420,7 @@
   "theme.obsidian": "黑曜极简",
   "theme.obsidianDesc": "低饱和纯粹，克制无扰",
   "theme.rose": "绯红蔷薇",
-  "theme.roseDesc": "典雅热烈，醒目点睛"
+  "theme.roseDesc": "典雅热烈，醒目点睛",
+  "resurface.reasonSlice": "✂️ 渐进阅读切片 · 约 ${minutes} 分钟轻量读完",
+  "resurface.sliceBadge": "渐进切片"
 }

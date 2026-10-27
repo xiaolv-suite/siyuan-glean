@@ -1420,5 +1420,7 @@
   "theme.obsidian": "Obsidian Dark",
   "theme.obsidianDesc": "Minimalist mono, distraction-free",
   "theme.rose": "Crimson Rose",
-  "theme.roseDesc": "Elegant, distinctive, warm accent"
+  "theme.roseDesc": "Elegant, distinctive, warm accent",
+  "resurface.reasonSlice": "✂️ Progressive slice · ~${minutes} min quick read",
+  "resurface.sliceBadge": "Slice"
 }

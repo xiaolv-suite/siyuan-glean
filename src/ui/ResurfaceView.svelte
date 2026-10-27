@@ -341,6 +341,9 @@ function finishSwipe(pick: SurfacePick, event: PointerEvent): void {
         swipeState = null;
         return;
     }
+    if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+        try { navigator.vibrate?.(12); } catch { /* 静默安全 */ }
+    }
     event.preventDefault();
     suppressedClickId = pick.item.id;
     swipeState = { ...current, offsetX: action === "later" ? 132 : -132 };
@@ -437,6 +440,7 @@ function reasonText(reason: SurfaceReason): string {
         case "site": return t(i18n, "resurface.reason.site", { site: reason.site ?? "" });
         case "author": return t(i18n, "resurface.reason.author", { author: reason.author ?? "" });
         case "freshTopic": return t(i18n, "resurface.reason.freshTopic");
+        case "slice": return t(i18n, "resurface.reasonSlice", { minutes: reason.minutes ?? 5 });
     }
 }
 

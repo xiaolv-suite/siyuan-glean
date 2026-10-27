@@ -1792,6 +1792,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
                     <div><dt><kbd>a</kbd></dt><dd>{t(i18n, "reader.shortcutLater")}</dd></div>
                     <div><dt><kbd>o</kbd></dt><dd>{t(i18n, "reader.shortcutOpenSource")}</dd></div>
                     <div><dt><kbd>x</kbd></dt><dd>{t(i18n, "reader.shortcutExcerpt")}</dd></div>
+                    <div><dt><kbd>Alt+E</kbd></dt><dd>{t(i18n, "reader.extractToCards")}</dd></div>
                     <div><dt><kbd>h</kbd></dt><dd>{t(i18n, "reader.shortcutNextHighlight")}</dd></div>
                     <div><dt><kbd>Shift+h</kbd></dt><dd>{t(i18n, "reader.shortcutPrevHighlight")}</dd></div>
                     <div><dt><kbd>Ctrl+F</kbd></dt><dd>{t(i18n, "reader.searchTitle")}</dd></div>

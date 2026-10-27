@@ -8,6 +8,16 @@ Lv Glean organizes clippings and articles already in SiYuan. It does not crawl t
 
 [中文说明](README.md) · [Latest Release](https://github.com/ai68298100/siyuan-glean/releases/latest) · [Capability matrix](docs/CAPABILITY-MATRIX.md) · [Feedback](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.35 update (2026-10-27)
+
+This release implements progressive slice awareness in daily resurfacing, mobile haptic touch feedback, and shortcut matrix alignment.
+
+**New features & improvements:**
+
+- **Slice Awareness in Daily Resurfacing**: Resurfacing cards automatically detect doc slices, highlighting "✂️ Progressive slice · ~X min quick read" to eliminate hesitation.
+- **Mobile Swipe Haptic Feedback**: `ResurfaceView.svelte` triggers a crisp 12ms tactile vibration when swipe actions lock, bringing native app touch feel.
+- **Shortcut Matrix Alignment**: Added `Alt+E` card extraction keycap in reader shortcut help.
+
 ## v1.3.34 update (2026-10-27)
 
 This release implements the quick theme switcher on the main library dock toolbar and quote card theme synchronization.

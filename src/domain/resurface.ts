@@ -29,6 +29,8 @@ export interface SurfaceItem {
     site?: string;
     /** 来源作者或公众号名称，用于推荐理由。 */
     author?: string;
+    /** 预计阅读时长（分钟） */
+    minutes?: number;
 }
 
 export interface SurfacePick {
@@ -37,7 +39,7 @@ export interface SurfacePick {
 }
 
 /** "为什么出现"的结构化理由（T-1717）；UI 负责转 i18n，域层不做文案。 */
-export type SurfaceReasonKind = "stale" | "priority" | "site" | "author" | "freshTopic";
+export type SurfaceReasonKind = "stale" | "priority" | "site" | "author" | "freshTopic" | "slice";
 
 export interface SurfaceReason {
     kind: SurfaceReasonKind;
@@ -45,6 +47,7 @@ export interface SurfaceReason {
     priority?: number;
     site?: string;
     author?: string;
+    minutes?: number;
 }
 
 const DAY_MS = 86_400_000;
@@ -229,6 +232,9 @@ export function surfaceReasons(
     now: Date = new Date()
 ): SurfaceReason[] {
     const reasons: SurfaceReason[] = [];
+    if ((item.aiTags || []).some((tag) => tag.toLowerCase() === "渐进切片" || tag.toLowerCase() === "doc-slice")) {
+        reasons.push({ kind: "slice", minutes: item.minutes });
+    }
     const days = ageDays(item.time, now);
     if (days >= 7) reasons.push({ kind: "stale", days });
     if ((item.priority || 3) >= 4) reasons.push({ kind: "priority", priority: item.priority || 3 });
