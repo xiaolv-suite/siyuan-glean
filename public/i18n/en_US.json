@@ -1441,5 +1441,6 @@
   "reading.resumePointShort": "Resume",
   "resurface.shortcutPin": "T Pin",
   "action.copyBlockRef": "Copy Block Ref",
-  "reader.blockRefCopied": "Block reference copied to clipboard!"
+  "reader.blockRefCopied": "Block reference copied to clipboard!",
+  "reader.shortcutImmersive": "Toggle Immersive Focus"
 }

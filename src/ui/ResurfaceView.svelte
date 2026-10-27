@@ -889,7 +889,7 @@ function focusCard(id: string): void {
                         <span class={`glean-carrier-badge glean-carrier-badge--${resolveCarrier(pick.item.contentType)}`}>{carrierLabel(pick)}</span>
                         {#if isWechatUrl(pick.item.url) || isWechatUrl(pick.item.site)}
                             <span class="glean-badge glean-source-wechat" title={displayWechatAuthor(pick.item.author) || t(i18n, "wechat.officialAccount")}>
-                                微信{#if displayWechatAuthor(pick.item.author)} · {displayWechatAuthor(pick.item.author)}{/if}
+                                <span class="glean-wechat-dot" aria-hidden="true"></span>微信{#if displayWechatAuthor(pick.item.author)} · {displayWechatAuthor(pick.item.author)}{/if}
                             </span>
                         {/if}
                         {#if isPinnedToday(pick)}<span class="glean-surf__pinned"><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanPin" /></svg>{t(i18n, "resurface.pinnedToday")}</span>{/if}

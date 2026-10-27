@@ -70,6 +70,7 @@ test("阅读单键：只在当前阅读页签焦点内执行映射", () => {
     const mappings: Array<[string, ReaderShortcut]> = [
         ["j", "scrollDown"], ["k", "scrollUp"], ["e", "edit"],
         ["m", "done"], ["a", "later"], ["o", "openSource"], ["x", "excerpt"], ["?", "help"],
+        ["F", "toggleImmersive"],
     ];
     for (const [key, action] of mappings) {
         assert.equal(readerShortcut({ ...readerKey, key }), action);

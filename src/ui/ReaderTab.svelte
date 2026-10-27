@@ -932,6 +932,13 @@ import { aiFailureKey } from "../libs/ai-feedback";
             openSource();
             return;
         }
+        if (action === "toggleImmersive") {
+            event.preventDefault();
+            event.stopPropagation();
+            if (immersive) exitImmersive();
+            else enterImmersive();
+            return;
+        }
         if (action === "later") {
             if (!context || context.id !== docId || statusBusy || context.status === "later") return;
             event.preventDefault();
@@ -1868,6 +1875,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
                     <div><dt><kbd>Alt+E</kbd></dt><dd>{t(i18n, "reader.extractToCards")}</dd></div>
                     <div><dt><kbd>h</kbd></dt><dd>{t(i18n, "reader.shortcutNextHighlight")}</dd></div>
                     <div><dt><kbd>Shift+h</kbd></dt><dd>{t(i18n, "reader.shortcutPrevHighlight")}</dd></div>
+                    <div><dt><kbd>Shift+F</kbd></dt><dd>{t(i18n, "reader.shortcutImmersive")}</dd></div>
                     <div><dt><kbd>Ctrl+F</kbd></dt><dd>{t(i18n, "reader.searchTitle")}</dd></div>
                     <div><dt><kbd>?</kbd></dt><dd>{t(i18n, "reader.shortcutHelp")}</dd></div>
                     <div><dt><kbd>Esc</kbd></dt><dd>{t(i18n, "reader.shortcutEscape")}</dd></div>

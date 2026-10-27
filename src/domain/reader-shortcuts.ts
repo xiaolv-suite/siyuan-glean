@@ -1,4 +1,4 @@
-export type ReaderShortcut = "scrollDown" | "scrollUp" | "edit" | "done" | "later" | "openSource" | "excerpt" | "help" | "nextHighlight" | "prevHighlight";
+export type ReaderShortcut = "scrollDown" | "scrollUp" | "edit" | "done" | "later" | "openSource" | "excerpt" | "help" | "nextHighlight" | "prevHighlight" | "toggleImmersive";
 
 export interface ReaderKeyInput {
     key: string;
@@ -18,7 +18,7 @@ export interface ReaderKeyInput {
 export function readerShortcut(input: ReaderKeyInput): ReaderShortcut | null {
     if (input.mode !== "read" || !input.focused || input.blocked || input.defaultPrevented
         || input.isComposing || input.keyCode === 229 || input.ctrlKey || input.altKey || input.metaKey) return null;
-    if (input.shiftKey && input.key !== "?" && input.key !== "H") return null;
+    if (input.shiftKey && input.key !== "?" && input.key !== "H" && input.key !== "F") return null;
     const shortcut: ReaderShortcut | null = input.key === "j" ? "scrollDown"
         : input.key === "k" ? "scrollUp"
         : input.key === "e" ? "edit"
@@ -28,6 +28,7 @@ export function readerShortcut(input: ReaderKeyInput): ReaderShortcut | null {
         : input.key === "x" ? "excerpt"
         : input.key === "h" ? "nextHighlight"
         : input.key === "H" ? "prevHighlight"
+        : input.key === "F" ? "toggleImmersive"
         : input.key === "?" ? "help" : null;
     if (input.repeat && shortcut !== "scrollDown" && shortcut !== "scrollUp") return null;
     return shortcut;

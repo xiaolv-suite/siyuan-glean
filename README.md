@@ -8,6 +8,15 @@
 
 [English](README.en-US.md) · [下载最新版](https://github.com/ai68298100/siyuan-glean/releases/latest) · [能力矩阵](docs/CAPABILITY-MATRIX.md) · [反馈与问题](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.42 更新（2026-10-27）
+
+本次版本实现阅读器沉浸模式快捷键 Shift+F 与今日拾遗微信微标视觉升级。
+
+**新增与体验增强：**
+
+- **沉浸模式快捷键 Shift+F**：阅读文章时单手轻敲 `Shift+F` 即可一键秒级出入沉浸全屏阅读。
+- **今日拾遗微信微标视觉升级**：拾遗卡片注入绿色品牌指示圆点，视觉体验更加温润和谐。
+
 ## v1.3.41 更新（2026-10-27）
 
 本次版本实现微信公众号头像微标贯通、今日拾遗快捷置顶与一键复制思源块引用。

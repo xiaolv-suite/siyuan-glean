@@ -2324,3 +2324,11 @@ T-3416 承接方向五（有依据的阅读 AI）与同类产品对标（Readwis
    - 键盘分拣流新增 `T` 键，支持单手敲击 `T` 键快速钉住/取消钉住当前卡片，快捷提示条同步补齐；
 3. 阅读器与预览区一键「复制块引用」（`WorkbenchPreview.svelte` & `ReaderTab.svelte`）：
    - 一键生成带文章标题的思源标准块引用链接（`((docId '标题'))`），极大方便日常笔记与日志引用。
+
+## D-0355（2026-10-27）阅读器沉浸模式快捷键 Shift+F 与今日拾遗微信微标视觉升级（T-3476）
+
+微交互打磨与视觉语言谐调：
+1. 阅读器沉浸模式 Shift+F 快捷出入（`domain/reader-shortcuts.ts` & `ReaderTab.svelte`）：
+   - 扩展 `toggleImmersive` 键盘映射与长按防抖保护，阅读长文时单手轻敲 `Shift+F` 即可秒级切换大屏专注阅读；
+2. 今日拾遗微信来源微标视觉升级（`ResurfaceView.svelte` & `wechat.scss`）：
+   - 拾遗卡片注入绿色品牌圆点指示（`.glean-wechat-dot`），全表面达成统一的视觉设计语言。

@@ -1441,5 +1441,6 @@
   "reading.resumePointShort": "续读",
   "resurface.shortcutPin": "T 置顶",
   "action.copyBlockRef": "复制块引用",
-  "reader.blockRefCopied": "已复制思源块引用到剪贴板！"
+  "reader.blockRefCopied": "已复制思源块引用到剪贴板！",
+  "reader.shortcutImmersive": "沉浸全屏阅读"
 }

@@ -2,6 +2,18 @@
 .glean-source-wechat {
     color: #07c160;
     font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+}
+
+.glean-wechat-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #07c160;
+    display: inline-block;
+    margin-right: 4px;
+    flex-shrink: 0;
 }
 
 .glean-wechat-publisher {

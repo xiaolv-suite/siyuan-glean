@@ -8,6 +8,15 @@ Lv Glean organizes clippings and articles already in SiYuan. It does not crawl t
 
 [中文说明](README.md) · [Latest Release](https://github.com/ai68298100/siyuan-glean/releases/latest) · [Capability matrix](docs/CAPABILITY-MATRIX.md) · [Feedback](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.42 update (2026-10-27)
+
+This release implements the Shift+F shortcut for immersive reading and polishes the WeChat badge visual styling in daily resurfacing.
+
+**New features & improvements:**
+
+- **Shift+F Immersive Reading Shortcut**: Press `Shift+F` while reading to toggle full-screen distraction-free immersion.
+- **WeChat Badge Dot Polish**: Resurfacing cards add a subtle green indicator dot for harmonious all-surface branding.
+
 ## v1.3.41 update (2026-10-27)
 
 This release implements WeChat avatar badges across views, the T-key pin today shortcut, and 1-click block reference copying.
