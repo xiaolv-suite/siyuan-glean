@@ -1445,5 +1445,19 @@
   "reader.shortcutImmersive": "沉浸全屏阅读",
   "stats.copyReport": "复制报告",
   "stats.reportCopied": "已复制阅读回顾报告 Markdown 到剪贴板！",
-  "wechat.wereadGuide": "已复制文章纯净短链！可在微信中发送给【微信读书】公众号，即可自动同步至书架并阅读"
+  "wechat.wereadGuide": "已复制文章纯净短链！可在微信中发送给【微信读书】公众号，即可自动同步至书架并阅读",
+  "wechat.wereadGuideTitle": "微信读书网页版同步阅读向导",
+  "wechat.wereadGuideDesc": "微信读书网页版不支持外部任意链接直读，需先同步至微信读书个人书架，扫码登录后即可畅读",
+  "wechat.step1Title": "步骤 1：复制文章纯净短链",
+  "wechat.step1Desc": "已自动清洗追踪参数，生成永久标准链接",
+  "wechat.copyCleanLink": "复制短链",
+  "wechat.copiedLink": "已复制到剪贴板",
+  "wechat.step2Title": "步骤 2：在微信中同步到微信读书",
+  "wechat.step2Desc": "打开微信搜索【微信读书】官方公众号，将复制的链接发送给它；微信读书将自动将其加入您的个人书架",
+  "wechat.step3Title": "步骤 3：登录微信读书网页版",
+  "wechat.step3Desc": "前往微信读书网页版，微信扫码登录后即可在书架中直接打开文章畅读与划线",
+  "wechat.openWereadShelf": "前往微信读书网页版（扫码登录 / 书架）",
+  "wechat.localReaderOption": "无需微信登录，直接在思源中纯净阅读",
+  "wechat.localReaderDesc": "小驴拾遗已自动完成排版清洗、插图修复与去噪，无需扫码即可享受专注沉浸阅读",
+  "wechat.openLocalReader": "在拾遗阅读器中直接打开"
 }

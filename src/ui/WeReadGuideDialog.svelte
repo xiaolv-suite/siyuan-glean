@@ -1,0 +1,104 @@
+<script lang="ts">
+    import { showMessage } from "siyuan";
+    import type { GleanFacade } from "../types";
+    import { t } from "../libs/i18n";
+    import { cleanWechatArticleUrl, isWechatUrl } from "../domain/wechat";
+    import type { WeReadGuideArticleInfo } from "./weread-guide-dialog";
+
+    interface Props {
+        facade: GleanFacade;
+        article: WeReadGuideArticleInfo;
+        onClose?: () => void;
+    }
+
+    let { facade, article, onClose }: Props = $props();
+
+    const i18n = $derived(facade.i18n);
+    const cleanUrl = $derived(article.url && isWechatUrl(article.url) ? cleanWechatArticleUrl(article.url) : (article.url || ""));
+    let copied = $state(false);
+
+    async function copyLink(): Promise<void> {
+        if (!cleanUrl) return;
+        try {
+            await navigator.clipboard.writeText(cleanUrl);
+            copied = true;
+            if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+                try { navigator.vibrate?.(15); } catch { /* noop */ }
+            }
+            showMessage(t(i18n, "wechat.copiedLink"), 2500);
+            setTimeout(() => { copied = false; }, 3000);
+        } catch {
+            showMessage(t(i18n, "msg.actionFailed"), 2500);
+        }
+    }
+
+    function openShelf(): void {
+        window.open("https://weread.qq.com/web/shelf", "_blank");
+    }
+
+    function openLocalReader(): void {
+        onClose?.();
+        if (article.id) {
+            facade.openReadingDocument(article.id);
+        }
+    }
+</script>
+
+<div class="glean-weread-guide">
+    <div class="glean-weread-guide__head">
+        <div class="glean-weread-guide__title">{article.title || t(i18n, "panel.untitled")}</div>
+        <p class="glean-weread-guide__desc">{t(i18n, "wechat.wereadGuideDesc")}</p>
+    </div>
+
+    <div class="glean-weread-steps">
+        <div class="glean-weread-step">
+            <div class="glean-weread-step__badge">1</div>
+            <div class="glean-weread-step__body">
+                <div class="glean-weread-step__title">{t(i18n, "wechat.step1Title")}</div>
+                <div class="glean-weread-step__desc">{t(i18n, "wechat.step1Desc")}</div>
+                {#if cleanUrl}
+                    <div class="glean-weread-url-box">
+                        <span class="glean-weread-url-text" title={cleanUrl}>{cleanUrl}</span>
+                        <button type="button" class="glean-btn glean-btn--ghost glean-btn--xs" onclick={copyLink}>
+                            {copied ? `✓ ${t(i18n, "wechat.copiedLink")}` : `📋 ${t(i18n, "wechat.copyCleanLink")}`}
+                        </button>
+                    </div>
+                {/if}
+            </div>
+        </div>
+
+        <div class="glean-weread-step">
+            <div class="glean-weread-step__badge">2</div>
+            <div class="glean-weread-step__body">
+                <div class="glean-weread-step__title">{t(i18n, "wechat.step2Title")}</div>
+                <div class="glean-weread-step__desc">{t(i18n, "wechat.step2Desc")}</div>
+            </div>
+        </div>
+
+        <div class="glean-weread-step">
+            <div class="glean-weread-step__badge">3</div>
+            <div class="glean-weread-step__body">
+                <div class="glean-weread-step__title">{t(i18n, "wechat.step3Title")}</div>
+                <div class="glean-weread-step__desc">{t(i18n, "wechat.step3Desc")}</div>
+                <div class="glean-weread-step__actions">
+                    <button type="button" class="glean-btn glean-btn--pri glean-weread-shelf-btn" onclick={openShelf}>
+                        🌐 {t(i18n, "wechat.openWereadShelf")}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="glean-weread-local-card">
+        <div class="glean-weread-local-card__head">
+            <span class="glean-weread-local-card__icon" aria-hidden="true">💡</span>
+            <div class="glean-weread-local-card__info">
+                <strong>{t(i18n, "wechat.localReaderOption")}</strong>
+                <p>{t(i18n, "wechat.localReaderDesc")}</p>
+            </div>
+        </div>
+        <button type="button" class="glean-btn glean-btn--ghost glean-weread-local-btn" onclick={openLocalReader}>
+            📖 {t(i18n, "wechat.openLocalReader")}
+        </button>
+    </div>
+</div>

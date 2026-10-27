@@ -20,7 +20,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
     import { fulltextBodyState } from "../domain/content";
     import { canCountReading, createReadingTimer, readingTimerMinutes, setReadingTimerActive, type ReadingTimerState } from "../domain/reading-timer";
     import { hasSourceAction, resolveCarrier, sourceUrlForCarrier } from "../domain/carrier";
-    import { isWechatUrl, cleanWechatArticleUrl, wechatArticleToWereadUrl, extractWechatAuthor, displayWechatAuthor, cleanWechatNoise, repairWechatContent } from "../domain/wechat";
+    import { isWechatUrl, cleanWechatArticleUrl, extractWechatAuthor, displayWechatAuthor, cleanWechatNoise, repairWechatContent } from "../domain/wechat";
     import { chunkSpeechText, clampSpeechRate, resumeSpeechChunkIndex, speechLanguage } from "../domain/speech";
     import type { ClipStatus } from "../domain/schema";
     import { DEFAULT_SETTINGS } from "../services/settings";
@@ -39,6 +39,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
     import { makeQuoteCardPreview } from "./flashcard-dialog";
     import { openQuoteCardDialog } from "./quote-card-dialog";
     import { openDocSlicingDialog } from "./doc-slicing-dialog";
+    import { openWeReadGuideDialog } from "./weread-guide-dialog";
     import { purifyWechatArticle } from "../services/wechat-service";
     import { THEME_PALETTES, type ThemePaletteId } from "../domain/theme-palette";
     import { applyThemePaletteToDom } from "../libs/theme-palette-controller";
@@ -747,17 +748,13 @@ import { aiFailureKey } from "../libs/ai-feedback";
         void openTab({ app: facade.pluginInstance.app, doc: { id: docId }, keepCursor: false });
     }
 
-    async function openWeread(): Promise<void> {
-        if (!context?.url) return;
-        const clean = cleanWechatArticleUrl(context.url);
-        try {
-            await navigator.clipboard.writeText(clean);
-            showMessage(t(i18n, "wechat.wereadGuide"), 4000);
-        } catch {
-            // ignore
-        }
-        const wereadUrl = wechatArticleToWereadUrl(context.url) || "https://weread.qq.com/web/shelf";
-        window.open(wereadUrl, "_blank");
+    function openWeread(): void {
+        openWeReadGuideDialog(facade, {
+            id: docId,
+            title: context?.title,
+            url: context?.url,
+            author: context?.author,
+        });
     }
 
     async function runPurifyWechat(): Promise<void> {

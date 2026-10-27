@@ -1445,5 +1445,19 @@
   "reader.shortcutImmersive": "Toggle Immersive Focus",
   "stats.copyReport": "Copy Report",
   "stats.reportCopied": "Review report Markdown copied to clipboard!",
-  "wechat.wereadGuide": "Clean article link copied! Send it to the 'WeRead' official account in WeChat to sync to your bookshelf."
+  "wechat.wereadGuide": "Clean article link copied! Send it to the 'WeRead' official account in WeChat to sync to your bookshelf.",
+  "wechat.wereadGuideTitle": "WeRead Web Sync & Reading Guide",
+  "wechat.wereadGuideDesc": "WeRead Web does not open arbitrary external links directly; sync the article to your WeRead shelf and scan to log in",
+  "wechat.step1Title": "Step 1: Copy Clean Article Link",
+  "wechat.step1Desc": "Tracking parameters stripped into a canonical short link",
+  "wechat.copyCleanLink": "Copy Link",
+  "wechat.copiedLink": "Copied to Clipboard",
+  "wechat.step2Title": "Step 2: Sync to WeRead in WeChat",
+  "wechat.step2Desc": "Send the copied link to the 'WeRead' official account in WeChat; it will automatically be saved to your bookshelf",
+  "wechat.step3Title": "Step 3: Log in to WeRead Web",
+  "wechat.step3Desc": "Go to WeRead Web, scan QR code to log in, and read seamlessly from your shelf",
+  "wechat.openWereadShelf": "Open WeRead Web (Login / Shelf)",
+  "wechat.localReaderOption": "Read locally in SiYuan without login",
+  "wechat.localReaderDesc": "Lv Glean has purified the layout, images and ads locally for instant offline reading",
+  "wechat.openLocalReader": "Open in Glean Reader"
 }

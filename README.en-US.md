@@ -8,6 +8,15 @@ Lv Glean organizes clippings and articles already in SiYuan. It does not crawl t
 
 [中文说明](README.md) · [Latest Release](https://github.com/ai68298100/siyuan-glean/releases/latest) · [Capability matrix](docs/CAPABILITY-MATRIX.md) · [Feedback](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.49 update (2026-10-27)
+
+This release launches the WeRead Web Sync & Reading Guide dialog for seamless shelf-syncing and login guidance.
+
+**New features & improvements:**
+
+- **WeRead Web Sync & Reading Guide Dialog**: 3-step interactive visual workflow (Copy clean link → Send to WeRead bot in WeChat → Scan QR to log in on WeRead web) eliminating all 404 confusion.
+- **Embedded Login-Free Local Reader Option**: Instant 1-click fallback to Lv Glean's distraction-free reader tab right inside SiYuan.
+
 ## v1.3.48 update (2026-10-27)
 
 This release fixes the WeRead 404 issue, adds shelf-sync guidance, and provides a direct Glean Reader shortcut.

@@ -15,7 +15,8 @@
     import ProtyleHost from "./ProtyleHost.svelte";
     import AuthorEditor from "./AuthorEditor.svelte";
     import { exportArticleMarkdown } from "../services/library-export-service";
-    import { isWechatUrl, displayWechatAuthor, wechatArticleToWereadUrl, cleanWechatArticleUrl } from "../domain/wechat";
+    import { isWechatUrl, displayWechatAuthor } from "../domain/wechat";
+    import { openWeReadGuideDialog } from "./weread-guide-dialog";
     import { scanAndFillWechatAuthor } from "../services/wechat-service";
 
     type PreviewItem = ({ kind: "clip" } & ClipIndexEntry) | ({ kind: "candidate" } & CandidateEntry);
@@ -229,18 +230,14 @@
         }
     }
 
-    async function handleOpenWeread(event?: MouseEvent): Promise<void> {
+    function handleOpenWeread(event?: MouseEvent): void {
         event?.preventDefault();
-        if (!sourceUrl) return;
-        const clean = isWechatUrl(sourceUrl) ? cleanWechatArticleUrl(sourceUrl) : sourceUrl;
-        try {
-            await navigator.clipboard.writeText(clean);
-            showMessage(t(i18n, "wechat.wereadGuide"), 4000);
-        } catch {
-            // ignore
-        }
-        const wereadUrl = wechatArticleToWereadUrl(sourceUrl) || "https://weread.qq.com/web/shelf";
-        window.open(wereadUrl, "_blank");
+        openWeReadGuideDialog(facade, {
+            id: entry.id,
+            title: entry.title,
+            url: sourceUrl,
+            author: safeAuthor,
+        });
     }
 
     async function downloadMarkdown(): Promise<void> {
