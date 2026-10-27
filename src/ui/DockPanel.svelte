@@ -2536,38 +2536,37 @@ function metaLine(entry: Row): string {
                         <svg aria-hidden="true"><use href="#iconGleanRefresh" /></svg>
                         <span class="glean-head-action__label">{t(i18n, "panel.migrateShort")}</span>
                     </button>
-                    <div class="glean-palette-quick-wrap">
-                        <button
-                            type="button"
-                            class="glean-icon-btn glean-head-action"
-                            title={t(i18n, "settings.themePalette")}
-                            aria-label={t(i18n, "settings.themePalette")}
-                            onclick={() => { paletteMenuOpen = !paletteMenuOpen; }}
-                        >
-                            <span class="glean-head-palette-dot" style="background: var(--lv-brand);"></span>
-                            <span class="glean-head-action__label">🎨</span>
-                        </button>
-                        {#if paletteMenuOpen}
-                            <div class="glean-palette-quick-menu" role="menu">
-                                {#each THEME_PALETTES as p}
-                                    <button
-                                        type="button"
-                                        class="glean-palette-quick-item"
-                                        class:glean-palette-quick-item--active={currentThemePalette === p.id}
-                                        title={t(i18n, p.nameKey)}
-                                        onclick={() => void selectThemePalette(p.id)}
-                                    >
-                                        <span class="glean-palette-dot-mini" style="background: {p.brand};"></span>
-                                        <span>{t(i18n, p.nameKey)}</span>
-                                    </button>
-                                {/each}
-                            </div>
-                        {/if}
-                    </div>
                     <button type="button" class="glean-icon-btn glean-head-action" title={t(i18n, "panel.settings")} aria-label={t(i18n, "panel.settings")} onclick={() => facade.openSettings()}>
                         <svg aria-hidden="true"><use href="#iconGleanGear" /></svg>
                         <span class="glean-head-action__label">{t(i18n, "panel.settings")}</span>
                     </button>
+                </div>
+                <div class="glean-palette-quick-wrap">
+                    <button
+                        type="button"
+                        class="glean-icon-btn glean-head-action"
+                        title={t(i18n, "settings.themePalette")}
+                        aria-label={t(i18n, "settings.themePalette")}
+                        onclick={() => { paletteMenuOpen = !paletteMenuOpen; }}
+                    >
+                        <span class="glean-head-palette-dot" style="background: var(--lv-brand);"></span>
+                    </button>
+                    {#if paletteMenuOpen}
+                        <div class="glean-palette-quick-menu" role="menu">
+                            {#each THEME_PALETTES as p}
+                                <button
+                                    type="button"
+                                    class="glean-palette-quick-item"
+                                    class:glean-palette-quick-item--active={currentThemePalette === p.id}
+                                    title={t(i18n, p.nameKey)}
+                                    onclick={() => void selectThemePalette(p.id)}
+                                >
+                                    <span class="glean-palette-dot-mini" style="background: {p.brand};"></span>
+                                    <span>{t(i18n, p.nameKey)}</span>
+                                </button>
+                            {/each}
+                        </div>
+                    {/if}
                 </div>
             </div>
         {/if}

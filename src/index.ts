@@ -338,10 +338,11 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
             const prefs = await loadUiPrefs(this);
             if (!this.loaded) return;
             applyThemePaletteToDom(null, prefs.themePalette);
-            if (this.isMobile) return;
-            const onboardingInProgress = prefs.onboardingInterrupted || prefs.onboardingStep !== 1;
-            if (prefs.onboardingDone || (this.settings.anchorNotebooks.length > 0 && !onboardingInProgress)) return;
-            this.onboardingTimer = window.setTimeout(() => this.openOnboarding(), 800);
+            if (!this.isMobile) {
+                const onboardingInProgress = prefs.onboardingInterrupted || prefs.onboardingStep !== 1;
+                if (prefs.onboardingDone || (this.settings.anchorNotebooks.length > 0 && !onboardingInProgress)) return;
+                this.onboardingTimer = window.setTimeout(() => this.openOnboarding(), 800);
+            }
         })();
 
         if (this.isMobile) return;

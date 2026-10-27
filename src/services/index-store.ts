@@ -223,7 +223,7 @@ export function applyAttrsToIndex(
             aiTags: attrs.aiTags,
             contentType: attrs.contentType ?? "",
             timeSource: attrs.timeSource ?? "",
-            readPoint: attrs.readPoint,
+            ...(attrs.readPoint ? { readPoint: attrs.readPoint } : {}),
             updated: doc.updated,
         };
     } else {

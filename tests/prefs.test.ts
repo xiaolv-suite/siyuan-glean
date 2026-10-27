@@ -42,6 +42,7 @@ test("loadUiPrefs：旧存档补齐首启进度默认值", async () => {
         tagAliases: [],
         defaultSavedViewId: "",
         governanceMuted: { quota: "", stale: "", candidates: "" },
+        themePalette: "teal",
     });
 });
 
@@ -64,6 +65,7 @@ test("normalizeUiPrefs：非法步骤与已完成状态不会产生可恢复脏�
         tagAliases: [],
         defaultSavedViewId: "",
         governanceMuted: { quota: "", stale: "", candidates: "" },
+        themePalette: "teal",
     });
     assert.deepEqual(normalizeUiPrefs({ onboardingDone: true, onboardingStep: 4, onboardingInterrupted: true }), {
         lastView: "",
@@ -83,6 +85,7 @@ test("normalizeUiPrefs：非法步骤与已完成状态不会产生可恢复脏�
         tagAliases: [],
         defaultSavedViewId: "",
         governanceMuted: { quota: "", stale: "", candidates: "" },
+        themePalette: "teal",
     });
 });
 
