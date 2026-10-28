@@ -188,6 +188,7 @@
     display: inline-flex;
     align-items: center;
     gap: var(--glean-space-1-5);
+    flex-wrap: wrap;
 }
 
 .glean-roaming-triage-btn {

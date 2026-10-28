@@ -1,11 +1,13 @@
 <script lang="ts">
-    import { showMessage } from "siyuan";
+    import { openTab, showMessage } from "siyuan";
     import type { GleanFacade } from "../types";
     import { t } from "../libs/i18n";
     import { pickRoamingArticle, type RoamingPick, type RoamingTimeBudget } from "../domain/roaming";
     import { loadIndex } from "../services/index-store";
     import { displayWechatAuthor, isWechatUrl } from "../domain/wechat";
     import { writeClip } from "../services/clip-store";
+    import { formatGBT7714, type CitationItem } from "../domain/citation";
+    import { snapshotClip } from "../services/snapshot-service";
 
     interface Props {
         facade: GleanFacade;
@@ -212,6 +214,67 @@
         }
     }
 
+    async function copyCurrentBlockRef(): Promise<void> {
+        const title = currentPick.item.title || t(i18n, "panel.untitled");
+        const refText = `((${currentPick.item.id} '${title}'))`;
+        try {
+            if (navigator?.clipboard?.writeText) {
+                await navigator.clipboard.writeText(refText);
+                showMessage(t(i18n, "reader.blockRefCopied"), 2000);
+            } else {
+                showMessage(t(i18n, "msg.actionFailed"), 2000);
+            }
+        } catch {
+            showMessage(t(i18n, "msg.actionFailed"), 2000);
+        }
+    }
+
+    async function copyCurrentCitation(): Promise<void> {
+        const citItem: CitationItem = {
+            id: currentPick.item.id,
+            title: currentPick.item.title,
+            author: currentPick.item.author,
+            site: currentPick.item.site,
+            url: currentPick.item.url,
+            time: currentPick.item.time,
+        };
+        const citText = formatGBT7714(citItem);
+        try {
+            if (navigator?.clipboard?.writeText) {
+                await navigator.clipboard.writeText(citText);
+                showMessage(t(i18n, "citation.gbtCopied"), 2000);
+            } else {
+                showMessage(t(i18n, "msg.actionFailed"), 2000);
+            }
+        } catch {
+            showMessage(t(i18n, "msg.actionFailed"), 2000);
+        }
+    }
+
+    async function openOrTakeCurrentSnapshot(): Promise<void> {
+        if (currentPick.item.snapshot) {
+            void openTab({ app: facade.pluginInstance.app, asset: { path: currentPick.item.snapshot } });
+            return;
+        }
+        if (loading) return;
+        loading = true;
+        try {
+            const result = await snapshotClip(facade.pluginInstance, currentPick.item.id);
+            if (result?.path) {
+                currentPick.item.snapshot = result.path;
+                showMessage(t(i18n, result.indexSyncFailed ? "msg.writeIndexPending" : "snapshot.done"), result.indexSyncFailed ? 4000 : 3000);
+                facade.notifyDataChanged();
+            } else {
+                showMessage(t(i18n, "snapshot.failed"), 3000);
+            }
+        } catch (error) {
+            console.warn("[glean] 漫游盲盒拍摄快照失败:", error);
+            showMessage(t(i18n, "snapshot.failed"), 3000);
+        } finally {
+            loading = false;
+        }
+    }
+
     function startRead(): void {
         onClose?.();
         onOpenArticle(currentPick.item.id, currentPick.item.readPoint);
@@ -236,6 +299,15 @@
     } else if ((e.key === "f" || e.key === "F") && !e.ctrlKey && !e.metaKey && !e.altKey) {
         e.preventDefault();
         void toggleCurrentFavorite();
+    } else if ((e.key === "c" || e.key === "C") && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        void copyCurrentCitation();
+    } else if ((e.key === "y" || e.key === "Y") && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        void copyCurrentBlockRef();
+    } else if ((e.key === "s" || e.key === "S") && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        void openOrTakeCurrentSnapshot();
     } else if (e.key === "1" && !e.ctrlKey && !e.metaKey && !e.altKey) {
         e.preventDefault();
         void changeBudget("all");
@@ -391,6 +463,33 @@
                 title={t(i18n, "roaming.favoriteAction") + " (F)"}
             >
                 {currentPick.item.favorite ? "❤️" : "🤍"} {t(i18n, "roaming.favoriteAction")}
+            </button>
+            <button
+                type="button"
+                class="glean-btn glean-btn--ghost glean-roaming-triage-btn"
+                disabled={loading}
+                onclick={() => void copyCurrentBlockRef()}
+                title="{t(i18n, 'action.copyBlockRef')} (Y)"
+            >
+                🔗 {t(i18n, "action.copyBlockRef")}
+            </button>
+            <button
+                type="button"
+                class="glean-btn glean-btn--ghost glean-roaming-triage-btn"
+                disabled={loading}
+                onclick={() => void copyCurrentCitation()}
+                title="{t(i18n, 'citation.copyGBT')} (C)"
+            >
+                📄 {t(i18n, "citation.copyGBT")}
+            </button>
+            <button
+                type="button"
+                class="glean-btn glean-btn--ghost glean-roaming-triage-btn"
+                disabled={loading}
+                onclick={() => void openOrTakeCurrentSnapshot()}
+                title="{(currentPick.item.snapshot ? t(i18n, 'snapshot.open') : t(i18n, 'snapshot.take'))} (S)"
+            >
+                💾 {currentPick.item.snapshot ? t(i18n, "snapshot.open") : t(i18n, "snapshot.take")}
             </button>
             <button
                 type="button"

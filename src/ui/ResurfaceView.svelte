@@ -1,10 +1,12 @@
 <script lang="ts">
 /** 今日拾遗视图（T-1400/T-1402/T-1717）：确定性挑选，读了/改天/归档，平静原则文案。
  * 重浮是纯投影：输入是父级刚对账过的索引（T-1710），本组件不再另读缓存。 */
-import { showMessage } from "siyuan";
+import { openTab, showMessage } from "siyuan";
 import { onDestroy, tick } from "svelte";
 import type { GleanFacade } from "../types";
 import { t } from "../libs/i18n";
+import { formatGBT7714, type CitationItem } from "../domain/citation";
+import { snapshotClip } from "../services/snapshot-service";
 import { actOnSurface, computeDailyFromIndex, pickSurfaceReplacementFromIndex, setSurfacePinned, undoSurfaceAction, type SurfaceAction, type SurfaceUndoToken } from "../services/resurface-service";
 import type { GleanIndex } from "../services/index-store";
 import { todayStamp, type SurfacePick, type SurfaceReason, type SurfaceItem } from "../domain/resurface";
@@ -173,6 +175,54 @@ async function copyPickBlockRef(item: SurfaceItem): Promise<void> {
         showMessage(t(i18n, "reader.blockRefCopied"), 2000);
     } catch {
         showMessage(t(i18n, "msg.actionFailed"), 2000);
+    }
+}
+
+async function copyPickCitation(pick: SurfaceDisplayPick): Promise<void> {
+    const raw = index.clips[pick.item.id];
+    const citItem: CitationItem = {
+        id: pick.item.id,
+        title: pick.item.title,
+        author: raw?.author || pick.item.author,
+        site: raw?.site || pick.item.site,
+        url: raw?.url || pick.item.url,
+        time: raw?.time || pick.item.time,
+    };
+    const citText = formatGBT7714(citItem);
+    try {
+        if (navigator?.clipboard?.writeText) {
+            await navigator.clipboard.writeText(citText);
+            showMessage(t(i18n, "citation.gbtCopied"), 2000);
+        } else {
+            showMessage(t(i18n, "msg.actionFailed"), 2000);
+        }
+    } catch {
+        showMessage(t(i18n, "msg.actionFailed"), 2000);
+    }
+}
+
+async function openOrTakePickSnapshot(pick: SurfaceDisplayPick): Promise<void> {
+    const snapPath = index.clips[pick.item.id]?.snapshot;
+    if (snapPath) {
+        void openTab({ app: facade.pluginInstance.app, asset: { path: snapPath } });
+        return;
+    }
+    if (actingId || undoingId) return;
+    actingId = pick.item.id;
+    try {
+        const result = await snapshotClip(facade.pluginInstance, pick.item.id);
+        if (result?.path) {
+            showMessage(t(i18n, result.indexSyncFailed ? "msg.writeIndexPending" : "snapshot.done"), result.indexSyncFailed ? 4000 : 3000);
+            facade.notifyDataChanged();
+            onMutated();
+        } else {
+            showMessage(t(i18n, "snapshot.failed"), 3000);
+        }
+    } catch (error) {
+        console.warn("[glean] 今日拾遗拍摄快照失败:", error);
+        showMessage(t(i18n, "snapshot.failed"), 3000);
+    } finally {
+        actingId = "";
     }
 }
 
@@ -521,6 +571,16 @@ function handleResurfaceShortcut(event: KeyboardEvent): void {
             return;
         }
     }
+    // S 离线快照：在今日拾遗中按下 S / s 键查看或补拍当前卡片的离线快照
+    if (!action && !textEntry && Boolean(cursorId) && (event.key === "s" || event.key === "S") && !event.ctrlKey && !event.metaKey && !event.altKey) {
+        const pick = activePick;
+        if (pick && !actingId && !undoingId) {
+            event.preventDefault();
+            event.stopPropagation();
+            void openOrTakePickSnapshot(pick);
+            return;
+        }
+    }
     if (!action) return;
     if (action.type === "move") {
         event.preventDefault();
@@ -583,6 +643,11 @@ function handleResurfaceShortcut(event: KeyboardEvent): void {
             event.preventDefault();
             event.stopPropagation();
             void togglePickFavorite(pick);
+            break;
+        case "copyCitation":
+            event.preventDefault();
+            event.stopPropagation();
+            void copyPickCitation(pick);
             break;
     }
 }
@@ -907,6 +972,8 @@ function focusCard(id: string): void {
                     <kbd>F</kbd> {t(i18n, "roaming.favoriteAction")}
                     <kbd>T</kbd> {t(i18n, "resurface.shortcutPin")}
                     <kbd>Y</kbd> {t(i18n, "action.copyBlockRef")}
+                    <kbd>C</kbd> {t(i18n, "citation.copyGBT")}
+                    <kbd>S</kbd> {t(i18n, "snapshot.take")}
                     <kbd>P</kbd><kbd>1-5</kbd> {t(i18n, "library.keyboardPriority")}
                     <kbd>M</kbd> {t(i18n, "library.keyboardRating")}
                     <kbd>Esc</kbd> {t(i18n, "library.keyboardExit")}
@@ -986,6 +1053,12 @@ function focusCard(id: string): void {
                         </button>
                         <button class="glean-surf-act" title={t(i18n, "action.copyBlockRef")} aria-label={t(i18n, "action.copyBlockRef")} onclick={() => void copyPickBlockRef(pick.item)}>
                             🔗 {t(i18n, "action.copyBlockRef")}
+                        </button>
+                        <button class="glean-surf-act" title={t(i18n, "citation.copyGBT") + " (C)"} aria-label={t(i18n, "citation.copyGBT")} onclick={() => void copyPickCitation(pick)}>
+                            📄 {t(i18n, "citation.copyGBT")}
+                        </button>
+                        <button class="glean-surf-act" title={(clip?.snapshot ? t(i18n, "snapshot.open") : t(i18n, "snapshot.take")) + " (S)"} aria-label={clip?.snapshot ? t(i18n, "snapshot.open") : t(i18n, "snapshot.take")} onclick={() => void openOrTakePickSnapshot(pick)}>
+                            💾 {clip?.snapshot ? t(i18n, "snapshot.open") : t(i18n, "snapshot.take")}
                         </button>
                         {#if hasSourceAction(pick.item.contentType, pick.item.url)}
                             <button class="glean-surf-act" aria-busy={actingId === pick.item.id} disabled={actingId === pick.item.id} onclick={() => openSource(pick)}>

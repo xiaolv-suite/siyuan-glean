@@ -19,9 +19,15 @@ test("RoamingDrawerDialog 契约守门：展示推荐理由、匹配得分、换
     assert.match(dialogSource, /e\.key === "a" \|\| e\.key === "A"/);
     assert.match(dialogSource, /e\.key === "e" \|\| e\.key === "E"/);
     assert.match(dialogSource, /e\.key === "f" \|\| e\.key === "F"/);
+    assert.match(dialogSource, /e\.key === "c" \|\| e\.key === "C"/);
+    assert.match(dialogSource, /e\.key === "y" \|\| e\.key === "Y"/);
+    assert.match(dialogSource, /e\.key === "s" \|\| e\.key === "S"/);
     assert.match(dialogSource, /markCurrentLater/);
     assert.match(dialogSource, /markCurrentArchive/);
     assert.match(dialogSource, /toggleCurrentFavorite/);
+    assert.match(dialogSource, /copyCurrentCitation/);
+    assert.match(dialogSource, /copyCurrentBlockRef/);
+    assert.match(dialogSource, /openOrTakeCurrentSnapshot/);
     assert.match(dialogSource, /changeBudget/);
     assert.match(dialogSource, /changeTag/);
     assert.match(dialogSource, /glean-roaming-budget/);

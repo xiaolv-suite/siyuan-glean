@@ -67,6 +67,15 @@ This release implements floating margin notes in the reader editor for same-focu
 - **Floating Margin Notes (Margin Notes)**: Highlights and user thoughts float as sticky note bubbles along the right margin; clicking a note smoothly scrolls to the source block with pulse focus.
 - **Toggle Margin Notes (Alt+M)**: The reader toolbar offers a dedicated toggle action (Alt+M) to collapse or reveal margin notes at will.
 
+## v1.3.75 update (2026-10-29)
+
+This release implements resurface and roaming blind-box citation copying (C key), block reference copying (Y key), and offline snapshot viewing/taking (S key).
+
+**New features & improvements:**
+
+- **Resurface View C / S Shortcuts & Actions (T-3510)**: Daily resurface cards embed "📄 Citation (C)" and "💾 Snapshot (S)" actions; pressing `C` copies GB/T 7714-2015 citation and pressing `S` opens or captures offline snapshots; bottom hint bar displays `<kbd>C</kbd>` and `<kbd>S</kbd>`.
+- **Roaming Drawer Y / C / S Shortcuts & Actions (T-3510)**: Roaming drawer triage bar embeds "🔗 Block Ref (Y)", "📄 Citation (C)", and "💾 Snapshot (S)" actions with full keyboard shortcut bindings (`Y`, `C`, `S`).
+
 ## v1.3.74 update (2026-10-28)
 
 This release implements C-key citation copy arbitration, workbench preview C/Shift+C dual-format citation shortcuts, and highlights wall precise block jump fix.

@@ -129,7 +129,7 @@ function loadSurfaceControls({ act, undo, pin, replacement, tick, openReading } 
     };
     const modules = {
         svelte: { onDestroy(callback) { destroyCallbacks.push(callback); }, tick: async () => tick?.() },
-        siyuan: { showMessage(message) { calls.messages.push(message); } },
+        siyuan: { showMessage(message) { calls.messages.push(message); }, openTab() {} },
         "../libs/i18n": { t: (_dictionary, key) => key },
         "../services/resurface-service": services,
         "../domain/resurface": { todayStamp: () => "20261016" },
@@ -139,6 +139,8 @@ function loadSurfaceControls({ act, undo, pin, replacement, tick, openReading } 
         "../domain/recent-reading": {
             projectActiveRecentReadings: (entries, clips, limit) => [],
         },
+        "../domain/citation": { formatGBT7714: () => "" },
+        "../services/snapshot-service": { snapshotClip: async () => ({}) },
     };
     const source = readFileSync(new URL("../src/ui/ResurfaceView.svelte", import.meta.url), "utf8").match(/<script lang="ts">([\s\S]*?)<\/script>/)[1];
     const probe = `globalThis.controls = { act, togglePin, replacePick, undoLastAction, dismissUndo, bind(panel, button) { panelRoot = panel; undoButton = button; }, inspect() { return { actingId, undoingId, undoNotice, startedToday, sessionPicks }; } };`;
