@@ -377,6 +377,14 @@
             } else {
                 void copyBlockRef();
             }
+        } else if (lower === "c") {
+            event.preventDefault();
+            event.stopPropagation();
+            if (event.shiftKey) {
+                void copyCitation("bibtex");
+            } else {
+                void copyCitation("gbt");
+            }
         } else if (lower === "s") {
             event.preventDefault();
             event.stopPropagation();
@@ -417,8 +425,8 @@
                 </button>
             {/if}
             <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void triggerRoaming()} title={t(i18n, "roaming.buttonHint")}>🎲 {t(i18n, "roaming.button")}</button>
-            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation("gbt")} title="复制 GB/T 7714 电子文献著录">{t(i18n, "citation.copyGBT")}</button>
-            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation("bibtex")} title="复制 BibTeX @article 条目">BibTeX</button>
+            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation("gbt")} title="复制 GB/T 7714 电子文献著录 (C)">{t(i18n, "citation.copyGBT")}</button>
+            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation("bibtex")} title="复制 BibTeX @article 条目 (Shift+C)">BibTeX</button>
             <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyBlockRef()}>{t(i18n, "action.copyBlockRef")}</button>
             <button type="button" class="glean-btn glean-btn--ghost" onclick={() => facade.openReadingDocument(entry.id)}>{t(i18n, "preview.openDocument")}</button>
             {#if entry.kind === "clip"}<button type="button" class="glean-btn glean-btn--ghost" disabled={busy || exporting} onclick={() => void downloadMarkdown()}>{exporting ? t(i18n, "settings.exporting") : t(i18n, "export.markdown")}</button>{/if}

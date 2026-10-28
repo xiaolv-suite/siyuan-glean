@@ -67,6 +67,16 @@ This release implements floating margin notes in the reader editor for same-focu
 - **Floating Margin Notes (Margin Notes)**: Highlights and user thoughts float as sticky note bubbles along the right margin; clicking a note smoothly scrolls to the source block with pulse focus.
 - **Toggle Margin Notes (Alt+M)**: The reader toolbar offers a dedicated toggle action (Alt+M) to collapse or reveal margin notes at will.
 
+## v1.3.74 update (2026-10-28)
+
+This release implements C-key citation copy arbitration, workbench preview C/Shift+C dual-format citation shortcuts, and highlights wall precise block jump fix.
+
+**New features & improvements:**
+
+- **C-Key Citation Copy Arbitration (T-3509)**: The keyboard arbitration layer routes `C` to `clearSelection` when selections exist, or `copyCitation` (GB/T 7714-2015 electronic resource citation) when rows are focused without selection; bottom hint bar dynamically updates.
+- **Workbench Preview C / Shift+C Shortcuts**: Pressing `C` in preview copies GB/T 7714 citation, while `Shift+C` copies BibTeX `@article` entry.
+- **Highlights Wall C-Key Copy & Block Jump Fix**: Highlights wall routes `C` to copy quote share text; `visibleIds` adapts to both timeline and article grouped views; pressing `Enter` precisely navigates to the exact quote block in the source document.
+
 ## v1.3.73 update (2026-10-28)
 
 This release implements preview offline snapshot viewing/taking (S key) and reader Alt+S snapshot shortcut.

@@ -102,7 +102,7 @@ test("快捷设置优先级与评分：P/1-5 调优先级，M 调评分，长按
     assert.equal(cycleRatingValue(undefined), 1);
 });
 
-test("批量选择键位：S 需光标，F/C 只需已有勾选（T-3367）", () => {
+test("批量选择键位：S 需光标，F/C 只需已有勾选（T-3367 / T-3509）", () => {
     assert.deepEqual(resolveLibraryShortcut(key("s"), active), { type: "selectDisplayed" });
     assert.equal(resolveLibraryShortcut(key("s"), {}), null);
     assert.equal(resolveLibraryShortcut(key("s"), { cursorActive: false, hasSelection: true }), null);
@@ -116,6 +116,15 @@ test("批量选择键位：S 需光标，F/C 只需已有勾选（T-3367）", ()
     // 长按不重复执行批量动作
     assert.equal(resolveLibraryShortcut(key("s", { repeat: true }), active), null);
     assert.equal(resolveLibraryShortcut(key("c", { repeat: true }), { hasSelection: true }), null);
+});
+
+test("C 键语义仲裁：有勾选集合时优先 clearSelection，无勾选且光标激活时作为 copyCitation 复制学术著录（T-3509）", () => {
+    assert.deepEqual(resolveLibraryShortcut(key("c"), { hasSelection: true }), { type: "clearSelection" });
+    assert.deepEqual(resolveLibraryShortcut(key("c"), { cursorActive: true, hasSelection: false }), { type: "copyCitation" });
+    assert.deepEqual(resolveLibraryShortcut(key("C"), { cursorActive: true, hasSelection: false }), { type: "copyCitation" });
+    assert.equal(resolveLibraryShortcut(key("c"), {}), null);
+    // 长按防抖保护
+    assert.equal(resolveLibraryShortcut(key("c", { repeat: true }), { cursorActive: true }), null);
 });
 
 test("漫游盲盒键位：B/b 无需激活光标即可全局呼出，长按与输入框保护（T-3494）", () => {
@@ -164,7 +173,9 @@ test("DockPanel 接线：键盘光标样式、提示条与动作路由存在", (
     assert.match(dock, /class="glean-kbdhint"/);
     assert.match(dock, /<kbd>S<\/kbd> \{t\(i18n, "library\.keyboardSelectDisplayed"\)\}/);
     assert.match(dock, /<kbd>F<\/kbd> \{selection\.size > 0 \? t\(i18n, "library\.keyboardKeepFiltered"\) : t\(i18n, "roaming\.favoriteAction"\)\}/);
-    assert.match(dock, /<kbd>C<\/kbd> \{t\(i18n, "library\.keyboardClearSelection"\)\}/);
+    assert.match(dock, /<kbd>C<\/kbd> \{selection\.size > 0 \? t\(i18n, "library\.keyboardClearSelection"\) : t\(i18n, "citation\.copyGBT"\)\}/);
+    assert.match(dock, /case "copyCitation":/);
+    assert.match(dock, /formatGBT7714\(citItem\)/);
     assert.match(dock, /if \(action\.type === "selectDisplayed"\) \{[\s\S]*?selectDisplayedArticles\(\);/);
     assert.match(dock, /if \(action\.type === "keepFiltered"\) \{[\s\S]*?retainSelectionToFilter\(\);/);
     assert.match(dock, /if \(action\.type === "clearSelection"\) \{[\s\S]*?clearSelection\(\);/);

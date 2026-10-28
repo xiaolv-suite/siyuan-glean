@@ -379,6 +379,8 @@ test("WorkbenchPreview 头部操作栏红心收藏切换与 BibTeX 复制契约�
     assert.match(preview, /onPreviewKeyDown/);
     assert.match(preview, /lower === "b"/);
     assert.match(preview, /lower === "y"/);
+    assert.match(preview, /lower === "c"/);
+    assert.match(preview, /event\.shiftKey/);
     assert.match(preview, /lower === "f"/);
     assert.match(preview, /lower === "r"/);
     assert.match(preview, /lower === "o"/);

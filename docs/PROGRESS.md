@@ -1,5 +1,14 @@
 # 进度（PROGRESS）
 
+## T-3509 全库行级 C 键学术著录复制仲裁、工作台预览 C/Shift+C 双格式文献复制与摘录墙精准块跳转修复（2026-10-28）
+
+- [x] C 键学术著录复制仲裁：`src/domain/library-keyboard.ts` 智能分配 `C` 键语义：有批量勾选时作为 `clearSelection`（清空勾选），无勾选且光标落在某篇时作为 `copyCitation` 秒级复制 GB/T 7714-2015 著录；
+- [x] 读库工作台接入：`src/ui/DockPanel.svelte` 键盘流接入 `copyCitation` 动作，底栏指引条动态呈现对应键位；
+- [x] 快速预览区 C / Shift+C 著录复制：`src/ui/WorkbenchPreview.svelte` 键盘监听接入 `C` 键一键复制 GB/T 7714 著录，`Shift+C` 复制 BibTeX `@article` 条目；
+- [x] 摘录墙 C 键分享复制、多视图光标适配与精准块跳转修复：`src/ui/HighlightView.svelte` 键盘仲裁层接入 `copyCitation`，单按 `C` 键存入分享卡文本；适配平铺与按文章聚类双视图；敲击 `Enter` 精准跳转原文高亮块（`openDoc(item.rootId, item.id)`）；
+- [x] 遵照指令本地闭环交付：本地完成 v1.3.74 打包与构建，本轮严格不推送到 GitHub，不调用任何远程接口，等用户通知解封后再行统一推送与发布；
+- [x] 门禁全通：全套单测（1697/1697）、`pnpm check` 0 错误 0 警告，发布门禁与性能基线通过。
+
 ## T-3508 工作台快速预览区离线单文件快照（S 键）直开/补拍与阅读器 Alt+S 快捷查看快照（2026-10-28）
 
 - [x] 快速预览区快照直达：`src/ui/WorkbenchPreview.svelte` 头部操作栏增设「💾 快照」动作按钮，支持单点击或单敲按键 `S` 秒级调起本地离线 HTML 快照或即时补拍，彻底解决外部原文 404 时的离线核对痛点；

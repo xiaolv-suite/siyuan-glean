@@ -76,7 +76,11 @@ const filtered = $derived(filterHighlights(items, { search, site, tag, aiTag, co
 const articleGroups = $derived(groupHighlightsByArticle(filtered));
 const highlightPageSize = 20;
 const visible = $derived(pageHighlights(filtered, page, highlightPageSize));
-const visibleIds = $derived(visible.items.map((item) => item.id));
+const visibleIds = $derived(
+    viewMode === "timeline"
+        ? visible.items.map((item) => item.id)
+        : articleGroups.flatMap((group) => group.items.map((item) => item.id))
+);
 
 // 翻页、筛选或作用域变化后，光标只在仍可见时保留。
 $effect(() => {
@@ -480,8 +484,9 @@ function handleHighlightShortcut(event: KeyboardEvent): void {
         nativeAction,
         overlay: Boolean(document.querySelector("dialog[open], .b3-menu")),
         cursorActive: Boolean(cursorId),
+        hasSelection: selected.length > 0,
     });
-    // 只接管 J/K/X/Enter/Y 与 B 漫游；方向键仍交给列表原生滚动。
+    // 只接管 J/K/X/Enter/Y/C 与 B 漫游；方向键仍交给列表原生滚动。
     if (!action || action.type === "clearCursor") return;
     if (action.type === "roaming") {
         event.preventDefault();
@@ -489,18 +494,27 @@ function handleHighlightShortcut(event: KeyboardEvent): void {
         void triggerRoaming();
         return;
     }
-    if (!["move", "toggleSelect", "activate", "copyBlockRef"].includes(action.type)) return;
+    if (action.type === "clearSelection") {
+        event.preventDefault();
+        event.stopPropagation();
+        selected = [];
+        return;
+    }
+    if (!["move", "toggleSelect", "activate", "copyBlockRef", "copyCitation"].includes(action.type)) return;
     event.preventDefault();
     event.stopPropagation();
     if (action.type === "move") {
         setCursor(moveLibraryCursor(visibleIds, cursorId, action.delta));
         return;
     }
-    const item = visible.items.find((entry) => entry.id === cursorId);
+    const item = viewMode === "timeline"
+        ? visible.items.find((entry) => entry.id === cursorId)
+        : articleGroups.flatMap((group) => group.items).find((entry) => entry.id === cursorId);
     if (!item) return;
     if (action.type === "toggleSelect") toggle(item.id);
-    if (action.type === "activate") openDoc(item.id);
+    if (action.type === "activate") openDoc(item.rootId, item.id);
     if (action.type === "copyBlockRef") void copyQuoteBlockRef(item);
+    if (action.type === "copyCitation") void copyQuote(item);
 }
 
 async function triggerRoaming(): Promise<void> {
@@ -763,6 +777,7 @@ function focusHighlightRow(id: string): void {
                 <kbd>X</kbd> {t(i18n, "library.keyboardSelect")}
                 <kbd>Enter</kbd> {t(i18n, "library.keyboardView")}
                 <kbd>Y</kbd> {t(i18n, "action.copyBlockRef")}
+                <kbd>C</kbd> {selected.length > 0 ? t(i18n, "library.keyboardClearSelection") : t(i18n, "highlight.copyShare")}
                 <kbd>B</kbd> {t(i18n, "roaming.button")}
                 <kbd>Esc</kbd> {t(i18n, "library.keyboardExit")}
             </span>

@@ -39,6 +39,7 @@ import { hasSourceAction, openTargetForCarrier, resolveCarrier, sourceUrlForCarr
 import { isWechatUrl, displayWechatAuthor, isWechatSeriesTag } from "../domain/wechat";
 import { pickRoamingArticle } from "../domain/roaming";
 import { openRoamingDialog } from "./roaming-dialog";
+import { formatGBT7714, type CitationItem } from "../domain/citation";
 import { batchRecognizeWechatAuthors, scanAndFillWechatAuthor, purifyWechatArticle } from "../services/wechat-service";
 import ClipStatusActions from "./ClipStatusActions.svelte";
 import ClipRankControls from "./ClipRankControls.svelte";
@@ -2249,6 +2250,28 @@ async function runKeyboardAction(action: LibraryKeyboardAction): Promise<void> {
             }
             break;
         }
+        case "copyCitation": {
+            const citItem: CitationItem = {
+                id: entry.id,
+                title: entry.title,
+                author: entry.author,
+                site: entry.site,
+                url: entry.url,
+                time: entry.time,
+            };
+            const citText = formatGBT7714(citItem);
+            try {
+                if (navigator?.clipboard?.writeText) {
+                    await navigator.clipboard.writeText(citText);
+                    showMessage(t(i18n, "citation.gbtCopied"), 2000);
+                } else {
+                    showMessage(t(i18n, "msg.actionFailed"), 2000);
+                }
+            } catch {
+                showMessage(t(i18n, "msg.actionFailed"), 2000);
+            }
+            break;
+        }
     }
 }
 
@@ -2735,7 +2758,7 @@ function metaLine(entry: Row): string {
                     <kbd>X</kbd> {t(i18n, "library.keyboardSelect")}
                     <kbd>S</kbd> {t(i18n, "library.keyboardSelectDisplayed")}
                     <kbd>F</kbd> {selection.size > 0 ? t(i18n, "library.keyboardKeepFiltered") : t(i18n, "roaming.favoriteAction")}
-                    <kbd>C</kbd> {t(i18n, "library.keyboardClearSelection")}
+                    <kbd>C</kbd> {selection.size > 0 ? t(i18n, "library.keyboardClearSelection") : t(i18n, "citation.copyGBT")}
                     <kbd>P</kbd><kbd>1-5</kbd> {t(i18n, "library.keyboardPriority")}
                     <kbd>M</kbd> {t(i18n, "library.keyboardRating")}
                     <kbd>Y</kbd> {t(i18n, "action.copyBlockRef")}
