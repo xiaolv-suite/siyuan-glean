@@ -8,6 +8,15 @@ Lv Glean organizes clippings and articles already in SiYuan. It does not crawl t
 
 [中文说明](README.md) · [Latest Release](https://github.com/ai68298100/siyuan-glean/releases/latest) · [Capability matrix](docs/CAPABILITY-MATRIX.md) · [Feedback](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.52 update (2026-10-27)
+
+This release implements multi-dimensional weighted stress-free roaming read (blind-box pick) and 1-click academic citation export (BibTeX / GB/T 7714).
+
+**New features & improvements:**
+
+- **Weighted Stress-Free Roaming Read**: Workbench and reader toolbar add a "🎲 Roam" action (supported via `Alt+R`), blending importance, rating, slice progress, and random exploration for zero-pressure reading.
+- **1-Click Academic Citation Export**: Companion bar and preview area add 1-click citation copying to format articles as standard GB/T 7714-2015 or BibTeX `@article` entries.
+
 ## v1.3.51 update (2026-10-27)
 
 This release implements Task Horizon GTD action extraction and native SiYuan mindmap generation from outlines.

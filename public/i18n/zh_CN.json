@@ -1467,5 +1467,15 @@
   "reader.extractedToTask": "已提炼为待办行动项并存入剪贴板！",
   "reader.createMindmap": "思源脑图",
   "reader.createMindmapHint": "按大纲生成思源原生思维导图文档（挂载 custom-sy-list-mindmap）",
-  "reader.mindmapCreated": "思维导图文档创建成功并已在新标签打开！"
+  "reader.mindmapCreated": "思维导图文档创建成功并已在新标签打开！",
+  "roaming.button": "漫游",
+  "roaming.buttonHint": "多维加权无压漫游阅读（盲盒选文）",
+  "roaming.nextArticle": "漫游换篇",
+  "roaming.nextArticleHint": "根据重要度与兴趣度算法推荐下一篇漫游文章",
+  "roaming.picked": "🎲 漫游推荐：《${title}》（${reason}）",
+  "roaming.emptyPool": "未读池已清空或暂无可漫游文章",
+  "citation.copyGBT": "复制 GB/T 引用",
+  "citation.copyBibTeX": "复制 BibTeX",
+  "citation.gbtCopied": "已复制 GB/T 7714 引用格式到剪贴板！",
+  "citation.bibtexCopied": "已复制 BibTeX 引用条目到剪贴板！"
 }

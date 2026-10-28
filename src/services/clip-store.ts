@@ -132,6 +132,7 @@ export interface ReadingClipContext {
     readPoint?: string;
     tags?: string[];
     aiTags?: string[];
+    time?: string;
 }
 
 /** 编辑器上下文只读当前根块属性；旧索引不能冒充正在阅读的状态。 */
@@ -158,6 +159,7 @@ export async function readClipContext(docId: string): Promise<ReadingClipContext
         readPoint: attrs.readPoint,
         tags: parseUserTags(ial.tags),
         aiTags: attrs.aiTags ?? [],
+        time: attrs.time,
     };
 }
 

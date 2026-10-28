@@ -1467,5 +1467,15 @@
   "reader.extractedToTask": "Extracted as action task and copied to clipboard!",
   "reader.createMindmap": "SiYuan Mindmap",
   "reader.createMindmapHint": "Generate native SiYuan mindmap doc from outline",
-  "reader.mindmapCreated": "Mindmap document created and opened in new tab!"
+  "reader.mindmapCreated": "Mindmap document created and opened in new tab!",
+  "roaming.button": "Roam",
+  "roaming.buttonHint": "Multi-dimensional weighted stress-free roaming read",
+  "roaming.nextArticle": "Roam Next",
+  "roaming.nextArticleHint": "Roam to next recommended article by score",
+  "roaming.picked": "🎲 Roaming pick: \"${title}\" (${reason})",
+  "roaming.emptyPool": "No available articles to roam",
+  "citation.copyGBT": "Copy GB/T 7714",
+  "citation.copyBibTeX": "Copy BibTeX",
+  "citation.gbtCopied": "GB/T 7714 citation copied to clipboard!",
+  "citation.bibtexCopied": "BibTeX entry copied to clipboard!"
 }

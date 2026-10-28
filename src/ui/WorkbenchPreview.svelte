@@ -15,6 +15,7 @@
     import ProtyleHost from "./ProtyleHost.svelte";
     import AuthorEditor from "./AuthorEditor.svelte";
     import { exportArticleMarkdown } from "../services/library-export-service";
+import { formatGBT7714 } from "../domain/citation";
     import { isWechatUrl, displayWechatAuthor } from "../domain/wechat";
     import { openWeReadGuideDialog } from "./weread-guide-dialog";
     import { scanAndFillWechatAuthor } from "../services/wechat-service";
@@ -230,6 +231,23 @@
         }
     }
 
+    async function copyCitation(): Promise<void> {
+        const item = {
+            id: entry.id,
+            title: entry.title || t(i18n, "panel.untitled"),
+            author: attrs?.author || entry.author,
+            site: attrs?.site || entry.site,
+            url: sourceUrl,
+            time: attrs?.time || (entry.kind === "clip" ? entry.time : ""),
+        };
+        try {
+            await navigator.clipboard.writeText(formatGBT7714(item));
+            showMessage(t(i18n, "citation.gbtCopied"), 2500);
+        } catch {
+            showMessage(t(i18n, "msg.actionFailed"), 2500);
+        }
+    }
+
     function handleOpenWeread(event?: MouseEvent): void {
         event?.preventDefault();
         openWeReadGuideDialog(facade, {
@@ -267,6 +285,7 @@
     <div class="glean-preview__header">
         <h2 id={titleId} title={entry.title}>{entry.title || t(i18n, "panel.untitled")}</h2>
         <div class="glean-preview__header-actions" role="group" aria-label={t(i18n, "preview.title")}>
+            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation()}>{t(i18n, "citation.copyGBT")}</button>
             <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyBlockRef()}>{t(i18n, "action.copyBlockRef")}</button>
             <button type="button" class="glean-btn glean-btn--ghost" onclick={() => facade.openReadingDocument(entry.id)}>{t(i18n, "preview.openDocument")}</button>
             {#if entry.kind === "clip"}<button type="button" class="glean-btn glean-btn--ghost" disabled={busy || exporting} onclick={() => void downloadMarkdown()}>{exporting ? t(i18n, "settings.exporting") : t(i18n, "export.markdown")}</button>{/if}

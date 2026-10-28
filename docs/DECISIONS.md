@@ -2412,3 +2412,13 @@ T-3416 承接方向五（有依据的阅读 AI）与同类产品对标（Readwis
    - 划词悬浮条增设「✅ 提炼待办」动作（支持 `Alt+T`），自动生成带原文块引用反链的 GTD 待办（`- [ ] 落地行动：... 来源：(( blockId '标题' )) {: custom-status="todo" custom-priority="medium" }`），存入剪贴板并派发标准 `horizon:action-created` 事件，打通从长文研读到行动项闭环；
 2. 长文大纲思源原生折叠脑图化挂载（`doc-slicing.ts` & `doc-slicing-service.ts`）：
    - 新增 `buildOutlineMindmapMarkdown` 与 `createOutlineMindmapDocument`；伴生栏大纲树头部增设「🧠 思源脑图」一键建稿，挂载 `{: custom-sy-list-mindmap="true" }` 原生脑图属性并在新标签页秒级打开。
+
+## D-0365（2026-10-27）多维加权无压漫游阅读与学术文献引用一键导出（T-3486）
+
+借鉴社区顶尖插件实践，释放长文阅读与文献引用生产力：
+1. 多维动态加权无压漫游阅读（`domain/roaming.ts`、`DockPanel.svelte` & `ReaderTab.svelte`）：
+   - 引入四维综合加权轮盘赌算法：`重要度(40%) + 兴趣评分(30%) + 未读切片/适度短篇(20%) + 随机扰动探索(10%)`；
+   - 工作台视图栏增设「🎲 漫游」按钮，阅读器顶栏增设「🎲 漫游换篇」按钮（支持 `Alt+R`），彻底消除囤积长文的选文负担；
+2. 学术文献引用标准著录（`domain/citation.ts`、`ReaderTab.svelte` & `WorkbenchPreview.svelte`）：
+   - 新增 `formatBibTeX`、`formatGBT7714` 与 `formatAPA` 纯函数；
+   - 伴生栏操作区与预览区增设复制引用按钮，秒级格式化为标准中国国标 GB/T 7714 或 BibTeX 著录条目，极大简化学术写作。

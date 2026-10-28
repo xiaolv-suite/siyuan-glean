@@ -37,6 +37,7 @@ import { ageDays, todayStamp } from "../domain/resurface.ts";
 import { recordReadingDone } from "../services/checkin-bridge";
 import { hasSourceAction, openTargetForCarrier, resolveCarrier, sourceUrlForCarrier } from "../domain/carrier";
 import { isWechatUrl, displayWechatAuthor, isWechatSeriesTag } from "../domain/wechat";
+import { pickRoamingArticle } from "../domain/roaming";
 import { batchRecognizeWechatAuthors, scanAndFillWechatAuthor, purifyWechatArticle } from "../services/wechat-service";
 import ClipStatusActions from "./ClipStatusActions.svelte";
 import ClipRankControls from "./ClipRankControls.svelte";
@@ -766,6 +767,17 @@ function selectTag(value: string): void {
 function selectAiTag(value: string): void {
     markPrefsInteraction();
     selectedAiTag = selectedAiTag === value ? "" : value;
+}
+
+function triggerRoamingRead(): void {
+    const candidates = Object.values(index.clips);
+    const pick = pickRoamingArticle(candidates);
+    if (pick) {
+        showMessage(t(i18n, "roaming.picked", { title: pick.item.title || t(i18n, "panel.untitled"), reason: pick.reason }), 2500);
+        facade.openReadingDocument(pick.item.id);
+    } else {
+        showMessage(t(i18n, "roaming.emptyPool"), 2500);
+    }
 }
 
 function filterChipText(key: FilterChipKey, value: string): string {
@@ -2581,6 +2593,12 @@ function metaLine(entry: Row): string {
                         onclick={() => { markPrefsInteraction(); view = item.key; }}
                     >{t(i18n, item.labelKey)}</button>
                 {/each}
+                <button
+                    type="button"
+                    class="glean-views__btn glean-views__btn--roam"
+                    title={t(i18n, "roaming.buttonHint")}
+                    onclick={triggerRoamingRead}
+                >🎲 {t(i18n, "roaming.button")}</button>
             </div>
         {/if}
 

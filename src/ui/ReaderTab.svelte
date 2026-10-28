@@ -59,7 +59,9 @@ import { aiFailureKey } from "../libs/ai-feedback";
     import { formatTaskHorizonItem, type IncrementalExtractPayload, type TaskHorizonActionPayload } from "../libs/ecosystem-bridge-kit";
     import { createReadPointObserver, scrollAndPulseReadPoint, type ReadPointObserverHandle } from "../libs/read-point-observer";
     import { saveReadPoint } from "../services/clip-store";
-    import { formatHighlightShare, formatHighlightTime } from "../domain/highlights";
+    import { pickRoamingArticle } from "../domain/roaming";
+import { formatBibTeX, formatGBT7714 } from "../domain/citation";
+import { formatHighlightShare, formatHighlightTime } from "../domain/highlights";
     import { estimateReadingPercentage } from "../domain/reading-position";
     import { findMatchingOutlineItemId, type OutlineItem } from "../domain/outline";
     import { findActiveOutlineItemInHost } from "../libs/reading-position";
@@ -829,6 +831,43 @@ import { aiFailureKey } from "../libs/ai-feedback";
         }
     }
 
+    async function copyCitation(format: "gbt" | "bibtex" = "gbt"): Promise<void> {
+        if (!context || !docId) return;
+        const item = {
+            id: context.id,
+            title: context.title || t(i18n, "panel.untitled"),
+            author: context.author,
+            site: context.site,
+            url: context.url,
+            time: context.time,
+        };
+        const text = format === "bibtex" ? formatBibTeX(item) : formatGBT7714(item);
+        try {
+            await navigator.clipboard.writeText(text);
+            showMessage(t(i18n, format === "bibtex" ? "citation.bibtexCopied" : "citation.gbtCopied"), 2500);
+        } catch {
+            showMessage(t(i18n, "msg.actionFailed"), 2500);
+        }
+    }
+
+    async function roamNext(): Promise<void> {
+        if (!context || !docId) return;
+        try {
+            const index = await loadIndex(facade.pluginInstance);
+            const candidates = Object.values(index.clips);
+            const pick = pickRoamingArticle(candidates, [docId]);
+            if (pick) {
+                showMessage(t(i18n, "roaming.picked", { title: pick.item.title || t(i18n, "panel.untitled"), reason: pick.reason }), 2500);
+                void facade.openReadingDocument(pick.item.id);
+            } else {
+                showMessage(t(i18n, "roaming.emptyPool"), 2500);
+            }
+        } catch (error) {
+            console.warn("[glean] 漫游换篇失败:", error);
+            showMessage(t(i18n, "msg.actionFailed"), 2500);
+        }
+    }
+
     async function copyArticleBlockRef(): Promise<void> {
         if (!docId) return;
         const title = context?.title || t(i18n, "panel.untitled");
@@ -895,6 +934,12 @@ import { aiFailureKey } from "../libs/ai-feedback";
                 void extractToHorizonTask();
                 return;
             }
+        }
+        if (event.altKey && (event.key === "r" || event.key === "R")) {
+            event.preventDefault();
+            event.stopPropagation();
+            void roamNext();
+            return;
         }
         const root = readerRoot;
         const target = event.target instanceof Element ? event.target : null;
@@ -1928,6 +1973,12 @@ import { aiFailureKey } from "../libs/ai-feedback";
                     title={t(i18n, "reader.doneNextHint")}
                     onclick={() => void doneAndNext()}
                 >✓→ {t(i18n, "reader.doneNext")}</button>
+                <button
+                    type="button"
+                    class="glean-btn glean-btn--ghost glean-reader__toolbar-roam"
+                    title={t(i18n, "roaming.nextArticleHint")}
+                    onclick={() => void roamNext()}
+                >🎲 {t(i18n, "roaming.nextArticle")}</button>
             {/if}
             <div class="glean-reader__toolbar-secondary" role="group" aria-label={t(i18n, "reader.shortcuts")}>
                 <button class="glean-btn glean-btn--ghost glean-reader__toolbar-utility glean-reader__toolbar-focus" disabled={mode !== "read"} title={t(i18n, "reader.keyboardFocus")} onclick={() => readerRoot?.focus({ preventScroll: true })}>{t(i18n, "reader.keyboardFocus")}</button>
@@ -1949,6 +2000,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
                     <div><dt><kbd>x</kbd></dt><dd>{t(i18n, "reader.shortcutExcerpt")}</dd></div>
                     <div><dt><kbd>Alt+E</kbd></dt><dd>{t(i18n, "reader.extractToCards")}</dd></div>
                     <div><dt><kbd>Alt+T</kbd></dt><dd>{t(i18n, "reader.extractToTask")}</dd></div>
+                    <div><dt><kbd>Alt+R</kbd></dt><dd>{t(i18n, "roaming.nextArticle")}</dd></div>
                     <div><dt><kbd>h</kbd></dt><dd>{t(i18n, "reader.shortcutNextHighlight")}</dd></div>
                     <div><dt><kbd>Shift+h</kbd></dt><dd>{t(i18n, "reader.shortcutPrevHighlight")}</dd></div>
                     <div><dt><kbd>Shift+F</kbd></dt><dd>{t(i18n, "reader.shortcutImmersive")}</dd></div>
@@ -2184,6 +2236,9 @@ import { aiFailureKey } from "../libs/ai-feedback";
                         </button>
                         <button type="button" class="glean-btn glean-btn--ghost glean-wechat-publisher__btn" disabled={copyingCleanBody} onclick={() => void copyCleanMarkdown()} title={t(i18n, "reader.copyCleanMarkdownHint")}>
                             📋 {copyingCleanBody ? t(i18n, "reader.copying") : t(i18n, "reader.copyCleanMarkdown")}
+                        </button>
+                        <button type="button" class="glean-btn glean-btn--ghost glean-wechat-publisher__btn" onclick={() => void copyCitation("gbt")} title={t(i18n, "citation.copyGBT")}>
+                            📜 {t(i18n, "citation.copyGBT")}
                         </button>
                         <button type="button" class="glean-btn glean-btn--ghost glean-wechat-publisher__btn" onclick={() => void copyArticleBlockRef()} title={t(i18n, "action.copyBlockRef")}>
                             🔗 {t(i18n, "action.copyBlockRef")}
