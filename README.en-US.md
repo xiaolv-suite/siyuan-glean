@@ -67,6 +67,16 @@ This release implements floating margin notes in the reader editor for same-focu
 - **Floating Margin Notes (Margin Notes)**: Highlights and user thoughts float as sticky note bubbles along the right margin; clicking a note smoothly scrolls to the source block with pulse focus.
 - **Toggle Margin Notes (Alt+M)**: The reader toolbar offers a dedicated toggle action (Alt+M) to collapse or reveal margin notes at will.
 
+## v1.3.66 update (2026-10-28)
+
+This release implements preview roaming blind-box (B key), selection block ref copy (Y key), and full preview keyboard workflow.
+
+**New features & improvements:**
+
+- **Preview Roaming Blind-Box**: Adds "🎲 Roam" action (shortcut `B`) in preview header to open blind-box drawer during quick review.
+- **Selection Block Ref Copy**: Adds "🔗 Copy Block Ref" button in excerpt toolbar to generate block references directly from preview text selections.
+- **Full Preview Keyboard Workflow**: Supports `B` (Blind-box), `Y` (Block ref), `F` (Favorite), `R` (Reader), and `O` (Source) keys for seamless hands-on-keyboard triage.
+
 ## v1.3.65 update (2026-10-28)
 
 This release implements preview toolbar favorite star toggling and dual-format academic citation export (GB/T 7714 & BibTeX).

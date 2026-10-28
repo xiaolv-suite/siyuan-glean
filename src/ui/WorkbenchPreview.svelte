@@ -7,6 +7,7 @@
     import type { ClipAttrs, ClipStatus } from "../domain/schema";
     import { normalizeUrl } from "../domain/url";
     import type { ClipIndexEntry, CandidateEntry } from "../services/index-store";
+    import { loadIndex } from "../services/index-store";
     import { readClip, writeClip } from "../services/clip-store";
     import { autoEnrich } from "../services/enrich-service";
     import { recordReadingDone } from "../services/checkin-bridge";
@@ -16,6 +17,8 @@
     import AuthorEditor from "./AuthorEditor.svelte";
     import { exportArticleMarkdown } from "../services/library-export-service";
     import { formatBibTeX, formatGBT7714 } from "../domain/citation";
+    import { pickRoamingArticle } from "../domain/roaming";
+    import { openRoamingDialog } from "./roaming-dialog";
     import { isWechatUrl, displayWechatAuthor } from "../domain/wechat";
     import { openWeReadGuideDialog } from "./weread-guide-dialog";
     import { scanAndFillWechatAuthor } from "../services/wechat-service";
@@ -297,7 +300,75 @@
             exporting = false;
         }
     }
+
+    async function triggerRoaming(): Promise<void> {
+        try {
+            const index = await loadIndex(facade.pluginInstance);
+            const candidates = Object.values(index.clips);
+            const pick = pickRoamingArticle(candidates, [entry.id]);
+            if (pick) {
+                openRoamingDialog(facade, pick, (id, readPoint) => {
+                    facade.openReadingDocument(id, readPoint);
+                });
+            } else {
+                showMessage(t(i18n, "roaming.emptyPool"), 2500);
+            }
+        } catch (error) {
+            console.warn("[glean] 预览漫游异常:", error);
+            showMessage(t(i18n, "msg.actionFailed"), 2500);
+        }
+    }
+
+    async function copySelectedBlockRef(): Promise<void> {
+        if (!excerpt?.blockId) return;
+        const snippet = excerpt.text.trim().slice(0, 30);
+        const refText = `((${excerpt.blockId} '${snippet}'))`;
+        try {
+            await navigator.clipboard.writeText(refText);
+            showMessage(t(i18n, "reader.blockRefCopied"), 2000);
+        } catch {
+            showMessage(t(i18n, "msg.actionFailed"), 2000);
+        }
+    }
+
+    function onPreviewKeyDown(event: KeyboardEvent): void {
+        const target = event.target instanceof Element ? event.target : null;
+        const textEntry = Boolean(target?.closest("input, textarea, select, [contenteditable]:not([contenteditable='false'])"));
+        if (textEntry || event.isComposing || event.ctrlKey || event.metaKey || event.altKey) return;
+        if (document.querySelector("dialog[open], .b3-menu")) return;
+
+        const lower = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+        if (lower === "b") {
+            event.preventDefault();
+            event.stopPropagation();
+            void triggerRoaming();
+        } else if (lower === "y") {
+            event.preventDefault();
+            event.stopPropagation();
+            if (excerpt?.blockId) {
+                void copySelectedBlockRef();
+            } else {
+                void copyBlockRef();
+            }
+        } else if (lower === "f") {
+            event.preventDefault();
+            event.stopPropagation();
+            void toggleFavorite();
+        } else if (lower === "r") {
+            event.preventDefault();
+            event.stopPropagation();
+            facade.openReadingDocument(entry.id);
+        } else if (lower === "o") {
+            if (normalizeUrl(sourceUrl)) {
+                event.preventDefault();
+                event.stopPropagation();
+                window.open(sourceUrl, "_blank", "noopener,noreferrer");
+            }
+        }
+    }
 </script>
+
+<svelte:window onkeydown={onPreviewKeyDown} />
 
 <section class="glean-preview" aria-labelledby={titleId} aria-describedby={metaId} aria-busy={busy}>
     <div class="glean-preview__header">
@@ -308,12 +379,13 @@
                     type="button"
                     class="glean-btn glean-btn--ghost glean-preview__fav-btn"
                     class:glean-preview__fav-btn--active={attrs.favorite}
-                    title={attrs.favorite ? t(i18n, "roaming.favoriteRemoved") : t(i18n, "roaming.favoriteAction")}
+                    title={attrs.favorite ? t(i18n, "roaming.favoriteRemoved") : t(i18n, "roaming.favoriteAction") + " (F)"}
                     onclick={() => void toggleFavorite()}
                 >
                     {attrs.favorite ? "❤️" : "🤍"}
                 </button>
             {/if}
+            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void triggerRoaming()} title={t(i18n, "roaming.buttonHint")}>🎲 {t(i18n, "roaming.button")}</button>
             <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation("gbt")} title="复制 GB/T 7714 电子文献著录">{t(i18n, "citation.copyGBT")}</button>
             <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation("bibtex")} title="复制 BibTeX @article 条目">BibTeX</button>
             <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyBlockRef()}>{t(i18n, "action.copyBlockRef")}</button>
@@ -410,6 +482,7 @@
         <div class="glean-preview__excerpt">
             <span title={excerpt.text}>{excerpt.text.slice(0, 100)}</span>
             <button type="button" class="glean-btn" disabled={busy || !confirmed || !excerpt.blockId} title={excerpt.blockId ? "" : t(i18n, "reader.excerptNoBlock")} onclick={quote}>{t(i18n, "reader.excerptQuote")}</button>
+            <button type="button" class="glean-btn glean-btn--ghost" disabled={!excerpt.blockId} onclick={() => void copySelectedBlockRef()} title="复制选中段落块引用 (Y)">{t(i18n, "action.copyBlockRef")}</button>
             <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyExcerpt()}>{t(i18n, "reader.copy")}</button>
         </div>
     {/if}
