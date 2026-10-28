@@ -2902,3 +2902,18 @@ T-3416 承接方向五（有依据的阅读 AI）与同类产品对标（Readwis
    - 增设 `formatMLA` 并统一 `formatCitation` 调度，全插件读库、预览、伴读、拾遗、摘录与统计全面对齐 GB/T 7714、BibTeX、APA 与 MLA 四大标准；
 3. 严格本地交付保障：
    - 严格在本地完成构建和测试，不执行任何外部推送与远程 API 调用。
+
+## D-0408（2026-10-29）全表面全局快速检索流：/ 键全局聚焦检索输入框、Ctrl+F/Cmd+F 快速唤起与按键提示闭环（T-3530）
+
+彻底解决读库工作台与摘录墙快速搜索需要手动鼠标点击检索栏的效率痛点：
+1. 域层快捷键仲裁扩展（`src/domain/library-keyboard.ts`）：
+   - `LibraryKeyboardAction` 新增 `{ type: "focusSearch" }` 动作，纳入 `REPEAT_SENSITIVE` 长按防抖保护集合；
+   - 单敲 `/` 键全局调度为 `focusSearch`，严格尊重 `textEntry`、`nativeAction` 与浮层状态，在输入框或弹窗内输入斜杠不误拦截；
+2. 读库工作台全局搜索闭环（`src/ui/DockPanel.svelte`）：
+   - 监听 `/` 键以及 `Ctrl+F` / `Cmd+F` 组合键，若高级检索栏未展开则自动展开，并在下一个 tick 自动聚焦并全选搜索框文本；
+   - 底部键盘指引条（`glean-kbdhint`）增设 `<kbd>/</kbd> 检索` 提示；
+3. 摘录墙全局搜索闭环（`src/ui/HighlightView.svelte`）：
+   - 监听 `/` 键以及 `Ctrl+F` / `Cmd+F` 组合键，秒级聚焦摘录搜索输入框并全选文本；
+   - 底部键盘指引条同步增设 `<kbd>/</kbd> 检索` 提示；
+4. 严格本地交付保障：
+   - 严格在本地完成构建和测试，不执行任何外部推送与远程 API 调用。

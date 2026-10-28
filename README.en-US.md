@@ -67,6 +67,15 @@ This release implements floating margin notes in the reader editor for same-focu
 - **Floating Margin Notes (Margin Notes)**: Highlights and user thoughts float as sticky note bubbles along the right margin; clicking a note smoothly scrolls to the source block with pulse focus.
 - **Toggle Margin Notes (Alt+M)**: The reader toolbar offers a dedicated toggle action (Alt+M) to collapse or reveal margin notes at will.
 
+## v1.3.95 update (2026-10-29)
+
+This release implements the global search flow: press `/` to focus the search input, `Ctrl+F`/`Cmd+F` quick activation, and updated shortcut hints.
+
+**New features & improvements:**
+
+- **Global Search Shortcut Arbitration (T-3530)**: Domain layer introduces `focusSearch` action. Press `/` anywhere in library or highlight view to focus and select search input, while safely passing through native slash typing in inputs or overlays.
+- **Dock Workbench and Highlight Wall Search Integration (T-3530)**: Supports `/` and `Ctrl+F` / `Cmd+F` to expand filter bar and focus search input; updates bottom `glean-kbdhint` with `<kbd>/</kbd> Search`.
+
 ## v1.3.94 update (2026-10-29)
 
 This release implements full keyboard workflow in WeReadGuideDialog (C/Enter/R/Esc) and quadruple academic citation support (GB/T, BibTeX, APA, MLA).

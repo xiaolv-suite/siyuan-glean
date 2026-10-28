@@ -167,6 +167,10 @@ test("HighlightView 行级键盘导航复用读库仲裁层（T-3399 / T-3509）
     assert.match(view, /triggerRoaming/);
     assert.match(view, /glean-highlights__roam/);
     assert.match(view, /<kbd>B<\/kbd>/);
+    assert.match(view, /<kbd>\/<\/kbd>/);
+    assert.match(view, /action\.type === "focusSearch"/);
+    assert.match(view, /searchInputEl\?\.focus\(\)/);
+    assert.match(view, /event\.key === "f" \|\| event\.key === "F"/);
     assert.match(view, /<kbd>C<\/kbd>/);
 });
 

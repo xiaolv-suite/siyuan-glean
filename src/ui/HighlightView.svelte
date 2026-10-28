@@ -46,6 +46,7 @@ let relatedReason = $state<RelatedReason | null>("disabled");
 let docTitle = $state("");
 let cardingKey = $state("");
 let search = $state("");
+let searchInputEl = $state<HTMLInputElement | null>(null);
 let site = $state("");
 let tag = $state("");
 let aiTag = $state("");
@@ -530,6 +531,17 @@ async function createDocFromArticleQuotes(group: ArticleHighlightGroup): Promise
 
 function onWindowKeyDown(event: KeyboardEvent): void {
     if (event.defaultPrevented || event.isComposing || event.keyCode === 229 || event.repeat) return;
+    if ((event.ctrlKey || event.metaKey) && (event.key === "f" || event.key === "F")) {
+        const target = event.target instanceof Element ? event.target : null;
+        const textEntry = Boolean(target?.closest("input, textarea, select, [contenteditable]:not([contenteditable='false'])"));
+        if (!textEntry) {
+            event.preventDefault();
+            event.stopPropagation();
+            searchInputEl?.focus();
+            searchInputEl?.select();
+            return;
+        }
+    }
     if (event.key === "Escape") {
         if (session && !exportBusy) {
             event.preventDefault();
@@ -566,12 +578,19 @@ function handleHighlightShortcut(event: KeyboardEvent): void {
         cursorActive: Boolean(cursorId),
         hasSelection: selected.length > 0,
     });
-    // 只接管 J/K/X/Enter/Y/C 与 B 漫游；方向键仍交给列表原生滚动。
+    // 只接管 J/K/X/Enter/Y/C/B 与 / 检索；方向键仍交给列表原生滚动。
     if (!action || action.type === "clearCursor") return;
     if (action.type === "roaming") {
         event.preventDefault();
         event.stopPropagation();
         void triggerRoaming();
+        return;
+    }
+    if (action.type === "focusSearch") {
+        event.preventDefault();
+        event.stopPropagation();
+        searchInputEl?.focus();
+        searchInputEl?.select();
         return;
     }
     if (action.type === "clearSelection") {
@@ -661,7 +680,7 @@ function focusHighlightRow(id: string): void {
         </div>
     </div>
     <div class="glean-highlights__filters" role="search" aria-label={t(i18n, "action.search")}>
-        <input type="search" bind:value={search} oninput={() => page = 1} onkeydown={(event) => { if (event.key === "Escape" && search) { event.stopPropagation(); search = ""; page = 1; } }} placeholder={t(i18n, "highlight.searchPlaceholder")} aria-label={t(i18n, "action.search")} />
+        <input bind:this={searchInputEl} type="search" bind:value={search} oninput={() => page = 1} onkeydown={(event) => { if (event.key === "Escape" && search) { event.stopPropagation(); search = ""; page = 1; } }} placeholder={t(i18n, "highlight.searchPlaceholder")} aria-label={t(i18n, "action.search")} />
         <label>{t(i18n, "library.filterSite")}<select bind:value={site} onchange={() => page = 1}><option value="">{t(i18n, "action.filterAll")}</option>{#each facets.sites as value}<option value={value}>{value}</option>{/each}</select></label>
         <label>{t(i18n, "library.filterTag")}<select bind:value={tag} onchange={() => page = 1}><option value="">{t(i18n, "action.filterAll")}</option>{#each facets.tags as value}<option value={value}>{displayTagAlias(tagAliases, value)}</option>{/each}</select></label>
         <label>{t(i18n, "library.filterAiTag")}<select bind:value={aiTag} onchange={() => page = 1}><option value="">{t(i18n, "action.filterAll")}</option>{#each facets.aiTags as value}<option value={value}>{value}</option>{/each}</select></label>
@@ -890,6 +909,7 @@ function focusHighlightRow(id: string): void {
                 <kbd>C</kbd> {selected.length > 0 ? t(i18n, "library.keyboardClearSelection") : t(i18n, "highlight.copyShare")}
                 <kbd>Shift+C</kbd> BibTeX
                 <kbd>B</kbd> {t(i18n, "roaming.button")}
+                <kbd>/</kbd> {t(i18n, "action.search")}
                 <kbd>Esc</kbd> {t(i18n, "library.keyboardExit")}
             </span>
             <span class="glean-sr-only" role="status" aria-live="polite">

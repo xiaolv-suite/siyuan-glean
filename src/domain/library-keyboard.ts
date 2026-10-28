@@ -29,7 +29,8 @@ export type LibraryKeyboardAction =
     | { type: "roaming" }
     | { type: "toggleFavorite" }
     | { type: "copyCitation" }
-    | { type: "copyBibTeX" };
+    | { type: "copyBibTeX" }
+    | { type: "focusSearch" };
 
 export interface LibraryKeyboardEventLike {
     key: string;
@@ -60,7 +61,7 @@ const REPEAT_SENSITIVE = new Set<LibraryKeyboardAction["type"]>([
     "activate", "openDocument", "startReading", "later", "archive", "toggleSelect",
     "selectDisplayed", "keepFiltered", "clearSelection",
     "cyclePriority", "setPriority", "cycleRating", "togglePin", "copyBlockRef", "roaming",
-    "toggleFavorite", "copyCitation", "copyBibTeX",
+    "toggleFavorite", "copyCitation", "copyBibTeX", "focusSearch",
 ]);
 
 /**
@@ -107,6 +108,8 @@ export function resolveLibraryShortcut(
     if (lower === "c" && context.hasSelection) return repeatOrNull(event, { type: "clearSelection" });
     // 漫游盲盒：B 键全局快速呼出，无需前置选中光标
     if (lower === "b") return repeatOrNull(event, { type: "roaming" });
+    // 检索：/ 键全局聚焦检索输入框，无需前置选中光标
+    if (key === "/") return repeatOrNull(event, { type: "focusSearch" });
     if (!cursorActive) return null;
 
     if (lower === "s") return repeatOrNull(event, { type: "selectDisplayed" });

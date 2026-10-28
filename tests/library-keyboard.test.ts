@@ -153,6 +153,19 @@ test("漫游盲盒键位：B/b 无需激活光标即可全局呼出，长按与�
     assert.equal(resolveLibraryShortcut(key("b", { repeat: true }), active), null);
 });
 
+test("/ 键全局呼出与聚焦搜索框，文本输入与长按防抖保护（T-3530）", () => {
+    assert.deepEqual(resolveLibraryShortcut(key("/"), {}), { type: "focusSearch" });
+    assert.deepEqual(resolveLibraryShortcut(key("/"), active), { type: "focusSearch" });
+
+    // 输入框与浮层中让出原生按键，不拦截正常打斜杠
+    assert.equal(resolveLibraryShortcut(key("/"), { textEntry: true }), null);
+    assert.equal(resolveLibraryShortcut(key("/"), { overlay: true }), null);
+
+    // 长按防抖保护
+    assert.equal(resolveLibraryShortcut(key("/", { repeat: true }), {}), null);
+    assert.equal(resolveLibraryShortcut(key("/", { repeat: true }), active), null);
+});
+
 test("F 键语义仲裁：有勾选集合时优先 keepFiltered，无勾选且光标激活时作为 toggleFavorite 切换星标收藏（T-3505）", () => {
     assert.deepEqual(resolveLibraryShortcut(key("f"), { hasSelection: true }), { type: "keepFiltered" });
     assert.deepEqual(resolveLibraryShortcut(key("f"), { cursorActive: true, hasSelection: false }), { type: "toggleFavorite" });

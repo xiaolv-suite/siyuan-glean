@@ -1,5 +1,16 @@
 # 更新日志（CHANGELOG）
 
+## v1.3.95（2026-10-29）
+
+### 全表面全局快速检索流：/ 键全局聚焦检索输入框、Ctrl+F/Cmd+F 快速唤起与按键提示闭环
+
+- **全局按键仲裁扩展（T-3530）**：
+  - `src/domain/library-keyboard.ts` 新增 `{ type: "focusSearch" }` 动作并纳入 `REPEAT_SENSITIVE` 长按防抖保护集合，单敲 `/` 键全局调度为 `focusSearch`；在原生输入框或浮层内打斜杠严格放行，不发生按键侵入；
+- **读库工作台与摘录墙快速聚焦与按键提示（T-3530）**：
+  - `src/ui/DockPanel.svelte` 与 `src/ui/HighlightView.svelte` 接入 `/` 键与 `Ctrl+F` / `Cmd+F` 快捷键，自动展开检索栏并秒级聚焦选中文本；底部键盘指引条（`glean-kbdhint`）同步增设 `<kbd>/</kbd> 检索` 提示；
+- **本地纯净交付保障**：
+  - 严格保持本地更新构建，不执行任何外部推送，待作者账号解封通知后统一处理。
+
 ## v1.3.94（2026-10-29）
 
 ### 微信读书向导弹窗全键盘工作流（C / Enter / R / Esc）与四大国际学术引用（GB/T、BibTeX、APA、MLA）大圆满

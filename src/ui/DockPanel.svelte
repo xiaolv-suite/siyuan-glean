@@ -2412,6 +2412,14 @@ async function runKeyboardAction(action: LibraryKeyboardAction): Promise<void> {
         triggerRoamingRead();
         return;
     }
+    if (action.type === "focusSearch") {
+        if (!searchOpen) searchOpen = true;
+        void tick().then(() => {
+            searchInput?.focus();
+            searchInput?.select();
+        });
+        return;
+    }
     const entry = keyboardEntry;
     if (!entry) return;
     if (action.type === "copyBlockRef") {
@@ -2492,6 +2500,16 @@ $effect(() => {
             event.stopPropagation();
             markPrefsInteraction();
             selectedFavoriteOnly = !selectedFavoriteOnly;
+            return;
+        }
+        if ((event.ctrlKey || event.metaKey) && (event.key === "f" || event.key === "F")) {
+            event.preventDefault();
+            event.stopPropagation();
+            if (!searchOpen) searchOpen = true;
+            void tick().then(() => {
+                searchInput?.focus();
+                searchInput?.select();
+            });
             return;
         }
         const action = resolveLibraryShortcut(event, keyboardContext(event));
@@ -2978,6 +2996,7 @@ function metaLine(entry: Row): string {
                     <kbd>M</kbd> {t(i18n, "library.keyboardRating")}
                     <kbd>Y</kbd> {t(i18n, "action.copyBlockRef")}
                     <kbd>B</kbd> {t(i18n, "roaming.button")}
+                    <kbd>/</kbd> {t(i18n, "action.search")}
                     <kbd>Esc</kbd> {t(i18n, "library.keyboardExit")}
                 </span>
                 <span class="glean-sr-only" role="status" aria-live="polite">

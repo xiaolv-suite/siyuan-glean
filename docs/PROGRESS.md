@@ -1,5 +1,12 @@
 # 进度（PROGRESS）
 
+## T-3530 全表面全局快速检索流：/ 键全局聚焦检索输入框、Ctrl+F/Cmd+F 快速唤起与按键提示闭环（2026-10-29）
+
+- [x] 全局按键仲裁扩展：`src/domain/library-keyboard.ts` 新增 `{ type: "focusSearch" }` 动作并纳入 `REPEAT_SENSITIVE` 长按防抖保护集合，单敲 `/` 键全局调度为 `focusSearch`；在原生输入框或浮层内打斜杠严格放行，不发生按键侵入；
+- [x] 读库工作台与摘录墙快速聚焦与按键提示：`src/ui/DockPanel.svelte` 与 `src/ui/HighlightView.svelte` 接入 `/` 键与 `Ctrl+F` / `Cmd+F` 快捷键，自动展开检索栏并秒级聚焦选中文本；底部键盘指引条（`glean-kbdhint`）同步增设 `<kbd>/</kbd> 检索` 提示；
+- [x] 遵照指令本地闭环交付：本地完成 v1.3.95 打包与构建，本轮严格不推送到 GitHub，不调用任何远程接口，等用户通知解封后再行统一推送与发布；
+- [x] 门禁全通：全套单测（1732/1732）、`pnpm check` 0 错误 0 警告，发布门禁与性能基线通过。
+
 ## T-3529 微信读书向导弹窗全键盘工作流（C / Enter / R / Esc）与四大国际学术引用（GB/T、BibTeX、APA、MLA）大圆满（2026-10-29）
 
 - [x] 微信读书向导弹窗全键盘工作流：`src/ui/WeReadGuideDialog.svelte` 键盘监听接入 `C` 复制短链、`Enter` 打开书架、`R` 本地阅读与 `Esc` 退出，底部增设键盘指引；
