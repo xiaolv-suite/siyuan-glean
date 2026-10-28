@@ -8,6 +8,14 @@ Lv Glean organizes clippings and articles already in SiYuan. It does not crawl t
 
 [中文说明](README.md) · [Latest Release](https://github.com/ai68298100/siyuan-glean/releases/latest) · [Capability matrix](docs/CAPABILITY-MATRIX.md) · [Feedback](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.58 update (2026-10-28)
+
+This release implements reading stats SCSS modularization and further cleans up the main stylesheet.
+
+**New features & improvements:**
+
+- **Stats SCSS Modularization**: Extracted `stats.scss`, stripping another 550+ lines from the core stylesheet for clean architecture.
+
 ## v1.3.57 update (2026-10-28)
 
 This release implements highlights SCSS modularization and B-key roaming blind-box access in today's gleaning.

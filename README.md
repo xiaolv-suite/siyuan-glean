@@ -8,6 +8,14 @@
 
 [English](README.en-US.md) · [下载最新版](https://github.com/ai68298100/siyuan-glean/releases/latest) · [能力矩阵](docs/CAPABILITY-MATRIX.md) · [反馈与问题](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.58 更新（2026-10-28）
+
+本次版本实现 SCSS 统计回顾模块独立解耦与单体样式进一步瘦身。
+
+**新增与体验增强：**
+
+- **统计回顾样式独立解耦**：拆分 `stats.scss`，主单体样式再减 550 余行，样式架构分层更清晰。
+
 ## v1.3.57 更新（2026-10-28）
 
 本次版本实现 SCSS 摘录墙独立解耦与今日拾遗 B 键漫游盲盒流。
