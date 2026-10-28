@@ -67,6 +67,15 @@ This release implements floating margin notes in the reader editor for same-focu
 - **Floating Margin Notes (Margin Notes)**: Highlights and user thoughts float as sticky note bubbles along the right margin; clicking a note smoothly scrolls to the source block with pulse focus.
 - **Toggle Margin Notes (Alt+M)**: The reader toolbar offers a dedicated toggle action (Alt+M) to collapse or reveal margin notes at will.
 
+## v1.3.65 update (2026-10-28)
+
+This release implements preview toolbar favorite star toggling and dual-format academic citation export (GB/T 7714 & BibTeX).
+
+**New features & improvements:**
+
+- **Preview Toolbar Favorite Star Toggle**: Workbench preview header adds dedicated "❤️ Favorite" button to star/unstar articles during quick triage.
+- **Dual-Format Academic Citation**: Adds standalone BibTeX citation button alongside GB/T 7714 for seamless academic workflows.
+
 ## v1.3.64 update (2026-10-28)
 
 This release implements reader toolbar favorite star toggle (Alt+F), Alt+C academic citation copy, and context favorite persistence.

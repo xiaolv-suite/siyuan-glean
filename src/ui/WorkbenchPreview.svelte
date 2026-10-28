@@ -7,7 +7,7 @@
     import type { ClipAttrs, ClipStatus } from "../domain/schema";
     import { normalizeUrl } from "../domain/url";
     import type { ClipIndexEntry, CandidateEntry } from "../services/index-store";
-    import { readClip } from "../services/clip-store";
+    import { readClip, writeClip } from "../services/clip-store";
     import { autoEnrich } from "../services/enrich-service";
     import { recordReadingDone } from "../services/checkin-bridge";
     import { excerptFromSelection, selectionBelongsToHost, type ExcerptSelection } from "../services/excerpt-service";
@@ -15,7 +15,7 @@
     import ProtyleHost from "./ProtyleHost.svelte";
     import AuthorEditor from "./AuthorEditor.svelte";
     import { exportArticleMarkdown } from "../services/library-export-service";
-import { formatGBT7714 } from "../domain/citation";
+    import { formatBibTeX, formatGBT7714 } from "../domain/citation";
     import { isWechatUrl, displayWechatAuthor } from "../domain/wechat";
     import { openWeReadGuideDialog } from "./weread-guide-dialog";
     import { scanAndFillWechatAuthor } from "../services/wechat-service";
@@ -231,7 +231,7 @@ import { formatGBT7714 } from "../domain/citation";
         }
     }
 
-    async function copyCitation(): Promise<void> {
+    async function copyCitation(format: "gbt" | "bibtex" = "gbt"): Promise<void> {
         const item = {
             id: entry.id,
             title: entry.title || t(i18n, "panel.untitled"),
@@ -240,10 +240,28 @@ import { formatGBT7714 } from "../domain/citation";
             url: sourceUrl,
             time: attrs?.time || (entry.kind === "clip" ? entry.time : ""),
         };
+        const text = format === "bibtex" ? formatBibTeX(item) : formatGBT7714(item);
         try {
-            await navigator.clipboard.writeText(formatGBT7714(item));
-            showMessage(t(i18n, "citation.gbtCopied"), 2500);
+            await navigator.clipboard.writeText(text);
+            showMessage(t(i18n, format === "bibtex" ? "citation.bibtexCopied" : "citation.gbtCopied"), 2500);
         } catch {
+            showMessage(t(i18n, "msg.actionFailed"), 2500);
+        }
+    }
+
+    async function toggleFavorite(): Promise<void> {
+        if (busy || !attrs || entry.kind !== "clip") return;
+        const currentFav = Boolean(attrs.favorite);
+        const nextFav = !currentFav;
+        attrs = { ...attrs, favorite: nextFav };
+        try {
+            await writeClip(facade.pluginInstance, entry.id, { favorite: nextFav }, { force: true });
+            showMessage(t(i18n, nextFav ? "roaming.favoriteAdded" : "roaming.favoriteRemoved"), 2000);
+            facade.notifyDataChanged();
+            await onRefresh();
+        } catch (error) {
+            attrs = { ...attrs, favorite: currentFav };
+            console.warn("[glean] 预览收藏切换失败:", error);
             showMessage(t(i18n, "msg.actionFailed"), 2500);
         }
     }
@@ -285,7 +303,19 @@ import { formatGBT7714 } from "../domain/citation";
     <div class="glean-preview__header">
         <h2 id={titleId} title={entry.title}>{entry.title || t(i18n, "panel.untitled")}</h2>
         <div class="glean-preview__header-actions" role="group" aria-label={t(i18n, "preview.title")}>
-            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation()}>{t(i18n, "citation.copyGBT")}</button>
+            {#if entry.kind === "clip" && attrs?.status}
+                <button
+                    type="button"
+                    class="glean-btn glean-btn--ghost glean-preview__fav-btn"
+                    class:glean-preview__fav-btn--active={attrs.favorite}
+                    title={attrs.favorite ? t(i18n, "roaming.favoriteRemoved") : t(i18n, "roaming.favoriteAction")}
+                    onclick={() => void toggleFavorite()}
+                >
+                    {attrs.favorite ? "❤️" : "🤍"}
+                </button>
+            {/if}
+            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation("gbt")} title="复制 GB/T 7714 电子文献著录">{t(i18n, "citation.copyGBT")}</button>
+            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation("bibtex")} title="复制 BibTeX @article 条目">BibTeX</button>
             <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyBlockRef()}>{t(i18n, "action.copyBlockRef")}</button>
             <button type="button" class="glean-btn glean-btn--ghost" onclick={() => facade.openReadingDocument(entry.id)}>{t(i18n, "preview.openDocument")}</button>
             {#if entry.kind === "clip"}<button type="button" class="glean-btn glean-btn--ghost" disabled={busy || exporting} onclick={() => void downloadMarkdown()}>{exporting ? t(i18n, "settings.exporting") : t(i18n, "export.markdown")}</button>{/if}

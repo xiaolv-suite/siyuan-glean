@@ -366,3 +366,12 @@ test("WorkbenchPreview 候选补来源支持 Enter 保存与 Escape 退出（T-3
     assert.match(preview, /else if \(event\.key === "Escape"\) \{ event\.preventDefault\(\); event\.stopPropagation\(\); editingUrl = false; \}/);
     assert.match(preview, /placeholder=\{t\(i18n, "candidate\.urlPlaceholder"\)\}/);
 });
+
+test("WorkbenchPreview 头部操作栏红心收藏切换与 BibTeX 复制契约（T-3499）", () => {
+    const preview = readFileSync(resolve(import.meta.dirname, "../src/ui/WorkbenchPreview.svelte"), "utf8");
+    assert.match(preview, /glean-preview__fav-btn/);
+    assert.match(preview, /toggleFavorite/);
+    assert.match(preview, /formatBibTeX/);
+    assert.match(preview, /copyCitation\("bibtex"\)/);
+    assert.match(preview, /copyCitation\("gbt"\)/);
+});
