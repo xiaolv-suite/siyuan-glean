@@ -9,7 +9,7 @@
     interface Props {
         facade: GleanFacade;
         initialPick: RoamingPick;
-        onOpenArticle: (id: string) => void;
+        onOpenArticle: (id: string, readPoint?: string) => void;
         onClose?: () => void;
     }
 
@@ -69,7 +69,7 @@
 
     function startRead(): void {
         onClose?.();
-        onOpenArticle(currentPick.item.id);
+        onOpenArticle(currentPick.item.id, currentPick.item.readPoint);
     }
 </script>
 
@@ -79,7 +79,7 @@
     } else if (e.key === "ArrowLeft" && canPrev) {
         e.preventDefault();
         prevPick();
-    } else if (e.key === "ArrowRight") {
+    } else if (e.key === "ArrowRight" || e.key === " " || e.code === "Space") {
         e.preventDefault();
         void nextPick();
     } else if (e.key === "Enter") {

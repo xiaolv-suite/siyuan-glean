@@ -61,6 +61,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
     import { createReadPointObserver, scrollAndPulseReadPoint, type ReadPointObserverHandle } from "../libs/read-point-observer";
     import { saveReadPoint } from "../services/clip-store";
     import { pickRoamingArticle } from "../domain/roaming";
+    import { openRoamingDialog } from "./roaming-dialog";
 import { formatBibTeX, formatGBT7714 } from "../domain/citation";
 import { formatHighlightShare, formatHighlightTime } from "../domain/highlights";
     import { estimateReadingPercentage } from "../domain/reading-position";
@@ -859,8 +860,9 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
             const candidates = Object.values(index.clips);
             const pick = pickRoamingArticle(candidates, [docId]);
             if (pick) {
-                showMessage(t(i18n, "roaming.picked", { title: pick.item.title || t(i18n, "panel.untitled"), reason: pick.reason }), 2500);
-                void facade.openReadingDocument(pick.item.id);
+                openRoamingDialog(facade, pick, (id, readPoint) => {
+                    void facade.openReadingDocument(id, readPoint);
+                });
             } else {
                 showMessage(t(i18n, "roaming.emptyPool"), 2500);
             }
@@ -937,7 +939,7 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                 return;
             }
         }
-        if (event.altKey && (event.key === "r" || event.key === "R")) {
+        if (event.altKey && (event.key === "r" || event.key === "R" || event.key === "b" || event.key === "B")) {
             event.preventDefault();
             event.stopPropagation();
             void roamNext();
@@ -2018,7 +2020,7 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                     <div><dt><kbd>x</kbd></dt><dd>{t(i18n, "reader.shortcutExcerpt")}</dd></div>
                     <div><dt><kbd>Alt+E</kbd></dt><dd>{t(i18n, "reader.extractToCards")}</dd></div>
                     <div><dt><kbd>Alt+T</kbd></dt><dd>{t(i18n, "reader.extractToTask")}</dd></div>
-                    <div><dt><kbd>Alt+R</kbd></dt><dd>{t(i18n, "roaming.nextArticle")}</dd></div>
+                    <div><dt><kbd>Alt+R / Alt+B</kbd></dt><dd>{t(i18n, "roaming.nextArticle")}</dd></div>
                     <div><dt><kbd>Alt+M</kbd></dt><dd>{t(i18n, "reader.marginNotesToggle")}</dd></div>
                     <div><dt><kbd>h</kbd></dt><dd>{t(i18n, "reader.shortcutNextHighlight")}</dd></div>
                     <div><dt><kbd>Shift+h</kbd></dt><dd>{t(i18n, "reader.shortcutPrevHighlight")}</dd></div>

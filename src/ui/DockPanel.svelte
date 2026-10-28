@@ -774,8 +774,8 @@ function triggerRoamingRead(): void {
     const candidates = Object.values(index.clips);
     const pick = pickRoamingArticle(candidates);
     if (pick) {
-        openRoamingDialog(facade, pick, (id) => {
-            facade.openReadingDocument(id);
+        openRoamingDialog(facade, pick, (id, readPoint) => {
+            facade.openReadingDocument(id, readPoint);
         });
     } else {
         showMessage(t(i18n, "roaming.emptyPool"), 2500);

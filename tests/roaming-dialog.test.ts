@@ -11,10 +11,11 @@ test("RoamingDrawerDialog 契约守门：展示推荐理由、匹配得分、换
     assert.match(dialogSource, /roaming\.prevBlindBox/);
     assert.match(dialogSource, /prevPick\(\)/);
     assert.match(dialogSource, /pickRoamingArticle/);
-    assert.match(dialogSource, /onOpenArticle\(currentPick\.item\.id\)/);
     assert.match(dialogSource, /currentPick\.item\.summary/);
     assert.match(dialogSource, /currentPick\.item\.tags/);
     assert.match(dialogSource, /currentPick\.item\.readPoint/);
+    assert.match(dialogSource, /onOpenArticle\(currentPick\.item\.id,\s*currentPick\.item\.readPoint\)/);
+    assert.match(dialogSource, /e\.key === " " \|\| e\.code === "Space"/);
     assert.match(dialogSource, /roaming\.keyboardTips/);
 });
 
@@ -35,6 +36,15 @@ test("ResurfaceView 今日拾遗漫游盲盒入口与全部读完空态契约", 
     assert.match(resurfaceSource, /roaming\.buttonHint/);
     assert.match(resurfaceSource, /event\.key === "b" \|\| event\.key === "B"/);
     assert.match(resurfaceSource, /<kbd>B<\/kbd>/);
+});
+
+test("ReaderTab 漫游盲盒展台与 Alt+B/Alt+R 双快捷键契约", () => {
+    const readerSource = fs.readFileSync(new URL("../src/ui/ReaderTab.svelte", import.meta.url), "utf8");
+    assert.match(readerSource, /import \{ openRoamingDialog \} from "\.\/roaming-dialog"/);
+    assert.match(readerSource, /openRoamingDialog\(facade, pick/);
+    assert.match(readerSource, /event\.key === "b" \|\| event\.key === "B"/);
+    assert.match(readerSource, /event\.key === "r" \|\| event\.key === "R"/);
+    assert.match(readerSource, /<kbd>Alt\+R \/ Alt\+B<\/kbd>/);
 });
 
 test("双语 i18n 覆盖：漫游盲盒文案对齐", () => {

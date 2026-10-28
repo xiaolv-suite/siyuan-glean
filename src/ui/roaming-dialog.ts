@@ -7,7 +7,7 @@ import type { RoamingPick } from "../domain/roaming.ts";
 export function openRoamingDialog(
     facade: GleanFacade,
     pick: RoamingPick,
-    onOpenArticle: (id: string) => void,
+    onOpenArticle: (id: string, readPoint?: string) => void,
 ): void {
     svelteDialog({
         title: t(facade.i18n, "roaming.dialogTitle"),

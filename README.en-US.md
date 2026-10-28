@@ -67,6 +67,16 @@ This release implements floating margin notes in the reader editor for same-focu
 - **Floating Margin Notes (Margin Notes)**: Highlights and user thoughts float as sticky note bubbles along the right margin; clicking a note smoothly scrolls to the source block with pulse focus.
 - **Toggle Margin Notes (Alt+M)**: The reader toolbar offers a dedicated toggle action (Alt+M) to collapse or reveal margin notes at will.
 
+## v1.3.61 update (2026-10-28)
+
+This release implements reader roaming blind-box drawer integration, bookmark read-point direct navigation, and Space-key instant switching.
+
+**New features & improvements:**
+
+- **Reader Roaming Blind-Box Drawer**: Upgrades reader toolbar roaming and shortcuts (`Alt+B` / `Alt+R`) to trigger the roaming blind-box drawer instead of abrupt direct navigation, allowing reviewing recommendations before opening.
+- **Bookmark Read-Point Direct Navigation**: Opening from blind-box automatically forwards the stored bookmark (`readPoint`) to smoothly scroll and pulse the exact reading position.
+- **Space-Key Instant Switching**: Adds Space-key shortcut in blind-box dialog for quick blind-box draws alongside arrow keys and Enter.
+
 ## v1.3.52 update (2026-10-27)
 
 This release implements multi-dimensional weighted stress-free roaming read (blind-box pick) and 1-click academic citation export (BibTeX / GB/T 7714).
