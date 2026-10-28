@@ -13,7 +13,7 @@ import { t } from "../libs/i18n";
 import type { GleanIndex } from "../services/index-store";
 import { buildReadingReview, previewReadingReview, resolveUnknownReadingReview, saveReadingReviewReport, type ReadingReviewSession } from "../services/stats-service";
 import { buildReadingReviewMarkdown, computeConversionFunnel, computeReadingMilestones, filterCompletedItemsByDate, parseReviewDate, reviewDateInput, type ReadingReviewLabels, type ReviewPeriodKind } from "../domain/stats";
-import { formatGBT7714, type CitationItem } from "../domain/citation";
+import { formatBibTeX, formatGBT7714, type CitationItem } from "../domain/citation";
 
 interface Props {
     facade: GleanFacade;
@@ -216,7 +216,7 @@ async function copyCompletedBlockRef(item: { id: string; title: string }): Promi
     }
 }
 
-async function copyCompletedCitation(item: { id: string; title: string }): Promise<void> {
+async function copyCompletedCitation(item: { id: string; title: string }, format: "gbt" | "bibtex" = "gbt"): Promise<void> {
     const clip = index.clips[item.id];
     const citItem: CitationItem = {
         id: item.id,
@@ -226,12 +226,40 @@ async function copyCompletedCitation(item: { id: string; title: string }): Promi
         url: clip?.url,
         time: clip?.time,
     };
-    const citText = formatGBT7714(citItem);
+    const citText = format === "bibtex" ? formatBibTeX(citItem) : formatGBT7714(citItem);
     try {
         await navigator.clipboard.writeText(citText);
-        showMessage(t(i18n, "citation.gbtCopied"), 2000);
+        showMessage(t(i18n, format === "bibtex" ? "citation.bibtexCopied" : "citation.gbtCopied"), 2000);
     } catch {
         showMessage(t(i18n, "msg.actionFailed"), 2000);
+    }
+}
+
+async function copyCompletedListCitations(format: "gbt" | "bibtex" = "gbt"): Promise<void> {
+    if (visibleCompletedItems.length === 0) return;
+    const blocks: string[] = [];
+    visibleCompletedItems.forEach((item, indexNum) => {
+        const clip = index.clips[item.id];
+        const citItem: CitationItem = {
+            id: item.id,
+            title: item.title,
+            author: clip?.author,
+            site: clip?.site,
+            url: clip?.url,
+            time: clip?.time,
+        };
+        if (format === "bibtex") {
+            blocks.push(formatBibTeX(citItem));
+        } else {
+            blocks.push(`[${indexNum + 1}] ${formatGBT7714(citItem)}`);
+        }
+    });
+    const sep = format === "bibtex" ? "\n\n" : "\n";
+    try {
+        await navigator.clipboard.writeText(blocks.join(sep));
+        showMessage(t(i18n, format === "bibtex" ? "library.batchBibtexCopied" : "library.batchCitationsCopied", { n: visibleCompletedItems.length }), 2500);
+    } catch {
+        showMessage(t(i18n, "msg.actionFailed"), 2500);
     }
 }
 
@@ -278,6 +306,14 @@ function onWindowKeyDown(event: KeyboardEvent): void {
         event.preventDefault();
         event.stopPropagation();
         void copyReportMarkdown();
+    } else if (lower === "y" && !busy && visibleCompletedItems.length > 0) {
+        event.preventDefault();
+        event.stopPropagation();
+        void copyCompletedListMarkdown();
+    } else if (lower === "c" && !busy && visibleCompletedItems.length > 0) {
+        event.preventDefault();
+        event.stopPropagation();
+        void copyCompletedListCitations(event.shiftKey ? "bibtex" : "gbt");
     }
 }
 </script>
@@ -494,9 +530,17 @@ function onWindowKeyDown(event: KeyboardEvent): void {
                     <span></span>
                 {/if}
                 {#if visibleCompletedItems.length > 0}
-                    <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm glean-stats__copy-completed-btn" onclick={() => void copyCompletedListMarkdown()} title={t(i18n, "stats.copyCompletedList")}>
-                        📋 {t(i18n, "stats.copyCompletedList")}
-                    </button>
+                    <div style="display: inline-flex; align-items: center; gap: 4px; flex-wrap: wrap;">
+                        <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm glean-stats__copy-completed-btn" onclick={() => void copyCompletedListMarkdown()} title="{t(i18n, 'stats.copyCompletedList')} (Y)">
+                            📋 {t(i18n, "stats.copyCompletedList")}
+                        </button>
+                        <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm glean-stats__copy-citations-btn" onclick={() => void copyCompletedListCitations("gbt")} title="{t(i18n, 'citation.copyGBT')} (C)">
+                            📄 {t(i18n, "citation.copyGBT")}
+                        </button>
+                        <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm glean-stats__copy-bibtex-btn" onclick={() => void copyCompletedListCitations("bibtex")} title="{t(i18n, 'citation.copyBibTeX')} (Shift+C)">
+                            📚 BibTeX
+                        </button>
+                    </div>
                 {/if}
             </div>
             <ul class="glean-stats__completed">
@@ -508,8 +552,11 @@ function onWindowKeyDown(event: KeyboardEvent): void {
                             <button type="button" class="glean-btn glean-btn--ghost glean-btn--xs" onclick={() => void copyCompletedBlockRef(item)} title={t(i18n, "action.copyBlockRef")}>
                                 🔗
                             </button>
-                            <button type="button" class="glean-btn glean-btn--ghost glean-btn--xs" onclick={() => void copyCompletedCitation(item)} title={t(i18n, "citation.copyGBT")}>
+                            <button type="button" class="glean-btn glean-btn--ghost glean-btn--xs" onclick={() => void copyCompletedCitation(item, "gbt")} title={t(i18n, "citation.copyGBT")}>
                                 📄
+                            </button>
+                            <button type="button" class="glean-btn glean-btn--ghost glean-btn--xs" onclick={() => void copyCompletedCitation(item, "bibtex")} title={t(i18n, "citation.copyBibTeX")}>
+                                📚
                             </button>
                         </div>
                     </li>

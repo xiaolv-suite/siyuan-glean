@@ -1,23 +1,23 @@
 # 发布候选复核
 
-> **v1.3.85 发布候选（2026-10-29）**：本次发布覆盖全表面 BibTeX 学术文献著录闭环：读库批量 BibTeX 导出、全键盘 Shift+C / Alt+Shift+C 快捷键与今日拾遗/摘录墙直达。
+> **v1.3.86 发布候选（2026-10-29）**：本次发布覆盖阅读统计回顾页已完成文章著录导出闭环：单行 GB/T 与 BibTeX 著录复制、全清单批量导出与 Y / C / Shift+C 全键盘支持。
 >
 > 真实宿主、读屏、移动端和外部能力仍按能力矩阵及 B-0002、B-0004–B-0008 验收。
 
-## 1. 发布产物与门禁核验（v1.3.85）
+## 1. 发布产物与门禁核验（v1.3.86）
 
 | 项目 | 结果 | 证据 |
 |---|---|---|
-| 源版本 | `1.3.85` | `package.json` 与 `plugin.json` 一致 |
-| 变更记录 | 已有 `v1.3.85` 条目 | `docs/CHANGELOG.md` |
+| 源版本 | `1.3.86` | `package.json` 与 `plugin.json` 一致 |
+| 变更记录 | 已有 `v1.3.86` 条目 | `docs/CHANGELOG.md` |
 | 类型与 Svelte 检查 | 通过，0 错误/0 警告 | `pnpm check` |
-| 全量测试 | 1728/1728 通过；覆盖全套架构、i18n、无障碍与域层回归 | `pnpm test` |
+| 全量测试 | 1727/1727 通过；覆盖全套架构、i18n、无障碍与域层回归 | `pnpm test` |
 | 生产构建 | 通过 | `pnpm build` |
 | 发布产物 | `package.zip` 验证通过 | `pnpm check:release` 通过 |
 | 性能门禁 | 通过；10k 合成输入均在预算内 | `pnpm perf:check` |
 | 视觉矩阵 | 登记检查通过；24 个案例等待真实宿主 | `pnpm visual:check` |
 | 任务账本与差异 | 通过 | `pnpm task:ledger -- --check`、`git diff --check` |
-| 本地构建包 | `v1.3.85` 已打包 | `package.zip` (待解封后上传 GitHub) |
+| 本地构建包 | `v1.3.86` 已打包 | `package.zip` (待解封后上传 GitHub) |
 | GitHub 工作流 | 本轮未触发：GitHub 账号封禁期，严格本地构建与提交 | 本轮无任何远程调用；解封后统一推送 |
 
 本轮变更重点在读库过滤热路径：`src/domain/library-view.ts` 的 `searchableText` 引入 WeakMap 按条目对象缓存归一化可搜索文本（标题/摘要/路径/站点/作者/URL/标签/AI 标签），关键词高频击键不再全库重建数组再小写化；`filterAndSortLibrary` 改用装饰-排序-还原预计算排序主键与 id 决胜键，O(n) 次归一化替代比较对内重复计算，升降序与决胜语义逐位等价。条目投影按不可变快照使用，缓存随 GC 回收，无手动失效面。同版并行交付 T-3506 大纲章节块引用复制与过滤框 Escape 重置（`src/ui/ReaderTab.svelte`）。AI 仍默认手动且需要用户配置通道；详细前置条件以[能力矩阵](CAPABILITY-MATRIX.md)为准。

@@ -67,6 +67,16 @@ This release implements floating margin notes in the reader editor for same-focu
 - **Floating Margin Notes (Margin Notes)**: Highlights and user thoughts float as sticky note bubbles along the right margin; clicking a note smoothly scrolls to the source block with pulse focus.
 - **Toggle Margin Notes (Alt+M)**: The reader toolbar offers a dedicated toggle action (Alt+M) to collapse or reveal margin notes at will.
 
+## v1.3.86 update (2026-10-29)
+
+This release implements completed article citation exports in reading stats: per-item GB/T and BibTeX copying, full-list batch export, and Y / C / Shift+C keyboard shortcuts.
+
+**New features & improvements:**
+
+- **Dual-Format Citation Copy for Completed Articles (T-3521)**: Each completed item row in reading stats now offers independent "📄 GB/T 7714" and "📚 BibTeX" citation copy buttons.
+- **Full-List Batch Citation & BibTeX Export (T-3521)**: The completed section header embeds "📄 Copy Citations" and "📚 Copy BibTeX" buttons to format all visible completed articles in batch.
+- **Y / C / Shift+C Keyboard Workflow (T-3521)**: Pressing `Y` copies block references of completed articles, `C` copies GB/T citations, and `Shift+C` copies BibTeX entries.
+
 ## v1.3.85 update (2026-10-29)
 
 This release implements full-surface BibTeX academic citation loop: library batch BibTeX export, keyboard Shift+C / Alt+Shift+C shortcuts, and resurface/highlights direct citation.

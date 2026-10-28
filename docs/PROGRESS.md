@@ -1,5 +1,13 @@
 # 进度（PROGRESS）
 
+## T-3521 阅读统计回顾页已完成文章著录导出闭环：单行 GB/T 与 BibTeX 著录复制、全清单批量导出与 Y / C / Shift+C 全键盘支持（2026-10-29）
+
+- [x] 已完成文章学术著录双格式复制：`src/ui/StatsView.svelte` 已完成文章清单（`.glean-stats__completed`）每行不仅提供「🔗 块引用」与「📄 GB/T 著录」独立复制，更同步增设「📚 BibTeX」单卡著录复制按钮；
+- [x] 全清单批量著录与 BibTeX 导出：已完成文章章节顶部增设「📄 复制著录」与「📚 复制 BibTeX」批量操作按钮，一键将当前可见已读文章（含单日下钻筛选）全量提取元数据生成标准带序号著录列表或 BibTeX 清单；
+- [x] Y / C / Shift+C 全键盘快捷工作流：`StatsView` 键盘监听接入 `Y` 复制清单块引用、`C` 复制 GB/T 7714 著录、`Shift+C` 复制 BibTeX 条目；
+- [x] 遵照指令本地闭环交付：本地完成 v1.3.86 打包与构建，本轮严格不推送到 GitHub，不调用任何远程接口，等用户通知解封后再行统一推送与发布；
+- [x] 门禁全通：全套单测（1727/1727）、`pnpm check` 0 错误 0 警告，发布门禁与性能基线通过。
+
 ## T-3520 全表面 BibTeX 学术文献著录闭环：读库批量 BibTeX 导出、全键盘 Shift+C / Alt+Shift+C 快捷键与今日拾遗/摘录墙直达（2026-10-29）
 
 - [x] 读库批量 BibTeX 导出：`src/ui/LibraryBatchBar.svelte` 批量条增设「📚 BibTeX」导出按钮，`src/ui/DockPanel.svelte` 实现 `batchCopyBibTeX` 将多选文章一键格式化为标准 `@article` 条目存入剪贴板；
