@@ -12,6 +12,7 @@ import DistributionList from "./DistributionList.svelte";
 import { t } from "../libs/i18n";
 import type { GleanIndex } from "../services/index-store";
 import { buildReadingReview, previewReadingReview, resolveUnknownReadingReview, saveReadingReviewReport, type ReadingReviewSession } from "../services/stats-service";
+import { exportSelectedClipsCsv } from "../services/library-export-service";
 import { buildReadingReviewMarkdown, computeConversionFunnel, computeReadingMilestones, filterCompletedItemsByDate, parseReviewDate, reviewDateInput, type ReadingReviewLabels, type ReviewPeriodKind } from "../domain/stats";
 import { formatBibTeX, formatGBT7714, formatCitation, type CitationFormat, type CitationItem } from "../domain/citation";
 
@@ -282,6 +283,52 @@ async function copyCompletedListMarkdown(): Promise<void> {
     }
 }
 
+async function copyCompletedSummaryList(): Promise<void> {
+    if (visibleCompletedItems.length === 0) return;
+    const lines = visibleCompletedItems.map((item) => {
+        const clip = index.clips[item.id];
+        const title = item.title || t(i18n, "review.untitled");
+        const dateStr = item.doneTime ? `${item.doneTime.slice(0, 4)}-${item.doneTime.slice(4, 6)}-${item.doneTime.slice(6, 8)}` : "";
+        const parts = [`- **[${title}](siyuan://blocks/${item.id})**`];
+        if (dateStr) parts.push(`*已读: ${dateStr}*`);
+        if (clip?.author) parts.push(`*作者: ${clip.author}*`);
+        if (clip?.site) parts.push(`*来源: ${clip.site}*`);
+        if (clip?.minutes) parts.push(`*⏱️ ${clip.minutes}m*`);
+        if (clip?.tags?.length) parts.push(`#${clip.tags.join(" #")}`);
+        if (clip?.summary) parts.push(`\n  > ${clip.summary}`);
+        return parts.join(" · ");
+    });
+    try {
+        await navigator.clipboard.writeText(lines.join("\n\n"));
+        showMessage(t(i18n, "library.batchSummaryListCopied", { n: visibleCompletedItems.length }), 2500);
+    } catch {
+        showMessage(t(i18n, "msg.actionFailed"), 2000);
+    }
+}
+
+async function exportCompletedCsv(): Promise<void> {
+    if (visibleCompletedItems.length === 0 || busy) return;
+    const ids = visibleCompletedItems.map((item) => item.id);
+    try {
+        const csvContent = await exportSelectedClipsCsv(facade.pluginInstance, facade.settings, ids);
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        const parsedRef = parseReviewDate(referenceDate);
+        const dateStr = (parsedRef || new Date()).toISOString().slice(0, 10);
+        a.download = `glean-completed-${period}-${dateStr}.csv`;
+        document.body.append(a);
+        a.click();
+        a.remove();
+        window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+        showMessage(t(i18n, "stats.completedCsvExported", { n: ids.length }), 2500);
+    } catch (err) {
+        console.warn("[LvGlean] 导出已完成 CSV 失败:", err);
+        showMessage(t(i18n, "msg.actionFailed"), 2500);
+    }
+}
+
 function onWindowKeyDown(event: KeyboardEvent): void {
     if (event.defaultPrevented || event.isComposing || event.keyCode === 229 || event.repeat) return;
     const target = event.target instanceof Element ? event.target : null;
@@ -313,7 +360,8 @@ function onWindowKeyDown(event: KeyboardEvent): void {
     } else if (lower === "y" && !busy && visibleCompletedItems.length > 0) {
         event.preventDefault();
         event.stopPropagation();
-        void copyCompletedListMarkdown();
+        if (event.shiftKey) void copyCompletedSummaryList();
+        else void copyCompletedListMarkdown();
     } else if (lower === "c" && !busy && visibleCompletedItems.length > 0) {
         event.preventDefault();
         event.stopPropagation();
@@ -538,6 +586,9 @@ function onWindowKeyDown(event: KeyboardEvent): void {
                         <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm glean-stats__copy-completed-btn" onclick={() => void copyCompletedListMarkdown()} title="{t(i18n, 'stats.copyCompletedList')} (Y)">
                             📋 {t(i18n, "stats.copyCompletedList")}
                         </button>
+                        <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm glean-stats__copy-summary-btn" onclick={() => void copyCompletedSummaryList()} title="{t(i18n, 'stats.copyCompletedSummary')} (Shift+Y)">
+                            📝 {t(i18n, "stats.copyCompletedSummary")}
+                        </button>
                         <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm glean-stats__copy-citations-btn" onclick={() => void copyCompletedListCitations("gbt")} title="{t(i18n, 'citation.copyGBT')} (C)">
                             📄 {t(i18n, "citation.copyGBT")}
                         </button>
@@ -546,6 +597,9 @@ function onWindowKeyDown(event: KeyboardEvent): void {
                         </button>
                         <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm glean-stats__copy-apa-btn" onclick={() => void copyCompletedListCitations("apa")} title={t(i18n, "citation.copyAPA")}>
                             🎓 APA
+                        </button>
+                        <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm glean-stats__export-csv-btn" onclick={() => void exportCompletedCsv()} title={t(i18n, "library.batchExportCsv")}>
+                            📊 {t(i18n, "library.batchExportCsv")}
                         </button>
                     </div>
                 {/if}

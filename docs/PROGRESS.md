@@ -1,5 +1,13 @@
 # 进度（PROGRESS）
 
+## T-3527 阅读统计回顾页已完成文章 CSV 导出、结构大纲摘要复制与 Shift+Y 快捷键闭环（2026-10-29）
+
+- [x] 已完成文章多维数据导出 CSV：`src/ui/StatsView.svelte` 接入 `exportSelectedClipsCsv`，已读文章清单头部增设「📊 导出 CSV」动作按钮；一键将当前可见范围的已读文章导出为标准 CSV 表格；
+- [x] 结构化大纲摘要清单一键复制：`StatsView` 增设 `copyCompletedSummaryList` 与「📝 复制大纲摘要」按钮，支持一键将已完成文章按思源块反链、已读日期、作者、来源与摘要汇编为 Markdown 摘要流；
+- [x] Shift+Y 快捷键流接入：统计页按 `Y` 复制块反链，按 `Shift+Y` 复制结构大纲摘要；
+- [x] 遵照指令本地闭环交付：本地完成 v1.3.92 打包与构建，本轮严格不推送到 GitHub，不调用任何远程接口，等用户通知解封后再行统一推送与发布；
+- [x] 门禁全通：全套单测（1730/1730）、`pnpm check` 0 错误 0 警告，发布门禁与性能基线通过。
+
 ## T-3526 读库多选批量导出 CSV 与结构大纲清单（Markdown Digest）复制闭环（2026-10-29）
 
 - [x] 读库批量导出 CSV：`src/services/library-export-service.ts` 实现 `exportSelectedClipsCsv`，`src/ui/LibraryBatchBar.svelte` 接入「📊 导出 CSV」动作；

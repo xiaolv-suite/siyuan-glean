@@ -67,6 +67,16 @@ This release implements floating margin notes in the reader editor for same-focu
 - **Floating Margin Notes (Margin Notes)**: Highlights and user thoughts float as sticky note bubbles along the right margin; clicking a note smoothly scrolls to the source block with pulse focus.
 - **Toggle Margin Notes (Alt+M)**: The reader toolbar offers a dedicated toggle action (Alt+M) to collapse or reveal margin notes at will.
 
+## v1.3.92 update (2026-10-29)
+
+This release implements completed article CSV export, structured summary digest copy, and Shift+Y shortcut in reading stats.
+
+**New features & improvements:**
+
+- **Export Completed Articles to CSV (T-3527)**: Reading stats completed section header embeds an "📊 Export CSV" action to download full metadata for currently visible completed articles.
+- **Structured Summary Digest Copy (T-3527)**: Adds a "📝 Copy Digest List" button to format completed articles into rich Markdown digest summaries with block backlinks, dates, authors, sources, minutes, and summaries.
+- **Shift+Y Keyboard Shortcut**: Press `Y` to copy block backlinks, or `Shift+Y` to copy rich Markdown digest summaries.
+
 ## v1.3.91 update (2026-10-29)
 
 This release implements batch CSV export and Markdown summary digest copy in the library batch bar.

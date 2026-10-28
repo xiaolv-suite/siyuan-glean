@@ -2871,3 +2871,15 @@ T-3416 承接方向五（有依据的阅读 AI）与同类产品对标（Readwis
    - 批量工具栏接入「📋 复制大纲摘要」动作（`batchCopySummaryList`），将多选文章汇编为带思源块链接、作者、来源、时长与摘要的精美 Markdown 清单；
 3. 严格本地交付保障：
    - 严格在本地完成构建和测试，不执行任何外部推送与远程 API 调用。
+
+## D-0405（2026-10-29）阅读统计回顾页已完成文章 CSV 导出、结构大纲摘要复制与 Shift+Y 快捷键闭环（T-3527）
+
+全面扩展统计回顾页在已读成果导出与复盘流转上的能力：
+1. 已完成文章导出 CSV（`src/ui/StatsView.svelte`）：
+   - 接入 `exportSelectedClipsCsv`，支持一键将当前统计周期内或指定下钻日期的全部完成文章导出为标准格式 CSV；
+2. 结构大纲摘要流复制（`src/ui/StatsView.svelte`）：
+   - 增设 `copyCompletedSummaryList`，生成包含块反链、已读日期、作者、站点与摘要的精美 Markdown；
+3. Shift+Y 快捷键联动（`src/ui/StatsView.svelte`）：
+   - 统计页键盘监听接入 `Shift+Y` 快捷复制大纲摘要，`Y` 复制块反链；
+4. 严格本地交付保障：
+   - 严格在本地完成构建和测试，不执行任何外部推送与远程 API 调用。
