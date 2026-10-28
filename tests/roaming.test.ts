@@ -39,6 +39,18 @@ test("calculateRoamingScore：综合计算重要度、评分、切片与随机�
     // 优先级 32 + 默认评分 18 + 续读点 19 + 随机 0 = 69
     assert.equal(resReadPoint.score, 69);
     assert.equal(resReadPoint.reason, "🔖 断点续读 · 接续灵感");
+
+    const itemFav: RoamingCandidate = {
+        id: "doc-4",
+        title: "珍藏长文",
+        status: "later",
+        priority: 4,
+        favorite: true,
+    };
+    const resFav = calculateRoamingScore(itemFav, 0);
+    // 优先级 32 + 默认评分 18 + 收藏 19 + 随机 0 = 69
+    assert.equal(resFav.score, 69);
+    assert.equal(resFav.reason, "❤️ 珍藏精选 · 值得重读");
 });
 
 test("pickRoamingArticle：在未读候选池中挑选最优漫游文章并支持排除项", () => {

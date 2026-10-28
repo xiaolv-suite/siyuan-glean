@@ -102,6 +102,22 @@
         }
     }
 
+    async function toggleCurrentFavorite(): Promise<void> {
+        if (loading) return;
+        const currentFav = Boolean(currentPick.item.favorite);
+        const nextFav = !currentFav;
+        currentPick.item.favorite = nextFav;
+        try {
+            await writeClip(facade.pluginInstance, currentPick.item.id, { favorite: nextFav }, { force: true });
+            showMessage(t(i18n, nextFav ? "roaming.favoriteAdded" : "roaming.favoriteRemoved"), 2000);
+            facade.notifyDataChanged();
+        } catch (error) {
+            currentPick.item.favorite = currentFav;
+            console.warn("[glean] 盲盒收藏切换失败:", error);
+            showMessage(t(i18n, "msg.actionFailed"), 2500);
+        }
+    }
+
     function startRead(): void {
         onClose?.();
         onOpenArticle(currentPick.item.id, currentPick.item.readPoint);
@@ -123,6 +139,9 @@
     } else if ((e.key === "e" || e.key === "E") && !e.ctrlKey && !e.metaKey && !e.altKey) {
         e.preventDefault();
         void markCurrentArchive();
+    } else if ((e.key === "f" || e.key === "F") && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        void toggleCurrentFavorite();
     } else if (e.key === "Enter") {
         e.preventDefault();
         startRead();
@@ -163,6 +182,15 @@
             {#if (currentPick.item.rating ?? 0) > 0}
                 <span class="glean-tier-badge">💖 {currentPick.item.rating}★</span>
             {/if}
+            {#if currentPick.item.favorite}
+                <span class="glean-tier-badge glean-tier-badge--fav">❤️ 已收藏</span>
+            {/if}
+            {#if (currentPick.item.words ?? 0) > 0}
+                <span class="glean-tier-badge">📝 {t(i18n, "panel.words", { n: currentPick.item.words ?? 0 })}</span>
+            {/if}
+            {#if currentPick.item.snapshot}
+                <span class="glean-tier-badge" title="已保存离线网页单文件快照">💾 已快照</span>
+            {/if}
             {#if currentPick.item.readPoint}
                 <span class="glean-tier-badge glean-tier-badge--bookmark" title={t(i18n, "roaming.hasReadPoint")}>🔖 {t(i18n, "roaming.hasReadPoint")}</span>
             {/if}
@@ -184,6 +212,16 @@
 
     <div class="glean-roaming-actions">
         <div class="glean-roaming-triage">
+            <button
+                type="button"
+                class="glean-btn glean-btn--ghost glean-roaming-triage-btn"
+                class:glean-roaming-triage-btn--active={currentPick.item.favorite}
+                disabled={loading}
+                onclick={() => void toggleCurrentFavorite()}
+                title={t(i18n, "roaming.favoriteAction") + " (F)"}
+            >
+                {currentPick.item.favorite ? "❤️" : "🤍"} {t(i18n, "roaming.favoriteAction")}
+            </button>
             <button
                 type="button"
                 class="glean-btn glean-btn--ghost glean-roaming-triage-btn"

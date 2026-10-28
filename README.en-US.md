@@ -67,6 +67,16 @@ This release implements floating margin notes in the reader editor for same-focu
 - **Floating Margin Notes (Margin Notes)**: Highlights and user thoughts float as sticky note bubbles along the right margin; clicking a note smoothly scrolls to the source block with pulse focus.
 - **Toggle Margin Notes (Alt+M)**: The reader toolbar offers a dedicated toggle action (Alt+M) to collapse or reveal margin notes at will.
 
+## v1.3.63 update (2026-10-28)
+
+This release implements instant star favorite toggling (F key) in blind-box, words count and snapshot badges, and favorite multi-dimensional weighting.
+
+**New features & improvements:**
+
+- **Instant Favorite (F Key) Toggling**: Adds "❤️ Favorite" action (shortcut `F`) in roaming blind-box drawer to toggle star state instantly.
+- **Word Count & Offline Snapshot Badges**: Shows clean word count (`📝 n words`) and snapshot status (`💾 Snapshot`) in blind-box metadata.
+- **Favorite Weighted Recommendation**: Algorithmic weighting prioritizes user-starred gems with dedicated reasoning tag.
+
 ## v1.3.62 update (2026-10-28)
 
 This release implements instant triage within roaming blind-box (A for Later / E for Archive), auto-switching after status mutations, and grouped action layout.

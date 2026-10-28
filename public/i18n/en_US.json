@@ -1483,8 +1483,11 @@
   "roaming.prevBlindBox": "Previous",
   "roaming.startReadNow": "Start Reading",
   "roaming.exploreMore": "Open Roaming Blind-Box",
-  "roaming.keyboardTips": "Tips: ← / → or Space to switch, A for Later, E to Archive, Enter to read",
+  "roaming.keyboardTips": "Tips: ← / → or Space to switch, A for Later, E to Archive, F to Star, Enter to read",
   "roaming.hasReadPoint": "Bookmark",
+  "roaming.favoriteAdded": "Added to favorites",
+  "roaming.favoriteRemoved": "Removed from favorites",
+  "roaming.favoriteAction": "Favorite",
   "reader.marginNotes": "Margin Notes",
   "reader.marginNotesToggle": "Toggle Margin Notes (Alt+M)"
 }

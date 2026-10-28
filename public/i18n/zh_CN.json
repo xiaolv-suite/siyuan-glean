@@ -1483,8 +1483,11 @@
   "roaming.prevBlindBox": "上个盲盒",
   "roaming.startReadNow": "立即开读",
   "roaming.exploreMore": "开启漫游阅读盲盒",
-  "roaming.keyboardTips": "提示：← / → 或空格换盲盒，A 稍后，E 归档，Enter 开读",
+  "roaming.keyboardTips": "提示：← / → 或空格换盲盒，A 稍后，E 归档，F 收藏，Enter 开读",
   "roaming.hasReadPoint": "已记断点",
+  "roaming.favoriteAdded": "已加入星标收藏",
+  "roaming.favoriteRemoved": "已取消星标收藏",
+  "roaming.favoriteAction": "收藏",
   "reader.marginNotes": "边距注记",
   "reader.marginNotesToggle": "展开/收起边距悬浮注记（Alt+M）"
 }

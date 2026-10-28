@@ -18,11 +18,17 @@ test("RoamingDrawerDialog 契约守门：展示推荐理由、匹配得分、换
     assert.match(dialogSource, /e\.key === " " \|\| e\.code === "Space"/);
     assert.match(dialogSource, /e\.key === "a" \|\| e\.key === "A"/);
     assert.match(dialogSource, /e\.key === "e" \|\| e\.key === "E"/);
+    assert.match(dialogSource, /e\.key === "f" \|\| e\.key === "F"/);
     assert.match(dialogSource, /markCurrentLater/);
     assert.match(dialogSource, /markCurrentArchive/);
+    assert.match(dialogSource, /toggleCurrentFavorite/);
+    assert.match(dialogSource, /currentPick\.item\.favorite/);
+    assert.match(dialogSource, /currentPick\.item\.words/);
+    assert.match(dialogSource, /currentPick\.item\.snapshot/);
     assert.match(dialogSource, /writeClip\(facade\.pluginInstance/);
     assert.match(dialogSource, /queue\.later/);
     assert.match(dialogSource, /queue\.archived/);
+    assert.match(dialogSource, /roaming\.favoriteAction/);
     assert.match(dialogSource, /roaming\.keyboardTips/);
 });
 
@@ -71,4 +77,10 @@ test("双语 i18n 覆盖：漫游盲盒文案对齐", () => {
     assert.ok(en["roaming.keyboardTips"]);
     assert.ok(zh["roaming.hasReadPoint"]);
     assert.ok(en["roaming.hasReadPoint"]);
+    assert.ok(zh["roaming.favoriteAction"]);
+    assert.ok(en["roaming.favoriteAction"]);
+    assert.ok(zh["roaming.favoriteAdded"]);
+    assert.ok(en["roaming.favoriteAdded"]);
+    assert.ok(zh["roaming.favoriteRemoved"]);
+    assert.ok(en["roaming.favoriteRemoved"]);
 });
