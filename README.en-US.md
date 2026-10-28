@@ -67,6 +67,15 @@ This release implements floating margin notes in the reader editor for same-focu
 - **Floating Margin Notes (Margin Notes)**: Highlights and user thoughts float as sticky note bubbles along the right margin; clicking a note smoothly scrolls to the source block with pulse focus.
 - **Toggle Margin Notes (Alt+M)**: The reader toolbar offers a dedicated toggle action (Alt+M) to collapse or reveal margin notes at will.
 
+## v1.3.91 update (2026-10-29)
+
+This release implements batch CSV export and Markdown summary digest copy in the library batch bar.
+
+**New features & improvements:**
+
+- **Batch CSV Export (T-3526)**: The batch bar introduces a "📊 Export CSV" action to download full metadata for selected articles into a sanitized CSV file.
+- **Batch Markdown Digest Summary Copy (T-3526)**: Adds a "📋 Copy Digest List" button to format selected articles into structured Markdown items with backlinks, authors, sources, minutes, and summaries.
+
 ## v1.3.90 update (2026-10-29)
 
 This release implements multi-tier font sizes (compact/standard/large), watermark toggle, and keyboard shortcuts in QuoteCardDialog.

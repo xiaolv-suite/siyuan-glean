@@ -2861,3 +2861,13 @@ T-3416 承接方向五（有依据的阅读 AI）与同类产品对标（Readwis
    - 接入 `W` 键切换水印，`[` / `]` 键微调字号；
 4. 严格本地交付保障：
    - 严格在本地完成构建和测试，不执行任何外部推送与远程 API 调用。
+
+## D-0404（2026-10-29）读库多选批量导出 CSV 与结构大纲清单（Markdown Digest）复制闭环（T-3526）
+
+满足学术研究与知识复盘中的批量结构化导出需求：
+1. 读库批量导出 CSV（`src/services/library-export-service.ts` & `src/ui/LibraryBatchBar.svelte`）：
+   - 实现 `exportSelectedClipsCsv`，支持读者勾选多篇文章后一键下载包含全量元数据的标准 CSV 表格文件，防公式注入与空字段净化；
+2. 批量复制大纲摘要（`src/ui/DockPanel.svelte` & `src/ui/LibraryBatchBar.svelte`）：
+   - 批量工具栏接入「📋 复制大纲摘要」动作（`batchCopySummaryList`），将多选文章汇编为带思源块链接、作者、来源、时长与摘要的精美 Markdown 清单；
+3. 严格本地交付保障：
+   - 严格在本地完成构建和测试，不执行任何外部推送与远程 API 调用。

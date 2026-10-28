@@ -1,5 +1,18 @@
 # 更新日志（CHANGELOG）
 
+## v1.3.91（2026-10-29）
+
+### 读库多选批量导出 CSV 与结构大纲清单（Markdown Digest）复制闭环
+
+- **读库批量导出 CSV（T-3526）**：
+  - `src/services/library-export-service.ts` 实现 `exportSelectedClipsCsv` 服务，仅对用户多选的文章子集执行属性抓取、数据脱敏、公式注入防范与 CSV 渲染；
+  - `src/ui/LibraryBatchBar.svelte` 批量条增设「📊 导出 CSV」按钮，勾选多篇文章后一键下载包含标题、路径、作者、站点、评分、预计/实际用时、标签与摘要的完整数据表格；
+- **读库批量复制大纲摘要（T-3526）**：
+  - `src/ui/LibraryBatchBar.svelte` 增设「📋 复制大纲摘要」按钮，`src/ui/DockPanel.svelte` 实现 `batchCopySummaryList`；
+  - 一键将选中文章生成带思源块链接、作者、来源、时长与引用级摘要的精美 Markdown 清单，极大加速周报编写、读书总结与资料汇总；
+- **本地纯净交付保障**：
+  - 严格保持本地更新构建，不执行任何外部推送，待作者账号解封通知后统一处理。
+
 ## v1.3.90（2026-10-29）
 
 ### 金句卡片多档字号（紧凑/标准/大字）、水印自由开关与全套快捷键增强（W / [ / ]）

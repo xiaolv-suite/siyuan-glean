@@ -22,6 +22,7 @@ registerHooks({
 
 const {
     exportLibraryCsv,
+    exportSelectedClipsCsv,
     exportArticleMarkdown,
     exportLibraryMarkdownArchive,
     exportAnonymousDiagnostic,
@@ -147,6 +148,35 @@ test("exportLibraryCsv: 正常多状态导出、CSV 特殊符号转义与内部�
     assert.ok(lines[2].includes('"包含""引号""与,逗号的文章"'), "包含引号与逗号的标题必须被双引号转义");
     assert.ok(!csv.includes("内部隐藏文档"), "内部文档必须被排除");
     assert.ok(!csv.includes("未入库文档"), "无 status 属性的未确认文章必须被排除");
+});
+
+test("exportSelectedClipsCsv: 仅导出指定的勾选文章列表并过滤未选中项", async () => {
+    const entry1 = makeIndexEntry("doc-1", { title: "文章一", status: "inbox" });
+    const entry2 = makeIndexEntry("doc-2", { title: "文章二", status: "done" });
+    const entry3 = makeIndexEntry("doc-3", { title: "文章三", status: "reading" });
+
+    globalThis.__libraryExportStore = {
+        reconcileIndex: async () => ({
+            version: 1,
+            updatedAt: "2026-10-20T00:00:00.000Z",
+            clips: { "doc-1": entry1, "doc-2": entry2, "doc-3": entry3 },
+            candidates: {},
+        }),
+        batchReadClipAttrs: async (ids) => ids.map((id) => ({
+            id,
+            attrs: { "custom-clip-status": id === "doc-2" ? "done" : "inbox" },
+        })),
+        readClipDocument: async () => { throw new Error("not needed"); },
+    };
+
+    // 仅选中 doc-2
+    const csv = await exportSelectedClipsCsv(fakePlugin, defaultSettings, ["doc-2"]);
+    assert.ok(csv.startsWith("\uFEFF"));
+    const lines = csv.trim().split("\r\n");
+    assert.equal(lines.length, 2, "表头 + 1 条选中文章");
+    assert.ok(lines[1].includes("文章二"));
+    assert.ok(!csv.includes("文章一"));
+    assert.ok(!csv.includes("文章三"));
 });
 
 test("exportLibraryCsv: 空库或全排除时仅输出 BOM 与表头行", async () => {

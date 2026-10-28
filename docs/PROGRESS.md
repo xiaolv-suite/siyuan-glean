@@ -1,5 +1,12 @@
 # 进度（PROGRESS）
 
+## T-3526 读库多选批量导出 CSV 与结构大纲清单（Markdown Digest）复制闭环（2026-10-29）
+
+- [x] 读库批量导出 CSV：`src/services/library-export-service.ts` 实现 `exportSelectedClipsCsv`，`src/ui/LibraryBatchBar.svelte` 接入「📊 导出 CSV」动作；
+- [x] 读库批量复制大纲摘要：`src/ui/DockPanel.svelte` 实现 `batchCopySummaryList`，一键生成带思源块链接、作者、来源、时长与摘要的精美 Markdown 清单；
+- [x] 遵照指令本地闭环交付：本地完成 v1.3.91 打包与构建，本轮严格不推送到 GitHub，不调用任何远程接口，等用户通知解封后再行统一推送与发布；
+- [x] 门禁全通：全套单测（1730/1730）、`pnpm check` 0 错误 0 警告，发布门禁与性能基线通过。
+
 ## T-3525 金句卡片多档字号（紧凑/标准/大字）、水印自由开关与全套快捷键增强（W / [ / ]）（2026-10-29）
 
 - [x] 金句卡片三档字号可变排版：`src/domain/quote-card.ts` 新增 `QUOTE_CARD_FONTS` 与 `resolveQuoteCardFont` 纯函数，支持紧凑（15px）、标准（17px）与大字（21px）三套 Canvas 2x 超采样与 DOM 预览排版规则；

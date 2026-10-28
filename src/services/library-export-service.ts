@@ -53,6 +53,49 @@ export async function exportLibraryCsv(plugin: Plugin, settings: GleanSettings):
     return renderLibraryCsv(rows);
 }
 
+export async function exportSelectedClipsCsv(plugin: Plugin, settings: GleanSettings, clipIds: string[]): Promise<string> {
+    const targetSet = new Set(clipIds);
+    const index = await reconcileIndex(plugin, settings);
+    const ids = Object.keys(index.clips).filter((id) => targetSet.has(id));
+    const pairs = await batchReadClipAttrs(ids);
+    const attrs = new Map(pairs.map((pair) => [pair.id, pair.attrs]));
+    const rows: LibraryExportRow[] = [];
+    for (const entry of Object.values(index.clips).filter((e) => targetSet.has(e.id)).sort((left, right) => left.id.localeCompare(right.id))) {
+        const value = attrs.get(entry.id);
+        if (!value || value[ATTR.internal] === "true") continue;
+        const parsed = parseClipAttrs(value);
+        if (!parsed.status) continue;
+        rows.push({
+            id: entry.id,
+            title: entry.title,
+            path: entry.hpath,
+            notebook: entry.box,
+            status: parsed.status,
+            url: parsed.url ?? "",
+            site: parsed.site ?? "",
+            author: parsed.author ?? "",
+            time: parsed.time ?? "",
+            doneTime: parsed.doneTime ?? "",
+            words: parsed.words ?? "",
+            minutes: parsed.minutes ?? "",
+            readMinutes: parsed.readMinutes ?? "",
+            priority: parsed.priority ?? "",
+            rating: parsed.rating ?? "",
+            source: parsed.src ?? "",
+            contentType: parsed.contentType ?? "",
+            timeSource: parsed.timeSource ?? "",
+            lastSurfaced: parsed.lastSurfaced ?? "",
+            pinned: parsed.pinned ?? "",
+            userTags: [...entry.tags],
+            aiTags: [...parsed.aiTags],
+            summary: parsed.summary ?? "",
+            snapshot: parsed.snapshot ?? "",
+            readingPosition: parsed.readingPosition ? JSON.stringify(parsed.readingPosition) : "",
+        });
+    }
+    return renderLibraryCsv(rows);
+}
+
 export interface MarkdownExport {
     filename: string;
     content: string;

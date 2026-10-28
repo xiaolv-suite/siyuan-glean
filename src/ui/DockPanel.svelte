@@ -10,7 +10,7 @@ import { normalizeUrl } from "../domain/url";
 import { batchSetStatusDetailed, captureDocument, findClipUrlConflict, reconcileIndex, writeClip, type StatusWriteResult } from "../services/clip-store";
 import { autoEnrich, enrichClip } from "../services/enrich-service";
 import { snapshotClip } from "../services/snapshot-service";
-import { exportArticleMarkdown } from "../services/library-export-service";
+import { exportArticleMarkdown, exportSelectedClipsCsv } from "../services/library-export-service";
 import { filterAndSortLibrary, libraryFacets, matchLibraryReason, resolveReadingTimeTier, type LibraryItem, type LibraryMatchTarget, type LibrarySortDirection, type LibrarySortKey, type ReadingTimeTier } from "../domain/library-view.ts";
 import { loadIndex, type ClipIndexEntry, type CandidateEntry, type GleanIndex } from "../services/index-store";
 import StatsView from "./StatsView.svelte";
@@ -1132,6 +1132,53 @@ async function batchFavorite(nextFav: boolean): Promise<void> {
         showMessage(t(i18n, nextFav ? "library.batchFavoriteAdded" : "library.batchFavoriteRemoved", { n: count }), 2500);
     } catch (err) {
         console.warn("[LvGlean] 批量收藏失败:", err);
+        showMessage(t(i18n, "msg.actionFailed"), 3000);
+    } finally {
+        batchBusy = false;
+    }
+}
+
+async function batchCopySummaryList(): Promise<void> {
+    if (selection.size === 0) return;
+    const ids = Array.from(selection);
+    const lines = ids.map((id) => {
+        const clip = index.clips[id] || index.candidates[id];
+        const title = clip?.title || t(i18n, "panel.untitled");
+        const parts = [`- **[${title}](siyuan://blocks/${id})**`];
+        if (clip?.author) parts.push(`*作者: ${clip.author}*`);
+        if (clip?.site) parts.push(`*来源: ${clip.site}*`);
+        if (clip?.minutes) parts.push(`*⏱️ ${clip.minutes}m*`);
+        if (clip?.tags?.length) parts.push(`#${clip.tags.join(" #")}`);
+        if (clip?.summary) parts.push(`\n  > ${clip.summary}`);
+        return parts.join(" · ");
+    });
+    try {
+        await navigator.clipboard.writeText(lines.join("\n\n"));
+        showMessage(t(i18n, "library.batchSummaryListCopied", { n: ids.length }), 2500);
+    } catch {
+        showMessage(t(i18n, "msg.actionFailed"), 2000);
+    }
+}
+
+async function batchExportCsv(): Promise<void> {
+    if (batchBusy || selection.size === 0) return;
+    batchBusy = true;
+    const ids = Array.from(selection);
+    try {
+        const csvContent = await exportSelectedClipsCsv(facade.pluginInstance, facade.settings, ids);
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        const dateStr = localDateStamp();
+        a.download = `glean-selected-${dateStr}.csv`;
+        document.body.append(a);
+        a.click();
+        a.remove();
+        window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+        showMessage(t(i18n, "library.batchExportedCsv", { n: ids.length }), 2500);
+    } catch (err) {
+        console.warn("[LvGlean] 批量导出 CSV 失败:", err);
         showMessage(t(i18n, "msg.actionFailed"), 3000);
     } finally {
         batchBusy = false;
@@ -3806,6 +3853,8 @@ function metaLine(entry: Row): string {
             onCopyCitations={batchCopyCitations}
             onCopyBibTeX={batchCopyBibTeX}
             onCopyAPA={batchCopyAPA}
+            onCopySummaryList={batchCopySummaryList}
+            onExportCsv={batchExportCsv}
             onBatchFavorite={batchFavorite}
         />
     {:else if view === "resurface"}
