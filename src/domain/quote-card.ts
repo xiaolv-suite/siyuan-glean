@@ -8,6 +8,7 @@ export interface QuoteCardSource {
     color?: string;
     time?: string;
     docId?: string;
+    blockId?: string;
 }
 
 export interface QuoteCardThemeConfig {

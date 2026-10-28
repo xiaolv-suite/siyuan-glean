@@ -233,16 +233,66 @@
             showMessage(t(i18n, "msg.actionFailed"), 2500);
         }
     }
+
+    async function copyCardBlockRef(): Promise<void> {
+        const id = source.blockId || source.docId;
+        if (!id) return;
+        const title = source.title || source.quote.trim().slice(0, 30);
+        const refText = `((${id} '${title}'))`;
+        try {
+            await navigator.clipboard.writeText(refText);
+            showMessage(t(i18n, "reader.blockRefCopied"), 2000);
+        } catch {
+            showMessage(t(i18n, "msg.actionFailed"), 2000);
+        }
+    }
+
+    function onKeyDown(e: KeyboardEvent): void {
+        const target = e.target instanceof Element ? e.target : null;
+        if (target?.closest("input, textarea, select, [contenteditable]:not([contenteditable='false'])")) return;
+        if (e.isComposing || e.keyCode === 229) return;
+        if (e.key === "1") {
+            e.preventDefault();
+            activeThemeKey = "teal";
+        } else if (e.key === "2") {
+            e.preventDefault();
+            activeThemeKey = "paper";
+        } else if (e.key === "3") {
+            e.preventDefault();
+            activeThemeKey = "obsidian";
+        } else if (e.key === "4") {
+            e.preventDefault();
+            activeThemeKey = "minimal";
+        } else if ((e.key === "c" || e.key === "C") && (e.ctrlKey || e.metaKey)) {
+            e.preventDefault();
+            void copyCardImage();
+        } else if ((e.key === "c" || e.key === "C") && !e.altKey && !e.ctrlKey && !e.metaKey) {
+            e.preventDefault();
+            if (e.shiftKey) void copyCardText();
+            else void copyCardImage();
+        } else if ((e.key === "s" || e.key === "S") && !e.altKey) {
+            e.preventDefault();
+            saveCardImage();
+        } else if ((e.key === "y" || e.key === "Y") && !e.ctrlKey && !e.metaKey && !e.altKey) {
+            if (source.blockId || source.docId) {
+                e.preventDefault();
+                void copyCardBlockRef();
+            }
+        }
+    }
 </script>
+
+<svelte:window onkeydown={onKeyDown} />
 
 <div class="glean-quote-card-dialog">
     <div class="glean-quote-card-themes" role="group" aria-label={t(i18n, "reader.appearanceTheme")}>
-        {#each QUOTE_CARD_THEMES as theme}
+        {#each QUOTE_CARD_THEMES as theme, idx}
             <button
                 type="button"
                 class="glean-quote-card-theme-btn"
                 class:glean-quote-card-theme-btn--active={activeThemeKey === theme.key}
                 onclick={() => activeThemeKey = theme.key}
+                title={`${t(i18n, theme.nameKey)} (${idx + 1})`}
             >
                 <span class="glean-quote-card-theme-preview glean-quote-card-theme-preview--{theme.key}"></span>
                 <span>{t(i18n, theme.nameKey)}</span>
@@ -287,6 +337,7 @@
             class="glean-btn glean-btn--pri glean-quote-card-btn"
             disabled={copying}
             onclick={() => void copyCardImage()}
+            title="{t(i18n, 'quoteCard.copyImage')} (C)"
         >
             <svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
             <span>{copying ? t(i18n, "panel.loading") : t(i18n, "quoteCard.copyImage")}</span>
@@ -296,6 +347,7 @@
             class="glean-btn glean-btn--ghost glean-quote-card-btn"
             disabled={downloading}
             onclick={saveCardImage}
+            title="{t(i18n, 'quoteCard.saveImage')} (S)"
         >
             <span>💾 {downloading ? t(i18n, "panel.loading") : t(i18n, "quoteCard.saveImage")}</span>
         </button>
@@ -303,9 +355,30 @@
             type="button"
             class="glean-btn glean-btn--ghost glean-quote-card-btn"
             onclick={() => void copyCardText()}
+            title="{t(i18n, 'quoteCard.copyText')} (Shift+C)"
         >
             <span>📝 {t(i18n, "quoteCard.copyText")}</span>
         </button>
+        {#if source.blockId || source.docId}
+            <button
+                type="button"
+                class="glean-btn glean-btn--ghost glean-quote-card-btn"
+                onclick={() => void copyCardBlockRef()}
+                title="{t(i18n, 'action.copyBlockRef')} (Y)"
+            >
+                <span>🔗 {t(i18n, "action.copyBlockRef")}</span>
+            </button>
+        {/if}
+    </div>
+
+    <div class="glean-kbdhint" style="margin-top: 2px; justify-content: center;">
+        <span class="glean-kbdhint__keys" aria-hidden="true">
+            <kbd>1-4</kbd> {t(i18n, "reader.appearanceTheme")}
+            <kbd>C</kbd> {t(i18n, "quoteCard.copyImage")}
+            <kbd>Shift+C</kbd> {t(i18n, "quoteCard.copyText")}
+            <kbd>S</kbd> {t(i18n, "quoteCard.saveImage")}
+            {#if source.blockId || source.docId}<kbd>Y</kbd> {t(i18n, "action.copyBlockRef")}{/if}
+        </span>
     </div>
 </div>
 

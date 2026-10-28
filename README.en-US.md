@@ -67,6 +67,16 @@ This release implements floating margin notes in the reader editor for same-focu
 - **Floating Margin Notes (Margin Notes)**: Highlights and user thoughts float as sticky note bubbles along the right margin; clicking a note smoothly scrolls to the source block with pulse focus.
 - **Toggle Margin Notes (Alt+M)**: The reader toolbar offers a dedicated toggle action (Alt+M) to collapse or reveal margin notes at will.
 
+## v1.3.76 update (2026-10-29)
+
+This release implements quote card full keyboard flow, block reference direct copying, and workbench excerpt card generation.
+
+**New features & improvements:**
+
+- **Quote Card 1-4 Theme & Full Keyboard Flow (T-3511)**: Quote card dialog embeds window keydown listener: number keys `1` (teal), `2` (paper), `3` (obsidian), `4` (minimal) switch themes; `C` copies card image, `Shift+C` copies text, and `S` saves PNG image.
+- **Card Block Reference Copying (Y Key)**: `QuoteCardSource` extends `blockId` across all entry points; dialog embeds "🔗 Block Ref (Y)" action.
+- **Workbench Excerpt Quote Card Direct Generation**: Workbench preview selection excerpt toolbar embeds "🖼️ Quote Card" action to create card images from selected text.
+
 ## v1.3.75 update (2026-10-29)
 
 This release implements resurface and roaming blind-box citation copying (C key), block reference copying (Y key), and offline snapshot viewing/taking (S key).

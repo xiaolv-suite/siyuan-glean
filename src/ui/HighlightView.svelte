@@ -323,6 +323,7 @@ function quoteCard(item: HighlightItem): void {
         site: item.site,
         color: item.color,
         docId: item.rootId,
+        blockId: item.id,
     });
 }
 

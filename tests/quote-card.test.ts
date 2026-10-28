@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
 import {
     QUOTE_CARD_THEMES,
     formatQuoteCardAttribution,
@@ -25,8 +26,27 @@ test("formatQuoteShareText：生成包含引言与出处的分享文本", () => 
         quote: "人生苦短，我用 Python。",
         title: "编程随想",
         author: "Guido",
+        blockId: "20261020100000-blk1234",
     };
+    assert.equal(source.blockId, "20261020100000-blk1234");
     const text = formatQuoteShareText(source);
     assert.match(text, /“人生苦短，我用 Python。”/);
     assert.match(text, /—— 《编程随想》 · Guido/);
+});
+
+test("QuoteCardDialog 键盘流与块引用支持契约（T-3511）", () => {
+    const dialog = fs.readFileSync(new URL("../src/ui/QuoteCardDialog.svelte", import.meta.url), "utf8");
+    assert.match(dialog, /<svelte:window onkeydown=\{onKeyDown\} \/>/);
+    assert.match(dialog, /e\.key === "1"/);
+    assert.match(dialog, /e\.key === "2"/);
+    assert.match(dialog, /e\.key === "3"/);
+    assert.match(dialog, /e\.key === "4"/);
+    assert.match(dialog, /copyCardImage\(\)/);
+    assert.match(dialog, /saveCardImage\(\)/);
+    assert.match(dialog, /copyCardText\(\)/);
+    assert.match(dialog, /copyCardBlockRef\(\)/);
+    assert.match(dialog, /<kbd>1-4<\/kbd>/);
+    assert.match(dialog, /<kbd>C<\/kbd>/);
+    assert.match(dialog, /<kbd>S<\/kbd>/);
+    assert.match(dialog, /<kbd>Y<\/kbd>/);
 });

@@ -628,6 +628,7 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
             site: context.site,
             color: item.color,
             docId: context.id,
+            blockId: item.id,
         });
     }
 

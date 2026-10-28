@@ -387,5 +387,7 @@ test("WorkbenchPreview 头部操作栏红心收藏切换与 BibTeX 复制契约�
     assert.match(preview, /lower === "s"/);
     assert.match(preview, /openOrTakeSnapshot/);
     assert.match(preview, /glean-preview__snapshot-btn/);
+    assert.match(preview, /makeExcerptQuoteCard/);
+    assert.match(preview, /glean-preview__excerpt-quote-btn/);
     assert.match(preview, /roaming\.button/);
 });

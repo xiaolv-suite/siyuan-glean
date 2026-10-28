@@ -23,6 +23,7 @@
     import { openWeReadGuideDialog } from "./weread-guide-dialog";
     import { scanAndFillWechatAuthor } from "../services/wechat-service";
     import { snapshotClip } from "../services/snapshot-service";
+    import { openQuoteCardDialog } from "./quote-card-dialog";
 
     type PreviewItem = ({ kind: "clip" } & ClipIndexEntry) | ({ kind: "candidate" } & CandidateEntry);
     interface Props {
@@ -332,6 +333,18 @@
         }
     }
 
+    function makeExcerptQuoteCard(): void {
+        if (!excerpt?.text) return;
+        openQuoteCardDialog(facade, {
+            quote: excerpt.text,
+            title: entry.title,
+            author: attrs?.author || (entry.kind === "clip" ? entry.author : ""),
+            site: attrs?.site || (entry.kind === "clip" ? entry.site : ""),
+            docId: entry.id,
+            blockId: excerpt.blockId,
+        });
+    }
+
     async function openOrTakeSnapshot(): Promise<void> {
         const snapPath = attrs?.snapshot || (entry.kind === "clip" ? entry.snapshot : "");
         if (snapPath) {
@@ -532,6 +545,7 @@
             <span title={excerpt.text}>{excerpt.text.slice(0, 100)}</span>
             <button type="button" class="glean-btn" disabled={busy || !confirmed || !excerpt.blockId} title={excerpt.blockId ? "" : t(i18n, "reader.excerptNoBlock")} onclick={quote}>{t(i18n, "reader.excerptQuote")}</button>
             <button type="button" class="glean-btn glean-btn--ghost" disabled={!excerpt.blockId} onclick={() => void copySelectedBlockRef()} title="复制选中段落块引用 (Y)">{t(i18n, "action.copyBlockRef")}</button>
+            <button type="button" class="glean-btn glean-btn--ghost glean-preview__excerpt-quote-btn" onclick={makeExcerptQuoteCard} title={t(i18n, "quoteCard.action")}>🖼️ {t(i18n, "quoteCard.action")}</button>
             <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyExcerpt()}>{t(i18n, "reader.copy")}</button>
         </div>
     {/if}
