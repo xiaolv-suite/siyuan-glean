@@ -1488,6 +1488,11 @@
   "roaming.favoriteAdded": "Added to favorites",
   "roaming.favoriteRemoved": "Removed from favorites",
   "roaming.favoriteAction": "Favorite",
+  "roaming.budgetAll": "Any time",
+  "roaming.budgetShort": "Quick ≤5m",
+  "roaming.budgetMedium": "Medium 5-15m",
+  "roaming.budgetLong": "Long >15m",
+  "roaming.emptyBudgetPool": "No articles match current time budget",
   "reader.marginNotes": "Margin Notes",
   "reader.marginNotesToggle": "Toggle Margin Notes (Alt+M)"
 }

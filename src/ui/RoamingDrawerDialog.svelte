@@ -2,7 +2,7 @@
     import { showMessage } from "siyuan";
     import type { GleanFacade } from "../types";
     import { t } from "../libs/i18n";
-    import { pickRoamingArticle, type RoamingPick } from "../domain/roaming";
+    import { pickRoamingArticle, type RoamingPick, type RoamingTimeBudget } from "../domain/roaming";
     import { loadIndex } from "../services/index-store";
     import { displayWechatAuthor, isWechatUrl } from "../domain/wechat";
     import { writeClip } from "../services/clip-store";
@@ -22,6 +22,7 @@
     const activeHistory = $derived(history.length > 0 ? history : [initialPick]);
     const currentPick = $derived(activeHistory[historyIndex] ?? initialPick);
     const canPrev = $derived(historyIndex > 0);
+    let timeBudget = $state<RoamingTimeBudget>("all");
     let loading = $state(false);
 
     const safeAuthor = $derived(displayWechatAuthor(currentPick.item.author));
@@ -33,6 +34,31 @@
             if (typeof navigator !== "undefined" && "vibrate" in navigator) {
                 try { navigator.vibrate?.(10); } catch { /* noop */ }
             }
+        }
+    }
+
+    async function changeBudget(budget: RoamingTimeBudget): Promise<void> {
+        if (timeBudget === budget || loading) return;
+        timeBudget = budget;
+        loading = true;
+        try {
+            const index = await loadIndex(facade.pluginInstance);
+            const candidates = Object.values(index.clips);
+            const next = pickRoamingArticle(candidates, { timeBudget: budget });
+            if (next) {
+                history = [next];
+                historyIndex = 0;
+                if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+                    try { navigator.vibrate?.(10); } catch { /* noop */ }
+                }
+            } else {
+                showMessage(t(i18n, "roaming.emptyBudgetPool"), 2500);
+            }
+        } catch (error) {
+            console.warn("[glean] 切换时间预算漫游异常:", error);
+            showMessage(t(i18n, "msg.actionFailed"), 2500);
+        } finally {
+            loading = false;
         }
     }
 
@@ -50,7 +76,7 @@
             const excludedIds = new Set(currentList.map((h) => h.item.id));
             const index = await loadIndex(facade.pluginInstance);
             const candidates = Object.values(index.clips);
-            const next = pickRoamingArticle(candidates, excludedIds);
+            const next = pickRoamingArticle(candidates, { excludedIds, timeBudget });
             if (next) {
                 history = [...currentList, next];
                 historyIndex = history.length - 1;
@@ -58,7 +84,7 @@
                     try { navigator.vibrate?.(12); } catch { /* noop */ }
                 }
             } else {
-                showMessage(t(i18n, "roaming.emptyPool"), 2500);
+                showMessage(t(i18n, timeBudget === "all" ? "roaming.emptyPool" : "roaming.emptyBudgetPool"), 2500);
             }
         } catch (error) {
             console.warn("[glean] 漫游换篇异常:", error);
@@ -142,6 +168,18 @@
     } else if ((e.key === "f" || e.key === "F") && !e.ctrlKey && !e.metaKey && !e.altKey) {
         e.preventDefault();
         void toggleCurrentFavorite();
+    } else if (e.key === "1" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        void changeBudget("all");
+    } else if (e.key === "2" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        void changeBudget("short");
+    } else if (e.key === "3" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        void changeBudget("medium");
+    } else if (e.key === "4" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        void changeBudget("long");
     } else if (e.key === "Enter") {
         e.preventDefault();
         startRead();
@@ -159,6 +197,47 @@
                 <span class="glean-roaming-pos">({historyIndex + 1}/{history.length})</span>
             {/if}
             🔥 {currentPick.score}分
+        </div>
+    </div>
+
+    <div class="glean-roaming-budget-row">
+        <div class="glean-roaming-budget" role="group" aria-label="可用时间">
+            <button
+                type="button"
+                class="glean-roaming-budget-btn"
+                class:glean-roaming-budget-btn--active={timeBudget === "all"}
+                onclick={() => void changeBudget("all")}
+                title="{t(i18n, 'roaming.budgetAll')} (1)"
+            >
+                {t(i18n, "action.filterAll")}
+            </button>
+            <button
+                type="button"
+                class="glean-roaming-budget-btn"
+                class:glean-roaming-budget-btn--active={timeBudget === "short"}
+                onclick={() => void changeBudget("short")}
+                title="{t(i18n, 'roaming.budgetShort')} (2)"
+            >
+                ⚡ ≤5m
+            </button>
+            <button
+                type="button"
+                class="glean-roaming-budget-btn"
+                class:glean-roaming-budget-btn--active={timeBudget === "medium"}
+                onclick={() => void changeBudget("medium")}
+                title="{t(i18n, 'roaming.budgetMedium')} (3)"
+            >
+                ⏱️ 5-15m
+            </button>
+            <button
+                type="button"
+                class="glean-roaming-budget-btn"
+                class:glean-roaming-budget-btn--active={timeBudget === "long"}
+                onclick={() => void changeBudget("long")}
+                title="{t(i18n, 'roaming.budgetLong')} (4)"
+            >
+                📚 >15m
+            </button>
         </div>
     </div>
 

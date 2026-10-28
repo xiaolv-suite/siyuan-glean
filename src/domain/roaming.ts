@@ -34,6 +34,14 @@ export interface RoamingPick {
     reason: string;
 }
 
+export type RoamingTimeBudget = "all" | "short" | "medium" | "long";
+
+export interface RoamingPickOptions {
+    excludedIds?: Iterable<string>;
+    timeBudget?: RoamingTimeBudget;
+    random?: () => number;
+}
+
 export function calculateRoamingScore(
     item: RoamingCandidate,
     randomFactor: number = Math.random()
@@ -78,15 +86,36 @@ export function calculateRoamingScore(
 
 export function pickRoamingArticle(
     candidates: readonly RoamingCandidate[],
-    excludedIds: Iterable<string> = [],
-    random: () => number = Math.random
+    options?: RoamingPickOptions | Iterable<string>,
+    legacyRandom?: () => number
 ): RoamingPick | null {
+    let excludedIds: Iterable<string> = [];
+    let timeBudget: RoamingTimeBudget = "all";
+    let random = Math.random;
+
+    if (options) {
+        if (typeof (options as any)[Symbol.iterator] === "function" && !(options as RoamingPickOptions).timeBudget && !(options as RoamingPickOptions).excludedIds) {
+            excludedIds = options as Iterable<string>;
+            if (legacyRandom) random = legacyRandom;
+        } else {
+            const opts = options as RoamingPickOptions;
+            if (opts.excludedIds) excludedIds = opts.excludedIds;
+            if (opts.timeBudget) timeBudget = opts.timeBudget;
+            if (opts.random) random = opts.random;
+        }
+    }
+
     const excludeSet = new Set(excludedIds);
-    // 仅从待读/稍后读/阅读中且未排除的候选池挑选
-    const pool = candidates.filter((c) =>
-        (c.status === "inbox" || c.status === "later" || c.status === "reading") &&
-        !excludeSet.has(c.id)
-    );
+    // 仅从待读/稍后读/阅读中且未排除的候选池挑选，并应用可用时间预算约束
+    const pool = candidates.filter((c) => {
+        if (c.status !== "inbox" && c.status !== "later" && c.status !== "reading") return false;
+        if (excludeSet.has(c.id)) return false;
+        const m = c.minutes ?? 0;
+        if (timeBudget === "short") return m > 0 && m <= 5;
+        if (timeBudget === "medium") return m > 5 && m <= 15;
+        if (timeBudget === "long") return m > 15;
+        return true;
+    });
 
     if (pool.length === 0) return null;
 

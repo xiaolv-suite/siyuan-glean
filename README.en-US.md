@@ -67,6 +67,15 @@ This release implements floating margin notes in the reader editor for same-focu
 - **Floating Margin Notes (Margin Notes)**: Highlights and user thoughts float as sticky note bubbles along the right margin; clicking a note smoothly scrolls to the source block with pulse focus.
 - **Toggle Margin Notes (Alt+M)**: The reader toolbar offers a dedicated toggle action (Alt+M) to collapse or reveal margin notes at will.
 
+## v1.3.68 update (2026-10-28)
+
+This release implements time budget targeted roaming blind-box filtering and number keys 1-4 instant switching.
+
+**New features & improvements:**
+
+- **Time Budget Targeted Roaming Pick**: Roaming drawer embeds time capsule segmented control: `[All] [⚡ ≤5m Quick] [⏱️ 5-15m Medium] [📚 >15m Deep]`, tailoring exploration to available time.
+- **Number Keys 1-4 Quick Switching**: Supports number keys `1` (All), `2` (≤5m), `3` (5-15m), and `4` (>15m) to switch budgets instantly.
+
 ## v1.3.67 update (2026-10-28)
 
 This release implements quote wall roaming blind-box access (B key) and keyboard shortcut bar integration.

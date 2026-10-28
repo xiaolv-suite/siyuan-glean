@@ -74,3 +74,27 @@ test("pickRoamingArticle：在未读候选池中挑选最优漫游文章并支�
     const pickNone = pickRoamingArticle(pool, ["doc-a", "doc-b"], () => 0.5);
     assert.equal(pickNone, null);
 });
+
+test("pickRoamingArticle 支持 RoamingTimeBudget 时间预算（short/medium/long）精确定向挑选", () => {
+    const pool: RoamingCandidate[] = [
+        { id: "doc-short", title: "3分钟速读", status: "later", priority: 3, minutes: 3 },
+        { id: "doc-medium", title: "10分钟中篇", status: "later", priority: 3, minutes: 10 },
+        { id: "doc-long", title: "30分钟长文", status: "later", priority: 3, minutes: 30 },
+    ];
+
+    const pickShort = pickRoamingArticle(pool, { timeBudget: "short", random: () => 0 });
+    assert.ok(pickShort);
+    assert.equal(pickShort.item.id, "doc-short");
+
+    const pickMedium = pickRoamingArticle(pool, { timeBudget: "medium", random: () => 0 });
+    assert.ok(pickMedium);
+    assert.equal(pickMedium.item.id, "doc-medium");
+
+    const pickLong = pickRoamingArticle(pool, { timeBudget: "long", random: () => 0 });
+    assert.ok(pickLong);
+    assert.equal(pickLong.item.id, "doc-long");
+
+    // 不限时间 budget='all'
+    const pickAll = pickRoamingArticle(pool, { timeBudget: "all", random: () => 0 });
+    assert.ok(pickAll);
+});

@@ -1488,6 +1488,11 @@
   "roaming.favoriteAdded": "已加入星标收藏",
   "roaming.favoriteRemoved": "已取消星标收藏",
   "roaming.favoriteAction": "收藏",
+  "roaming.budgetAll": "不限时长",
+  "roaming.budgetShort": "速读 ≤5m",
+  "roaming.budgetMedium": "精读 5-15m",
+  "roaming.budgetLong": "长文 >15m",
+  "roaming.emptyBudgetPool": "未读池暂无符合当前时间预算的文章",
   "reader.marginNotes": "边距注记",
   "reader.marginNotesToggle": "展开/收起边距悬浮注记（Alt+M）"
 }

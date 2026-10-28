@@ -22,6 +22,12 @@ test("RoamingDrawerDialog 契约守门：展示推荐理由、匹配得分、换
     assert.match(dialogSource, /markCurrentLater/);
     assert.match(dialogSource, /markCurrentArchive/);
     assert.match(dialogSource, /toggleCurrentFavorite/);
+    assert.match(dialogSource, /changeBudget/);
+    assert.match(dialogSource, /glean-roaming-budget/);
+    assert.match(dialogSource, /e\.key === "1"/);
+    assert.match(dialogSource, /e\.key === "2"/);
+    assert.match(dialogSource, /e\.key === "3"/);
+    assert.match(dialogSource, /e\.key === "4"/);
     assert.match(dialogSource, /currentPick\.item\.favorite/);
     assert.match(dialogSource, /currentPick\.item\.words/);
     assert.match(dialogSource, /currentPick\.item\.snapshot/);
@@ -79,6 +85,12 @@ test("双语 i18n 覆盖：漫游盲盒文案对齐", () => {
     assert.ok(en["roaming.hasReadPoint"]);
     assert.ok(zh["roaming.favoriteAction"]);
     assert.ok(en["roaming.favoriteAction"]);
+    assert.ok(zh["roaming.budgetAll"]);
+    assert.ok(en["roaming.budgetAll"]);
+    assert.ok(zh["roaming.budgetShort"]);
+    assert.ok(en["roaming.budgetShort"]);
+    assert.ok(zh["roaming.emptyBudgetPool"]);
+    assert.ok(en["roaming.emptyBudgetPool"]);
     assert.ok(zh["roaming.favoriteAdded"]);
     assert.ok(en["roaming.favoriteAdded"]);
     assert.ok(zh["roaming.favoriteRemoved"]);
