@@ -1493,6 +1493,8 @@
   "roaming.budgetMedium": "Medium 5-15m",
   "roaming.budgetLong": "Long >15m",
   "roaming.emptyBudgetPool": "No articles match current time budget",
+  "roaming.allTopics": "All topics",
+  "roaming.emptyTopicPool": "No roaming articles under this topic",
   "reader.marginNotes": "Margin Notes",
   "reader.marginNotesToggle": "Toggle Margin Notes (Alt+M)"
 }

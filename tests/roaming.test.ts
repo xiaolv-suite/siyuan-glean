@@ -98,3 +98,25 @@ test("pickRoamingArticle 支持 RoamingTimeBudget 时间预算（short/medium/lo
     const pickAll = pickRoamingArticle(pool, { timeBudget: "all", random: () => 0 });
     assert.ok(pickAll);
 });
+
+test("pickRoamingArticle 支持 tag 专属主题定向漫游与时间预算复合约束", () => {
+    const pool: RoamingCandidate[] = [
+        { id: "doc-ai", title: "AI大模型短文", status: "later", priority: 3, minutes: 4, tags: ["AI"] },
+        { id: "doc-web", title: "前端开发长文", status: "later", priority: 3, minutes: 20, tags: ["前端"] },
+        { id: "doc-ai-long", title: "AI深度研报", status: "later", priority: 4, minutes: 25, tags: ["AI"] },
+    ];
+
+    // 仅按 tag='AI' 漫游
+    const pickAi = pickRoamingArticle(pool, { tag: "AI", random: () => 0 });
+    assert.ok(pickAi);
+    assert.ok(pickAi.item.tags?.includes("AI"));
+
+    // 复合约束：tag='AI' 且 timeBudget='short'，应精准命中 doc-ai
+    const pickAiShort = pickRoamingArticle(pool, { tag: "AI", timeBudget: "short", random: () => 0 });
+    assert.ok(pickAiShort);
+    assert.equal(pickAiShort.item.id, "doc-ai");
+
+    // 不存在的 tag 返回 null
+    const pickUnknown = pickRoamingArticle(pool, { tag: "未知标签", random: () => 0 });
+    assert.equal(pickUnknown, null);
+});

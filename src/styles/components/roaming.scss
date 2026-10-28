@@ -38,6 +38,21 @@
 .glean-roaming-budget-row {
     display: flex;
     align-items: center;
+    justify-content: space-between;
+    gap: var(--glean-space-2);
+    flex-wrap: wrap;
+}
+
+.glean-roaming-tag-select {
+    font-size: var(--glean-text-xs);
+    height: 26px;
+    padding: 0 8px;
+    border-radius: var(--glean-radius-pill);
+    background: var(--b3-theme-background-light);
+    border: 1px solid var(--b3-border-color);
+    color: var(--b3-theme-on-background);
+    max-width: 140px;
+    cursor: pointer;
 }
 
 .glean-roaming-budget {

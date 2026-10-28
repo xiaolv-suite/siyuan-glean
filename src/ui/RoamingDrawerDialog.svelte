@@ -23,7 +23,26 @@
     const currentPick = $derived(activeHistory[historyIndex] ?? initialPick);
     const canPrev = $derived(historyIndex > 0);
     let timeBudget = $state<RoamingTimeBudget>("all");
+    let selectedTag = $state("");
+    let availableTags = $state<string[]>([]);
     let loading = $state(false);
+
+    $effect(() => {
+        void loadIndex(facade.pluginInstance).then((index) => {
+            const counts: Record<string, number> = {};
+            for (const clip of Object.values(index.clips)) {
+                if (clip.status === "inbox" || clip.status === "later" || clip.status === "reading") {
+                    for (const t of clip.tags || []) {
+                        counts[t] = (counts[t] || 0) + 1;
+                    }
+                }
+            }
+            availableTags = Object.entries(counts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 12)
+                .map(([tagKey]) => tagKey);
+        }).catch(() => undefined);
+    });
 
     const safeAuthor = $derived(displayWechatAuthor(currentPick.item.author));
     const isWechat = $derived(isWechatUrl(currentPick.item.url) || isWechatUrl(currentPick.item.site));
@@ -44,7 +63,7 @@
         try {
             const index = await loadIndex(facade.pluginInstance);
             const candidates = Object.values(index.clips);
-            const next = pickRoamingArticle(candidates, { timeBudget: budget });
+            const next = pickRoamingArticle(candidates, { timeBudget: budget, tag: selectedTag || undefined });
             if (next) {
                 history = [next];
                 historyIndex = 0;
@@ -56,6 +75,31 @@
             }
         } catch (error) {
             console.warn("[glean] 切换时间预算漫游异常:", error);
+            showMessage(t(i18n, "msg.actionFailed"), 2500);
+        } finally {
+            loading = false;
+        }
+    }
+
+    async function changeTag(tagVal: string): Promise<void> {
+        if (loading) return;
+        selectedTag = tagVal;
+        loading = true;
+        try {
+            const index = await loadIndex(facade.pluginInstance);
+            const candidates = Object.values(index.clips);
+            const next = pickRoamingArticle(candidates, { timeBudget, tag: selectedTag || undefined });
+            if (next) {
+                history = [next];
+                historyIndex = 0;
+                if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+                    try { navigator.vibrate?.(10); } catch { /* noop */ }
+                }
+            } else {
+                showMessage(t(i18n, "roaming.emptyTopicPool"), 2500);
+            }
+        } catch (error) {
+            console.warn("[glean] 切换主题漫游异常:", error);
             showMessage(t(i18n, "msg.actionFailed"), 2500);
         } finally {
             loading = false;
@@ -76,7 +120,7 @@
             const excludedIds = new Set(currentList.map((h) => h.item.id));
             const index = await loadIndex(facade.pluginInstance);
             const candidates = Object.values(index.clips);
-            const next = pickRoamingArticle(candidates, { excludedIds, timeBudget });
+            const next = pickRoamingArticle(candidates, { excludedIds, timeBudget, tag: selectedTag || undefined });
             if (next) {
                 history = [...currentList, next];
                 historyIndex = history.length - 1;
@@ -239,6 +283,21 @@
                 📚 >15m
             </button>
         </div>
+
+        {#if availableTags.length > 0}
+            <select
+                class="b3-select glean-roaming-tag-select"
+                bind:value={selectedTag}
+                onchange={() => void changeTag(selectedTag)}
+                title={t(i18n, "roaming.allTopics")}
+                aria-label={t(i18n, "roaming.allTopics")}
+            >
+                <option value="">🏷️ {t(i18n, "roaming.allTopics")}</option>
+                {#each availableTags as tag (tag)}
+                    <option value={tag}>#{tag}</option>
+                {/each}
+            </select>
+        {/if}
     </div>
 
     <article class="glean-roaming-card">

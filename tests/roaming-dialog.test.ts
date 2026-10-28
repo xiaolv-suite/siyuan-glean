@@ -23,7 +23,9 @@ test("RoamingDrawerDialog 契约守门：展示推荐理由、匹配得分、换
     assert.match(dialogSource, /markCurrentArchive/);
     assert.match(dialogSource, /toggleCurrentFavorite/);
     assert.match(dialogSource, /changeBudget/);
+    assert.match(dialogSource, /changeTag/);
     assert.match(dialogSource, /glean-roaming-budget/);
+    assert.match(dialogSource, /glean-roaming-tag-select/);
     assert.match(dialogSource, /e\.key === "1"/);
     assert.match(dialogSource, /e\.key === "2"/);
     assert.match(dialogSource, /e\.key === "3"/);
@@ -91,6 +93,10 @@ test("双语 i18n 覆盖：漫游盲盒文案对齐", () => {
     assert.ok(en["roaming.budgetShort"]);
     assert.ok(zh["roaming.emptyBudgetPool"]);
     assert.ok(en["roaming.emptyBudgetPool"]);
+    assert.ok(zh["roaming.allTopics"]);
+    assert.ok(en["roaming.allTopics"]);
+    assert.ok(zh["roaming.emptyTopicPool"]);
+    assert.ok(en["roaming.emptyTopicPool"]);
     assert.ok(zh["roaming.favoriteAdded"]);
     assert.ok(en["roaming.favoriteAdded"]);
     assert.ok(zh["roaming.favoriteRemoved"]);

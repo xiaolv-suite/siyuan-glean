@@ -67,6 +67,15 @@ This release implements floating margin notes in the reader editor for same-focu
 - **Floating Margin Notes (Margin Notes)**: Highlights and user thoughts float as sticky note bubbles along the right margin; clicking a note smoothly scrolls to the source block with pulse focus.
 - **Toggle Margin Notes (Alt+M)**: The reader toolbar offers a dedicated toggle action (Alt+M) to collapse or reveal margin notes at will.
 
+## v1.3.69 update (2026-10-28)
+
+This release implements topic tag targeted roaming blind-box filtering and time-topic compound exploration.
+
+**New features & improvements:**
+
+- **Topic Tag Targeted Roaming Pick**: Roaming drawer embeds topic tag selector (`🏷️ All topics` / `#AI` / ...), aggregating top tags for domain-specific exploration.
+- **Time & Topic Compound Filter**: Seamlessly combines time budgets (e.g. `≤5m Quick`) and topics (e.g. `#AI`) for precision roaming.
+
 ## v1.3.68 update (2026-10-28)
 
 This release implements time budget targeted roaming blind-box filtering and number keys 1-4 instant switching.

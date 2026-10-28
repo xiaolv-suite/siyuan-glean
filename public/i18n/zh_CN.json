@@ -1493,6 +1493,8 @@
   "roaming.budgetMedium": "精读 5-15m",
   "roaming.budgetLong": "长文 >15m",
   "roaming.emptyBudgetPool": "未读池暂无符合当前时间预算的文章",
+  "roaming.allTopics": "全部主题",
+  "roaming.emptyTopicPool": "该主题下暂无可漫游文章",
   "reader.marginNotes": "边距注记",
   "reader.marginNotesToggle": "展开/收起边距悬浮注记（Alt+M）"
 }

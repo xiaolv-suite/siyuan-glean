@@ -1,5 +1,13 @@
 # 进度（PROGRESS）
 
+## T-3503 漫游盲盒专题标签（Topic）定向约束与可用时间复合漫游筛选（2026-10-28）
+
+- [x] 漫游算法专题约束：`src/domain/roaming.ts` 的 `RoamingPickOptions` 扩充 `tag?: string` 选项，算法在未读池中精准按指定标签筛选；
+- [x] 盲盒展台主题选择器：`src/ui/RoamingDrawerDialog.svelte` 头部嵌入主题选择器，聚合全库高频核心标签（前 12 个），支持锁定特定主题定向抽卡；
+- [x] 复合正交筛选：时间预算（`timeBudget`）与专题标签（`tag`）自由组合，满足“当下有特定时间、想读这个专题”的精准研读需求；
+- [x] 遵照指令本地闭环交付：本地完成 v1.3.69 打包与构建，本轮严格不推送到 GitHub，不调用任何远程接口，等用户通知解封后再行统一推送与发布；
+- [x] 门禁全通：全套单测（1691/1691）、`pnpm check` 0 错误 0 警告，发布门禁与性能基线通过。
+
 ## T-3502 漫游盲盒可用时间预算（Time Budget）定向挑选与数字键 1-4 快捷切换（2026-10-28）
 
 - [x] 漫游算法可用时间约束：`src/domain/roaming.ts` 引入 `RoamingTimeBudget`（`all` / `short` / `medium` / `long`）与 `RoamingPickOptions`，按读者可用时间做定向过滤（≤5m 速读、5-15m 中篇、>15m 深度）；
