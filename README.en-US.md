@@ -67,6 +67,16 @@ This release implements floating margin notes in the reader editor for same-focu
 - **Floating Margin Notes (Margin Notes)**: Highlights and user thoughts float as sticky note bubbles along the right margin; clicking a note smoothly scrolls to the source block with pulse focus.
 - **Toggle Margin Notes (Alt+M)**: The reader toolbar offers a dedicated toggle action (Alt+M) to collapse or reveal margin notes at will.
 
+## v1.3.90 update (2026-10-29)
+
+This release implements multi-tier font sizes (compact/standard/large), watermark toggle, and keyboard shortcuts in QuoteCardDialog.
+
+**New features & improvements:**
+
+- **Three Typography Font Scales (T-3525)**: QuoteCardDialog introduces compact (15px), standard (17px), and large (21px) font sizes and line heights.
+- **Watermark Toggle (T-3525)**: Supports toggling the bottom watermark on or off with instant height re-computation for both Canvas exports and DOM previews.
+- **Enhanced Keyboard Shortcuts (T-3525)**: Press `W` to toggle watermark, `[` and `]` to adjust font sizes quickly.
+
 ## v1.3.89 update (2026-10-29)
 
 This release implements triple-format (GB/T, BibTeX, APA) citation copying and Shift+C shortcut in the Roaming Blind-Box drawer.

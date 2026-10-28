@@ -8,6 +8,8 @@
         QUOTE_CARD_THEMES,
         formatQuoteCardAttribution,
         formatQuoteShareText,
+        resolveQuoteCardFont,
+        type QuoteCardFontSize,
         type QuoteCardSource,
         type QuoteCardTheme,
     } from "../domain/quote-card";
@@ -22,8 +24,12 @@
     const i18n = $derived(facade.i18n);
 
     let activeThemeKey = $state<QuoteCardTheme>("teal");
+    let activeFontSize = $state<QuoteCardFontSize>("md");
+    let showWatermark = $state(true);
     let copying = $state(false);
     let downloading = $state(false);
+
+    const activeFont = $derived(resolveQuoteCardFont(activeFontSize));
 
     onMount(() => {
         void loadUiPrefs(facade.pluginInstance).then((prefs) => {
@@ -70,7 +76,7 @@
         if (!ctx) throw new Error("无法创建 Canvas 2D 绘图上下文");
 
         // 预估行高与文本换行
-        ctx.font = '17px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif';
+        ctx.font = `${activeFont.fontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif`;
         const maxTextWidth = width - padding * 2;
         const lines: string[] = [];
 
@@ -90,11 +96,11 @@
             if (currentLine) lines.push(currentLine);
         }
 
-        const lineHeight = 30;
+        const lineHeight = activeFont.lineHeight;
         const quoteTextHeight = Math.max(lines.length * lineHeight, 40);
         const topHeaderHeight = 44;
         const attrHeight = attributionText ? 40 : 0;
-        const footerHeight = 40;
+        const footerHeight = showWatermark ? 40 : 16;
         const totalHeight = padding * 2 + topHeaderHeight + quoteTextHeight + attrHeight + footerHeight;
 
         canvas.width = width * scale;
@@ -128,7 +134,7 @@
         ctx.strokeRect(16, 16, width - 32, totalHeight - 32);
 
         // 3. 顶部：装饰性引号与色彩标签
-        ctx.font = 'bold 36px Georgia, serif';
+        ctx.font = `bold ${activeFont.quoteMarkSize}px Georgia, serif`;
         ctx.fillStyle = activeTheme.accentColor;
         ctx.fillText("“", padding, padding + 24);
 
@@ -154,7 +160,7 @@
 
         // 4. 正文引语
         let textY = padding + topHeaderHeight + 20;
-        ctx.font = '17px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif';
+        ctx.font = `${activeFont.fontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif`;
         ctx.fillStyle = activeTheme.textColor;
         for (const line of lines) {
             ctx.fillText(line, padding, textY);
@@ -171,10 +177,12 @@
         }
 
         // 6. 底部水印
-        const footerY = totalHeight - padding + 10;
-        ctx.font = '11.5px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-        ctx.fillStyle = activeTheme.watermarkColor;
-        ctx.fillText(t(i18n, "quoteCard.watermark"), padding, footerY);
+        if (showWatermark) {
+            const footerY = totalHeight - padding + 10;
+            ctx.font = '11.5px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+            ctx.fillStyle = activeTheme.watermarkColor;
+            ctx.fillText(t(i18n, "quoteCard.watermark"), padding, footerY);
+        }
 
         return canvas;
     }
@@ -295,6 +303,15 @@
         } else if ((e.key === "s" || e.key === "S") && !e.altKey) {
             e.preventDefault();
             saveCardImage();
+        } else if ((e.key === "w" || e.key === "W") && !e.ctrlKey && !e.metaKey && !e.altKey) {
+            e.preventDefault();
+            showWatermark = !showWatermark;
+        } else if (e.key === "[" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+            e.preventDefault();
+            activeFontSize = activeFontSize === "lg" ? "md" : "sm";
+        } else if (e.key === "]" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+            e.preventDefault();
+            activeFontSize = activeFontSize === "sm" ? "md" : "lg";
         } else if ((e.key === "y" || e.key === "Y") && !e.ctrlKey && !e.metaKey && !e.altKey) {
             if (source.blockId || source.docId) {
                 e.preventDefault();
@@ -307,19 +324,61 @@
 <svelte:window onkeydown={onKeyDown} />
 
 <div class="glean-quote-card-dialog">
-    <div class="glean-quote-card-themes" role="group" aria-label={t(i18n, "reader.appearanceTheme")}>
-        {#each QUOTE_CARD_THEMES as theme, idx}
+    <div class="glean-quote-card-header-bar">
+        <div class="glean-quote-card-themes" role="group" aria-label={t(i18n, "reader.appearanceTheme")}>
+            {#each QUOTE_CARD_THEMES as theme, idx}
+                <button
+                    type="button"
+                    class="glean-quote-card-theme-btn"
+                    class:glean-quote-card-theme-btn--active={activeThemeKey === theme.key}
+                    onclick={() => activeThemeKey = theme.key}
+                    title={`${t(i18n, theme.nameKey)} (${idx + 1})`}
+                >
+                    <span class="glean-quote-card-theme-preview glean-quote-card-theme-preview--{theme.key}"></span>
+                    <span>{t(i18n, theme.nameKey)}</span>
+                </button>
+            {/each}
+        </div>
+        <div class="glean-quote-card-opts">
+            <div class="glean-quote-card-font-group" role="group" aria-label={t(i18n, "quoteCard.fontMd")}>
+                <button
+                    type="button"
+                    class="glean-quote-card-font-btn"
+                    class:glean-quote-card-font-btn--active={activeFontSize === "sm"}
+                    onclick={() => activeFontSize = "sm"}
+                    title="{t(i18n, 'quoteCard.fontSm')} ([)"
+                >
+                    {t(i18n, "quoteCard.fontSm")}
+                </button>
+                <button
+                    type="button"
+                    class="glean-quote-card-font-btn"
+                    class:glean-quote-card-font-btn--active={activeFontSize === "md"}
+                    onclick={() => activeFontSize = "md"}
+                    title={t(i18n, "quoteCard.fontMd")}
+                >
+                    {t(i18n, "quoteCard.fontMd")}
+                </button>
+                <button
+                    type="button"
+                    class="glean-quote-card-font-btn"
+                    class:glean-quote-card-font-btn--active={activeFontSize === "lg"}
+                    onclick={() => activeFontSize = "lg"}
+                    title="{t(i18n, 'quoteCard.fontLg')} (])"
+                >
+                    {t(i18n, "quoteCard.fontLg")}
+                </button>
+            </div>
             <button
                 type="button"
-                class="glean-quote-card-theme-btn"
-                class:glean-quote-card-theme-btn--active={activeThemeKey === theme.key}
-                onclick={() => activeThemeKey = theme.key}
-                title={`${t(i18n, theme.nameKey)} (${idx + 1})`}
+                class="glean-btn glean-btn--ghost glean-btn--xs glean-quote-card-wm-btn"
+                class:glean-btn--active={showWatermark}
+                onclick={() => showWatermark = !showWatermark}
+                title="{t(i18n, 'quoteCard.toggleWatermark')} (W)"
             >
-                <span class="glean-quote-card-theme-preview glean-quote-card-theme-preview--{theme.key}"></span>
-                <span>{t(i18n, theme.nameKey)}</span>
+                💧 {showWatermark ? t(i18n, "quoteCard.watermarkOn") : t(i18n, "quoteCard.watermarkOff")}
             </button>
-        {/each}
+        </div>
     </div>
 
     <div class="glean-quote-card-stage">
@@ -337,7 +396,7 @@
                 </span>
             </div>
 
-            <blockquote class="glean-quote-card-body">
+            <blockquote class="glean-quote-card-body glean-quote-card-body--{activeFontSize}">
                 {source.quote}
             </blockquote>
 
@@ -347,9 +406,11 @@
                 </div>
             {/if}
 
-            <footer class="glean-quote-card-footer" style:color={activeTheme.watermarkColor}>
-                <span>{t(i18n, "quoteCard.watermark")}</span>
-            </footer>
+            {#if showWatermark}
+                <footer class="glean-quote-card-footer" style:color={activeTheme.watermarkColor}>
+                    <span>{t(i18n, "quoteCard.watermark")}</span>
+                </footer>
+            {/if}
         </article>
     </div>
 
@@ -406,6 +467,8 @@
     <div class="glean-kbdhint" style="margin-top: 2px; justify-content: center;">
         <span class="glean-kbdhint__keys" aria-hidden="true">
             <kbd>1-4</kbd> {t(i18n, "reader.appearanceTheme")}
+            <kbd>[</kbd><kbd>]</kbd> {t(i18n, "quoteCard.fontSm")}/{t(i18n, "quoteCard.fontLg")}
+            <kbd>W</kbd> {t(i18n, "quoteCard.toggleWatermark")}
             <kbd>C</kbd> {t(i18n, "quoteCard.copyImage")}
             <kbd>Shift+C</kbd> {t(i18n, "quoteCard.copyText")}
             <kbd>S</kbd> {t(i18n, "quoteCard.saveImage")}
@@ -423,6 +486,51 @@
         height: 100%;
         min-height: 0;
         box-sizing: border-box;
+    }
+
+    .glean-quote-card-header-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--glean-space-2);
+        flex-wrap: wrap;
+    }
+
+    .glean-quote-card-opts {
+        display: flex;
+        align-items: center;
+        gap: var(--glean-space-2);
+    }
+
+    .glean-quote-card-font-group {
+        display: inline-flex;
+        border-radius: var(--glean-radius-pill);
+        background: color-mix(in srgb, var(--b3-theme-surface) 90%, transparent);
+        border: 1px solid var(--glean-border-soft);
+        padding: 2px;
+        gap: 2px;
+    }
+
+    .glean-quote-card-font-btn {
+        padding: 2px 8px;
+        border-radius: var(--glean-radius-pill);
+        border: 1px solid transparent;
+        background: transparent;
+        color: var(--b3-theme-on-surface);
+        font-size: var(--glean-text-xs);
+        cursor: pointer;
+        transition: all var(--glean-duration-fast) ease;
+    }
+
+    .glean-quote-card-font-btn:hover {
+        background: color-mix(in srgb, var(--b3-theme-on-surface) 6%, transparent);
+    }
+
+    .glean-quote-card-font-btn--active {
+        background: color-mix(in srgb, var(--lv-brand) 12%, var(--b3-theme-surface));
+        color: var(--lv-brand);
+        font-weight: var(--glean-weight-semibold);
+        border-color: color-mix(in srgb, var(--lv-brand) 28%, transparent);
     }
 
     .glean-quote-card-themes {
@@ -536,6 +644,21 @@
         white-space: pre-wrap;
         word-break: break-word;
         font-weight: 500;
+    }
+
+    .glean-quote-card-body--sm {
+        font-size: 13.5px;
+        line-height: 1.55;
+    }
+
+    .glean-quote-card-body--md {
+        font-size: 15.5px;
+        line-height: 1.65;
+    }
+
+    .glean-quote-card-body--lg {
+        font-size: 19px;
+        line-height: 1.75;
     }
 
     .glean-quote-card-attr {

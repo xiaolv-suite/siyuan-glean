@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import {
     QUOTE_CARD_THEMES,
+    QUOTE_CARD_FONTS,
+    resolveQuoteCardFont,
     formatQuoteCardAttribution,
     formatQuoteShareText,
     type QuoteCardSource,
@@ -34,7 +36,19 @@ test("formatQuoteShareText：生成包含引言与出处的分享文本", () => 
     assert.match(text, /—— 《编程随想》 · Guido/);
 });
 
-test("QuoteCardDialog 键盘流与块引用支持契约（T-3511）", () => {
+test("QUOTE_CARD_FONTS 与 resolveQuoteCardFont：包含三档字号与行高配置（T-3525）", () => {
+    assert.deepEqual(resolveQuoteCardFont("sm"), QUOTE_CARD_FONTS.sm);
+    assert.deepEqual(resolveQuoteCardFont("md"), QUOTE_CARD_FONTS.md);
+    assert.deepEqual(resolveQuoteCardFont("lg"), QUOTE_CARD_FONTS.lg);
+    assert.equal(resolveQuoteCardFont("md").fontSize, 17);
+    assert.equal(resolveQuoteCardFont("sm").fontSize, 15);
+    assert.equal(resolveQuoteCardFont("lg").fontSize, 21);
+    // 非法值回退到 md
+    // @ts-expect-error fallback test
+    assert.deepEqual(resolveQuoteCardFont("unknown"), QUOTE_CARD_FONTS.md);
+});
+
+test("QuoteCardDialog 键盘流与块引用支持契约（T-3511 / T-3525）", () => {
     const dialog = fs.readFileSync(new URL("../src/ui/QuoteCardDialog.svelte", import.meta.url), "utf8");
     assert.match(dialog, /<svelte:window onkeydown=\{onKeyDown\} \/>/);
     assert.match(dialog, /e\.key === "1"/);
@@ -46,7 +60,15 @@ test("QuoteCardDialog 键盘流与块引用支持契约（T-3511）", () => {
     assert.match(dialog, /copyCardText\(\)/);
     assert.match(dialog, /copyCardBlockRef\(\)/);
     assert.match(dialog, /copyCardCitation\(\)/);
+    assert.match(dialog, /activeFontSize/);
+    assert.match(dialog, /showWatermark/);
+    assert.match(dialog, /e\.key === "w"/);
+    assert.match(dialog, /e\.key === "\["/);
+    assert.match(dialog, /e\.key === "\]"/);
+    assert.match(dialog, /glean-quote-card-font-btn/);
+    assert.match(dialog, /glean-quote-card-wm-btn/);
     assert.match(dialog, /<kbd>1-4<\/kbd>/);
+    assert.match(dialog, /<kbd>W<\/kbd>/);
     assert.match(dialog, /<kbd>C<\/kbd>/);
     assert.match(dialog, /<kbd>S<\/kbd>/);
     assert.match(dialog, /<kbd>Y<\/kbd>/);

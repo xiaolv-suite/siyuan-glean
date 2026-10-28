@@ -82,3 +82,23 @@ export function formatQuoteShareText(source: QuoteCardSource): string {
     const attr = formatQuoteCardAttribution(source.title, source.author, source.site);
     return attr ? `“${quote}”\n\n${attr}` : `“${quote}”`;
 }
+
+export type QuoteCardFontSize = "sm" | "md" | "lg";
+
+export interface QuoteCardFontConfig {
+    key: QuoteCardFontSize;
+    nameKey: string;
+    fontSize: number;
+    lineHeight: number;
+    quoteMarkSize: number;
+}
+
+export const QUOTE_CARD_FONTS: Record<QuoteCardFontSize, QuoteCardFontConfig> = {
+    sm: { key: "sm", nameKey: "quoteCard.fontSm", fontSize: 15, lineHeight: 26, quoteMarkSize: 30 },
+    md: { key: "md", nameKey: "quoteCard.fontMd", fontSize: 17, lineHeight: 30, quoteMarkSize: 36 },
+    lg: { key: "lg", nameKey: "quoteCard.fontLg", fontSize: 21, lineHeight: 36, quoteMarkSize: 42 },
+};
+
+export function resolveQuoteCardFont(size: QuoteCardFontSize = "md"): QuoteCardFontConfig {
+    return QUOTE_CARD_FONTS[size] || QUOTE_CARD_FONTS.md;
+}
