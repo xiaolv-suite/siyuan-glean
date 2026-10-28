@@ -293,6 +293,10 @@ test("desktop header subtitle reflects the current view and active library filte
     assert.match(source, /<div class="glean-brand__sub">\{headerSubtitle\}<\/div>/);
     assert.match(source, /glean-libbar__fav-btn/);
     assert.match(source, /event\.altKey && \(event\.key === "f" \|\| event\.key === "F"\)/);
+    assert.match(source, /copyEntryBlockRef\(entry\)/);
+    assert.match(source, /copyEntryCitation\(entry, "gbt"\)/);
+    assert.match(source, /copyEntryCitation\(entry, "bibtex"\)/);
+    assert.match(source, /copyEntryCitation\(entry, "apa"\)/);
     assert.match(zh, /"panel\.headerFiltered": "\$\{view\} · 读库 \$\{n\} 篇 · 已筛选 \$\{filters\} 项"/);
     assert.match(en, /"panel\.headerFiltered": "\$\{view\} · \$\{n\} in library · \$\{filters\} filters"/);
     assert.doesNotMatch(source, /glean-brand__badge/);

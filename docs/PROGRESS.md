@@ -1,5 +1,13 @@
 # 进度（PROGRESS）
 
+## T-3523 读库行表与卡片动作菜单（ActionPopover）文献著录与块引用复制贯通闭环（2026-10-29）
+
+- [x] 行表与卡片更多操作菜单扩展：`src/ui/DockPanel.svelte` 读库宽屏行表与窄屏卡片的更多操作浮层（`ActionPopover`）同步增设「🔗 复制块引用」、「📄 复制 GB/T 引用」、「📚 复制 BibTeX」与「🎓 复制 APA」四项高频引用动作；
+- [x] 全交互模式对齐：抹平鼠标/触控操作与键盘单键分拣（`Y` / `C` / `Shift+C`）之间的能力不对称，列表行或卡片浮层中轻点即复制；
+- [x] 统一底层实现复用：`DockPanel` 内部抽取并复用 `copyEntryBlockRef` 与 `copyEntryCitation` 统一逻辑；
+- [x] 遵照指令本地闭环交付：本地完成 v1.3.88 打包与构建，本轮严格不推送到 GitHub，不调用任何远程接口，等用户通知解封后再行统一推送与发布；
+- [x] 门禁全通：全套单测（1728/1728）、`pnpm check` 0 错误 0 警告，发布门禁与性能基线通过。
+
 ## T-3522 全表面 APA 学术规范引用闭环：统一 formatCitation 门面纯函数、读库/拾遗/摘录/统计/金句卡片三格式（GB/T、BibTeX、APA）文献著录贯通（2026-10-29）
 
 - [x] 统一 formatCitation 纯函数门面：`src/domain/citation.ts` 抽象 `CitationFormat = "gbt" | "bibtex" | "apa"` 与 `formatCitation` 纯函数统一分发；

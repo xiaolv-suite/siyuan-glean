@@ -39,7 +39,7 @@ import { hasSourceAction, openTargetForCarrier, resolveCarrier, sourceUrlForCarr
 import { isWechatUrl, displayWechatAuthor, isWechatSeriesTag } from "../domain/wechat";
 import { pickRoamingArticle } from "../domain/roaming";
 import { openRoamingDialog } from "./roaming-dialog";
-import { formatAPA, formatBibTeX, formatGBT7714, type CitationItem } from "../domain/citation";
+import { formatAPA, formatBibTeX, formatGBT7714, type CitationFormat, type CitationItem } from "../domain/citation";
 import { batchRecognizeWechatAuthors, scanAndFillWechatAuthor, purifyWechatArticle } from "../services/wechat-service";
 import ClipStatusActions from "./ClipStatusActions.svelte";
 import ClipRankControls from "./ClipRankControls.svelte";
@@ -2276,6 +2276,44 @@ function cursorAfterRemoval(id: string): string {
     return keyboardIds[Math.min(index, keyboardIds.length - 1)] ?? "";
 }
 
+async function copyEntryBlockRef(entry: { id: string; title?: string }): Promise<void> {
+    const title = entry.title || t(i18n, "panel.untitled");
+    const refText = `((${entry.id} '${title}'))`;
+    try {
+        if (navigator?.clipboard?.writeText) {
+            await navigator.clipboard.writeText(refText);
+            showMessage(t(i18n, "reader.blockRefCopied"), 2000);
+        } else {
+            showMessage(t(i18n, "msg.actionFailed"), 2000);
+        }
+    } catch {
+        showMessage(t(i18n, "msg.actionFailed"), 2000);
+    }
+}
+
+async function copyEntryCitation(entry: { id: string; title?: string; author?: string; site?: string; url?: string; time?: string }, format: CitationFormat = "gbt"): Promise<void> {
+    const citItem: CitationItem = {
+        id: entry.id,
+        title: entry.title || t(i18n, "panel.untitled"),
+        author: entry.author,
+        site: entry.site,
+        url: entry.url,
+        time: entry.time,
+    };
+    const citText = format === "bibtex" ? formatBibTeX(citItem) : (format === "apa" ? formatAPA(citItem) : formatGBT7714(citItem));
+    const msgKey = format === "bibtex" ? "citation.bibtexCopied" : (format === "apa" ? "citation.apaCopied" : "citation.gbtCopied");
+    try {
+        if (navigator?.clipboard?.writeText) {
+            await navigator.clipboard.writeText(citText);
+            showMessage(t(i18n, msgKey), 2000);
+        } else {
+            showMessage(t(i18n, "msg.actionFailed"), 2000);
+        }
+    } catch {
+        showMessage(t(i18n, "msg.actionFailed"), 2000);
+    }
+}
+
 async function runKeyboardAction(action: LibraryKeyboardAction): Promise<void> {
     if (action.type === "move") {
         setKeyboardCursor(moveLibraryCursor(keyboardIds, keyboardCursorId, action.delta));
@@ -2306,14 +2344,7 @@ async function runKeyboardAction(action: LibraryKeyboardAction): Promise<void> {
     const entry = keyboardEntry;
     if (!entry) return;
     if (action.type === "copyBlockRef") {
-        const title = entry.title || t(i18n, "panel.untitled");
-        const refText = `((${entry.id} '${title}'))`;
-        try {
-            await navigator.clipboard.writeText(refText);
-            showMessage(t(i18n, "reader.blockRefCopied"), 2000);
-        } catch {
-            showMessage(t(i18n, "msg.actionFailed"), 2000);
-        }
+        await copyEntryBlockRef(entry);
         return;
     }
     if (entry.kind === "candidate") {
@@ -2371,50 +2402,12 @@ async function runKeyboardAction(action: LibraryKeyboardAction): Promise<void> {
             }
             break;
         }
-        case "copyCitation": {
-            const citItem: CitationItem = {
-                id: entry.id,
-                title: entry.title,
-                author: entry.author,
-                site: entry.site,
-                url: entry.url,
-                time: entry.time,
-            };
-            const citText = formatGBT7714(citItem);
-            try {
-                if (navigator?.clipboard?.writeText) {
-                    await navigator.clipboard.writeText(citText);
-                    showMessage(t(i18n, "citation.gbtCopied"), 2000);
-                } else {
-                    showMessage(t(i18n, "msg.actionFailed"), 2000);
-                }
-            } catch {
-                showMessage(t(i18n, "msg.actionFailed"), 2000);
-            }
+        case "copyCitation":
+            await copyEntryCitation(entry, "gbt");
             break;
-        }
-        case "copyBibTeX": {
-            const citItem: CitationItem = {
-                id: entry.id,
-                title: entry.title,
-                author: entry.author,
-                site: entry.site,
-                url: entry.url,
-                time: entry.time,
-            };
-            const bibText = formatBibTeX(citItem);
-            try {
-                if (navigator?.clipboard?.writeText) {
-                    await navigator.clipboard.writeText(bibText);
-                    showMessage(t(i18n, "citation.bibtexCopied"), 2000);
-                } else {
-                    showMessage(t(i18n, "msg.actionFailed"), 2000);
-                }
-            } catch {
-                showMessage(t(i18n, "msg.actionFailed"), 2000);
-            }
+        case "copyBibTeX":
+            await copyEntryCitation(entry, "bibtex");
             break;
-        }
     }
 }
 
@@ -3509,6 +3502,10 @@ function metaLine(entry: Row): string {
                                             {/if}
                                             <ActionPopover label={t(i18n, "library.moreActions")} compact>
                                                 <AuthorEditor {facade} docId={entry.id} onSaved={reload} />
+                                                <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryBlockRef(entry)}>🔗 {t(i18n, "action.copyBlockRef")}</button>
+                                                <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "gbt")}>📄 {t(i18n, "citation.copyGBT")}</button>
+                                                <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "bibtex")}>📚 {t(i18n, "citation.copyBibTeX")}</button>
+                                                <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "apa")}>🎓 {t(i18n, "citation.copyAPA")}</button>
                                                 {#if entry.status !== "archived"}
                                                     <button class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId) || entry.status === "later"} onclick={() => void setStatus(entry, "later")}>{t(i18n, "action.moveToLater")}</button>
                                                     <button class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId)} onclick={() => facade.openArchiveDialog(entry.id)}>{t(i18n, "action.archive")}</button>
@@ -3710,7 +3707,13 @@ function metaLine(entry: Row): string {
                                 {/if}
                             {:else}
                                 <div class="glean-card__ops">
-                                    <ActionPopover label={t(i18n, "author.edit")} compact><AuthorEditor {facade} docId={entry.id} onSaved={reload} /></ActionPopover>
+                                    <ActionPopover label={t(i18n, "library.moreActions")} compact>
+                                        <AuthorEditor {facade} docId={entry.id} onSaved={reload} />
+                                        <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryBlockRef(entry)}>🔗 {t(i18n, "action.copyBlockRef")}</button>
+                                        <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "gbt")}>📄 {t(i18n, "citation.copyGBT")}</button>
+                                        <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "bibtex")}>📚 {t(i18n, "citation.copyBibTeX")}</button>
+                                        <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "apa")}>🎓 {t(i18n, "citation.copyAPA")}</button>
+                                    </ActionPopover>
                                     <button
                                         class="glean-op-btn"
                                         title={snapshotLabel(entry)}

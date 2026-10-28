@@ -67,6 +67,16 @@ This release implements floating margin notes in the reader editor for same-focu
 - **Floating Margin Notes (Margin Notes)**: Highlights and user thoughts float as sticky note bubbles along the right margin; clicking a note smoothly scrolls to the source block with pulse focus.
 - **Toggle Margin Notes (Alt+M)**: The reader toolbar offers a dedicated toggle action (Alt+M) to collapse or reveal margin notes at will.
 
+## v1.3.88 update (2026-10-29)
+
+This release implements citation and block reference copy actions in library row & card ActionPopover menus.
+
+**New features & improvements:**
+
+- **Expanded More Actions Popover (T-3523)**: Both wide-screen rows and narrow cards now feature "🔗 Copy Block Ref", "📄 Copy GB/T 7714", "📚 Copy BibTeX", and "🎓 Copy APA" directly in their action popovers.
+- **Mouse & Keyboard Parity**: Bridges the gap between keyboard shortcuts (`Y`/`C`/`Shift+C`) and mouse/touch navigation, allowing 1-click citation copying anywhere.
+- **Shared Function Reuse**: Internal helper functions `copyEntryBlockRef` and `copyEntryCitation` unify clipboard writing and notifications across all library entry points.
+
 ## v1.3.87 update (2026-10-29)
 
 This release implements full-surface APA citation loop: unified formatCitation facade, and triple-format (GB/T, BibTeX, APA) citation export across library, resurface, highlights, stats, and quote card dialogs.
