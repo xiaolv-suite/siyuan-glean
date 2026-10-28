@@ -217,3 +217,13 @@ test("ReaderTab 正文搜索与高亮批注伴生栏接线（T-3419 与批注优
     assert.match(tab, /action === "prevHighlight"/);
     assert.match(tab, /onclick=\{stopSpeech\}/);
 });
+
+test("ReaderTab 顶栏红心收藏按钮、Alt+F/Alt+C 快捷键与帮助说明（T-3498）", () => {
+    const tab = readFileSync(new URL("../src/ui/ReaderTab.svelte", import.meta.url), "utf8");
+    assert.match(tab, /glean-reader__toolbar-fav/);
+    assert.match(tab, /toggleFavorite/);
+    assert.match(tab, /event\.altKey && \(event\.key === "f" \|\| event\.key === "F"\)/);
+    assert.match(tab, /event\.altKey && \(event\.key === "c" \|\| event\.key === "C"\)/);
+    assert.match(tab, /<kbd>Alt\+F<\/kbd>/);
+    assert.match(tab, /<kbd>Alt\+C<\/kbd>/);
+});

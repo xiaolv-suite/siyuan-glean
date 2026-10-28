@@ -67,6 +67,15 @@ This release implements floating margin notes in the reader editor for same-focu
 - **Floating Margin Notes (Margin Notes)**: Highlights and user thoughts float as sticky note bubbles along the right margin; clicking a note smoothly scrolls to the source block with pulse focus.
 - **Toggle Margin Notes (Alt+M)**: The reader toolbar offers a dedicated toggle action (Alt+M) to collapse or reveal margin notes at will.
 
+## v1.3.64 update (2026-10-28)
+
+This release implements reader toolbar favorite star toggle (Alt+F), Alt+C academic citation copy, and context favorite persistence.
+
+**New features & improvements:**
+
+- **Reader Toolbar Favorite Star Toggle**: ReaderTab toolbar embeds dedicated "❤️ Favorite" button (supported via `Alt+F`) to star articles directly during deep reading.
+- **Alt+C Academic Citation Shortcut**: Pressing `Alt+C` instantly copies standard GB/T 7714-2015 citation to clipboard with synced shortcut drawer help.
+
 ## v1.3.63 update (2026-10-28)
 
 This release implements instant star favorite toggling (F key) in blind-box, words count and snapshot badges, and favorite multi-dimensional weighting.

@@ -872,6 +872,22 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
         }
     }
 
+    async function toggleFavorite(): Promise<void> {
+        if (!context || !docId) return;
+        const current = Boolean(context.favorite);
+        const next = !current;
+        context = { ...context, favorite: next };
+        try {
+            await writeClip(facade.pluginInstance, docId, { favorite: next }, { force: true });
+            showMessage(t(i18n, next ? "roaming.favoriteAdded" : "roaming.favoriteRemoved"), 2000);
+            facade.notifyDataChanged();
+        } catch (error) {
+            context = { ...context, favorite: current };
+            console.warn("[glean] 收藏切换失败:", error);
+            showMessage(t(i18n, "msg.actionFailed"), 2500);
+        }
+    }
+
     async function copyArticleBlockRef(): Promise<void> {
         if (!docId) return;
         const title = context?.title || t(i18n, "panel.untitled");
@@ -949,6 +965,18 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
             event.preventDefault();
             event.stopPropagation();
             marginNotesOpen = !marginNotesOpen;
+            return;
+        }
+        if (event.altKey && (event.key === "f" || event.key === "F")) {
+            event.preventDefault();
+            event.stopPropagation();
+            void toggleFavorite();
+            return;
+        }
+        if (event.altKey && (event.key === "c" || event.key === "C")) {
+            event.preventDefault();
+            event.stopPropagation();
+            void copyCitation("gbt");
             return;
         }
         const root = readerRoot;
@@ -1999,6 +2027,13 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                     title={t(i18n, "roaming.nextArticleHint")}
                     onclick={() => void roamNext()}
                 >🎲 {t(i18n, "roaming.nextArticle")}</button>
+                <button
+                    type="button"
+                    class="glean-btn glean-btn--ghost glean-reader__toolbar-fav"
+                    class:glean-reader__toolbar-fav--active={context.favorite}
+                    title={context.favorite ? t(i18n, "roaming.favoriteRemoved") : t(i18n, "roaming.favoriteAction") + " (Alt+F)"}
+                    onclick={() => void toggleFavorite()}
+                >{context.favorite ? "❤️" : "🤍"} {t(i18n, "roaming.favoriteAction")}</button>
             {/if}
             <div class="glean-reader__toolbar-secondary" role="group" aria-label={t(i18n, "reader.shortcuts")}>
                 <button class="glean-btn glean-btn--ghost glean-reader__toolbar-utility glean-reader__toolbar-focus" disabled={mode !== "read"} title={t(i18n, "reader.keyboardFocus")} onclick={() => readerRoot?.focus({ preventScroll: true })}>{t(i18n, "reader.keyboardFocus")}</button>
@@ -2022,6 +2057,8 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                     <div><dt><kbd>Alt+T</kbd></dt><dd>{t(i18n, "reader.extractToTask")}</dd></div>
                     <div><dt><kbd>Alt+R / Alt+B</kbd></dt><dd>{t(i18n, "roaming.nextArticle")}</dd></div>
                     <div><dt><kbd>Alt+M</kbd></dt><dd>{t(i18n, "reader.marginNotesToggle")}</dd></div>
+                    <div><dt><kbd>Alt+F</kbd></dt><dd>{t(i18n, "roaming.favoriteAction")}</dd></div>
+                    <div><dt><kbd>Alt+C</kbd></dt><dd>{t(i18n, "citation.copyGBT")}</dd></div>
                     <div><dt><kbd>h</kbd></dt><dd>{t(i18n, "reader.shortcutNextHighlight")}</dd></div>
                     <div><dt><kbd>Shift+h</kbd></dt><dd>{t(i18n, "reader.shortcutPrevHighlight")}</dd></div>
                     <div><dt><kbd>Shift+F</kbd></dt><dd>{t(i18n, "reader.shortcutImmersive")}</dd></div>
