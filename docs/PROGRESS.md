@@ -1,5 +1,12 @@
 # 进度（PROGRESS）
 
+## T-3515 长文阅读器悬浮边注交互操作条：块引用复制、金句卡片直达与引语分享（2026-10-29）
+
+- [x] 悬浮边注卡片微操作条：`src/ui/ReaderTab.svelte` 与 `src/styles/components/margin-notes.scss`：便签卡片（`.glean-margin-note-card`）在 hover / focus-within 时平滑展开微操作条；
+- [x] 块引用与金句卡片直达：内嵌单点击复制块引用链接（`🔗`）、一键调起金句卡片生成器（`🖼️`）与引语分享复制；
+- [x] 遵照指令本地闭环交付：本地完成 v1.3.80 打包与构建，本轮严格不推送到 GitHub，不调用任何远程接口，等用户通知解封后再行统一推送与发布；
+- [x] 门禁全通：全套单测（1726/1726）、`pnpm check` 0 错误 0 警告，发布门禁与性能基线通过。
+
 ## T-3514 漫游盲盒支持 favoriteOnly 仅漫游星标好文（重温经典）与盲盒筛选栏联动（2026-10-29）
 
 - [x] 漫游算法 favoriteOnly 过滤支持：`src/domain/roaming.ts` 的 `pickRoamingArticle` 接入 `favoriteOnly` 选项，与可用时间预算及主题标签正交组合；

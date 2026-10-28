@@ -2245,6 +2245,32 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                             {#if hl.memo}
                                 <div class="glean-margin-note-card__memo">💬 {hl.memo}</div>
                             {/if}
+                            <div class="glean-margin-note-card__actions" role="group" aria-label={t(i18n, "library.batchActions")}>
+                                <button
+                                    type="button"
+                                    class="glean-margin-note-card__btn"
+                                    title={t(i18n, "action.copyBlockRef")}
+                                    onclick={(e) => { e.stopPropagation(); void copyHighlightBlockRef(hl); }}
+                                >
+                                    🔗
+                                </button>
+                                <button
+                                    type="button"
+                                    class="glean-margin-note-card__btn"
+                                    title={t(i18n, "quoteCard.action")}
+                                    onclick={(e) => { e.stopPropagation(); quoteCardFromHighlight(hl); }}
+                                >
+                                    🖼️
+                                </button>
+                                <button
+                                    type="button"
+                                    class="glean-margin-note-card__btn"
+                                    title={t(i18n, "highlight.copyShare")}
+                                    onclick={(e) => { e.stopPropagation(); void copyHighlightQuote(hl); }}
+                                >
+                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
+                                </button>
+                            </div>
                         </div>
                     {/each}
                 </aside>

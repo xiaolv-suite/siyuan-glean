@@ -80,4 +80,35 @@
         -webkit-box-orient: vertical;
         overflow: hidden;
     }
+
+    &__actions {
+        display: none;
+        align-items: center;
+        gap: 4px;
+        padding-top: 4px;
+        border-top: 1px dashed var(--glean-border-soft, var(--b3-border-color));
+        margin-top: 2px;
+    }
+
+    &:hover &__actions,
+    &:focus-within &__actions {
+        display: flex;
+    }
+
+    &__btn {
+        background: transparent;
+        border: none;
+        padding: 2px 4px;
+        border-radius: var(--glean-radius-sm, 4px);
+        font-size: 11px;
+        color: var(--b3-theme-on-surface);
+        opacity: 0.75;
+        cursor: pointer;
+        line-height: 1;
+
+        &:hover {
+            opacity: 1;
+            background: color-mix(in srgb, var(--b3-theme-on-surface) 10%, transparent);
+        }
+    }
 }

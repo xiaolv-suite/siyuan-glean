@@ -67,6 +67,14 @@ This release implements floating margin notes in the reader editor for same-focu
 - **Floating Margin Notes (Margin Notes)**: Highlights and user thoughts float as sticky note bubbles along the right margin; clicking a note smoothly scrolls to the source block with pulse focus.
 - **Toggle Margin Notes (Alt+M)**: The reader toolbar offers a dedicated toggle action (Alt+M) to collapse or reveal margin notes at will.
 
+## v1.3.80 update (2026-10-29)
+
+This release implements floating margin notes micro-actions bar for block ref copying, quote card generation, and quote share.
+
+**New features & improvements:**
+
+- **Margin Notes Micro-Actions Bar (T-3515)**: Reader floating margin notes bubbles reveal compact action bar upon hover or focus, supporting 1-click block ref copying (`🔗`), quote card dialog generation (`🖼️`), and quote share text copying.
+
 ## v1.3.79 update (2026-10-29)
 
 This release implements favoriteOnly roaming blind-box support for revisiting classic starred articles.
