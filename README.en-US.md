@@ -67,6 +67,16 @@ This release implements floating margin notes in the reader editor for same-focu
 - **Floating Margin Notes (Margin Notes)**: Highlights and user thoughts float as sticky note bubbles along the right margin; clicking a note smoothly scrolls to the source block with pulse focus.
 - **Toggle Margin Notes (Alt+M)**: The reader toolbar offers a dedicated toggle action (Alt+M) to collapse or reveal margin notes at will.
 
+## v1.3.78 update (2026-10-29)
+
+This release implements library batch bar block reference export, GB/T citation export, and batch star favorite.
+
+**New features & improvements:**
+
+- **Batch Copy Block References (T-3513)**: The library batch bar embeds "🔗 Copy Block Ref" button to format all selected articles into Markdown block reference bullets (`- ((docId 'title'))`).
+- **Batch Copy GB/T 7714 Citations (T-3513)**: The batch bar embeds "📄 Copy Citation" button to format selected articles into numbered Chinese national standard GB/T 7714-2015 electronic bibliography.
+- **Batch Star Favorite (T-3513)**: The batch bar embeds "❤️ Favorite" button to star/favorite all selected articles in one click.
+
 ## v1.3.77 update (2026-10-29)
 
 This release implements stats view completed list block ref & citation copying, full completed list Markdown export, and keyboard shortcuts.

@@ -296,3 +296,19 @@ test("批量条键盘与焦点：获焦在批量条内部时按 Escape 安全取
     assert.match(rawBar, /if \(barEl && document\.activeElement && barEl\.contains\(document\.activeElement\)\) \{/);
     assert.match(rawBar, /onClear\(\);/);
 });
+
+test("LibraryBatchBar 批量块引用、批量著录与批量收藏操作按钮（T-3513）", () => {
+    const rawBar = readFileSync(new URL("../src/ui/LibraryBatchBar.svelte", import.meta.url), "utf8");
+    assert.match(rawBar, /onCopyBlockRefs/);
+    assert.match(rawBar, /onCopyCitations/);
+    assert.match(rawBar, /onBatchFavorite/);
+    assert.match(rawBar, /glean-bb--copy-refs/);
+    assert.match(rawBar, /glean-bb--copy-citations/);
+    assert.match(rawBar, /glean-bb--fav/);
+    assert.match(dock, /onCopyBlockRefs=\{batchCopyBlockRefs\}/);
+    assert.match(dock, /onCopyCitations=\{batchCopyCitations\}/);
+    assert.match(dock, /onBatchFavorite=\{batchFavorite\}/);
+    assert.match(dock, /batchCopyBlockRefs/);
+    assert.match(dock, /batchCopyCitations/);
+    assert.match(dock, /batchFavorite/);
+});

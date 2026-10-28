@@ -1019,6 +1019,69 @@ async function batchAddTag(tag: string): Promise<void> {
     }
 }
 
+async function batchCopyBlockRefs(): Promise<void> {
+    if (selection.size === 0) return;
+    const ids = Array.from(selection);
+    const lines = ids.map((id) => {
+        const entry = index.clips[id] || index.candidates[id];
+        const title = entry?.title || t(i18n, "panel.untitled");
+        return `- ((${id} '${title}'))`;
+    });
+    try {
+        await navigator.clipboard.writeText(lines.join("\n"));
+        showMessage(t(i18n, "library.batchBlockRefsCopied", { n: ids.length }), 2500);
+    } catch {
+        showMessage(t(i18n, "msg.actionFailed"), 2000);
+    }
+}
+
+async function batchCopyCitations(): Promise<void> {
+    if (selection.size === 0) return;
+    const ids = Array.from(selection);
+    const lines = ids.map((id, indexNum) => {
+        const clip = index.clips[id];
+        const citItem: CitationItem = {
+            id,
+            title: clip?.title || t(i18n, "panel.untitled"),
+            author: clip?.author,
+            site: clip?.site,
+            url: clip?.url,
+            time: clip?.time,
+        };
+        const cit = formatGBT7714(citItem);
+        return `[${indexNum + 1}] ${cit}`;
+    });
+    try {
+        await navigator.clipboard.writeText(lines.join("\n"));
+        showMessage(t(i18n, "library.batchCitationsCopied", { n: ids.length }), 2500);
+    } catch {
+        showMessage(t(i18n, "msg.actionFailed"), 2000);
+    }
+}
+
+async function batchFavorite(nextFav: boolean): Promise<void> {
+    if (batchBusy || selection.size === 0) return;
+    batchBusy = true;
+    const ids = Array.from(selection);
+    try {
+        let count = 0;
+        for (const id of ids) {
+            const clip = index.clips[id];
+            if (!clip || clip.favorite === nextFav) continue;
+            await writeClip(facade.pluginInstance, id, { favorite: nextFav }, { force: true });
+            count += 1;
+        }
+        facade.notifyDataChanged();
+        await reload();
+        showMessage(t(i18n, nextFav ? "library.batchFavoriteAdded" : "library.batchFavoriteRemoved", { n: count }), 2500);
+    } catch (err) {
+        console.warn("[LvGlean] 批量收藏失败:", err);
+        showMessage(t(i18n, "msg.actionFailed"), 3000);
+    } finally {
+        batchBusy = false;
+    }
+}
+
 const hasWechatSelected = $derived.by(() => {
     for (const id of selection) {
         const entry = index.clips[id];
@@ -3634,6 +3697,9 @@ function metaLine(entry: Row): string {
             onSetAuthor={batchSetAuthor}
             {hasWechatSelected}
             onPurifyWechat={batchPurifyWechat}
+            onCopyBlockRefs={batchCopyBlockRefs}
+            onCopyCitations={batchCopyCitations}
+            onBatchFavorite={batchFavorite}
         />
     {:else if view === "resurface"}
         <ResurfaceView
