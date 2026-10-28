@@ -1478,6 +1478,9 @@
   "citation.copyBibTeX": "复制 BibTeX",
   "citation.gbtCopied": "已复制 GB/T 7714 引用格式到剪贴板！",
   "citation.bibtexCopied": "已复制 BibTeX 引用条目到剪贴板！",
+  "roaming.dialogTitle": "漫游阅读盲盒",
+  "roaming.nextBlindBox": "换个盲盒",
+  "roaming.startReadNow": "立即开读",
   "reader.marginNotes": "边距注记",
   "reader.marginNotesToggle": "展开/收起边距悬浮注记（Alt+M）"
 }

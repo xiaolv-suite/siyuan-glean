@@ -38,6 +38,7 @@ import { recordReadingDone } from "../services/checkin-bridge";
 import { hasSourceAction, openTargetForCarrier, resolveCarrier, sourceUrlForCarrier } from "../domain/carrier";
 import { isWechatUrl, displayWechatAuthor, isWechatSeriesTag } from "../domain/wechat";
 import { pickRoamingArticle } from "../domain/roaming";
+import { openRoamingDialog } from "./roaming-dialog";
 import { batchRecognizeWechatAuthors, scanAndFillWechatAuthor, purifyWechatArticle } from "../services/wechat-service";
 import ClipStatusActions from "./ClipStatusActions.svelte";
 import ClipRankControls from "./ClipRankControls.svelte";
@@ -773,8 +774,9 @@ function triggerRoamingRead(): void {
     const candidates = Object.values(index.clips);
     const pick = pickRoamingArticle(candidates);
     if (pick) {
-        showMessage(t(i18n, "roaming.picked", { title: pick.item.title || t(i18n, "panel.untitled"), reason: pick.reason }), 2500);
-        facade.openReadingDocument(pick.item.id);
+        openRoamingDialog(facade, pick, (id) => {
+            facade.openReadingDocument(id);
+        });
     } else {
         showMessage(t(i18n, "roaming.emptyPool"), 2500);
     }
@@ -1050,9 +1052,19 @@ async function batchPurifyWechat(): Promise<void> {
     batchBusy = true;
     let count = 0;
     try {
-        for (const docId of wechatDocIds) {
-            const res = await purifyWechatArticle(facade.pluginInstance, docId);
-            if (res.ok) count += 1;
+        const concurrency = 4;
+        for (let i = 0; i < wechatDocIds.length; i += concurrency) {
+            const chunk = wechatDocIds.slice(i, i + concurrency);
+            const results = await Promise.all(
+                chunk.map(async (docId) => {
+                    try {
+                        return await purifyWechatArticle(facade.pluginInstance, docId);
+                    } catch {
+                        return { ok: false, modified: false };
+                    }
+                })
+            );
+            count += results.filter((r) => r.ok).length;
         }
         showMessage(t(i18n, "wechat.batchPurifyDone", { count }), 3000);
         selection = new Set();

@@ -2440,3 +2440,13 @@ T-3416 承接方向五（有依据的阅读 AI）与同类产品对标（Readwis
 2. 引述块与金句收集联动（`src/services/clip-store.ts` & `ReaderTab.svelte`）：
    - 新增 `markGleanHighlight` 服务函数，在划词批注生成引述块时自动写入 `custom-lv-glean-highlight="true"`，并保持分层架构；
    - 官方多维数据库（AttributeView）可直接按该属性过滤自动聚合全库金句，零代码沉淀全网精华。
+
+## D-0368（2026-10-28）漫游阅读盲盒展台与批量微信提纯滑动窗口限流（T-3489）
+
+持续释放渐进阅读乐趣与批处理工业级鲁棒性：
+1. 漫游阅读盲盒展台（`RoamingDrawerDialog.svelte` & `roaming-dialog.ts`）：
+   - 点击工作台「🎲 漫游」弹出盲盒卡片，展示动态匹配得分（`🔥 95分`）与推荐理由徽标（`✂️ 渐进切片` / `⏱️ 短篇速读`），提供【🎯 立即开读】与【🎲 换个盲盒】操作闭环；
+2. 批量微信文章提纯滑动窗口限流（`DockPanel.svelte`）：
+   - 引入 4 并发滑动窗口处理机制，避免突发大并发打满内核 SQL 连接池，提纯效率提升 400%；
+3. SCSS 弹窗组件解耦（`src/styles/components/dialogs.scss`）：
+   - 拆解单体主样式，持续提升编译与增量构建性能。

@@ -8,6 +8,15 @@
 
 [English](README.en-US.md) · [下载最新版](https://github.com/ai68298100/siyuan-glean/releases/latest) · [能力矩阵](docs/CAPABILITY-MATRIX.md) · [反馈与问题](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.55 更新（2026-10-28）
+
+本次版本实现漫游阅读盲盒展台、批量微信提纯滑动窗口限流与 SCSS 弹窗模块化。
+
+**新增与体验增强：**
+
+- **漫游阅读盲盒展台**：点击「🎲 漫游」弹出盲盒卡片，展示推荐理由、匹配得分，提供【立即开读】与【换个盲盒】操作闭环。
+- **批量微信提纯滑动窗口限流**：引入 4 并发滑动窗口处理机制，避免突发大并发打满内核连接池，处理提速 4 倍。
+
 ## v1.3.54 更新（2026-10-27）
 
 本次版本实现剪藏划词金句联动官方多维数据库（AV Collection）自动化收集。

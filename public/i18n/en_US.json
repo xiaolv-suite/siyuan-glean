@@ -1478,6 +1478,9 @@
   "citation.copyBibTeX": "Copy BibTeX",
   "citation.gbtCopied": "GB/T 7714 citation copied to clipboard!",
   "citation.bibtexCopied": "BibTeX entry copied to clipboard!",
+  "roaming.dialogTitle": "Roaming Read Blind-Box",
+  "roaming.nextBlindBox": "Try Another",
+  "roaming.startReadNow": "Start Reading",
   "reader.marginNotes": "Margin Notes",
   "reader.marginNotesToggle": "Toggle Margin Notes (Alt+M)"
 }

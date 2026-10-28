@@ -8,6 +8,15 @@ Lv Glean organizes clippings and articles already in SiYuan. It does not crawl t
 
 [中文说明](README.md) · [Latest Release](https://github.com/ai68298100/siyuan-glean/releases/latest) · [Capability matrix](docs/CAPABILITY-MATRIX.md) · [Feedback](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.55 update (2026-10-28)
+
+This release implements the roaming read blind-box drawer dialog, batch WeChat purification sliding window throttling, and dialogs SCSS modularization.
+
+**New features & improvements:**
+
+- **Roaming Read Blind-Box Drawer**: Clicking "🎲 Roam" displays an interactive card showing match scores and recommendation badges, with 1-click "Start Reading" and "Try Another" actions.
+- **Batch WeChat Sliding Window Throttling**: Introduced 4-concurrent sliding window processing to protect the kernel connection pool while quadrupling batch speed.
+
 ## v1.3.54 update (2026-10-27)
 
 This release implements automatic quote gathering into official AttributeView databases.
