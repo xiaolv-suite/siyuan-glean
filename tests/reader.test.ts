@@ -224,8 +224,10 @@ test("ReaderTab 顶栏红心收藏按钮、Alt+F/Alt+C 快捷键与帮助说明�
     assert.match(tab, /toggleFavorite/);
     assert.match(tab, /event\.altKey && \(event\.key === "f" \|\| event\.key === "F"\)/);
     assert.match(tab, /event\.altKey && \(event\.key === "c" \|\| event\.key === "C"\)/);
+    assert.match(tab, /event\.altKey && \(event\.key === "s" \|\| event\.key === "S"\)/);
     assert.match(tab, /<kbd>Alt\+F<\/kbd>/);
     assert.match(tab, /<kbd>Alt\+C<\/kbd>/);
+    assert.match(tab, /<kbd>Alt\+S<\/kbd>/);
 });
 
 test("ReaderTab 大纲项章节块引用复制与过滤框 Escape 清空接线（T-3506）", () => {

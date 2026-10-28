@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount, untrack } from "svelte";
-    import { showMessage } from "siyuan";
+    import { openTab, showMessage } from "siyuan";
     import type { GleanFacade } from "../types";
     import { t } from "../libs/i18n";
     import { createLatestRequestGate } from "../libs/latest-request";
@@ -22,6 +22,7 @@
     import { isWechatUrl, displayWechatAuthor } from "../domain/wechat";
     import { openWeReadGuideDialog } from "./weread-guide-dialog";
     import { scanAndFillWechatAuthor } from "../services/wechat-service";
+    import { snapshotClip } from "../services/snapshot-service";
 
     type PreviewItem = ({ kind: "clip" } & ClipIndexEntry) | ({ kind: "candidate" } & CandidateEntry);
     interface Props {
@@ -331,6 +332,32 @@
         }
     }
 
+    async function openOrTakeSnapshot(): Promise<void> {
+        const snapPath = attrs?.snapshot || (entry.kind === "clip" ? entry.snapshot : "");
+        if (snapPath) {
+            void openTab({ app: facade.pluginInstance.app, asset: { path: snapPath } });
+            return;
+        }
+        if (busy || entry.kind !== "clip") return;
+        busy = true;
+        try {
+            const result = await snapshotClip(facade.pluginInstance, entry.id);
+            if (result?.path) {
+                if (attrs) attrs = { ...attrs, snapshot: result.path };
+                showMessage(t(i18n, result.indexSyncFailed ? "msg.writeIndexPending" : "snapshot.done"), result.indexSyncFailed ? 4000 : 3000);
+                facade.notifyDataChanged();
+                await onRefresh();
+            } else {
+                showMessage(t(i18n, "snapshot.failed"), 3000);
+            }
+        } catch (error) {
+            console.warn("[glean] 预览区拍摄快照失败:", error);
+            showMessage(t(i18n, "snapshot.failed"), 3000);
+        } finally {
+            busy = false;
+        }
+    }
+
     function onPreviewKeyDown(event: KeyboardEvent): void {
         const target = event.target instanceof Element ? event.target : null;
         const textEntry = Boolean(target?.closest("input, textarea, select, [contenteditable]:not([contenteditable='false'])"));
@@ -350,6 +377,10 @@
             } else {
                 void copyBlockRef();
             }
+        } else if (lower === "s") {
+            event.preventDefault();
+            event.stopPropagation();
+            void openOrTakeSnapshot();
         } else if (lower === "f") {
             event.preventDefault();
             event.stopPropagation();
@@ -391,6 +422,16 @@
             <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyBlockRef()}>{t(i18n, "action.copyBlockRef")}</button>
             <button type="button" class="glean-btn glean-btn--ghost" onclick={() => facade.openReadingDocument(entry.id)}>{t(i18n, "preview.openDocument")}</button>
             {#if entry.kind === "clip"}<button type="button" class="glean-btn glean-btn--ghost" disabled={busy || exporting} onclick={() => void downloadMarkdown()}>{exporting ? t(i18n, "settings.exporting") : t(i18n, "export.markdown")}</button>{/if}
+            {#if entry.kind === "clip"}
+                <button
+                    type="button"
+                    class="glean-btn glean-btn--ghost glean-preview__snapshot-btn"
+                    title={attrs?.snapshot ? t(i18n, "snapshot.open") : t(i18n, "snapshot.take") + " (S)"}
+                    onclick={() => void openOrTakeSnapshot()}
+                >
+                    💾 {attrs?.snapshot ? t(i18n, "snapshot.open") : t(i18n, "snapshot.take")}
+                </button>
+            {/if}
             <button type="button" class="glean-btn glean-btn--ghost" onclick={onClose}>{t(i18n, "preview.close")}</button>
         </div>
     </div>

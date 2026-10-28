@@ -67,6 +67,15 @@ This release implements floating margin notes in the reader editor for same-focu
 - **Floating Margin Notes (Margin Notes)**: Highlights and user thoughts float as sticky note bubbles along the right margin; clicking a note smoothly scrolls to the source block with pulse focus.
 - **Toggle Margin Notes (Alt+M)**: The reader toolbar offers a dedicated toggle action (Alt+M) to collapse or reveal margin notes at will.
 
+## v1.3.73 update (2026-10-28)
+
+This release implements preview offline snapshot viewing/taking (S key) and reader Alt+S snapshot shortcut.
+
+**New features & improvements:**
+
+- **Preview Offline Snapshot (S Key)**: Workbench preview header embeds "💾 Snapshot" action (supported via `S` key) to open local offline HTML snapshots or take new ones instantly.
+- **Reader Alt+S Snapshot Shortcut**: Pressing `Alt+S` in the reader tab immediately opens or takes snapshots for offline reading verification.
+
 ## v1.3.72 update (2026-10-28)
 
 This release implements outline heading block reference copy buttons, outline filter Escape quick reset, and hot-path performance tuning for library filtering.

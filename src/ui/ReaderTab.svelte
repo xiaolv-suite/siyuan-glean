@@ -990,6 +990,12 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
             void copyCitation("gbt");
             return;
         }
+        if (event.altKey && (event.key === "s" || event.key === "S")) {
+            event.preventDefault();
+            event.stopPropagation();
+            void takeSnapshot();
+            return;
+        }
         const root = readerRoot;
         const target = event.target instanceof Element ? event.target : null;
         const active = document.activeElement;
@@ -2070,6 +2076,7 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                     <div><dt><kbd>Alt+M</kbd></dt><dd>{t(i18n, "reader.marginNotesToggle")}</dd></div>
                     <div><dt><kbd>Alt+F</kbd></dt><dd>{t(i18n, "roaming.favoriteAction")}</dd></div>
                     <div><dt><kbd>Alt+C</kbd></dt><dd>{t(i18n, "citation.copyGBT")}</dd></div>
+                    <div><dt><kbd>Alt+S</kbd></dt><dd>{t(i18n, context?.snapshot ? "snapshot.open" : "snapshot.take")}</dd></div>
                     <div><dt><kbd>h</kbd></dt><dd>{t(i18n, "reader.shortcutNextHighlight")}</dd></div>
                     <div><dt><kbd>Shift+h</kbd></dt><dd>{t(i18n, "reader.shortcutPrevHighlight")}</dd></div>
                     <div><dt><kbd>Shift+F</kbd></dt><dd>{t(i18n, "reader.shortcutImmersive")}</dd></div>
