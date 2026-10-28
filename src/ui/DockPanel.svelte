@@ -3608,6 +3608,7 @@ function metaLine(entry: Row): string {
             onQuickCapture={quickCapture}
             onQuickSearch={openLibrarySearchFromHome}
             onQuickCandidates={openCandidateQueue}
+            onStartRoaming={triggerRoamingRead}
             {quickCaptureBusy}
         />
     {:else if view === "stats"}

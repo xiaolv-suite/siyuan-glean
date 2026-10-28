@@ -32,10 +32,11 @@ interface Props {
     onQuickCapture?: () => void;
     onQuickSearch?: () => void;
     onQuickCandidates?: () => void;
+    onStartRoaming?: () => void;
     quickCaptureBusy?: boolean;
 }
 
-let { facade, index, currentTime, loading = false, loadError = false, onRetry, onMutated, embedded = false, onQuickCapture, onQuickSearch, onQuickCandidates, quickCaptureBusy = false }: Props = $props();
+let { facade, index, currentTime, loading = false, loadError = false, onRetry, onMutated, embedded = false, onQuickCapture, onQuickSearch, onQuickCandidates, onStartRoaming, quickCaptureBusy = false }: Props = $props();
 const instanceId = $props.id();
 const panelTitleId = `glean-resurface-title-${instanceId}`;
 const quickActionsTitleId = `glean-resurface-quick-actions-title-${instanceId}`;
@@ -743,6 +744,13 @@ function focusCard(id: string): void {
             <div class="glean-empty__art"><svg aria-hidden="true"><use href="#iconGleanSpark" /></svg></div>
             <div class="glean-empty__title">{t(i18n, "resurface.allDone")}</div>
             <div class="glean-empty__hint">{t(i18n, "resurface.allDoneHint")}</div>
+            {#if onStartRoaming}
+                <div style="margin-top: 14px;">
+                    <button type="button" class="glean-btn glean-btn--pri" onclick={onStartRoaming}>
+                        🎲 {t(i18n, "roaming.exploreMore")}
+                    </button>
+                </div>
+            {/if}
         </div>
     {:else}
         {#if candidateCount > 0 && picks.length > 0 && onQuickCandidates}
@@ -766,6 +774,11 @@ function focusCard(id: string): void {
                     </div>
                     <strong class="glean-surf-streak-card__count">🔥 {t(i18n, "resurface.streakCardDays", { n: completionStreak || 0 })}</strong>
                 </div>
+                {#if onStartRoaming}
+                    <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm" title={t(i18n, "roaming.buttonHint")} onclick={onStartRoaming}>
+                        🎲 {t(i18n, "roaming.button")}
+                    </button>
+                {/if}
                 <div class="glean-surf-stepper" role="group" aria-label={t(i18n, "resurface.weeklyStepper")}>
                     {#each recent7Days as step (step.date)}
                         <div class="glean-surf-step" class:glean-surf-step--done={step.completed} class:glean-surf-step--today={step.isToday} title={`${step.date}: ${step.completed ? '已完成' : (step.isToday ? '今日待读' : '未读')}`}>

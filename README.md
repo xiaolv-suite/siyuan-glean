@@ -8,6 +8,14 @@
 
 [English](README.en-US.md) · [下载最新版](https://github.com/ai68298100/siyuan-glean/releases/latest) · [能力矩阵](docs/CAPABILITY-MATRIX.md) · [反馈与问题](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.56 更新（2026-10-28）
+
+本次版本实现今日拾遗漫游盲盒贯通与全部读完空态引导。
+
+**新增与体验增强：**
+
+- **今日拾遗漫游盲盒入口**：在每日重浮头部与全读完空态下提供「🎲 开启漫游阅读盲盒」快捷入口，随时一键探索全库未读好文。
+
 ## v1.3.55 更新（2026-10-28）
 
 本次版本实现漫游阅读盲盒展台、批量微信提纯滑动窗口限流与 SCSS 弹窗模块化。
