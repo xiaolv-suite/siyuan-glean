@@ -7,7 +7,7 @@ import { tick, untrack } from "svelte";
 import { showMessage } from "siyuan";
 import type { GleanFacade } from "../types";
 import { t } from "../libs/i18n";
-import { filterHighlights, formatHighlightShare, formatHighlightTime, groupHighlightsByArticle, highlightFacets, pageHighlights, renderArticleHighlightsMarkdown, retainHighlightSelection, type ArticleHighlightGroup, type HighlightFilter } from "../domain/highlights";
+import { filterHighlights, formatHighlightShare, formatHighlightTime, groupHighlightsByArticle, highlightFacets, pageHighlights, renderArticleHighlightsMarkdown, retainHighlightSelection, selectHighlights, type ArticleHighlightGroup, type HighlightFilter } from "../domain/highlights";
 import {
     copyHighlights, createArticleHighlightsDoc, exportHighlightsCsv, HighlightExportError, highlightDocumentTitle, listDocHighlights, listLibraryHighlights,
     prepareHighlightExport, saveHighlightDraft, type HighlightExportSession, type HighlightItem, type HighlightSaveReason,
@@ -23,6 +23,7 @@ import { moveLibraryCursor, resolveLibraryShortcut } from "../domain/library-key
 import { loadIndex } from "../services/index-store";
 import { pickRoamingArticle } from "../domain/roaming";
 import { openRoamingDialog } from "./roaming-dialog";
+import { formatGBT7714, type CitationItem } from "../domain/citation";
 
 interface Props { facade: GleanFacade }
 let { facade }: Props = $props();
@@ -382,6 +383,46 @@ async function copyQuoteBlockRef(item: HighlightItem): Promise<void> {
     }
 }
 
+async function copyQuoteCitation(item: HighlightItem): Promise<void> {
+    const citItem: CitationItem = {
+        id: item.rootId,
+        title: item.title,
+        site: item.site,
+        url: item.url,
+        time: item.id.slice(0, 8),
+    };
+    const citText = formatGBT7714(citItem);
+    try {
+        if (navigator?.clipboard?.writeText) {
+            await navigator.clipboard.writeText(citText);
+            showMessage(t(i18n, "citation.gbtCopied"), 2000);
+        } else {
+            showMessage(t(i18n, "highlight.clipboardUnavailable"), 3000);
+        }
+    } catch {
+        showMessage(t(i18n, "highlight.clipboardUnavailable"), 3000);
+    }
+}
+
+async function copySelectedHighlightBlockRefs(): Promise<void> {
+    if (!selected.length) return;
+    const selectedItems = selectHighlights(items, selected);
+    const lines = selectedItems.map((item) => {
+        const snippet = item.text.replace(/[\r\n]+/g, " ").trim().slice(0, 30);
+        return `- ((${item.id} '${snippet}')) · 《${item.title || "未命名"}》`;
+    });
+    try {
+        if (navigator?.clipboard?.writeText) {
+            await navigator.clipboard.writeText(lines.join("\n"));
+            showMessage(t(i18n, "reader.blockRefCopied"), 2500);
+        } else {
+            showMessage(t(i18n, "highlight.clipboardUnavailable"), 3000);
+        }
+    } catch {
+        showMessage(t(i18n, "highlight.clipboardUnavailable"), 3000);
+    }
+}
+
 function openDoc(id: string, focusBlockId?: string) {
     facade.openReadingDocument(id, focusBlockId);
 }
@@ -612,6 +653,7 @@ function focusHighlightRow(id: string): void {
         </div>
         <div class="glean-highlights__export-actions" role="group" aria-label={t(i18n, "highlight.exportTitle")}>
             <button disabled={loading || exportBusy || !selected.length} onclick={() => void runExport("copy")}>{t(i18n, "highlight.copy")}</button>
+            <button disabled={loading || exportBusy || !selected.length} onclick={() => void copySelectedHighlightBlockRefs()} title={t(i18n, "action.copyBlockRef")}>🔗 {t(i18n, "action.copyBlockRef")}</button>
             <button disabled={loading || exportBusy || !selected.length} onclick={() => void runExport("csv")}>{t(i18n, "highlight.csv")}</button>
             <button disabled={loading || exportBusy || !selected.length} onclick={() => void runExport("markdown")}>{t(i18n, "highlight.markdown")}</button>
             <button class="glean-highlights__preview-action" disabled={loading || exportBusy || !selected.length || !!session} onclick={() => void runExport("preview")}>{t(i18n, "highlight.preview")}</button>
@@ -673,6 +715,9 @@ function focusHighlightRow(id: string): void {
                             <button type="button" onclick={() => void copyQuoteBlockRef(item)} title={t(i18n, "action.copyBlockRef")} aria-label={t(i18n, "action.copyBlockRef")}>
                                 🔗 {t(i18n, "action.copyBlockRef")}
                             </button>
+                            <button type="button" onclick={() => void copyQuoteCitation(item)} title={t(i18n, "citation.copyGBT")} aria-label={t(i18n, "citation.copyGBT")}>
+                                📄 {t(i18n, "citation.copyGBT")}
+                            </button>
                             <button type="button" onclick={() => quoteCard(item)} title={t(i18n, "quoteCard.action")} aria-label={t(i18n, "quoteCard.action")}>🖼️ {t(i18n, "quoteCard.action")}</button>
                             <button type="button" class:glean-ghost-btn={!hasCardsInstalled} aria-busy={cardingKey === item.id} disabled={Boolean(cardingKey)} onclick={() => void card(item)} title={t(i18n, "flashcard.make")} aria-label={hasCardsInstalled ? t(i18n, "flashcard.make") : t(i18n, "reader.cardGhostHint")}><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanCard" /></svg>{t(i18n, "flashcard.make")}</button>
                             <button type="button" class="glean-btn glean-btn--ghost" class:glean-ghost-btn={!hasExamInstalled} disabled={exportBusy} onclick={() => void exam(item)} title={hasExamInstalled ? t(i18n, "reader.examMake") : t(i18n, "reader.examGhostHint")} aria-label={t(i18n, "reader.examMake")}>📝 {t(i18n, "reader.examMake")}</button>
@@ -732,6 +777,9 @@ function focusHighlightRow(id: string): void {
                                         </button>
                                         <button type="button" onclick={() => void copyQuoteBlockRef(item)} title={t(i18n, "action.copyBlockRef")} aria-label={t(i18n, "action.copyBlockRef")}>
                                             🔗 {t(i18n, "action.copyBlockRef")}
+                                        </button>
+                                        <button type="button" onclick={() => void copyQuoteCitation(item)} title={t(i18n, "citation.copyGBT")} aria-label={t(i18n, "citation.copyGBT")}>
+                                            📄 {t(i18n, "citation.copyGBT")}
                                         </button>
                                         <button type="button" onclick={() => quoteCard(item)} title={t(i18n, "quoteCard.action")} aria-label={t(i18n, "quoteCard.action")}>🖼️ {t(i18n, "quoteCard.action")}</button>
                                         <button type="button" class:glean-ghost-btn={!hasCardsInstalled} aria-busy={cardingKey === item.id} disabled={Boolean(cardingKey)} onclick={() => void card(item)} title={t(i18n, "flashcard.make")} aria-label={hasCardsInstalled ? t(i18n, "flashcard.make") : t(i18n, "reader.cardGhostHint")}><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanCard" /></svg>{t(i18n, "flashcard.make")}</button>

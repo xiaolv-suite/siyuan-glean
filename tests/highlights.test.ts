@@ -157,6 +157,8 @@ test("HighlightView 行级键盘导航复用读库仲裁层（T-3399 / T-3509）
     assert.match(view, /if \(!\["move", "toggleSelect", "activate", "copyBlockRef", "copyCitation"\]\.includes\(action\.type\)\) return;/);
     assert.match(view, /if \(action\.type === "copyBlockRef"\) void copyQuoteBlockRef\(item\)/);
     assert.match(view, /if \(action\.type === "copyCitation"\) void copyQuote\(item\)/);
+    assert.match(view, /copyQuoteCitation/);
+    assert.match(view, /copySelectedHighlightBlockRefs/);
     assert.match(view, /data-glean-highlight-id=\{item\.id\}/);
     assert.match(view, /class:glean-highlights__item--cursor=\{cursorId === item\.id\}/);
     assert.match(view, /action\.type === "roaming"/);

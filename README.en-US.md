@@ -67,6 +67,15 @@ This release implements floating margin notes in the reader editor for same-focu
 - **Floating Margin Notes (Margin Notes)**: Highlights and user thoughts float as sticky note bubbles along the right margin; clicking a note smoothly scrolls to the source block with pulse focus.
 - **Toggle Margin Notes (Alt+M)**: The reader toolbar offers a dedicated toggle action (Alt+M) to collapse or reveal margin notes at will.
 
+## v1.3.82 update (2026-10-29)
+
+This release implements highlights wall multi-select batch block ref export and single-card GB/T citation copy.
+
+**New features & improvements:**
+
+- **Batch Copy Highlight Block References (T-3517)**: The highlights wall selection toolbar embeds "🔗 Copy Block Ref" button to export multiple selected quotes into structured Markdown block references with titles.
+- **Single-Card GB/T 7714 Citation Copying**: Each highlight card in timeline and article grouped modes embeds "📄 Citation" button to copy source article's standard citation.
+
 ## v1.3.81 update (2026-10-29)
 
 This release implements reader tab Alt+E read/edit mode toggle, Alt+P theme cycle shortcut, and shortcut guide alignment.
