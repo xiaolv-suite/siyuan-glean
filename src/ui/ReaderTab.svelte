@@ -952,12 +952,20 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
 
     function onReaderKey(event: KeyboardEvent): void {
         if (event.altKey && (event.key === "e" || event.key === "E")) {
+            event.preventDefault();
+            event.stopPropagation();
             if (excerpt?.text) {
-                event.preventDefault();
-                event.stopPropagation();
                 void incrementalExtractToCards();
-                return;
+            } else {
+                setMode(mode === "read" ? "edit" : "read");
             }
+            return;
+        }
+        if (event.altKey && (event.key === "p" || event.key === "P")) {
+            event.preventDefault();
+            event.stopPropagation();
+            cycleTheme();
+            return;
         }
         if (event.altKey && (event.key === "t" || event.key === "T")) {
             if (excerpt?.text) {
@@ -1972,8 +1980,8 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                 {/if}
             </span>
             <div class="glean-reader__mode" role="group" aria-label={t(i18n, "settings.readerMode")}>
-                <button class="glean-seg__btn" class:glean-seg__btn--on={mode === "read"} aria-pressed={mode === "read"} title={t(i18n, "reader.readHint")} onclick={() => setMode("read")}>{t(i18n, "reader.modeRead")}</button>
-                <button class="glean-seg__btn" class:glean-seg__btn--on={mode === "edit"} aria-pressed={mode === "edit"} title={t(i18n, "reader.editHint")} onclick={() => setMode("edit")}>{t(i18n, "reader.modeEdit")}</button>
+                <button class="glean-seg__btn" class:glean-seg__btn--on={mode === "read"} aria-pressed={mode === "read"} title="{t(i18n, 'reader.readHint')} (Alt+E)" onclick={() => setMode("read")}>{t(i18n, "reader.modeRead")}</button>
+                <button class="glean-seg__btn" class:glean-seg__btn--on={mode === "edit"} aria-pressed={mode === "edit"} title="{t(i18n, 'reader.editHint')} (Alt+E)" onclick={() => setMode("edit")}>{t(i18n, "reader.modeEdit")}</button>
             </div>
             <button class="glean-btn glean-btn--ghost glean-reader__toolbar-sidebar" aria-busy={sidebarBusy} disabled={sidebarBusy} aria-expanded={!sidebarCollapsed && !immersive} aria-controls={sidebarId} title={t(i18n, sidebarCollapsed || immersive ? "reader.sidebarShow" : "reader.sidebarHide")} onclick={toggleCompanion}>{t(i18n, sidebarCollapsed || immersive ? "reader.sidebarShow" : "reader.sidebarHide")}</button>
             <button class="glean-btn glean-btn--ghost glean-reader__toolbar-search" aria-expanded={searchOpen} title={t(i18n, "reader.searchTitle")} aria-label={t(i18n, "reader.searchTitle")} onclick={() => { searchOpen = !searchOpen; }}><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanSearch" /></svg></button>
@@ -1990,7 +1998,7 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                 </button>
             {/if}
             <button class="glean-btn glean-btn--ghost glean-reader__toolbar-appearance" aria-expanded={appearanceOpen} aria-controls={appearancePanelId} title={t(i18n, "reader.appearanceTitle")} onclick={toggleAppearance}>{t(i18n, "reader.appearanceTitle")}</button>
-            <button type="button" class="glean-btn glean-btn--ghost glean-reader__toolbar-theme" title={t(i18n, "reader.themeToggle")} aria-label={t(i18n, "reader.themeToggle")} onclick={cycleTheme}>
+            <button type="button" class="glean-btn glean-btn--ghost glean-reader__toolbar-theme" title="{t(i18n, 'reader.themeToggle')} (Alt+P)" aria-label={t(i18n, "reader.themeToggle")} onclick={cycleTheme}>
                 <span class={`glean-reader__theme-dot glean-reader__theme-dot--${readerAppearance.theme}`} aria-hidden="true"></span>
                 <span>{themeLabel(readerAppearance.theme)}</span>
             </button>
@@ -2071,8 +2079,9 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                     <div><dt><kbd>a</kbd></dt><dd>{t(i18n, "reader.shortcutLater")}</dd></div>
                     <div><dt><kbd>o</kbd></dt><dd>{t(i18n, "reader.shortcutOpenSource")}</dd></div>
                     <div><dt><kbd>x</kbd></dt><dd>{t(i18n, "reader.shortcutExcerpt")}</dd></div>
-                    <div><dt><kbd>Alt+E</kbd></dt><dd>{t(i18n, "reader.extractToCards")}</dd></div>
+                    <div><dt><kbd>Alt+E</kbd></dt><dd>{t(i18n, "settings.readerMode")} / {t(i18n, "reader.extractToCards")}</dd></div>
                     <div><dt><kbd>Alt+T</kbd></dt><dd>{t(i18n, "reader.extractToTask")}</dd></div>
+                    <div><dt><kbd>Alt+P</kbd></dt><dd>{t(i18n, "reader.themeToggle")}</dd></div>
                     <div><dt><kbd>Alt+R / Alt+B</kbd></dt><dd>{t(i18n, "roaming.nextArticle")}</dd></div>
                     <div><dt><kbd>Alt+M</kbd></dt><dd>{t(i18n, "reader.marginNotesToggle")}</dd></div>
                     <div><dt><kbd>Alt+F</kbd></dt><dd>{t(i18n, "roaming.favoriteAction")}</dd></div>

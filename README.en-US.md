@@ -67,6 +67,16 @@ This release implements floating margin notes in the reader editor for same-focu
 - **Floating Margin Notes (Margin Notes)**: Highlights and user thoughts float as sticky note bubbles along the right margin; clicking a note smoothly scrolls to the source block with pulse focus.
 - **Toggle Margin Notes (Alt+M)**: The reader toolbar offers a dedicated toggle action (Alt+M) to collapse or reveal margin notes at will.
 
+## v1.3.81 update (2026-10-29)
+
+This release implements reader tab Alt+E read/edit mode toggle, Alt+P theme cycle shortcut, and shortcut guide alignment.
+
+**New features & improvements:**
+
+- **Alt+E Read/Edit Mode Toggle (T-3516)**: Pressing `Alt+E` without text selection instantly toggles between read mode (`preview`) and edit mode (`wysiwyg`); preserves card extraction when text is selected.
+- **Alt+P Reader Theme Cycling**: Pressing `Alt+P` cycles through follow system (`follow`), parchment (`paper`), and eye-protection (`eye`) themes.
+- **Shortcut Guide Alignment**: Toolbar buttons and shortcut help drawer synchronize `<kbd>Alt+E</kbd>` and `<kbd>Alt+P</kbd>`.
+
 ## v1.3.80 update (2026-10-29)
 
 This release implements floating margin notes micro-actions bar for block ref copying, quote card generation, and quote share.

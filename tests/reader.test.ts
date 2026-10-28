@@ -218,16 +218,21 @@ test("ReaderTab 正文搜索与高亮批注伴生栏接线（T-3419 与批注优
     assert.match(tab, /onclick=\{stopSpeech\}/);
 });
 
-test("ReaderTab 顶栏红心收藏按钮、Alt+F/Alt+C 快捷键与帮助说明（T-3498）", () => {
+test("ReaderTab 顶栏红心收藏按钮、Alt+F/Alt+C 快捷键与帮助说明（T-3498 / T-3516）", () => {
     const tab = readFileSync(new URL("../src/ui/ReaderTab.svelte", import.meta.url), "utf8");
     assert.match(tab, /glean-reader__toolbar-fav/);
     assert.match(tab, /toggleFavorite/);
     assert.match(tab, /event\.altKey && \(event\.key === "f" \|\| event\.key === "F"\)/);
     assert.match(tab, /event\.altKey && \(event\.key === "c" \|\| event\.key === "C"\)/);
     assert.match(tab, /event\.altKey && \(event\.key === "s" \|\| event\.key === "S"\)/);
+    assert.match(tab, /event\.altKey && \(event\.key === "p" \|\| event\.key === "P"\)/);
+    assert.match(tab, /event\.altKey && \(event\.key === "e" \|\| event\.key === "E"\)/);
+    assert.match(tab, /cycleTheme\(\)/);
     assert.match(tab, /<kbd>Alt\+F<\/kbd>/);
     assert.match(tab, /<kbd>Alt\+C<\/kbd>/);
     assert.match(tab, /<kbd>Alt\+S<\/kbd>/);
+    assert.match(tab, /<kbd>Alt\+P<\/kbd>/);
+    assert.match(tab, /<kbd>Alt\+E<\/kbd>/);
 });
 
 test("ReaderTab 大纲项章节块引用复制与过滤框 Escape 清空接线（T-3506）", () => {
