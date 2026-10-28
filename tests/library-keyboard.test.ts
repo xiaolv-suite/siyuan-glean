@@ -127,6 +127,17 @@ test("C 键语义仲裁：有勾选集合时优先 clearSelection，无勾选且
     assert.equal(resolveLibraryShortcut(key("c", { repeat: true }), { cursorActive: true }), null);
 });
 
+test("Shift+C 键位解析为 copyBibTeX 导出（T-3520）", () => {
+    assert.deepEqual(resolveLibraryShortcut(key("C", { shiftKey: true }), active), { type: "copyBibTeX" });
+    assert.deepEqual(resolveLibraryShortcut(key("c", { shiftKey: true }), active), { type: "copyBibTeX" });
+    // 未激活光标不响应
+    assert.equal(resolveLibraryShortcut(key("C", { shiftKey: true }), {}), null);
+    // 有勾选集合时不作为 BibTeX，让位
+    assert.equal(resolveLibraryShortcut(key("C", { shiftKey: true }), { ...active, hasSelection: true }), null);
+    // 长按防抖保护
+    assert.equal(resolveLibraryShortcut(key("C", { shiftKey: true, repeat: true }), active), null);
+});
+
 test("漫游盲盒键位：B/b 无需激活光标即可全局呼出，长按与输入框保护（T-3494）", () => {
     assert.deepEqual(resolveLibraryShortcut(key("b"), {}), { type: "roaming" });
     assert.deepEqual(resolveLibraryShortcut(key("b"), active), { type: "roaming" });
@@ -174,8 +185,12 @@ test("DockPanel 接线：键盘光标样式、提示条与动作路由存在", (
     assert.match(dock, /<kbd>S<\/kbd> \{t\(i18n, "library\.keyboardSelectDisplayed"\)\}/);
     assert.match(dock, /<kbd>F<\/kbd> \{selection\.size > 0 \? t\(i18n, "library\.keyboardKeepFiltered"\) : t\(i18n, "roaming\.favoriteAction"\)\}/);
     assert.match(dock, /<kbd>C<\/kbd> \{selection\.size > 0 \? t\(i18n, "library\.keyboardClearSelection"\) : t\(i18n, "citation\.copyGBT"\)\}/);
+    assert.match(dock, /<kbd>Shift\+C<\/kbd> BibTeX/);
     assert.match(dock, /case "copyCitation":/);
     assert.match(dock, /formatGBT7714\(citItem\)/);
+    assert.match(dock, /case "copyBibTeX":/);
+    assert.match(dock, /formatBibTeX\(citItem\)/);
+    assert.match(dock, /onCopyBibTeX=\{batchCopyBibTeX\}/);
     assert.match(dock, /if \(action\.type === "selectDisplayed"\) \{[\s\S]*?selectDisplayedArticles\(\);/);
     assert.match(dock, /if \(action\.type === "keepFiltered"\) \{[\s\S]*?retainSelectionToFilter\(\);/);
     assert.match(dock, /if \(action\.type === "clearSelection"\) \{[\s\S]*?clearSelection\(\);/);

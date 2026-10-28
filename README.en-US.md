@@ -67,6 +67,16 @@ This release implements floating margin notes in the reader editor for same-focu
 - **Floating Margin Notes (Margin Notes)**: Highlights and user thoughts float as sticky note bubbles along the right margin; clicking a note smoothly scrolls to the source block with pulse focus.
 - **Toggle Margin Notes (Alt+M)**: The reader toolbar offers a dedicated toggle action (Alt+M) to collapse or reveal margin notes at will.
 
+## v1.3.85 update (2026-10-29)
+
+This release implements full-surface BibTeX academic citation loop: library batch BibTeX export, keyboard Shift+C / Alt+Shift+C shortcuts, and resurface/highlights direct citation.
+
+**New features & improvements:**
+
+- **Batch BibTeX Export in Library (T-3520)**: Library batch bar embeds a dedicated "📚 BibTeX" button to format selected articles into standard `@article` bibliography entries for Zotero and LaTeX.
+- **Keyboard Shift+C / Alt+Shift+C Shortcuts (T-3520)**: While `C` copies GB/T 7714 citations, `Shift+C` in library and resurface copies BibTeX entries instantly; ReaderTab supports `Alt+Shift+C`.
+- **Resurface & Highlights Citation Parity (T-3520)**: Resurface and highlight cards feature 1-click BibTeX export; highlight selection bar supports deduplicated batch citation export.
+
 ## v1.3.84 update (2026-10-29)
 
 This release implements library toolbar permanent favorite filter button and Alt+F global shortcut.

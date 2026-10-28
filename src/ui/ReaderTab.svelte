@@ -996,7 +996,11 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
         if (event.altKey && (event.key === "c" || event.key === "C")) {
             event.preventDefault();
             event.stopPropagation();
-            void copyCitation("gbt");
+            if (event.shiftKey) {
+                void copyCitation("bibtex");
+            } else {
+                void copyCitation("gbt");
+            }
             return;
         }
         if (event.altKey && (event.key === "s" || event.key === "S")) {
@@ -2086,6 +2090,7 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                     <div><dt><kbd>Alt+M</kbd></dt><dd>{t(i18n, "reader.marginNotesToggle")}</dd></div>
                     <div><dt><kbd>Alt+F</kbd></dt><dd>{t(i18n, "roaming.favoriteAction")}</dd></div>
                     <div><dt><kbd>Alt+C</kbd></dt><dd>{t(i18n, "citation.copyGBT")}</dd></div>
+                    <div><dt><kbd>Alt+Shift+C</kbd></dt><dd>{t(i18n, "citation.copyBibTeX")}</dd></div>
                     <div><dt><kbd>Alt+S</kbd></dt><dd>{t(i18n, context?.snapshot ? "snapshot.open" : "snapshot.take")}</dd></div>
                     <div><dt><kbd>h</kbd></dt><dd>{t(i18n, "reader.shortcutNextHighlight")}</dd></div>
                     <div><dt><kbd>Shift+h</kbd></dt><dd>{t(i18n, "reader.shortcutPrevHighlight")}</dd></div>
@@ -2374,6 +2379,9 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                         </button>
                         <button type="button" class="glean-btn glean-btn--ghost glean-wechat-publisher__btn" onclick={() => void copyCitation("gbt")} title={t(i18n, "citation.copyGBT")}>
                             📜 {t(i18n, "citation.copyGBT")}
+                        </button>
+                        <button type="button" class="glean-btn glean-btn--ghost glean-wechat-publisher__btn" onclick={() => void copyCitation("bibtex")} title={t(i18n, "citation.copyBibTeX")}>
+                            📚 BibTeX
                         </button>
                         <button type="button" class="glean-btn glean-btn--ghost glean-wechat-publisher__btn" onclick={() => void copyArticleBlockRef()} title={t(i18n, "action.copyBlockRef")}>
                             🔗 {t(i18n, "action.copyBlockRef")}

@@ -23,7 +23,7 @@ import { moveLibraryCursor, resolveLibraryShortcut } from "../domain/library-key
 import { loadIndex } from "../services/index-store";
 import { pickRoamingArticle } from "../domain/roaming";
 import { openRoamingDialog } from "./roaming-dialog";
-import { formatGBT7714, type CitationItem } from "../domain/citation";
+import { formatBibTeX, formatGBT7714, type CitationItem } from "../domain/citation";
 
 interface Props { facade: GleanFacade }
 let { facade }: Props = $props();
@@ -383,7 +383,7 @@ async function copyQuoteBlockRef(item: HighlightItem): Promise<void> {
     }
 }
 
-async function copyQuoteCitation(item: HighlightItem): Promise<void> {
+async function copyQuoteCitation(item: HighlightItem, format: "gbt" | "bibtex" = "gbt"): Promise<void> {
     const citItem: CitationItem = {
         id: item.rootId,
         title: item.title,
@@ -391,11 +391,41 @@ async function copyQuoteCitation(item: HighlightItem): Promise<void> {
         url: item.url,
         time: item.id.slice(0, 8),
     };
-    const citText = formatGBT7714(citItem);
+    const citText = format === "bibtex" ? formatBibTeX(citItem) : formatGBT7714(citItem);
     try {
         if (navigator?.clipboard?.writeText) {
             await navigator.clipboard.writeText(citText);
-            showMessage(t(i18n, "citation.gbtCopied"), 2000);
+            showMessage(t(i18n, format === "bibtex" ? "citation.bibtexCopied" : "citation.gbtCopied"), 2000);
+        } else {
+            showMessage(t(i18n, "highlight.clipboardUnavailable"), 3000);
+        }
+    } catch {
+        showMessage(t(i18n, "highlight.clipboardUnavailable"), 3000);
+    }
+}
+
+async function copySelectedHighlightCitations(format: "gbt" | "bibtex" = "gbt"): Promise<void> {
+    if (!selected.length) return;
+    const selectedItems = selectHighlights(items, selected);
+    const seen = new Set<string>();
+    const lines: string[] = [];
+    for (const item of selectedItems) {
+        if (seen.has(item.rootId)) continue;
+        seen.add(item.rootId);
+        const citItem: CitationItem = {
+            id: item.rootId,
+            title: item.title,
+            site: item.site,
+            url: item.url,
+            time: item.id.slice(0, 8),
+        };
+        lines.push(format === "bibtex" ? formatBibTeX(citItem) : `[${lines.length + 1}] ${formatGBT7714(citItem)}`);
+    }
+    const sep = format === "bibtex" ? "\n\n" : "\n";
+    try {
+        if (navigator?.clipboard?.writeText) {
+            await navigator.clipboard.writeText(lines.join(sep));
+            showMessage(t(i18n, format === "bibtex" ? "highlight.batchBibtexCopied" : "highlight.batchCitationsCopied", { n: lines.length }), 2500);
         } else {
             showMessage(t(i18n, "highlight.clipboardUnavailable"), 3000);
         }
@@ -542,7 +572,7 @@ function handleHighlightShortcut(event: KeyboardEvent): void {
         selected = [];
         return;
     }
-    if (!["move", "toggleSelect", "activate", "copyBlockRef", "copyCitation"].includes(action.type)) return;
+    if (!["move", "toggleSelect", "activate", "copyBlockRef", "copyCitation", "copyBibTeX"].includes(action.type)) return;
     event.preventDefault();
     event.stopPropagation();
     if (action.type === "move") {
@@ -557,6 +587,7 @@ function handleHighlightShortcut(event: KeyboardEvent): void {
     if (action.type === "activate") openDoc(item.rootId, item.id);
     if (action.type === "copyBlockRef") void copyQuoteBlockRef(item);
     if (action.type === "copyCitation") void copyQuote(item);
+    if (action.type === "copyBibTeX") void copyQuoteCitation(item, "bibtex");
 }
 
 async function triggerRoaming(): Promise<void> {
@@ -654,6 +685,8 @@ function focusHighlightRow(id: string): void {
         <div class="glean-highlights__export-actions" role="group" aria-label={t(i18n, "highlight.exportTitle")}>
             <button disabled={loading || exportBusy || !selected.length} onclick={() => void runExport("copy")}>{t(i18n, "highlight.copy")}</button>
             <button disabled={loading || exportBusy || !selected.length} onclick={() => void copySelectedHighlightBlockRefs()} title={t(i18n, "action.copyBlockRef")}>🔗 {t(i18n, "action.copyBlockRef")}</button>
+            <button disabled={loading || exportBusy || !selected.length} onclick={() => void copySelectedHighlightCitations("gbt")} title={t(i18n, "citation.copyGBT")}>📄 {t(i18n, "citation.copyGBT")}</button>
+            <button disabled={loading || exportBusy || !selected.length} onclick={() => void copySelectedHighlightCitations("bibtex")} title={t(i18n, "citation.copyBibTeX")}>📚 BibTeX</button>
             <button disabled={loading || exportBusy || !selected.length} onclick={() => void runExport("csv")}>{t(i18n, "highlight.csv")}</button>
             <button disabled={loading || exportBusy || !selected.length} onclick={() => void runExport("markdown")}>{t(i18n, "highlight.markdown")}</button>
             <button class="glean-highlights__preview-action" disabled={loading || exportBusy || !selected.length || !!session} onclick={() => void runExport("preview")}>{t(i18n, "highlight.preview")}</button>
@@ -715,8 +748,11 @@ function focusHighlightRow(id: string): void {
                             <button type="button" onclick={() => void copyQuoteBlockRef(item)} title={t(i18n, "action.copyBlockRef")} aria-label={t(i18n, "action.copyBlockRef")}>
                                 🔗 {t(i18n, "action.copyBlockRef")}
                             </button>
-                            <button type="button" onclick={() => void copyQuoteCitation(item)} title={t(i18n, "citation.copyGBT")} aria-label={t(i18n, "citation.copyGBT")}>
+                            <button type="button" onclick={() => void copyQuoteCitation(item, "gbt")} title={t(i18n, "citation.copyGBT")} aria-label={t(i18n, "citation.copyGBT")}>
                                 📄 {t(i18n, "citation.copyGBT")}
+                            </button>
+                            <button type="button" onclick={() => void copyQuoteCitation(item, "bibtex")} title={t(i18n, "citation.copyBibTeX")} aria-label={t(i18n, "citation.copyBibTeX")}>
+                                📚 BibTeX
                             </button>
                             <button type="button" onclick={() => quoteCard(item)} title={t(i18n, "quoteCard.action")} aria-label={t(i18n, "quoteCard.action")}>🖼️ {t(i18n, "quoteCard.action")}</button>
                             <button type="button" class:glean-ghost-btn={!hasCardsInstalled} aria-busy={cardingKey === item.id} disabled={Boolean(cardingKey)} onclick={() => void card(item)} title={t(i18n, "flashcard.make")} aria-label={hasCardsInstalled ? t(i18n, "flashcard.make") : t(i18n, "reader.cardGhostHint")}><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanCard" /></svg>{t(i18n, "flashcard.make")}</button>
@@ -778,8 +814,11 @@ function focusHighlightRow(id: string): void {
                                         <button type="button" onclick={() => void copyQuoteBlockRef(item)} title={t(i18n, "action.copyBlockRef")} aria-label={t(i18n, "action.copyBlockRef")}>
                                             🔗 {t(i18n, "action.copyBlockRef")}
                                         </button>
-                                        <button type="button" onclick={() => void copyQuoteCitation(item)} title={t(i18n, "citation.copyGBT")} aria-label={t(i18n, "citation.copyGBT")}>
+                                        <button type="button" onclick={() => void copyQuoteCitation(item, "gbt")} title={t(i18n, "citation.copyGBT")} aria-label={t(i18n, "citation.copyGBT")}>
                                             📄 {t(i18n, "citation.copyGBT")}
+                                        </button>
+                                        <button type="button" onclick={() => void copyQuoteCitation(item, "bibtex")} title={t(i18n, "citation.copyBibTeX")} aria-label={t(i18n, "citation.copyBibTeX")}>
+                                            📚 BibTeX
                                         </button>
                                         <button type="button" onclick={() => quoteCard(item)} title={t(i18n, "quoteCard.action")} aria-label={t(i18n, "quoteCard.action")}>🖼️ {t(i18n, "quoteCard.action")}</button>
                                         <button type="button" class:glean-ghost-btn={!hasCardsInstalled} aria-busy={cardingKey === item.id} disabled={Boolean(cardingKey)} onclick={() => void card(item)} title={t(i18n, "flashcard.make")} aria-label={hasCardsInstalled ? t(i18n, "flashcard.make") : t(i18n, "reader.cardGhostHint")}><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanCard" /></svg>{t(i18n, "flashcard.make")}</button>
@@ -827,6 +866,7 @@ function focusHighlightRow(id: string): void {
                 <kbd>Enter</kbd> {t(i18n, "library.keyboardView")}
                 <kbd>Y</kbd> {t(i18n, "action.copyBlockRef")}
                 <kbd>C</kbd> {selected.length > 0 ? t(i18n, "library.keyboardClearSelection") : t(i18n, "highlight.copyShare")}
+                <kbd>Shift+C</kbd> BibTeX
                 <kbd>B</kbd> {t(i18n, "roaming.button")}
                 <kbd>Esc</kbd> {t(i18n, "library.keyboardExit")}
             </span>

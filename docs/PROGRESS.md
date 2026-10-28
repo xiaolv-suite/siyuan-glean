@@ -1,5 +1,13 @@
 # 进度（PROGRESS）
 
+## T-3520 全表面 BibTeX 学术文献著录闭环：读库批量 BibTeX 导出、全键盘 Shift+C / Alt+Shift+C 快捷键与今日拾遗/摘录墙直达（2026-10-29）
+
+- [x] 读库批量 BibTeX 导出：`src/ui/LibraryBatchBar.svelte` 批量条增设「📚 BibTeX」导出按钮，`src/ui/DockPanel.svelte` 实现 `batchCopyBibTeX` 将多选文章一键格式化为标准 `@article` 条目存入剪贴板；
+- [x] 全键盘 Shift+C / Alt+Shift+C 快捷键仲裁：`src/domain/library-keyboard.ts` 扩充 `copyBibTeX` 动作，光标激活时仲裁 `Shift+C` 触发 BibTeX 复制；`src/ui/ReaderTab.svelte` 接入 `Alt+Shift+C` 快捷键并更新快捷键帮助；
+- [x] 今日拾遗与摘录墙全表面贯通：`src/ui/ResurfaceView.svelte` 与 `src/ui/HighlightView.svelte` 卡片与批量导出栏全量接入 BibTeX 著录导出与键盘直达；
+- [x] 遵照指令本地闭环交付：本地完成 v1.3.85 打包与构建，本轮严格不推送到 GitHub，不调用任何远程接口，等用户通知解封后再行统一推送与发布；
+- [x] 门禁全通：全套单测（1728/1728）、`pnpm check` 0 错误 0 警告，发布门禁与性能基线通过。
+
 ## T-3519 读库工具栏星标收藏常驻切换按钮与 Alt+F 全局筛选快捷键（2026-10-29）
 
 - [x] 工具栏常驻收藏切换按钮：桌面工作台顶栏（`glean-libbar`）增设常驻「❤️ 仅收藏」按钮（`.glean-libbar__fav-btn`），一键在全库与星标精选好文之间自由切换；

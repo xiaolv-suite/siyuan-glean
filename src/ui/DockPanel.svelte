@@ -39,7 +39,7 @@ import { hasSourceAction, openTargetForCarrier, resolveCarrier, sourceUrlForCarr
 import { isWechatUrl, displayWechatAuthor, isWechatSeriesTag } from "../domain/wechat";
 import { pickRoamingArticle } from "../domain/roaming";
 import { openRoamingDialog } from "./roaming-dialog";
-import { formatGBT7714, type CitationItem } from "../domain/citation";
+import { formatBibTeX, formatGBT7714, type CitationItem } from "../domain/citation";
 import { batchRecognizeWechatAuthors, scanAndFillWechatAuthor, purifyWechatArticle } from "../services/wechat-service";
 import ClipStatusActions from "./ClipStatusActions.svelte";
 import ClipRankControls from "./ClipRankControls.svelte";
@@ -1048,7 +1048,7 @@ async function batchCopyCitations(): Promise<void> {
     if (selection.size === 0) return;
     const ids = Array.from(selection);
     const lines = ids.map((id, indexNum) => {
-        const clip = index.clips[id];
+        const clip = index.clips[id] || index.candidates[id];
         const citItem: CitationItem = {
             id,
             title: clip?.title || t(i18n, "panel.untitled"),
@@ -1063,6 +1063,29 @@ async function batchCopyCitations(): Promise<void> {
     try {
         await navigator.clipboard.writeText(lines.join("\n"));
         showMessage(t(i18n, "library.batchCitationsCopied", { n: ids.length }), 2500);
+    } catch {
+        showMessage(t(i18n, "msg.actionFailed"), 2000);
+    }
+}
+
+async function batchCopyBibTeX(): Promise<void> {
+    if (selection.size === 0) return;
+    const ids = Array.from(selection);
+    const blocks = ids.map((id) => {
+        const clip = index.clips[id] || index.candidates[id];
+        const citItem: CitationItem = {
+            id,
+            title: clip?.title || t(i18n, "panel.untitled"),
+            author: clip?.author,
+            site: clip?.site,
+            url: clip?.url,
+            time: clip?.time,
+        };
+        return formatBibTeX(citItem);
+    });
+    try {
+        await navigator.clipboard.writeText(blocks.join("\n\n"));
+        showMessage(t(i18n, "library.batchBibtexCopied", { n: ids.length }), 2500);
     } catch {
         showMessage(t(i18n, "msg.actionFailed"), 2000);
     }
@@ -2346,6 +2369,28 @@ async function runKeyboardAction(action: LibraryKeyboardAction): Promise<void> {
             }
             break;
         }
+        case "copyBibTeX": {
+            const citItem: CitationItem = {
+                id: entry.id,
+                title: entry.title,
+                author: entry.author,
+                site: entry.site,
+                url: entry.url,
+                time: entry.time,
+            };
+            const bibText = formatBibTeX(citItem);
+            try {
+                if (navigator?.clipboard?.writeText) {
+                    await navigator.clipboard.writeText(bibText);
+                    showMessage(t(i18n, "citation.bibtexCopied"), 2000);
+                } else {
+                    showMessage(t(i18n, "msg.actionFailed"), 2000);
+                }
+            } catch {
+                showMessage(t(i18n, "msg.actionFailed"), 2000);
+            }
+            break;
+        }
     }
 }
 
@@ -2840,6 +2885,7 @@ function metaLine(entry: Row): string {
                     <kbd>S</kbd> {t(i18n, "library.keyboardSelectDisplayed")}
                     <kbd>F</kbd> {selection.size > 0 ? t(i18n, "library.keyboardKeepFiltered") : t(i18n, "roaming.favoriteAction")}
                     <kbd>C</kbd> {selection.size > 0 ? t(i18n, "library.keyboardClearSelection") : t(i18n, "citation.copyGBT")}
+                    <kbd>Shift+C</kbd> BibTeX
                     <kbd>P</kbd><kbd>1-5</kbd> {t(i18n, "library.keyboardPriority")}
                     <kbd>M</kbd> {t(i18n, "library.keyboardRating")}
                     <kbd>Y</kbd> {t(i18n, "action.copyBlockRef")}
@@ -3731,6 +3777,7 @@ function metaLine(entry: Row): string {
             onPurifyWechat={batchPurifyWechat}
             onCopyBlockRefs={batchCopyBlockRefs}
             onCopyCitations={batchCopyCitations}
+            onCopyBibTeX={batchCopyBibTeX}
             onBatchFavorite={batchFavorite}
         />
     {:else if view === "resurface"}

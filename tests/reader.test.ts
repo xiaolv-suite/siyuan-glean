@@ -224,12 +224,15 @@ test("ReaderTab 顶栏红心收藏按钮、Alt+F/Alt+C 快捷键与帮助说明�
     assert.match(tab, /toggleFavorite/);
     assert.match(tab, /event\.altKey && \(event\.key === "f" \|\| event\.key === "F"\)/);
     assert.match(tab, /event\.altKey && \(event\.key === "c" \|\| event\.key === "C"\)/);
+    assert.match(tab, /copyCitation\("bibtex"\)/);
+    assert.match(tab, /copyCitation\("gbt"\)/);
     assert.match(tab, /event\.altKey && \(event\.key === "s" \|\| event\.key === "S"\)/);
     assert.match(tab, /event\.altKey && \(event\.key === "p" \|\| event\.key === "P"\)/);
     assert.match(tab, /event\.altKey && \(event\.key === "e" \|\| event\.key === "E"\)/);
     assert.match(tab, /cycleTheme\(\)/);
     assert.match(tab, /<kbd>Alt\+F<\/kbd>/);
     assert.match(tab, /<kbd>Alt\+C<\/kbd>/);
+    assert.match(tab, /<kbd>Alt\+Shift\+C<\/kbd>/);
     assert.match(tab, /<kbd>Alt\+S<\/kbd>/);
     assert.match(tab, /<kbd>Alt\+P<\/kbd>/);
     assert.match(tab, /<kbd>Alt\+E<\/kbd>/);

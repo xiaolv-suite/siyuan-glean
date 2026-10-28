@@ -21,6 +21,7 @@
         onPurifyWechat?: () => void | Promise<void>;
         onCopyBlockRefs?: () => void | Promise<void>;
         onCopyCitations?: () => void | Promise<void>;
+        onCopyBibTeX?: () => void | Promise<void>;
         onBatchFavorite?: (fav: boolean) => void | Promise<void>;
         hasWechatSelected?: boolean;
     }
@@ -28,7 +29,7 @@
     let {
         i18n, selectedCount, hiddenCount, displayedCount, displayedSelectedCount, busy = false,
         onApply, onOpenAi, onClear, onSelectDisplayed, onKeepFiltered, onAddTag, onSetAuthor,
-        onPurifyWechat, onCopyBlockRefs, onCopyCitations, onBatchFavorite, hasWechatSelected = false,
+        onPurifyWechat, onCopyBlockRefs, onCopyCitations, onCopyBibTeX, onBatchFavorite, hasWechatSelected = false,
     }: Props = $props();
     const filteredSelectedCount = $derived(Math.max(0, selectedCount - hiddenCount));
     let summaryEl = $state<HTMLElement | null>(null);
@@ -107,6 +108,9 @@
             {/if}
             {#if onCopyCitations}
                 <button type="button" class="glean-bb glean-bb--copy-citations" disabled={busy} onclick={() => void onCopyCitations?.()} title="{t(i18n, 'citation.copyGBT')}">📄 {t(i18n, "citation.copyGBT")}</button>
+            {/if}
+            {#if onCopyBibTeX}
+                <button type="button" class="glean-bb glean-bb--copy-bibtex" disabled={busy} onclick={() => void onCopyBibTeX?.()} title="{t(i18n, 'citation.copyBibTeX')}">📚 {t(i18n, "citation.copyBibTeX")}</button>
             {/if}
             {#if onBatchFavorite}
                 <button type="button" class="glean-bb glean-bb--fav" disabled={busy} onclick={() => void onBatchFavorite?.(true)} title="{t(i18n, 'roaming.favoriteAction')}">❤️ {t(i18n, "roaming.favoriteAction")}</button>

@@ -2786,3 +2786,18 @@ T-3416 承接方向五（有依据的阅读 AI）与同类产品对标（Readwis
    - 读库按键监听接入 `Alt+F`，随时单敲即可反转 `selectedFavoriteOnly` 状态并标记偏好交互；
 3. 严格本地交付保障：
    - 严格在本地完成构建和测试，不执行任何外部推送与远程 API 调用。
+
+## D-0398（2026-10-29）全表面 BibTeX 学术文献著录闭环：读库批量 BibTeX 导出、全键盘 Shift+C / Alt+Shift+C 快捷键与今日拾遗/摘录墙直达（T-3520）
+
+打通全插件跨视图、跨表面的 BibTeX 学术文献导出能力：
+1. 读库批量与单卡 BibTeX 导出（`src/ui/LibraryBatchBar.svelte` & `src/ui/DockPanel.svelte`）：
+   - 批量操作栏接入「📚 BibTeX」导出按钮，一键将多选文章批量转换为格式规范的标准 BibTeX `@article` 条目；
+   - 读库列表行与看板卡片支持通过键盘快捷键 `Shift+C` 单条导出 BibTeX；
+2. 全键盘快捷键仲裁（`src/domain/library-keyboard.ts` & `src/ui/ReaderTab.svelte`）：
+   - `library-keyboard` 纯函数层扩展 `copyBibTeX` 动作，仲裁无勾选光标激活时的 `Shift+C` 按键；
+   - 长文阅读器接入 `Alt+Shift+C` 快捷键导出，并同步更新快捷键帮助抽屉；
+3. 今日拾遗与摘录墙全表面贯通（`src/ui/ResurfaceView.svelte` & `src/ui/HighlightView.svelte`）：
+   - 今日拾遗重浮卡片增设「📚 BibTeX」按钮，键盘支持 `Shift+C` 导出；
+   - 摘录墙单卡与多选栏均接入 BibTeX 导出，多选时按宿主文章去重输出；
+4. 严格本地交付保障：
+   - 严格在本地完成构建和测试，不执行任何外部推送与远程 API 调用。

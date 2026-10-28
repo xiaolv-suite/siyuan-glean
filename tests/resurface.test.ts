@@ -257,11 +257,13 @@ test("ResurfaceView 接线：今日拾遗桌面端全键盘分拣流（T-3400）
     assert.match(view, /case "cycleRating":[\s\S]*?cycleRatingValue/);
     assert.match(view, /case "toggleFavorite":[\s\S]*?void togglePickFavorite\(pick\)/);
     assert.match(view, /case "copyCitation":[\s\S]*?void copyPickCitation\(pick\)/);
+    assert.match(view, /case "copyBibTeX":[\s\S]*?void copyPickCitation\(pick, "bibtex"\)/);
     assert.match(view, /copyPickCitation/);
     assert.match(view, /openOrTakePickSnapshot/);
     assert.match(view, /togglePickFavorite/);
     assert.match(view, /<kbd>F<\/kbd>/);
     assert.match(view, /<kbd>C<\/kbd>/);
+    assert.match(view, /<kbd>Shift\+C<\/kbd> BibTeX/);
     assert.match(view, /<kbd>S<\/kbd>/);
     assert.match(view, /<kbd>P<\/kbd><kbd>1-5<\/kbd> \{t\(i18n, "library\.keyboardPriority"\)\}/);
     assert.match(view, /<kbd>M<\/kbd> \{t\(i18n, "library\.keyboardRating"\)\}/);

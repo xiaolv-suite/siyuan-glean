@@ -1,5 +1,16 @@
 # HANDOFF — 续跑交接（每轮开发结束更新本页）
 
+## 当前有效交接（2026-10-29 全表面 BibTeX 学术文献著录闭环：读库批量 BibTeX 导出、全键盘 Shift+C / Alt+Shift+C 快捷键与今日拾遗/摘录墙直达）
+
+- T-3520/D-0398：全表面 BibTeX 学术文献著录闭环：读库批量 BibTeX 导出、全键盘 Shift+C / Alt+Shift+C 快捷键与今日拾遗/摘录墙直达落地：
+  1. 读库批量与单卡 BibTeX 导出：`src/ui/LibraryBatchBar.svelte` 批量条增设「📚 BibTeX」导出按钮，`src/ui/DockPanel.svelte` 实现 `batchCopyBibTeX` 将多选文章一键格式化为标准 `@article` 条目；
+  2. 全键盘 Shift+C / Alt+Shift+C 快捷键仲裁：`src/domain/library-keyboard.ts` 扩充 `copyBibTeX` 动作，光标激活时仲裁 `Shift+C` 触发 BibTeX 复制；`src/ui/ReaderTab.svelte` 接入 `Alt+Shift+C` 快捷键并更新快捷键帮助；
+  3. 今日拾遗与摘录墙全表面贯通：`src/ui/ResurfaceView.svelte` 与 `src/ui/HighlightView.svelte` 卡片与批量导出栏全量接入 BibTeX 著录导出与键盘直达；
+  4. 遵照用户指示：**本地完成 v1.3.85 打包与构建，本轮严格不推送到 GitHub，不调用任何远程接口，等用户通知解封后再行统一推送与发布**；
+  5. 门禁全通：全套单测（1728/1728）、`pnpm check` 0 错误 0 警告，发布门禁与性能基线通过。
+- 下一步：按当前执行板顺序推进下一个任务（如 T-3367 批量选择范围与底部操作在更多场景的走查，或按作者点单继续）。版本保持 1.3.85，本轮不打 tag、不发布、不推送。
+
+
 ## 当前有效交接（2026-10-29 读库工具栏星标收藏常驻切换按钮与 Alt+F 全局筛选快捷键）
 
 - T-3519/D-0397：读库工具栏星标收藏常驻切换按钮与 Alt+F 全局筛选快捷键落地：

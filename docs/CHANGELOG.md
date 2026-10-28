@@ -1,5 +1,21 @@
 # 更新日志（CHANGELOG）
 
+## v1.3.85（2026-10-29）
+
+### 全表面 BibTeX 学术文献著录闭环：读库批量 BibTeX 导出、全键盘 Shift+C / Alt+Shift+C 快捷键与今日拾遗/摘录墙直达
+
+- **读库批量 BibTeX 导出（T-3520）**：
+  - `src/ui/LibraryBatchBar.svelte` 批量操作栏增设「📚 BibTeX」导出按钮，支持对多选文章一键批量提取元数据生成标准 BibTeX `@article` 条目，并以双换行规范排版写入剪贴板；
+  - `src/ui/DockPanel.svelte` 实现 `batchCopyBibTeX`，并同步接入键盘光标单条 `Shift+C` 键位路由；
+- **全键盘 Shift+C / Alt+Shift+C 快捷键仲裁（T-3520）**：
+  - `src/domain/library-keyboard.ts` 扩充 `copyBibTeX` 动作，在无多选且光标激活时仲裁 `Shift+C` 触发 BibTeX 复制（与单敲 `C` 复制 GB/T 7714 对应）；
+  - `src/ui/ReaderTab.svelte` 接入 `Alt+Shift+C` 快捷键，并在快捷键抽屉中展示说明；
+- **今日拾遗与摘录墙全表面贯通（T-3520）**：
+  - `src/ui/ResurfaceView.svelte` 每日重浮卡片增设「📚 BibTeX」操作按钮，键盘监听在 `Shift+C` 下秒级导出 BibTeX；
+  - `src/ui/HighlightView.svelte` 摘录卡片与多选导出栏分别增设「📚 BibTeX」按钮与批处理导出，按宿主文章去重生成清晰著录；
+- **本地纯净交付保障**：
+  - 严格保持本地更新构建，不执行任何外部推送，待作者账号解封通知后统一处理。
+
 ## v1.3.84（2026-10-29）
 
 ### 读库工具栏星标收藏常驻切换按钮与 Alt+F 全局筛选快捷键

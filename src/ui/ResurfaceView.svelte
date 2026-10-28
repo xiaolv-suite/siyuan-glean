@@ -5,7 +5,7 @@ import { openTab, showMessage } from "siyuan";
 import { onDestroy, tick } from "svelte";
 import type { GleanFacade } from "../types";
 import { t } from "../libs/i18n";
-import { formatGBT7714, type CitationItem } from "../domain/citation";
+import { formatBibTeX, formatGBT7714, type CitationItem } from "../domain/citation";
 import { snapshotClip } from "../services/snapshot-service";
 import { actOnSurface, computeDailyFromIndex, pickSurfaceReplacementFromIndex, setSurfacePinned, undoSurfaceAction, type SurfaceAction, type SurfaceUndoToken } from "../services/resurface-service";
 import type { GleanIndex } from "../services/index-store";
@@ -178,7 +178,7 @@ async function copyPickBlockRef(item: SurfaceItem): Promise<void> {
     }
 }
 
-async function copyPickCitation(pick: SurfaceDisplayPick): Promise<void> {
+async function copyPickCitation(pick: SurfaceDisplayPick, format: "gbt" | "bibtex" = "gbt"): Promise<void> {
     const raw = index.clips[pick.item.id];
     const citItem: CitationItem = {
         id: pick.item.id,
@@ -188,11 +188,11 @@ async function copyPickCitation(pick: SurfaceDisplayPick): Promise<void> {
         url: raw?.url || pick.item.url,
         time: raw?.time || pick.item.time,
     };
-    const citText = formatGBT7714(citItem);
+    const citText = format === "bibtex" ? formatBibTeX(citItem) : formatGBT7714(citItem);
     try {
         if (navigator?.clipboard?.writeText) {
             await navigator.clipboard.writeText(citText);
-            showMessage(t(i18n, "citation.gbtCopied"), 2000);
+            showMessage(t(i18n, format === "bibtex" ? "citation.bibtexCopied" : "citation.gbtCopied"), 2000);
         } else {
             showMessage(t(i18n, "msg.actionFailed"), 2000);
         }
@@ -649,6 +649,11 @@ function handleResurfaceShortcut(event: KeyboardEvent): void {
             event.stopPropagation();
             void copyPickCitation(pick);
             break;
+        case "copyBibTeX":
+            event.preventDefault();
+            event.stopPropagation();
+            void copyPickCitation(pick, "bibtex");
+            break;
     }
 }
 
@@ -973,6 +978,7 @@ function focusCard(id: string): void {
                     <kbd>T</kbd> {t(i18n, "resurface.shortcutPin")}
                     <kbd>Y</kbd> {t(i18n, "action.copyBlockRef")}
                     <kbd>C</kbd> {t(i18n, "citation.copyGBT")}
+                    <kbd>Shift+C</kbd> BibTeX
                     <kbd>S</kbd> {t(i18n, "snapshot.take")}
                     <kbd>P</kbd><kbd>1-5</kbd> {t(i18n, "library.keyboardPriority")}
                     <kbd>M</kbd> {t(i18n, "library.keyboardRating")}
@@ -1054,8 +1060,11 @@ function focusCard(id: string): void {
                         <button class="glean-surf-act" title={t(i18n, "action.copyBlockRef")} aria-label={t(i18n, "action.copyBlockRef")} onclick={() => void copyPickBlockRef(pick.item)}>
                             🔗 {t(i18n, "action.copyBlockRef")}
                         </button>
-                        <button class="glean-surf-act" title={t(i18n, "citation.copyGBT") + " (C)"} aria-label={t(i18n, "citation.copyGBT")} onclick={() => void copyPickCitation(pick)}>
+                        <button class="glean-surf-act" title={t(i18n, "citation.copyGBT") + " (C)"} aria-label={t(i18n, "citation.copyGBT")} onclick={() => void copyPickCitation(pick, "gbt")}>
                             📄 {t(i18n, "citation.copyGBT")}
+                        </button>
+                        <button class="glean-surf-act" title={t(i18n, "citation.copyBibTeX") + " (Shift+C)"} aria-label={t(i18n, "citation.copyBibTeX")} onclick={() => void copyPickCitation(pick, "bibtex")}>
+                            📚 BibTeX
                         </button>
                         <button class="glean-surf-act" title={(clip?.snapshot ? t(i18n, "snapshot.open") : t(i18n, "snapshot.take")) + " (S)"} aria-label={clip?.snapshot ? t(i18n, "snapshot.open") : t(i18n, "snapshot.take")} onclick={() => void openOrTakePickSnapshot(pick)}>
                             💾 {clip?.snapshot ? t(i18n, "snapshot.open") : t(i18n, "snapshot.take")}

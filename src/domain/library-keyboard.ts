@@ -28,7 +28,8 @@ export type LibraryKeyboardAction =
     | { type: "copyBlockRef" }
     | { type: "roaming" }
     | { type: "toggleFavorite" }
-    | { type: "copyCitation" };
+    | { type: "copyCitation" }
+    | { type: "copyBibTeX" };
 
 export interface LibraryKeyboardEventLike {
     key: string;
@@ -59,7 +60,7 @@ const REPEAT_SENSITIVE = new Set<LibraryKeyboardAction["type"]>([
     "activate", "openDocument", "startReading", "later", "archive", "toggleSelect",
     "selectDisplayed", "keepFiltered", "clearSelection",
     "cyclePriority", "setPriority", "cycleRating", "togglePin", "copyBlockRef", "roaming",
-    "toggleFavorite", "copyCitation",
+    "toggleFavorite", "copyCitation", "copyBibTeX",
 ]);
 
 /**
@@ -77,7 +78,13 @@ export function resolveLibraryShortcut(
     if (event.ctrlKey || event.metaKey || event.altKey) return null;
     if (context.overlay || context.textEntry) return null;
     // 大写字母通常是 Shift+字母，不作为命令；避免 Shift+E 被当成归档。
-    if (event.shiftKey) return null;
+    // 特例：Shift+C 在激活光标且无勾选时触发 copyBibTeX 导出（与 C 复制 GB/T 著录对应）
+    if (event.shiftKey) {
+        if (context.cursorActive && !context.hasSelection && (event.key === "C" || event.key === "c")) {
+            return repeatOrNull(event, { type: "copyBibTeX" });
+        }
+        return null;
+    }
 
     const key = event.key;
     const lower = key.length === 1 ? key.toLowerCase() : key;
