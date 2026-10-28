@@ -8,6 +8,15 @@
 
 [English](README.en-US.md) · [下载最新版](https://github.com/ai68298100/siyuan-glean/releases/latest) · [能力矩阵](docs/CAPABILITY-MATRIX.md) · [反馈与问题](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.53 更新（2026-10-27）
+
+本次版本实现编辑器右侧边距悬浮注记（Margin Notes）与视线同焦平滑跳转。
+
+**新增与体验增强：**
+
+- **编辑器右侧边距悬浮注记（Margin Notes）**：长文批注与想法便签悬浮呈现于正文右侧外边距，点击气泡平滑滚动至原文并联动脉冲高亮，实现视线同焦沉浸研读。
+- **边注一键折叠（Alt+M）**：顶栏增设边注切换开关，读者可随心一键展开或收起侧边便签。
+
 ## v1.3.52 更新（2026-10-27）
 
 本次版本实现多维动态加权无压漫游阅读（盲盒选文）与学术文献引用（BibTeX / GB/T 7714）一键导出。

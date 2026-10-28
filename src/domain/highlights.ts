@@ -16,6 +16,7 @@ export interface HighlightItem extends HighlightRoot {
     text: string;
     markdown: string;
     color?: string;
+    memo?: string;
     source: { content: string; markdown: string; type: string; highlight: string };
 }
 

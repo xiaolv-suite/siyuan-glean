@@ -1477,5 +1477,7 @@
   "citation.copyGBT": "Copy GB/T 7714",
   "citation.copyBibTeX": "Copy BibTeX",
   "citation.gbtCopied": "GB/T 7714 citation copied to clipboard!",
-  "citation.bibtexCopied": "BibTeX entry copied to clipboard!"
+  "citation.bibtexCopied": "BibTeX entry copied to clipboard!",
+  "reader.marginNotes": "Margin Notes",
+  "reader.marginNotesToggle": "Toggle Margin Notes (Alt+M)"
 }

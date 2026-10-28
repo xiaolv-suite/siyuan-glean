@@ -1477,5 +1477,7 @@
   "citation.copyGBT": "复制 GB/T 引用",
   "citation.copyBibTeX": "复制 BibTeX",
   "citation.gbtCopied": "已复制 GB/T 7714 引用格式到剪贴板！",
-  "citation.bibtexCopied": "已复制 BibTeX 引用条目到剪贴板！"
+  "citation.bibtexCopied": "已复制 BibTeX 引用条目到剪贴板！",
+  "reader.marginNotes": "边距注记",
+  "reader.marginNotesToggle": "展开/收起边距悬浮注记（Alt+M）"
 }

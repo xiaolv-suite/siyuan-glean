@@ -132,6 +132,7 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
     let searchOpen = $state(false);
     let docHighlights = $state<HighlightItem[]>([]);
     let highlightsLoading = $state(false);
+    let marginNotesOpen = $state(true);
     let highlightsOpen = $state(false);
     let readingPercentage = $state<number | null>(null);
     let memoInputOpen = $state(false);
@@ -939,6 +940,12 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
             event.preventDefault();
             event.stopPropagation();
             void roamNext();
+            return;
+        }
+        if (event.altKey && (event.key === "m" || event.key === "M")) {
+            event.preventDefault();
+            event.stopPropagation();
+            marginNotesOpen = !marginNotesOpen;
             return;
         }
         const root = readerRoot;
@@ -1923,6 +1930,18 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
             </div>
             <button class="glean-btn glean-btn--ghost glean-reader__toolbar-sidebar" aria-busy={sidebarBusy} disabled={sidebarBusy} aria-expanded={!sidebarCollapsed && !immersive} aria-controls={sidebarId} title={t(i18n, sidebarCollapsed || immersive ? "reader.sidebarShow" : "reader.sidebarHide")} onclick={toggleCompanion}>{t(i18n, sidebarCollapsed || immersive ? "reader.sidebarShow" : "reader.sidebarHide")}</button>
             <button class="glean-btn glean-btn--ghost glean-reader__toolbar-search" aria-expanded={searchOpen} title={t(i18n, "reader.searchTitle")} aria-label={t(i18n, "reader.searchTitle")} onclick={() => { searchOpen = !searchOpen; }}><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanSearch" /></svg></button>
+            {#if docHighlights.length > 0 && !facade.isMobile}
+                <button
+                    type="button"
+                    class="glean-btn glean-btn--ghost glean-reader__toolbar-margin-notes"
+                    class:glean-btn--active={marginNotesOpen}
+                    title={t(i18n, "reader.marginNotesToggle")}
+                    aria-label={t(i18n, "reader.marginNotesToggle")}
+                    onclick={() => { marginNotesOpen = !marginNotesOpen; }}
+                >
+                    📑 <span class="glean-margin-notes__badge">{docHighlights.length}</span>
+                </button>
+            {/if}
             <button class="glean-btn glean-btn--ghost glean-reader__toolbar-appearance" aria-expanded={appearanceOpen} aria-controls={appearancePanelId} title={t(i18n, "reader.appearanceTitle")} onclick={toggleAppearance}>{t(i18n, "reader.appearanceTitle")}</button>
             <button type="button" class="glean-btn glean-btn--ghost glean-reader__toolbar-theme" title={t(i18n, "reader.themeToggle")} aria-label={t(i18n, "reader.themeToggle")} onclick={cycleTheme}>
                 <span class={`glean-reader__theme-dot glean-reader__theme-dot--${readerAppearance.theme}`} aria-hidden="true"></span>
@@ -2001,6 +2020,7 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                     <div><dt><kbd>Alt+E</kbd></dt><dd>{t(i18n, "reader.extractToCards")}</dd></div>
                     <div><dt><kbd>Alt+T</kbd></dt><dd>{t(i18n, "reader.extractToTask")}</dd></div>
                     <div><dt><kbd>Alt+R</kbd></dt><dd>{t(i18n, "roaming.nextArticle")}</dd></div>
+                    <div><dt><kbd>Alt+M</kbd></dt><dd>{t(i18n, "reader.marginNotesToggle")}</dd></div>
                     <div><dt><kbd>h</kbd></dt><dd>{t(i18n, "reader.shortcutNextHighlight")}</dd></div>
                     <div><dt><kbd>Shift+h</kbd></dt><dd>{t(i18n, "reader.shortcutPrevHighlight")}</dd></div>
                     <div><dt><kbd>Shift+F</kbd></dt><dd>{t(i18n, "reader.shortcutImmersive")}</dd></div>
@@ -2148,6 +2168,29 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                         ⏹
                     </button>
                 </div>
+            {/if}
+            {#if marginNotesOpen && docHighlights.length > 0 && !searchOpen && !facade.isMobile}
+                <aside class="glean-margin-notes" aria-label={t(i18n, "reader.marginNotes")}>
+                    {#each docHighlights as hl, idx (hl.id)}
+                        <div
+                            class="glean-margin-note-card glean-margin-note-card--color-{hl.color || 'yellow'}"
+                            role="button"
+                            tabindex="0"
+                            title={hl.text}
+                            onclick={() => scrollToHighlight(hl.id)}
+                            onkeydown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); scrollToHighlight(hl.id); } }}
+                        >
+                            <div class="glean-margin-note-card__head">
+                                <span class="glean-margin-note-card__index">#{idx + 1}</span>
+                                <span>{formatHighlightTime(hl.id)}</span>
+                            </div>
+                            <div class="glean-margin-note-card__text">{hl.text}</div>
+                            {#if hl.memo}
+                                <div class="glean-margin-note-card__memo">💬 {hl.memo}</div>
+                            {/if}
+                        </div>
+                    {/each}
+                </aside>
             {/if}
         {:else}
             <div class="glean-reader__empty">

@@ -8,6 +8,15 @@ Lv Glean organizes clippings and articles already in SiYuan. It does not crawl t
 
 [中文说明](README.md) · [Latest Release](https://github.com/ai68298100/siyuan-glean/releases/latest) · [Capability matrix](docs/CAPABILITY-MATRIX.md) · [Feedback](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.53 update (2026-10-27)
+
+This release implements floating margin notes in the reader editor for same-focus smooth navigation.
+
+**New features & improvements:**
+
+- **Floating Margin Notes (Margin Notes)**: Highlights and user thoughts float as sticky note bubbles along the right margin; clicking a note smoothly scrolls to the source block with pulse focus.
+- **Toggle Margin Notes (Alt+M)**: The reader toolbar offers a dedicated toggle action (Alt+M) to collapse or reveal margin notes at will.
+
 ## v1.3.52 update (2026-10-27)
 
 This release implements multi-dimensional weighted stress-free roaming read (blind-box pick) and 1-click academic citation export (BibTeX / GB/T 7714).

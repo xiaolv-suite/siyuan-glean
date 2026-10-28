@@ -2422,3 +2422,12 @@ T-3416 承接方向五（有依据的阅读 AI）与同类产品对标（Readwis
 2. 学术文献引用标准著录（`domain/citation.ts`、`ReaderTab.svelte` & `WorkbenchPreview.svelte`）：
    - 新增 `formatBibTeX`、`formatGBT7714` 与 `formatAPA` 纯函数；
    - 伴生栏操作区与预览区增设复制引用按钮，秒级格式化为标准中国国标 GB/T 7714 或 BibTeX 著录条目，极大简化学术写作。
+
+## D-0366（2026-10-27）编辑器右侧边距悬浮注记（Margin Notes）与视线同焦平滑跳转（T-3487）
+
+突破长文批注来回切页痛点，实现视线同焦研读：
+1. 边距悬浮注记气泡（`src/styles/components/margin-notes.scss` & `ReaderTab.svelte`）：
+   - 借鉴 MarginNote 与鲸鱼批注实践，在正文右侧外边距悬浮呈现高亮引文卡片与用户 Memo 思考气泡；
+   - 卡片左侧带有四色指示条（黄/红/蓝/绿），点击卡片自动平滑滚动对齐原文对应段落并脉冲高亮；
+2. 顶栏边注折叠开关与快捷键（`ReaderTab.svelte`）：
+   - 顶栏增设「📑 边注」切换开关（显示当前批注总数），支持快捷键 `Alt+M` 一键展开或收起，大屏阅读与沉浸阅读自适应随心切换。
