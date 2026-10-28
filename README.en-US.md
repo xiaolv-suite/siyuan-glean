@@ -67,6 +67,15 @@ This release implements floating margin notes in the reader editor for same-focu
 - **Floating Margin Notes (Margin Notes)**: Highlights and user thoughts float as sticky note bubbles along the right margin; clicking a note smoothly scrolls to the source block with pulse focus.
 - **Toggle Margin Notes (Alt+M)**: The reader toolbar offers a dedicated toggle action (Alt+M) to collapse or reveal margin notes at will.
 
+## v1.3.93 update (2026-10-29)
+
+This release implements 1-click quote card creation in selection capsule and Alt+Q shortcut in ReaderTab.
+
+**New features & improvements:**
+
+- **Instant Quote Card Creation from Selection (T-3528)**: The floating text selection capsule adds a "🖼️ Quote Card" button to launch the 2x Retina quote card generator directly with article metadata.
+- **Alt+Q Global Shortcut (T-3528)**: Press `Alt+Q` to generate a quote card from the active text selection or fallback to the latest article highlight.
+
 ## v1.3.92 update (2026-10-29)
 
 This release implements completed article CSV export, structured summary digest copy, and Shift+Y shortcut in reading stats.

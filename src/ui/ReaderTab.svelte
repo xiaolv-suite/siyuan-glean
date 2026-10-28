@@ -632,6 +632,18 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
         });
     }
 
+    function quoteCardFromExcerpt(): void {
+        if (!excerpt?.text || !context) return;
+        openQuoteCardDialog(facade, {
+            quote: excerpt.text,
+            title: context.title,
+            author: context.author,
+            site: context.site,
+            docId: context.id,
+            blockId: excerpt.blockId,
+        });
+    }
+
     async function examFromHighlight(item: HighlightItem): Promise<void> {
         if (!item.text || !item.id || !context) return;
         const examBridge = getBridgeSafely<Record<string, unknown>>("exam");
@@ -1001,6 +1013,16 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                 void copyCitation("bibtex");
             } else {
                 void copyCitation("gbt");
+            }
+            return;
+        }
+        if (event.altKey && (event.key === "q" || event.key === "Q")) {
+            event.preventDefault();
+            event.stopPropagation();
+            if (excerpt?.text) {
+                quoteCardFromExcerpt();
+            } else if (docHighlights.length > 0) {
+                quoteCardFromHighlight(docHighlights[0]);
             }
             return;
         }
@@ -2092,6 +2114,7 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                     <div><dt><kbd>Alt+F</kbd></dt><dd>{t(i18n, "roaming.favoriteAction")}</dd></div>
                     <div><dt><kbd>Alt+C</kbd></dt><dd>{t(i18n, "citation.copyGBT")}</dd></div>
                     <div><dt><kbd>Alt+Shift+C</kbd></dt><dd>{t(i18n, "citation.copyBibTeX")}</dd></div>
+                    <div><dt><kbd>Alt+Q</kbd></dt><dd>{t(i18n, "quoteCard.action")}</dd></div>
                     <div><dt><kbd>Alt+S</kbd></dt><dd>{t(i18n, context?.snapshot ? "snapshot.open" : "snapshot.take")}</dd></div>
                     <div><dt><kbd>h</kbd></dt><dd>{t(i18n, "reader.shortcutNextHighlight")}</dd></div>
                     <div><dt><kbd>Shift+h</kbd></dt><dd>{t(i18n, "reader.shortcutPrevHighlight")}</dd></div>
@@ -2169,6 +2192,14 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                         title={t(i18n, "reader.extractToTaskHint")}
                     >
                         ✅ {t(i18n, "reader.extractToTask")}
+                    </button>
+                    <button
+                        type="button"
+                        class="glean-btn glean-btn--ghost glean-reader__selection-btn"
+                        onclick={() => void quoteCardFromExcerpt()}
+                        title="{t(i18n, 'quoteCard.action')} (Alt+Q)"
+                    >
+                        🖼️ {t(i18n, "quoteCard.action")}
                     </button>
                     <button
                         type="button"
