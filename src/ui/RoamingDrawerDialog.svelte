@@ -16,24 +16,43 @@
     let { facade, initialPick, onOpenArticle, onClose }: Props = $props();
 
     const i18n = $derived(facade.i18n);
-    let overridePick = $state<RoamingPick | null>(null);
-    let excludedIds = $state<Set<string>>(new Set());
-    const currentPick = $derived(overridePick ?? initialPick);
+    let history = $state<RoamingPick[]>([]);
+    let historyIndex = $state(0);
+    const activeHistory = $derived(history.length > 0 ? history : [initialPick]);
+    const currentPick = $derived(activeHistory[historyIndex] ?? initialPick);
+    const canPrev = $derived(historyIndex > 0);
     let loading = $state(false);
 
     const safeAuthor = $derived(displayWechatAuthor(currentPick.item.author));
     const isWechat = $derived(isWechatUrl(currentPick.item.url) || isWechatUrl(currentPick.item.site));
 
+    function prevPick(): void {
+        if (historyIndex > 0) {
+            historyIndex -= 1;
+            if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+                try { navigator.vibrate?.(10); } catch { /* noop */ }
+            }
+        }
+    }
+
     async function nextPick(): Promise<void> {
+        const currentList = history.length > 0 ? history : [initialPick];
+        if (historyIndex < currentList.length - 1) {
+            historyIndex += 1;
+            if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+                try { navigator.vibrate?.(10); } catch { /* noop */ }
+            }
+            return;
+        }
         loading = true;
         try {
-            excludedIds.add(currentPick.item.id);
+            const excludedIds = new Set(currentList.map((h) => h.item.id));
             const index = await loadIndex(facade.pluginInstance);
             const candidates = Object.values(index.clips);
             const next = pickRoamingArticle(candidates, excludedIds);
             if (next) {
-                overridePick = next;
-                excludedIds.add(next.item.id);
+                history = [...currentList, next];
+                historyIndex = history.length - 1;
                 if (typeof navigator !== "undefined" && "vibrate" in navigator) {
                     try { navigator.vibrate?.(12); } catch { /* noop */ }
                 }
@@ -54,7 +73,20 @@
     }
 </script>
 
-<svelte:window onkeydown={(e) => { if (e.key === "Escape") onClose?.(); }} />
+<svelte:window onkeydown={(e) => {
+    if (e.key === "Escape") {
+        onClose?.();
+    } else if (e.key === "ArrowLeft" && canPrev) {
+        e.preventDefault();
+        prevPick();
+    } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        void nextPick();
+    } else if (e.key === "Enter") {
+        e.preventDefault();
+        startRead();
+    }
+}} />
 
 <div class="glean-roaming-dialog">
     <div class="glean-roaming-banner">
@@ -63,6 +95,9 @@
             <span>{currentPick.reason}</span>
         </div>
         <div class="glean-roaming-score" title="综合匹配得分">
+            {#if history.length > 1}
+                <span class="glean-roaming-pos">({historyIndex + 1}/{history.length})</span>
+            {/if}
             🔥 {currentPick.score}分
         </div>
     </div>
@@ -91,6 +126,11 @@
     </article>
 
     <div class="glean-roaming-actions">
+        {#if canPrev}
+            <button type="button" class="glean-btn glean-btn--ghost glean-roaming-prev-btn" onclick={prevPick} title={t(i18n, "roaming.prevBlindBox")}>
+                ⏮️ {t(i18n, "roaming.prevBlindBox")}
+            </button>
+        {/if}
         <button type="button" class="glean-btn glean-btn--ghost glean-roaming-next-btn" disabled={loading} onclick={() => void nextPick()}>
             🎲 {t(i18n, "roaming.nextBlindBox")}
         </button>

@@ -1480,6 +1480,7 @@
   "citation.bibtexCopied": "BibTeX entry copied to clipboard!",
   "roaming.dialogTitle": "Roaming Read Blind-Box",
   "roaming.nextBlindBox": "Try Another",
+  "roaming.prevBlindBox": "Previous",
   "roaming.startReadNow": "Start Reading",
   "roaming.exploreMore": "Open Roaming Blind-Box",
   "reader.marginNotes": "Margin Notes",

@@ -8,6 +8,8 @@ test("RoamingDrawerDialog 契约守门：展示推荐理由、匹配得分、换
     assert.match(dialogSource, /currentPick\.score/);
     assert.match(dialogSource, /roaming\.nextBlindBox/);
     assert.match(dialogSource, /roaming\.startReadNow/);
+    assert.match(dialogSource, /roaming\.prevBlindBox/);
+    assert.match(dialogSource, /prevPick\(\)/);
     assert.match(dialogSource, /pickRoamingArticle/);
     assert.match(dialogSource, /onOpenArticle\(currentPick\.item\.id\)/);
 });
@@ -36,6 +38,8 @@ test("双语 i18n 覆盖：漫游盲盒文案对齐", () => {
     assert.ok(en["roaming.dialogTitle"]);
     assert.ok(zh["roaming.nextBlindBox"]);
     assert.ok(en["roaming.nextBlindBox"]);
+    assert.ok(zh["roaming.prevBlindBox"]);
+    assert.ok(en["roaming.prevBlindBox"]);
     assert.ok(zh["roaming.startReadNow"]);
     assert.ok(en["roaming.startReadNow"]);
     assert.ok(zh["roaming.exploreMore"]);

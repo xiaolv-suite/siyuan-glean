@@ -8,6 +8,14 @@ Lv Glean organizes clippings and articles already in SiYuan. It does not crawl t
 
 [中文说明](README.md) · [Latest Release](https://github.com/ai68298100/siyuan-glean/releases/latest) · [Capability matrix](docs/CAPABILITY-MATRIX.md) · [Feedback](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.59 update (2026-10-28)
+
+This release implements roaming blind-box history back-navigation and keyboard arrow key switching.
+
+**New features & improvements:**
+
+- **Blind-Box History Backtrack**: Added a "⏮️ Previous" action and `(1/3)` index badge, supported via ArrowLeft/ArrowRight keyboard navigation.
+
 ## v1.3.58 update (2026-10-28)
 
 This release implements reading stats SCSS modularization and further cleans up the main stylesheet.

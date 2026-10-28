@@ -8,6 +8,14 @@
 
 [English](README.en-US.md) · [下载最新版](https://github.com/ai68298100/siyuan-glean/releases/latest) · [能力矩阵](docs/CAPABILITY-MATRIX.md) · [反馈与问题](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.59 更新（2026-10-28）
+
+本次版本实现漫游盲盒历史堆栈回退（防误点过）与全键盘左右切换。
+
+**新增与体验增强：**
+
+- **漫游盲盒历史回退**：弹窗增设「⏮️ 上个盲盒」按钮与 `(1/3)` 进度序号，彻底消除错过好文的顾虑，支持键盘左右方向键平滑切换。
+
 ## v1.3.58 更新（2026-10-28）
 
 本次版本实现 SCSS 统计回顾模块独立解耦与单体样式进一步瘦身。
