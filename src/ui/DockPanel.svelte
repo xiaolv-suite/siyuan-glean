@@ -39,7 +39,7 @@ import { hasSourceAction, openTargetForCarrier, resolveCarrier, sourceUrlForCarr
 import { isWechatUrl, displayWechatAuthor, isWechatSeriesTag } from "../domain/wechat";
 import { pickRoamingArticle } from "../domain/roaming";
 import { openRoamingDialog } from "./roaming-dialog";
-import { formatBibTeX, formatGBT7714, type CitationItem } from "../domain/citation";
+import { formatAPA, formatBibTeX, formatGBT7714, type CitationItem } from "../domain/citation";
 import { batchRecognizeWechatAuthors, scanAndFillWechatAuthor, purifyWechatArticle } from "../services/wechat-service";
 import ClipStatusActions from "./ClipStatusActions.svelte";
 import ClipRankControls from "./ClipRankControls.svelte";
@@ -1086,6 +1086,30 @@ async function batchCopyBibTeX(): Promise<void> {
     try {
         await navigator.clipboard.writeText(blocks.join("\n\n"));
         showMessage(t(i18n, "library.batchBibtexCopied", { n: ids.length }), 2500);
+    } catch {
+        showMessage(t(i18n, "msg.actionFailed"), 2000);
+    }
+}
+
+async function batchCopyAPA(): Promise<void> {
+    if (selection.size === 0) return;
+    const ids = Array.from(selection);
+    const lines = ids.map((id, indexNum) => {
+        const clip = index.clips[id] || index.candidates[id];
+        const citItem: CitationItem = {
+            id,
+            title: clip?.title || t(i18n, "panel.untitled"),
+            author: clip?.author,
+            site: clip?.site,
+            url: clip?.url,
+            time: clip?.time,
+        };
+        const cit = formatAPA(citItem);
+        return `[${indexNum + 1}] ${cit}`;
+    });
+    try {
+        await navigator.clipboard.writeText(lines.join("\n"));
+        showMessage(t(i18n, "library.batchApaCopied", { n: ids.length }), 2500);
     } catch {
         showMessage(t(i18n, "msg.actionFailed"), 2000);
     }
@@ -3778,6 +3802,7 @@ function metaLine(entry: Row): string {
             onCopyBlockRefs={batchCopyBlockRefs}
             onCopyCitations={batchCopyCitations}
             onCopyBibTeX={batchCopyBibTeX}
+            onCopyAPA={batchCopyAPA}
             onBatchFavorite={batchFavorite}
         />
     {:else if view === "resurface"}

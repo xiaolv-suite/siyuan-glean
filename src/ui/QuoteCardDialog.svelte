@@ -11,6 +11,7 @@
         type QuoteCardSource,
         type QuoteCardTheme,
     } from "../domain/quote-card";
+    import { formatCitation, type CitationItem } from "../domain/citation";
 
     interface Props {
         facade: GleanFacade;
@@ -247,6 +248,24 @@
         }
     }
 
+    async function copyCardCitation(): Promise<void> {
+        const item: CitationItem = {
+            id: source.docId || "",
+            title: source.title || "",
+            author: source.author,
+            site: source.site,
+            url: "",
+            time: source.time,
+        };
+        const text = formatCitation(item, "gbt");
+        try {
+            await navigator.clipboard.writeText(text);
+            showMessage(t(i18n, "citation.gbtCopied"), 2000);
+        } catch {
+            showMessage(t(i18n, "msg.actionFailed"), 2000);
+        }
+    }
+
     function onKeyDown(e: KeyboardEvent): void {
         const target = e.target instanceof Element ? e.target : null;
         if (target?.closest("input, textarea, select, [contenteditable]:not([contenteditable='false'])")) return;
@@ -266,6 +285,9 @@
         } else if ((e.key === "c" || e.key === "C") && (e.ctrlKey || e.metaKey)) {
             e.preventDefault();
             void copyCardImage();
+        } else if (e.altKey && (e.key === "c" || e.key === "C")) {
+            e.preventDefault();
+            void copyCardCitation();
         } else if ((e.key === "c" || e.key === "C") && !e.altKey && !e.ctrlKey && !e.metaKey) {
             e.preventDefault();
             if (e.shiftKey) void copyCardText();
@@ -369,6 +391,16 @@
                 <span>🔗 {t(i18n, "action.copyBlockRef")}</span>
             </button>
         {/if}
+        {#if source.title}
+            <button
+                type="button"
+                class="glean-btn glean-btn--ghost glean-quote-card-btn"
+                onclick={() => void copyCardCitation()}
+                title="{t(i18n, 'citation.copyGBT')} (Alt+C)"
+            >
+                <span>📄 {t(i18n, "citation.copyGBT")}</span>
+            </button>
+        {/if}
     </div>
 
     <div class="glean-kbdhint" style="margin-top: 2px; justify-content: center;">
@@ -378,6 +410,7 @@
             <kbd>Shift+C</kbd> {t(i18n, "quoteCard.copyText")}
             <kbd>S</kbd> {t(i18n, "quoteCard.saveImage")}
             {#if source.blockId || source.docId}<kbd>Y</kbd> {t(i18n, "action.copyBlockRef")}{/if}
+            {#if source.title}<kbd>Alt+C</kbd> {t(i18n, "citation.copyGBT")}{/if}
         </span>
     </div>
 </div>

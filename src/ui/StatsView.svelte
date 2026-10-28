@@ -13,7 +13,7 @@ import { t } from "../libs/i18n";
 import type { GleanIndex } from "../services/index-store";
 import { buildReadingReview, previewReadingReview, resolveUnknownReadingReview, saveReadingReviewReport, type ReadingReviewSession } from "../services/stats-service";
 import { buildReadingReviewMarkdown, computeConversionFunnel, computeReadingMilestones, filterCompletedItemsByDate, parseReviewDate, reviewDateInput, type ReadingReviewLabels, type ReviewPeriodKind } from "../domain/stats";
-import { formatBibTeX, formatGBT7714, type CitationItem } from "../domain/citation";
+import { formatBibTeX, formatGBT7714, formatCitation, type CitationFormat, type CitationItem } from "../domain/citation";
 
 interface Props {
     facade: GleanFacade;
@@ -216,7 +216,7 @@ async function copyCompletedBlockRef(item: { id: string; title: string }): Promi
     }
 }
 
-async function copyCompletedCitation(item: { id: string; title: string }, format: "gbt" | "bibtex" = "gbt"): Promise<void> {
+async function copyCompletedCitation(item: { id: string; title: string }, format: CitationFormat = "gbt"): Promise<void> {
     const clip = index.clips[item.id];
     const citItem: CitationItem = {
         id: item.id,
@@ -226,16 +226,17 @@ async function copyCompletedCitation(item: { id: string; title: string }, format
         url: clip?.url,
         time: clip?.time,
     };
-    const citText = format === "bibtex" ? formatBibTeX(citItem) : formatGBT7714(citItem);
+    const citText = formatCitation(citItem, format);
+    const msgKey = format === "bibtex" ? "citation.bibtexCopied" : (format === "apa" ? "citation.apaCopied" : "citation.gbtCopied");
     try {
         await navigator.clipboard.writeText(citText);
-        showMessage(t(i18n, format === "bibtex" ? "citation.bibtexCopied" : "citation.gbtCopied"), 2000);
+        showMessage(t(i18n, msgKey), 2000);
     } catch {
         showMessage(t(i18n, "msg.actionFailed"), 2000);
     }
 }
 
-async function copyCompletedListCitations(format: "gbt" | "bibtex" = "gbt"): Promise<void> {
+async function copyCompletedListCitations(format: CitationFormat = "gbt"): Promise<void> {
     if (visibleCompletedItems.length === 0) return;
     const blocks: string[] = [];
     visibleCompletedItems.forEach((item, indexNum) => {
@@ -250,14 +251,17 @@ async function copyCompletedListCitations(format: "gbt" | "bibtex" = "gbt"): Pro
         };
         if (format === "bibtex") {
             blocks.push(formatBibTeX(citItem));
+        } else if (format === "apa") {
+            blocks.push(`[${indexNum + 1}] ${formatCitation(citItem, "apa")}`);
         } else {
             blocks.push(`[${indexNum + 1}] ${formatGBT7714(citItem)}`);
         }
     });
     const sep = format === "bibtex" ? "\n\n" : "\n";
+    const msgKey = format === "bibtex" ? "library.batchBibtexCopied" : (format === "apa" ? "library.batchApaCopied" : "library.batchCitationsCopied");
     try {
         await navigator.clipboard.writeText(blocks.join(sep));
-        showMessage(t(i18n, format === "bibtex" ? "library.batchBibtexCopied" : "library.batchCitationsCopied", { n: visibleCompletedItems.length }), 2500);
+        showMessage(t(i18n, msgKey, { n: visibleCompletedItems.length }), 2500);
     } catch {
         showMessage(t(i18n, "msg.actionFailed"), 2500);
     }
@@ -540,6 +544,9 @@ function onWindowKeyDown(event: KeyboardEvent): void {
                         <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm glean-stats__copy-bibtex-btn" onclick={() => void copyCompletedListCitations("bibtex")} title="{t(i18n, 'citation.copyBibTeX')} (Shift+C)">
                             📚 BibTeX
                         </button>
+                        <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm glean-stats__copy-apa-btn" onclick={() => void copyCompletedListCitations("apa")} title={t(i18n, "citation.copyAPA")}>
+                            🎓 APA
+                        </button>
                     </div>
                 {/if}
             </div>
@@ -557,6 +564,9 @@ function onWindowKeyDown(event: KeyboardEvent): void {
                             </button>
                             <button type="button" class="glean-btn glean-btn--ghost glean-btn--xs" onclick={() => void copyCompletedCitation(item, "bibtex")} title={t(i18n, "citation.copyBibTeX")}>
                                 📚
+                            </button>
+                            <button type="button" class="glean-btn glean-btn--ghost glean-btn--xs" onclick={() => void copyCompletedCitation(item, "apa")} title={t(i18n, "citation.copyAPA")}>
+                                🎓
                             </button>
                         </div>
                     </li>

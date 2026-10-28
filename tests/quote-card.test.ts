@@ -45,8 +45,10 @@ test("QuoteCardDialog 键盘流与块引用支持契约（T-3511）", () => {
     assert.match(dialog, /saveCardImage\(\)/);
     assert.match(dialog, /copyCardText\(\)/);
     assert.match(dialog, /copyCardBlockRef\(\)/);
+    assert.match(dialog, /copyCardCitation\(\)/);
     assert.match(dialog, /<kbd>1-4<\/kbd>/);
     assert.match(dialog, /<kbd>C<\/kbd>/);
     assert.match(dialog, /<kbd>S<\/kbd>/);
     assert.match(dialog, /<kbd>Y<\/kbd>/);
+    assert.match(dialog, /<kbd>Alt\+C<\/kbd>/);
 });

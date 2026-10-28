@@ -62,7 +62,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
     import { saveReadPoint } from "../services/clip-store";
     import { pickRoamingArticle } from "../domain/roaming";
     import { openRoamingDialog } from "./roaming-dialog";
-import { formatBibTeX, formatGBT7714 } from "../domain/citation";
+import { formatCitation, type CitationFormat } from "../domain/citation";
 import { formatHighlightShare, formatHighlightTime } from "../domain/highlights";
     import { estimateReadingPercentage } from "../domain/reading-position";
     import { findMatchingOutlineItemId, type OutlineItem } from "../domain/outline";
@@ -846,7 +846,7 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
         }
     }
 
-    async function copyCitation(format: "gbt" | "bibtex" = "gbt"): Promise<void> {
+    async function copyCitation(format: CitationFormat = "gbt"): Promise<void> {
         if (!context || !docId) return;
         const item = {
             id: context.id,
@@ -856,10 +856,11 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
             url: context.url,
             time: context.time,
         };
-        const text = format === "bibtex" ? formatBibTeX(item) : formatGBT7714(item);
+        const text = formatCitation(item, format);
+        const msgKey = format === "bibtex" ? "citation.bibtexCopied" : (format === "apa" ? "citation.apaCopied" : "citation.gbtCopied");
         try {
             await navigator.clipboard.writeText(text);
-            showMessage(t(i18n, format === "bibtex" ? "citation.bibtexCopied" : "citation.gbtCopied"), 2500);
+            showMessage(t(i18n, msgKey), 2500);
         } catch {
             showMessage(t(i18n, "msg.actionFailed"), 2500);
         }
@@ -2382,6 +2383,9 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                         </button>
                         <button type="button" class="glean-btn glean-btn--ghost glean-wechat-publisher__btn" onclick={() => void copyCitation("bibtex")} title={t(i18n, "citation.copyBibTeX")}>
                             📚 BibTeX
+                        </button>
+                        <button type="button" class="glean-btn glean-btn--ghost glean-wechat-publisher__btn" onclick={() => void copyCitation("apa")} title={t(i18n, "citation.copyAPA")}>
+                            🎓 APA
                         </button>
                         <button type="button" class="glean-btn glean-btn--ghost glean-wechat-publisher__btn" onclick={() => void copyArticleBlockRef()} title={t(i18n, "action.copyBlockRef")}>
                             🔗 {t(i18n, "action.copyBlockRef")}

@@ -190,7 +190,9 @@ test("DockPanel 接线：键盘光标样式、提示条与动作路由存在", (
     assert.match(dock, /formatGBT7714\(citItem\)/);
     assert.match(dock, /case "copyBibTeX":/);
     assert.match(dock, /formatBibTeX\(citItem\)/);
+    assert.match(dock, /formatAPA\(citItem\)/);
     assert.match(dock, /onCopyBibTeX=\{batchCopyBibTeX\}/);
+    assert.match(dock, /onCopyAPA=\{batchCopyAPA\}/);
     assert.match(dock, /if \(action\.type === "selectDisplayed"\) \{[\s\S]*?selectDisplayedArticles\(\);/);
     assert.match(dock, /if \(action\.type === "keepFiltered"\) \{[\s\S]*?retainSelectionToFilter\(\);/);
     assert.match(dock, /if \(action\.type === "clearSelection"\) \{[\s\S]*?clearSelection\(\);/);

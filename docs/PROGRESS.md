@@ -1,5 +1,14 @@
 # 进度（PROGRESS）
 
+## T-3522 全表面 APA 学术规范引用闭环：统一 formatCitation 门面纯函数、读库/拾遗/摘录/统计/金句卡片三格式（GB/T、BibTeX、APA）文献著录贯通（2026-10-29）
+
+- [x] 统一 formatCitation 纯函数门面：`src/domain/citation.ts` 抽象 `CitationFormat = "gbt" | "bibtex" | "apa"` 与 `formatCitation` 纯函数统一分发；
+- [x] 读库批量与单条 APA 著录导出：`src/ui/LibraryBatchBar.svelte` 批量条增设「🎓 APA」按钮，`src/ui/DockPanel.svelte` 实现 `batchCopyAPA`，`src/ui/WorkbenchPreview.svelte` 接入 APA 复制；
+- [x] 金句卡片与伴读器文献著录直达：`src/ui/QuoteCardDialog.svelte` 增设「📄 著录」一键复制动作与 `Alt+C` 快捷键，`src/ui/ReaderTab.svelte` 微信展台伴生栏增设「🎓 APA」复制；
+- [x] 今日拾遗、摘录墙与阅读统计全面贯通：`src/ui/ResurfaceView.svelte`、`src/ui/HighlightView.svelte` 与 `src/ui/StatsView.svelte` 全量补齐单卡与批量「🎓 APA」著录复制；
+- [x] 遵照指令本地闭环交付：本地完成 v1.3.87 打包与构建，本轮严格不推送到 GitHub，不调用任何远程接口，等用户通知解封后再行统一推送与发布；
+- [x] 门禁全通：全套单测（1728/1728）、`pnpm check` 0 错误 0 警告，发布门禁与性能基线通过。
+
 ## T-3521 阅读统计回顾页已完成文章著录导出闭环：单行 GB/T 与 BibTeX 著录复制、全清单批量导出与 Y / C / Shift+C 全键盘支持（2026-10-29）
 
 - [x] 已完成文章学术著录双格式复制：`src/ui/StatsView.svelte` 已完成文章清单（`.glean-stats__completed`）每行不仅提供「🔗 块引用」与「📄 GB/T 著录」独立复制，更同步增设「📚 BibTeX」单卡著录复制按钮；

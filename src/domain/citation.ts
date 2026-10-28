@@ -87,3 +87,20 @@ export function formatAPA(item: CitationItem): string {
 
     return `${author}. (${year}). ${title}. ${site}.${url ? ` ${url}` : ""}`;
 }
+
+export type CitationFormat = "gbt" | "bibtex" | "apa";
+
+/**
+ * 统一引用格式化门面纯函数
+ */
+export function formatCitation(item: CitationItem, format: CitationFormat = "gbt", now = new Date()): string {
+    switch (format) {
+        case "bibtex":
+            return formatBibTeX(item);
+        case "apa":
+            return formatAPA(item);
+        case "gbt":
+        default:
+            return formatGBT7714(item, now);
+    }
+}

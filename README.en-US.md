@@ -67,6 +67,17 @@ This release implements floating margin notes in the reader editor for same-focu
 - **Floating Margin Notes (Margin Notes)**: Highlights and user thoughts float as sticky note bubbles along the right margin; clicking a note smoothly scrolls to the source block with pulse focus.
 - **Toggle Margin Notes (Alt+M)**: The reader toolbar offers a dedicated toggle action (Alt+M) to collapse or reveal margin notes at will.
 
+## v1.3.87 update (2026-10-29)
+
+This release implements full-surface APA citation loop: unified formatCitation facade, and triple-format (GB/T, BibTeX, APA) citation export across library, resurface, highlights, stats, and quote card dialogs.
+
+**New features & improvements:**
+
+- **Unified formatCitation Facade (T-3522)**: Provides pure function dispatcher for GB/T 7714-2015, BibTeX `@article`, and international APA 7th standards.
+- **Batch and Single-Article APA Export (T-3522)**: Library batch bar adds a "🎓 APA" button, and WorkbenchPreview adds an "APA" button for quick English citation copying.
+- **Quote Card & Companion Box Integration (T-3522)**: QuoteCardDialog provides a "📄 Citation" button with `Alt+C` shortcut; ReaderTab WeChat companion box provides APA citation export.
+- **Full Parity in Resurface, Highlights & Stats (T-3522)**: Resurface cards, highlight cards/batch bar, and completed reading stats all feature direct APA citation export.
+
 ## v1.3.86 update (2026-10-29)
 
 This release implements completed article citation exports in reading stats: per-item GB/T and BibTeX copying, full-list batch export, and Y / C / Shift+C keyboard shortcuts.

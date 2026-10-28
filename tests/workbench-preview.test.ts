@@ -374,6 +374,7 @@ test("WorkbenchPreview 头部操作栏红心收藏切换与 BibTeX 复制契约�
     assert.match(preview, /formatBibTeX/);
     assert.match(preview, /copyCitation\("bibtex"\)/);
     assert.match(preview, /copyCitation\("gbt"\)/);
+    assert.match(preview, /copyCitation\("apa"\)/);
     assert.match(preview, /triggerRoaming/);
     assert.match(preview, /copySelectedBlockRef/);
     assert.match(preview, /onPreviewKeyDown/);

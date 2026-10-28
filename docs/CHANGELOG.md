@@ -1,5 +1,22 @@
 # 更新日志（CHANGELOG）
 
+## v1.3.87（2026-10-29）
+
+### 全表面 APA 学术规范引用闭环：统一 formatCitation 门面纯函数、读库/拾遗/摘录/统计/金句卡片三格式（GB/T、BibTeX、APA）文献著录贯通
+
+- **统一 formatCitation 纯函数门面（T-3522）**：
+  - `src/domain/citation.ts` 定义 `CitationFormat = "gbt" | "bibtex" | "apa"` 联合类型与统一分发门面 `formatCitation`，支持按需输出中国国家标准 GB/T 7714-2015、标准 BibTeX `@article` 条目以及国际通行的 APA 7th 规范引用；
+- **读库批量与单条 APA 著录导出（T-3522）**：
+  - `src/ui/LibraryBatchBar.svelte` 批量条增设「🎓 APA」导出按钮，`src/ui/DockPanel.svelte` 实现 `batchCopyAPA` 将多选文章一键转换为 APA 引用清单；
+  - `src/ui/WorkbenchPreview.svelte` 头部操作栏增设「APA」快捷按钮，支持一键生成规范英文学术引用；
+- **金句卡片与伴读器文献著录直达（T-3522）**：
+  - `src/ui/QuoteCardDialog.svelte` 增设「📄 著录」一键复制动作与 `Alt+C` 快捷键，在制作金句卡片时支持直接导出文章著录；
+  - `src/ui/ReaderTab.svelte` 微信展台伴生栏增设「🎓 APA」复制入口；
+- **今日拾遗、摘录墙与阅读统计全面贯通（T-3522）**：
+  - `src/ui/ResurfaceView.svelte`、`src/ui/HighlightView.svelte` 与 `src/ui/StatsView.svelte` 全量补齐单卡与批量「🎓 APA」著录复制；
+- **本地纯净交付保障**：
+  - 严格保持本地更新构建，不执行任何外部推送，待作者账号解封通知后统一处理。
+
 ## v1.3.86（2026-10-29）
 
 ### 阅读统计回顾页已完成文章著录导出闭环：单行 GB/T 与 BibTeX 著录复制、全清单批量导出与 Y / C / Shift+C 全键盘支持

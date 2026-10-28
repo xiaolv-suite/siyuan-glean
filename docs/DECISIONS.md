@@ -2813,3 +2813,19 @@ T-3416 承接方向五（有依据的阅读 AI）与同类产品对标（Readwis
    - `StatsView` 键盘监听接入 `Y` 复制清单块引用、`C` 复制 GB/T 7714 著录、`Shift+C` 复制 BibTeX 条目；
 4. 严格本地交付保障：
    - 严格在本地完成构建和测试，不执行任何外部推送与远程 API 调用。
+
+## D-0400（2026-10-29）全表面 APA 学术规范引用闭环：统一 formatCitation 门面纯函数、读库/拾遗/摘录/统计/金句卡片三格式（GB/T、BibTeX、APA）文献著录贯通（T-3522）
+
+实现全插件学术文献引用的三足鼎立与统一门面架构：
+1. 统一 formatCitation 纯函数门面（`src/domain/citation.ts`）：
+   - 抽象 `CitationFormat = "gbt" | "bibtex" | "apa"`，对外暴露统一的 `formatCitation` 调度函数，彻底消除各 UI 视图内分散的多分支判断；
+2. 读库批量与单条 APA 著录导出（`src/ui/LibraryBatchBar.svelte` & `src/ui/DockPanel.svelte`）：
+   - 批量条增设「🎓 APA」按钮，实现 `batchCopyAPA` 批量生成带序号的标准 APA 英文引用；
+   - 预览区头部增设 APA 按钮，实现一键复制；
+3. 金句卡片与伴读器文献著录直达（`src/ui/QuoteCardDialog.svelte` & `src/ui/ReaderTab.svelte`）：
+   - 金句卡片生成器增设「📄 著录」一键复制动作与 `Alt+C` 快捷键；
+   - 伴读器微信展台提供 APA 著录生成；
+4. 今日拾遗、摘录墙与阅读统计全面贯通（`src/ui/ResurfaceView.svelte`、`src/ui/HighlightView.svelte`、`src/ui/StatsView.svelte`）：
+   - 全部卡片与批量操作区对齐三格式（GB/T、BibTeX、APA）选择，满足学术研究、科技论文与国际化场景全方位需求；
+5. 严格本地交付保障：
+   - 严格在本地完成构建和测试，不执行任何外部推送与远程 API 调用。

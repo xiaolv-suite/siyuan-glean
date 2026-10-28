@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { formatBibTeX, formatGBT7714, formatAPA, type CitationItem } from "../src/domain/citation.ts";
+import { formatBibTeX, formatGBT7714, formatAPA, formatCitation, type CitationItem } from "../src/domain/citation.ts";
 
 const sample: CitationItem = {
     id: "20261025120000-doc0001",
@@ -35,4 +35,13 @@ test("formatAPA：生成 APA 规范引用", () => {
         apa,
         "机器之心. (2026). 大语言模型分布式训练系统架构. 微信公众平台. https://mp.weixin.qq.com/s/sample123"
     );
+});
+
+test("formatCitation：统一门面纯函数支持 gbt / bibtex / apa 三种格式分发", () => {
+    const now = new Date("2026-10-27T12:00:00Z");
+    assert.equal(formatCitation(sample, "gbt", now), formatGBT7714(sample, now));
+    assert.equal(formatCitation(sample, "bibtex"), formatBibTeX(sample));
+    assert.equal(formatCitation(sample, "apa"), formatAPA(sample));
+    // 默认回退为 gbt
+    assert.equal(formatCitation(sample), formatGBT7714(sample));
 });

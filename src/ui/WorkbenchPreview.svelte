@@ -16,7 +16,7 @@
     import ProtyleHost from "./ProtyleHost.svelte";
     import AuthorEditor from "./AuthorEditor.svelte";
     import { exportArticleMarkdown } from "../services/library-export-service";
-    import { formatBibTeX, formatGBT7714 } from "../domain/citation";
+    import { formatBibTeX, formatCitation, type CitationFormat } from "../domain/citation";
     import { pickRoamingArticle } from "../domain/roaming";
     import { openRoamingDialog } from "./roaming-dialog";
     import { isWechatUrl, displayWechatAuthor } from "../domain/wechat";
@@ -236,7 +236,7 @@
         }
     }
 
-    async function copyCitation(format: "gbt" | "bibtex" = "gbt"): Promise<void> {
+    async function copyCitation(format: CitationFormat = "gbt"): Promise<void> {
         const item = {
             id: entry.id,
             title: entry.title || t(i18n, "panel.untitled"),
@@ -245,10 +245,11 @@
             url: sourceUrl,
             time: attrs?.time || (entry.kind === "clip" ? entry.time : ""),
         };
-        const text = format === "bibtex" ? formatBibTeX(item) : formatGBT7714(item);
+        const text = format === "bibtex" ? formatBibTeX(item) : formatCitation(item, format);
+        const msgKey = format === "bibtex" ? "citation.bibtexCopied" : (format === "apa" ? "citation.apaCopied" : "citation.gbtCopied");
         try {
             await navigator.clipboard.writeText(text);
-            showMessage(t(i18n, format === "bibtex" ? "citation.bibtexCopied" : "citation.gbtCopied"), 2500);
+            showMessage(t(i18n, msgKey), 2500);
         } catch {
             showMessage(t(i18n, "msg.actionFailed"), 2500);
         }
@@ -440,6 +441,7 @@
             <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void triggerRoaming()} title={t(i18n, "roaming.buttonHint")}>🎲 {t(i18n, "roaming.button")}</button>
             <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation("gbt")} title="复制 GB/T 7714 电子文献著录 (C)">{t(i18n, "citation.copyGBT")}</button>
             <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation("bibtex")} title="复制 BibTeX @article 条目 (Shift+C)">BibTeX</button>
+            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation("apa")} title={t(i18n, "citation.copyAPA")}>APA</button>
             <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyBlockRef()}>{t(i18n, "action.copyBlockRef")}</button>
             <button type="button" class="glean-btn glean-btn--ghost" onclick={() => facade.openReadingDocument(entry.id)}>{t(i18n, "preview.openDocument")}</button>
             {#if entry.kind === "clip"}<button type="button" class="glean-btn glean-btn--ghost" disabled={busy || exporting} onclick={() => void downloadMarkdown()}>{exporting ? t(i18n, "settings.exporting") : t(i18n, "export.markdown")}</button>{/if}

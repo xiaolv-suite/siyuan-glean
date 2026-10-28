@@ -1,5 +1,17 @@
 # HANDOFF — 续跑交接（每轮开发结束更新本页）
 
+## 当前有效交接（2026-10-29 全表面 APA 学术规范引用闭环：统一 formatCitation 门面纯函数、读库/拾遗/摘录/统计/金句卡片三格式（GB/T、BibTeX、APA）文献著录贯通）
+
+- T-3522/D-0400：全表面 APA 学术规范引用闭环：统一 formatCitation 门面纯函数、读库/拾遗/摘录/统计/金句卡片三格式（GB/T、BibTeX、APA）文献著录贯通落地：
+  1. 统一 formatCitation 纯函数门面：`src/domain/citation.ts` 抽象 `CitationFormat = "gbt" | "bibtex" | "apa"` 与 `formatCitation` 纯函数统一分发；
+  2. 读库批量与单条 APA 著录导出：`src/ui/LibraryBatchBar.svelte` 批量条增设「🎓 APA」按钮，`src/ui/DockPanel.svelte` 实现 `batchCopyAPA`，`src/ui/WorkbenchPreview.svelte` 接入 APA 复制；
+  3. 金句卡片与伴读器文献著录直达：`src/ui/QuoteCardDialog.svelte` 增设「📄 著录」一键复制动作与 `Alt+C` 快捷键，`src/ui/ReaderTab.svelte` 微信展台伴生栏增设「🎓 APA」复制；
+  4. 今日拾遗、摘录墙与阅读统计全面贯通：`src/ui/ResurfaceView.svelte`、`src/ui/HighlightView.svelte` 与 `src/ui/StatsView.svelte` 全量补齐单卡与批量「🎓 APA」著录复制；
+  5. 遵照用户指示：**本地完成 v1.3.87 打包与构建，本轮严格不推送到 GitHub，不调用任何远程接口，等用户通知解封后再行统一推送与发布**；
+  6. 门禁全通：全套单测（1728/1728）、`pnpm check` 0 错误 0 警告，发布门禁与性能基线通过。
+- 下一步：按当前执行板顺序推进下一个任务（如 T-3367 批量选择范围与底部操作在更多场景的走查，或按作者点单继续）。版本保持 1.3.87，本轮不打 tag、不发布、不推送。
+
+
 ## 当前有效交接（2026-10-29 阅读统计回顾页已完成文章著录导出闭环：单行 GB/T 与 BibTeX 著录复制、全清单批量导出与 Y / C / Shift+C 全键盘支持）
 
 - T-3521/D-0399：阅读统计回顾页已完成文章著录导出闭环：单行 GB/T 与 BibTeX 著录复制、全清单批量导出与 Y / C / Shift+C 全键盘支持落地：

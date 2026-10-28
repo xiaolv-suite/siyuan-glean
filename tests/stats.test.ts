@@ -441,7 +441,9 @@ test("StatsView 接线：回顾预览与日期过滤支持 Escape 快捷退出�
     assert.match(view, /glean-stats__copy-completed-btn/);
     assert.match(view, /glean-stats__copy-citations-btn/);
     assert.match(view, /glean-stats__copy-bibtex-btn/);
+    assert.match(view, /glean-stats__copy-apa-btn/);
     assert.match(view, /formatBibTeX/);
+    assert.match(view, /formatCitation/);
 });
 
 test("computeRecent7DaysStatus：准确计算近 7 天每日打卡完成状态（对标 Days Logged In）", () => {
