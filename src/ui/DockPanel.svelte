@@ -2237,6 +2237,18 @@ async function runKeyboardAction(action: LibraryKeyboardAction): Promise<void> {
             await setRating(entry, nextVal);
             break;
         }
+        case "toggleFavorite": {
+            const currentClip = index.clips[entry.id];
+            const nextFav = !(currentClip?.favorite ?? entry.favorite);
+            try {
+                await writeClip(facade.pluginInstance, entry.id, { favorite: nextFav }, { force: true });
+                showMessage(t(i18n, nextFav ? "roaming.favoriteAdded" : "roaming.favoriteRemoved"), 2000);
+                facade.notifyDataChanged();
+            } catch {
+                showMessage(t(i18n, "msg.actionFailed"), 2000);
+            }
+            break;
+        }
     }
 }
 
@@ -2722,7 +2734,7 @@ function metaLine(entry: Row): string {
                     <kbd>E</kbd> {t(i18n, "library.keyboardArchive")}
                     <kbd>X</kbd> {t(i18n, "library.keyboardSelect")}
                     <kbd>S</kbd> {t(i18n, "library.keyboardSelectDisplayed")}
-                    <kbd>F</kbd> {t(i18n, "library.keyboardKeepFiltered")}
+                    <kbd>F</kbd> {selection.size > 0 ? t(i18n, "library.keyboardKeepFiltered") : t(i18n, "roaming.favoriteAction")}
                     <kbd>C</kbd> {t(i18n, "library.keyboardClearSelection")}
                     <kbd>P</kbd><kbd>1-5</kbd> {t(i18n, "library.keyboardPriority")}
                     <kbd>M</kbd> {t(i18n, "library.keyboardRating")}

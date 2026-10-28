@@ -67,6 +67,15 @@ This release implements floating margin notes in the reader editor for same-focu
 - **Floating Margin Notes (Margin Notes)**: Highlights and user thoughts float as sticky note bubbles along the right margin; clicking a note smoothly scrolls to the source block with pulse focus.
 - **Toggle Margin Notes (Alt+M)**: The reader toolbar offers a dedicated toggle action (Alt+M) to collapse or reveal margin notes at will.
 
+## v1.3.71 update (2026-10-28)
+
+This release implements F-key star favorite keyboard arbitration and Resurface card favorite action button.
+
+**New features & improvements:**
+
+- **F-Key Favorite Keyboard Arbitration**: The keyboard arbitration layer routes `F` to `keepFiltered` when selections exist, or `toggleFavorite` when rows are focused without selection.
+- **Resurface Card Favorite Button**: Today's resurface cards embed dedicated "❤️ Favorite" button with `<kbd>F</kbd>` hint in footer bar for consistent favorites across all views.
+
 ## v1.3.70 update (2026-10-28)
 
 This release implements blind-box swipe gestures navigation, title tap-to-read, and adaptive mobile hints.

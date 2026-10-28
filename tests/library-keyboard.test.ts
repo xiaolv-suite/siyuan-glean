@@ -133,6 +133,15 @@ test("漫游盲盒键位：B/b 无需激活光标即可全局呼出，长按与�
     assert.equal(resolveLibraryShortcut(key("b", { repeat: true }), active), null);
 });
 
+test("F 键语义仲裁：有勾选集合时优先 keepFiltered，无勾选且光标激活时作为 toggleFavorite 切换星标收藏（T-3505）", () => {
+    assert.deepEqual(resolveLibraryShortcut(key("f"), { hasSelection: true }), { type: "keepFiltered" });
+    assert.deepEqual(resolveLibraryShortcut(key("f"), { cursorActive: true, hasSelection: false }), { type: "toggleFavorite" });
+    assert.deepEqual(resolveLibraryShortcut(key("F"), { cursorActive: true, hasSelection: false }), { type: "toggleFavorite" });
+    assert.equal(resolveLibraryShortcut(key("f"), {}), null);
+    // 长按防抖
+    assert.equal(resolveLibraryShortcut(key("f", { repeat: true }), { cursorActive: true }), null);
+});
+
 test("光标移动：首次进入按方向取端点，边界不回绕，空列表返回空串", () => {
     const ids = ["a", "b", "c"];
     assert.equal(moveLibraryCursor(ids, "", 1), "a");
@@ -154,7 +163,7 @@ test("DockPanel 接线：键盘光标样式、提示条与动作路由存在", (
     assert.match(dock, /class:glean-card--cursor=\{keyboardCursorId === entry\.id\}/);
     assert.match(dock, /class="glean-kbdhint"/);
     assert.match(dock, /<kbd>S<\/kbd> \{t\(i18n, "library\.keyboardSelectDisplayed"\)\}/);
-    assert.match(dock, /<kbd>F<\/kbd> \{t\(i18n, "library\.keyboardKeepFiltered"\)\}/);
+    assert.match(dock, /<kbd>F<\/kbd> \{selection\.size > 0 \? t\(i18n, "library\.keyboardKeepFiltered"\) : t\(i18n, "roaming\.favoriteAction"\)\}/);
     assert.match(dock, /<kbd>C<\/kbd> \{t\(i18n, "library\.keyboardClearSelection"\)\}/);
     assert.match(dock, /if \(action\.type === "selectDisplayed"\) \{[\s\S]*?selectDisplayedArticles\(\);/);
     assert.match(dock, /if \(action\.type === "keepFiltered"\) \{[\s\S]*?retainSelectionToFilter\(\);/);
@@ -162,6 +171,7 @@ test("DockPanel 接线：键盘光标样式、提示条与动作路由存在", (
     assert.match(dock, /case "cyclePriority":[\s\S]*?cyclePriorityValue\(entry\.priority\)/);
     assert.match(dock, /case "setPriority":[\s\S]*?await setPriority\(entry, action\.value\)/);
     assert.match(dock, /case "cycleRating":[\s\S]*?cycleRatingValue\(entry\.rating\)/);
+    assert.match(dock, /case "toggleFavorite":/);
     assert.match(dock, /if \(action\.type === "roaming"\) \{[\s\S]*?triggerRoamingRead\(\);/);
     assert.match(dock, /<kbd>B<\/kbd> \{t\(i18n, "roaming\.button"\)\}/);
     assert.match(dock, /<kbd>P<\/kbd><kbd>1-5<\/kbd> \{t\(i18n, "library\.keyboardPriority"\)\}/);

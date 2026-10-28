@@ -579,6 +579,11 @@ function handleResurfaceShortcut(event: KeyboardEvent): void {
             void setPickRating(pick, nextVal);
             break;
         }
+        case "toggleFavorite":
+            event.preventDefault();
+            event.stopPropagation();
+            void togglePickFavorite(pick);
+            break;
     }
 }
 
@@ -608,6 +613,24 @@ async function setPickRating(pick: SurfaceDisplayPick, value: number): Promise<v
         onMutated();
     } catch (error) {
         console.warn("[glean] 今日拾遗评分写入失败:", error);
+        showMessage(t(i18n, "msg.statusFailed"), 3000);
+    } finally {
+        actingId = "";
+    }
+}
+
+async function togglePickFavorite(pick: SurfaceDisplayPick): Promise<void> {
+    if (actingId || undoingId) return;
+    actingId = pick.item.id;
+    const currentClip = index.clips[pick.item.id];
+    const nextFav = !(currentClip?.favorite ?? (pick.item as any).favorite);
+    try {
+        const result = await writeClip(facade.pluginInstance, pick.item.id, { favorite: nextFav }, { force: true });
+        showMessage(t(i18n, nextFav ? "roaming.favoriteAdded" : "roaming.favoriteRemoved"), result.indexSyncFailed ? 4000 : 2000);
+        facade.notifyDataChanged();
+        onMutated();
+    } catch (error) {
+        console.warn("[glean] 今日拾遗收藏切换失败:", error);
         showMessage(t(i18n, "msg.statusFailed"), 3000);
     } finally {
         actingId = "";
@@ -881,6 +904,7 @@ function focusCard(id: string): void {
                     <kbd>E</kbd> {t(i18n, "resurface.archive")}
                     <kbd>H</kbd> {t(i18n, "resurface.replace")}
                     <kbd>B</kbd> {t(i18n, "roaming.button")}
+                    <kbd>F</kbd> {t(i18n, "roaming.favoriteAction")}
                     <kbd>T</kbd> {t(i18n, "resurface.shortcutPin")}
                     <kbd>Y</kbd> {t(i18n, "action.copyBlockRef")}
                     <kbd>P</kbd><kbd>1-5</kbd> {t(i18n, "library.keyboardPriority")}
@@ -954,6 +978,9 @@ function focusCard(id: string): void {
                         </div>
                     {/if}
                     <div class="glean-surf__acts">
+                        <button class="glean-surf-act" class:glean-surf-act--fav-active={clip?.favorite} aria-pressed={Boolean(clip?.favorite)} aria-busy={actingId === pick.item.id} aria-disabled={!!actingId || !!undoingId} title={clip?.favorite ? t(i18n, "roaming.favoriteRemoved") : t(i18n, "roaming.favoriteAction") + " (F)"} onclick={() => void togglePickFavorite(pick)}>
+                            {clip?.favorite ? "❤️" : "🤍"} {t(i18n, "roaming.favoriteAction")}
+                        </button>
                         <button class="glean-surf-act" aria-pressed={isPinnedToday(pick)} aria-busy={actingId === pick.item.id} aria-disabled={!!actingId || !!undoingId} onclick={() => void togglePin(pick)}>
                             <svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanPin" /></svg>{t(i18n, isPinnedToday(pick) ? "resurface.unpinToday" : "resurface.pinToday")}
                         </button>

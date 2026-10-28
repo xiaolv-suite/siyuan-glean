@@ -255,6 +255,9 @@ test("ResurfaceView 接线：今日拾遗桌面端全键盘分拣流（T-3400）
     assert.match(view, /case "cyclePriority":[\s\S]*?cyclePriorityValue/);
     assert.match(view, /case "setPriority":[\s\S]*?void setPickPriority\(pick, action\.value\)/);
     assert.match(view, /case "cycleRating":[\s\S]*?cycleRatingValue/);
+    assert.match(view, /case "toggleFavorite":[\s\S]*?void togglePickFavorite\(pick\)/);
+    assert.match(view, /togglePickFavorite/);
+    assert.match(view, /<kbd>F<\/kbd>/);
     assert.match(view, /<kbd>P<\/kbd><kbd>1-5<\/kbd> \{t\(i18n, "library\.keyboardPriority"\)\}/);
     assert.match(view, /<kbd>M<\/kbd> \{t\(i18n, "library\.keyboardRating"\)\}/);
     assert.match(view, /void replacePick\(slot, pick\)/);
