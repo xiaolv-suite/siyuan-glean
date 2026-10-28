@@ -67,6 +67,15 @@ This release implements floating margin notes in the reader editor for same-focu
 - **Floating Margin Notes (Margin Notes)**: Highlights and user thoughts float as sticky note bubbles along the right margin; clicking a note smoothly scrolls to the source block with pulse focus.
 - **Toggle Margin Notes (Alt+M)**: The reader toolbar offers a dedicated toggle action (Alt+M) to collapse or reveal margin notes at will.
 
+## v1.3.67 update (2026-10-28)
+
+This release implements quote wall roaming blind-box access (B key) and keyboard shortcut bar integration.
+
+**New features & improvements:**
+
+- **Quote Wall Roaming Blind-Box**: Adds "🎲 Roam" action (shortcut `B`) in HighlightView header to explore recommended articles from the quote wall.
+- **Keyboard Shortcut Bar**: Footer embeds keyboard hints (`J/K` Move, `X` Select, `Enter` View, `Y` Block ref, `B` Roam), achieving 100% keyboard harmony across all views.
+
 ## v1.3.66 update (2026-10-28)
 
 This release implements preview roaming blind-box (B key), selection block ref copy (Y key), and full preview keyboard workflow.

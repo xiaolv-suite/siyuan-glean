@@ -159,6 +159,10 @@ test("HighlightView 行级键盘导航复用读库仲裁层（T-3399）", () => 
     assert.match(view, /if \(action\.type === "copyBlockRef"\) void copyQuoteBlockRef\(item\)/);
     assert.match(view, /data-glean-highlight-id=\{item\.id\}/);
     assert.match(view, /class:glean-highlights__item--cursor=\{cursorId === item\.id\}/);
+    assert.match(view, /action\.type === "roaming"/);
+    assert.match(view, /triggerRoaming/);
+    assert.match(view, /glean-highlights__roam/);
+    assert.match(view, /<kbd>B<\/kbd>/);
 });
 
 test("groupHighlightsByArticle 与 renderArticleHighlightsMarkdown：按文章聚类与单篇导出（T-3415）", () => {

@@ -20,6 +20,9 @@ import { loadUiPrefs } from "../services/prefs";
 import { getBridgeSafely } from "../libs/ecosystem-bridge-kit";
 import { displayTagAlias, type TagAlias } from "../domain/ui-prefs";
 import { moveLibraryCursor, resolveLibraryShortcut } from "../domain/library-keyboard";
+import { loadIndex } from "../services/index-store";
+import { pickRoamingArticle } from "../domain/roaming";
+import { openRoamingDialog } from "./roaming-dialog";
 
 interface Props { facade: GleanFacade }
 let { facade }: Props = $props();
@@ -478,8 +481,14 @@ function handleHighlightShortcut(event: KeyboardEvent): void {
         overlay: Boolean(document.querySelector("dialog[open], .b3-menu")),
         cursorActive: Boolean(cursorId),
     });
-    // 只接管 J/K/X/Enter/Y；方向键仍交给列表原生滚动。
+    // 只接管 J/K/X/Enter/Y 与 B 漫游；方向键仍交给列表原生滚动。
     if (!action || action.type === "clearCursor") return;
+    if (action.type === "roaming") {
+        event.preventDefault();
+        event.stopPropagation();
+        void triggerRoaming();
+        return;
+    }
     if (!["move", "toggleSelect", "activate", "copyBlockRef"].includes(action.type)) return;
     event.preventDefault();
     event.stopPropagation();
@@ -492,6 +501,24 @@ function handleHighlightShortcut(event: KeyboardEvent): void {
     if (action.type === "toggleSelect") toggle(item.id);
     if (action.type === "activate") openDoc(item.id);
     if (action.type === "copyBlockRef") void copyQuoteBlockRef(item);
+}
+
+async function triggerRoaming(): Promise<void> {
+    try {
+        const index = await loadIndex(facade.pluginInstance);
+        const candidates = Object.values(index.clips);
+        const pick = pickRoamingArticle(candidates);
+        if (pick) {
+            openRoamingDialog(facade, pick, (id, readPoint) => {
+                facade.openReadingDocument(id, readPoint);
+            });
+        } else {
+            showMessage(t(i18n, "roaming.emptyPool"), 2500);
+        }
+    } catch (error) {
+        console.warn("[glean] 摘录墙漫游异常:", error);
+        showMessage(t(i18n, "msg.actionFailed"), 2500);
+    }
 }
 
 function setCursor(id: string): void {
@@ -535,6 +562,7 @@ function focusHighlightRow(id: string): void {
                 </button>
             {/if}
             <button class="glean-highlights__refresh" disabled={loading || exportBusy} onclick={refresh}>{t(i18n, "action.refresh")}</button>
+            <button type="button" class="glean-highlights__roam" title={t(i18n, "roaming.buttonHint")} onclick={() => void triggerRoaming()}>🎲 {t(i18n, "roaming.button")}</button>
         </div>
     </div>
     <div class="glean-highlights__filters" role="search" aria-label={t(i18n, "action.search")}>
@@ -726,6 +754,22 @@ function focusHighlightRow(id: string): void {
                 </div>
             {/if}
         </section>
+    {/if}
+
+    {#if !facade.isMobile}
+        <div class="glean-kbdhint" class:glean-kbdhint--active={Boolean(cursorId)}>
+            <span class="glean-kbdhint__keys" aria-hidden="true">
+                <kbd>J</kbd><kbd>K</kbd> {t(i18n, "library.keyboardMove")}
+                <kbd>X</kbd> {t(i18n, "library.keyboardSelect")}
+                <kbd>Enter</kbd> {t(i18n, "library.keyboardView")}
+                <kbd>Y</kbd> {t(i18n, "action.copyBlockRef")}
+                <kbd>B</kbd> {t(i18n, "roaming.button")}
+                <kbd>Esc</kbd> {t(i18n, "library.keyboardExit")}
+            </span>
+            <span class="glean-sr-only" role="status" aria-live="polite">
+                {cursorId ? "已用键盘选中摘录" : ""}
+            </span>
+        </div>
     {/if}
 </div>
 
