@@ -67,6 +67,16 @@ This release implements floating margin notes in the reader editor for same-focu
 - **Floating Margin Notes (Margin Notes)**: Highlights and user thoughts float as sticky note bubbles along the right margin; clicking a note smoothly scrolls to the source block with pulse focus.
 - **Toggle Margin Notes (Alt+M)**: The reader toolbar offers a dedicated toggle action (Alt+M) to collapse or reveal margin notes at will.
 
+## v1.3.89 update (2026-10-29)
+
+This release implements triple-format (GB/T, BibTeX, APA) citation copying and Shift+C shortcut in the Roaming Blind-Box drawer.
+
+**New features & improvements:**
+
+- **Triple Citation Matrix in Roaming Drawer (T-3524)**: Roaming drawer action bar features dedicated "📚 BibTeX" and "🎓 APA" buttons alongside existing "📄 GB/T 7714" citation export.
+- **Shift+C Keyboard Shortcut**: Pressing `Shift+C` in the roaming drawer copies the currently recommended article as a standard BibTeX `@article` entry.
+- **Unified Citation Engine**: Driven by the shared `formatCitation` facade for robust formatting across all surfaces.
+
 ## v1.3.88 update (2026-10-29)
 
 This release implements citation and block reference copy actions in library row & card ActionPopover menus.

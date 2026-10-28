@@ -6,7 +6,7 @@
     import { loadIndex } from "../services/index-store";
     import { displayWechatAuthor, isWechatUrl } from "../domain/wechat";
     import { writeClip } from "../services/clip-store";
-    import { formatGBT7714, type CitationItem } from "../domain/citation";
+    import { formatCitation, type CitationFormat, type CitationItem } from "../domain/citation";
     import { snapshotClip } from "../services/snapshot-service";
 
     interface Props {
@@ -255,7 +255,7 @@
         }
     }
 
-    async function copyCurrentCitation(): Promise<void> {
+    async function copyCurrentCitation(format: CitationFormat = "gbt"): Promise<void> {
         const citItem: CitationItem = {
             id: currentPick.item.id,
             title: currentPick.item.title,
@@ -264,11 +264,12 @@
             url: currentPick.item.url,
             time: currentPick.item.time,
         };
-        const citText = formatGBT7714(citItem);
+        const citText = formatCitation(citItem, format);
+        const msgKey = format === "bibtex" ? "citation.bibtexCopied" : (format === "apa" ? "citation.apaCopied" : "citation.gbtCopied");
         try {
             if (navigator?.clipboard?.writeText) {
                 await navigator.clipboard.writeText(citText);
-                showMessage(t(i18n, "citation.gbtCopied"), 2000);
+                showMessage(t(i18n, msgKey), 2000);
             } else {
                 showMessage(t(i18n, "msg.actionFailed"), 2000);
             }
@@ -327,7 +328,8 @@
         void toggleCurrentFavorite();
     } else if ((e.key === "c" || e.key === "C") && !e.ctrlKey && !e.metaKey && !e.altKey) {
         e.preventDefault();
-        void copyCurrentCitation();
+        if (e.shiftKey) void copyCurrentCitation("bibtex");
+        else void copyCurrentCitation("gbt");
     } else if ((e.key === "y" || e.key === "Y") && !e.ctrlKey && !e.metaKey && !e.altKey) {
         e.preventDefault();
         void copyCurrentBlockRef();
@@ -513,10 +515,28 @@
                 type="button"
                 class="glean-btn glean-btn--ghost glean-roaming-triage-btn"
                 disabled={loading}
-                onclick={() => void copyCurrentCitation()}
+                onclick={() => void copyCurrentCitation("gbt")}
                 title="{t(i18n, 'citation.copyGBT')} (C)"
             >
                 📄 {t(i18n, "citation.copyGBT")}
+            </button>
+            <button
+                type="button"
+                class="glean-btn glean-btn--ghost glean-roaming-triage-btn"
+                disabled={loading}
+                onclick={() => void copyCurrentCitation("bibtex")}
+                title="{t(i18n, 'citation.copyBibTeX')} (Shift+C)"
+            >
+                📚 BibTeX
+            </button>
+            <button
+                type="button"
+                class="glean-btn glean-btn--ghost glean-roaming-triage-btn"
+                disabled={loading}
+                onclick={() => void copyCurrentCitation("apa")}
+                title={t(i18n, "citation.copyAPA")}
+            >
+                🎓 APA
             </button>
             <button
                 type="button"

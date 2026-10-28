@@ -29,6 +29,10 @@ test("RoamingDrawerDialog 契约守门：展示推荐理由、匹配得分、换
     assert.match(dialogSource, /glean-roaming-fav-filter-btn/);
     assert.match(dialogSource, /roaming\.favoriteOnly/);
     assert.match(dialogSource, /copyCurrentCitation/);
+    assert.match(dialogSource, /copyCurrentCitation\("gbt"\)/);
+    assert.match(dialogSource, /copyCurrentCitation\("bibtex"\)/);
+    assert.match(dialogSource, /copyCurrentCitation\("apa"\)/);
+    assert.match(dialogSource, /formatCitation/);
     assert.match(dialogSource, /copyCurrentBlockRef/);
     assert.match(dialogSource, /openOrTakeCurrentSnapshot/);
     assert.match(dialogSource, /changeBudget/);

@@ -2839,3 +2839,13 @@ T-3416 承接方向五（有依据的阅读 AI）与同类产品对标（Readwis
    - 抽象 `copyEntryBlockRef` 与 `copyEntryCitation` 统一服务调用，键盘分拣与鼠标/触控操作共用同一套底层剪贴板管道与国际化文案；
 3. 严格本地交付保障：
    - 严格在本地完成构建和测试，不执行任何外部推送与远程 API 调用。
+
+## D-0402（2026-10-29）漫游盲盒抽卡展台学术著录三格式（GB/T、BibTeX、APA）复制与 Shift+C 快捷键闭环（T-3524）
+
+补齐漫游盲盒抽卡展台在学术著录层面的能力闭环：
+1. 三格式著录按钮扩展（`src/ui/RoamingDrawerDialog.svelte`）：
+   - 抽卡展台动作区增设「📚 BibTeX」与「🎓 APA」按钮，与既有「📄 GB/T 7714」形成三格式矩阵；
+2. 键盘 Shift+C 直达（`src/ui/RoamingDrawerDialog.svelte`）：
+   - 抽卡浏览时按下 `Shift+C` 快捷键，秒级导出当前推荐文章的 BibTeX 条目；
+3. 严格本地交付保障：
+   - 严格在本地完成构建和测试，不执行任何外部推送与远程 API 调用。
