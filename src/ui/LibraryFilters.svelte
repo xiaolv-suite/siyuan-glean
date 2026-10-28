@@ -18,6 +18,7 @@
         timeSource?: string;
         contentType?: string;
         readingTimeTier?: ReadingTimeTier;
+        favoriteOnly?: boolean;
         sortBy?: LibrarySortKey;
         direction?: LibrarySortDirection;
         hasFilters: boolean;
@@ -25,8 +26,8 @@
         sourceLabel: (value: string) => string;
         facetLabel: (value: string, kind: "timeSource" | "contentType") => string;
     }
-    let { i18n, facets, site = $bindable(""), author = $bindable(""), tag = $bindable(""), tagAliases = [], onManageTagAliases, aiTag = $bindable(""), source = $bindable(""), timeSource = $bindable(""), contentType = $bindable(""), readingTimeTier = $bindable("all"), sortBy = $bindable("time"), direction = $bindable("desc"), hasFilters, onClear, sourceLabel, facetLabel }: Props = $props();
-    const secondaryActiveCount = $derived(countSecondaryActiveFilters({ author, aiTag, src: source, timeSource, contentType, readingTimeTier }));
+    let { i18n, facets, site = $bindable(""), author = $bindable(""), tag = $bindable(""), tagAliases = [], onManageTagAliases, aiTag = $bindable(""), source = $bindable(""), timeSource = $bindable(""), contentType = $bindable(""), readingTimeTier = $bindable("all"), favoriteOnly = $bindable(false), sortBy = $bindable("time"), direction = $bindable("desc"), hasFilters, onClear, sourceLabel, facetLabel }: Props = $props();
+    const secondaryActiveCount = $derived(countSecondaryActiveFilters({ author, aiTag, src: source, timeSource, contentType, readingTimeTier, favoriteOnly }));
     const popoverLabel = $derived(secondaryActiveCount > 0 ? `${t(i18n, "library.moreFilters")} (${secondaryActiveCount})` : t(i18n, "library.moreFilters"));
 
     function clearSecondaryFilters(): void {
@@ -36,6 +37,7 @@
         timeSource = "";
         contentType = "";
         readingTimeTier = "all";
+        favoriteOnly = false;
     }
 </script>
 
@@ -105,6 +107,10 @@
                 <option value="medium">{t(i18n, "library.readingTimeMedium")}</option>
                 <option value="long">{t(i18n, "library.readingTimeLong")}</option>
             </select>
+        </label>
+        <label class="glean-action-popover__field" style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;">
+            <input type="checkbox" bind:checked={favoriteOnly} />
+            <span>❤️ {t(i18n, "roaming.favoriteOnly")}</span>
         </label>
         {#if secondaryActiveCount > 0}
             <button type="button" class="glean-btn glean-btn--ghost" onclick={clearSecondaryFilters}>

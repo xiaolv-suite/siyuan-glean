@@ -1,5 +1,13 @@
 # 进度（PROGRESS）
 
+## T-3518 读库星标收藏（favoriteOnly）筛选闭环：高级筛选切换、FilterChip 标签呈现与保存视图贯通（2026-10-29）
+
+- [x] 星标收藏筛选闭环：`src/domain/library-filter-chips.ts` 扩充 `favoriteOnly` 条件识别与标签映射；`src/ui/LibraryFilters.svelte` 高级筛选浮层与移动端筛选抽屉嵌入「❤️ 仅收藏」切换项；
+- [x] FilterChip 胶囊标签联动：顶部筛选标签栏（`libraryFilterChips`）支持呈现 `❤️ 仅收藏` chip，单点击 `×` 秒级清空收藏过滤；
+- [x] 保存视图与智能预设 100% 贯通：`src/ui/DockPanel.svelte` 保存视图完整持久化与回填 `favoriteOnly` 条件，使「星标收藏」智能视图预设（Smart View Preset）无缝生效；
+- [x] 遵照指令本地闭环交付：本地完成 v1.3.83 打包与构建，本轮严格不推送到 GitHub，不调用任何远程接口，等用户通知解封后再行统一推送与发布；
+- [x] 门禁全通：全套单测（1726/1726）、`pnpm check` 0 错误 0 警告，发布门禁与性能基线通过。
+
 ## T-3517 摘录墙多选批量块引用导出与单卡学术文献著录复制（2026-10-29）
 
 - [x] 摘录墙多选批量块引用导出：`src/ui/HighlightView.svelte` 导出操作栏增设「🔗 复制块引用」按钮，勾选多条摘录后一键生成带原文回链的结构化 Markdown 块反链清单；

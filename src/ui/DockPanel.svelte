@@ -141,6 +141,7 @@ let selectedSource = $state("");
 let selectedTimeSource = $state("");
 let selectedContentType = $state("");
 let selectedReadingTimeTier = $state<ReadingTimeTier>("all");
+let selectedFavoriteOnly = $state(false);
 let mobileFilterOpen = $state(false);
 
 type MobileFilterDraft = {
@@ -151,6 +152,7 @@ type MobileFilterDraft = {
     source: string;
     timeSource: string;
     contentType: string;
+    favoriteOnly: boolean;
     sortBy: LibrarySortKey;
     direction: LibrarySortDirection;
 };
@@ -163,6 +165,7 @@ let mobileFilterDraft = $state<MobileFilterDraft>({
     source: "",
     timeSource: "",
     contentType: "",
+    favoriteOnly: false,
     sortBy: "time",
     direction: "desc",
 });
@@ -462,6 +465,7 @@ const activeFilter = $derived({
     timeSource: selectedTimeSource,
     contentType: selectedContentType,
     readingTimeTier: selectedReadingTimeTier !== "all" ? selectedReadingTimeTier : undefined,
+    favoriteOnly: selectedFavoriteOnly || undefined,
     keyword,
     sortBy,
     direction: sortDirection,
@@ -719,6 +723,7 @@ function clearFilters(): void {
     selectedTimeSource = "";
     selectedContentType = "";
     selectedReadingTimeTier = "all";
+    selectedFavoriteOnly = false;
     keyword = "";
 }
 
@@ -727,7 +732,7 @@ function clearUserFilters(): void {
     clearFilters();
 }
 
-const hasFilters = $derived(Boolean(authorTimeline || selectedAuthor || selectedSite || selectedTag || selectedAiTag || selectedSource || selectedTimeSource || selectedContentType || selectedReadingTimeTier !== "all" || keyword.trim()));
+const hasFilters = $derived(Boolean(authorTimeline || selectedAuthor || selectedSite || selectedTag || selectedAiTag || selectedSource || selectedTimeSource || selectedContentType || selectedReadingTimeTier !== "all" || selectedFavoriteOnly || keyword.trim()));
 const filterChips = $derived(libraryFilterChips(activeFilter));
 
 function selectAuthor(value: string): void {
@@ -784,8 +789,8 @@ function triggerRoamingRead(): void {
 }
 
 function filterChipText(key: FilterChipKey, value: string): string {
-    const labels: Record<FilterChipKey, string> = { author: "library.filterAuthor", site: "library.filterSite", tag: "library.filterTag", aiTag: "library.filterAiTag", src: "library.filterSource", timeSource: "library.filterTimeSource", contentType: "library.filterContentType", readingTimeTier: "library.filterReadingTime", keyword: "action.search" };
-    const text = key === "tag" ? `#${value}` : key === "aiTag" ? `✨${value}` : key === "src" ? sourceLabel(value) : key === "timeSource" || key === "contentType" ? facetLabel(value, key) : key === "readingTimeTier" ? (value === "short" ? t(i18n, "library.readingTimeShort") : value === "medium" ? t(i18n, "library.readingTimeMedium") : value === "long" ? t(i18n, "library.readingTimeLong") : value) : value;
+    const labels: Record<FilterChipKey, string> = { author: "library.filterAuthor", site: "library.filterSite", tag: "library.filterTag", aiTag: "library.filterAiTag", src: "library.filterSource", timeSource: "library.filterTimeSource", contentType: "library.filterContentType", readingTimeTier: "library.filterReadingTime", favoriteOnly: "roaming.favoriteOnly", keyword: "action.search" };
+    const text = key === "tag" ? `#${value}` : key === "aiTag" ? `✨${value}` : key === "src" ? sourceLabel(value) : key === "timeSource" || key === "contentType" ? facetLabel(value, key) : key === "readingTimeTier" ? (value === "short" ? t(i18n, "library.readingTimeShort") : value === "medium" ? t(i18n, "library.readingTimeMedium") : value === "long" ? t(i18n, "library.readingTimeLong") : value) : key === "favoriteOnly" ? t(i18n, "roaming.favoriteOnly") : value;
     return `${t(i18n, labels[key])}: ${text}`;
 }
 
@@ -801,9 +806,10 @@ function removeFilterChip(key: FilterChipKey): void {
     selectedTimeSource = next.timeSource ?? "";
     selectedContentType = next.contentType ?? "";
     if (key === "readingTimeTier") selectedReadingTimeTier = "all";
+    if (key === "favoriteOnly") selectedFavoriteOnly = false;
     keyword = next.keyword ?? "";
 }
-const activeFilterCount = $derived([selectedAuthor, selectedSite, selectedTag, selectedAiTag, selectedSource, selectedTimeSource, selectedContentType, selectedReadingTimeTier !== "all" ? selectedReadingTimeTier : "", keyword.trim()].filter(Boolean).length);
+const activeFilterCount = $derived([selectedAuthor, selectedSite, selectedTag, selectedAiTag, selectedSource, selectedTimeSource, selectedContentType, selectedReadingTimeTier !== "all" ? selectedReadingTimeTier : "", selectedFavoriteOnly ? "favoriteOnly" : "", keyword.trim()].filter(Boolean).length);
 const headerSubtitle = $derived.by(() => {
     const viewLabel = t(i18n, views.find((item) => item.key === view)?.labelKey ?? "view.resurface");
     if (view === "resurface") {
@@ -824,6 +830,7 @@ function openMobileFilters(): void {
         source: selectedSource,
         timeSource: selectedTimeSource,
         contentType: selectedContentType,
+        favoriteOnly: selectedFavoriteOnly,
         sortBy,
         direction: sortDirection,
     };
@@ -916,6 +923,7 @@ function clearMobileFilterDraft(): void {
         source: "",
         timeSource: "",
         contentType: "",
+        favoriteOnly: false,
     };
 }
 
@@ -929,6 +937,7 @@ function applyMobileFilters(): void {
     selectedSource = mobileFilterDraft.source;
     selectedTimeSource = mobileFilterDraft.timeSource;
     selectedContentType = mobileFilterDraft.contentType;
+    selectedFavoriteOnly = mobileFilterDraft.favoriteOnly;
     sortBy = mobileFilterDraft.sortBy;
     sortDirection = mobileFilterDraft.direction;
     closeMobileFilters();
@@ -1296,6 +1305,7 @@ function currentSavedFilter() {
         timeSource: selectedTimeSource || undefined,
         contentType: selectedContentType || undefined,
         readingTimeTier: selectedReadingTimeTier !== "all" ? selectedReadingTimeTier : undefined,
+        favoriteOnly: selectedFavoriteOnly || undefined,
         keyword: keyword.trim() || undefined,
         sortBy,
         direction: sortDirection,
@@ -1318,6 +1328,7 @@ function applySavedViewState(id: string, source = savedViews): void {
     selectedTimeSource = filter.timeSource ?? "";
     selectedContentType = filter.contentType ?? "";
     selectedReadingTimeTier = filter.readingTimeTier ?? "all";
+    selectedFavoriteOnly = Boolean(filter.favoriteOnly);
     keyword = filter.keyword ?? "";
     sortBy = filter.sortBy ?? "time";
     sortDirection = filter.direction ?? (sortBy === "title" ? "asc" : "desc");
@@ -2853,7 +2864,7 @@ function metaLine(entry: Row): string {
                 <span class="glean-mobile-filter-results" role="status" aria-live="polite">{t(i18n, "library.resultCount", { n: rows.length })}</span>
             </div>
         {:else if !isTabCanvas}
-            <LibraryFilters {i18n} {facets} {tagAliases} onManageTagAliases={openTagAliasManager} bind:site={selectedSite} bind:author={selectedAuthor} bind:tag={selectedTag} bind:aiTag={selectedAiTag} bind:source={selectedSource} bind:timeSource={selectedTimeSource} bind:contentType={selectedContentType} bind:readingTimeTier={selectedReadingTimeTier} bind:sortBy bind:direction={sortDirection} {hasFilters} onClear={clearUserFilters} {sourceLabel} {facetLabel} />
+            <LibraryFilters {i18n} {facets} {tagAliases} onManageTagAliases={openTagAliasManager} bind:site={selectedSite} bind:author={selectedAuthor} bind:tag={selectedTag} bind:aiTag={selectedAiTag} bind:source={selectedSource} bind:timeSource={selectedTimeSource} bind:contentType={selectedContentType} bind:readingTimeTier={selectedReadingTimeTier} bind:favoriteOnly={selectedFavoriteOnly} bind:sortBy bind:direction={sortDirection} {hasFilters} onClear={clearUserFilters} {sourceLabel} {facetLabel} />
         {/if}
 
         {#if isTabCanvas}
@@ -2885,7 +2896,7 @@ function metaLine(entry: Row): string {
                 </div>
                 <div class="glean-libbar__spacer"></div>
                 <button class="glean-btn glean-btn--ghost" aria-pressed={previewEnabled} onclick={togglePreview}>{t(i18n, "preview.enabled")}</button>
-                <LibraryFilters {i18n} {facets} {tagAliases} onManageTagAliases={openTagAliasManager} bind:site={selectedSite} bind:author={selectedAuthor} bind:tag={selectedTag} bind:aiTag={selectedAiTag} bind:source={selectedSource} bind:timeSource={selectedTimeSource} bind:contentType={selectedContentType} bind:readingTimeTier={selectedReadingTimeTier} bind:sortBy bind:direction={sortDirection} {hasFilters} onClear={clearUserFilters} {sourceLabel} {facetLabel} />
+                <LibraryFilters {i18n} {facets} {tagAliases} onManageTagAliases={openTagAliasManager} bind:site={selectedSite} bind:author={selectedAuthor} bind:tag={selectedTag} bind:aiTag={selectedAiTag} bind:source={selectedSource} bind:timeSource={selectedTimeSource} bind:contentType={selectedContentType} bind:readingTimeTier={selectedReadingTimeTier} bind:favoriteOnly={selectedFavoriteOnly} bind:sortBy bind:direction={sortDirection} {hasFilters} onClear={clearUserFilters} {sourceLabel} {facetLabel} />
             </div>
         {/if}
 
@@ -2991,6 +3002,10 @@ function metaLine(entry: Row): string {
                                 <option value="">{t(i18n, "library.filterContentType")}</option>
                                 {#each facets.contentTypes as facet (facet.value)}<option value={facet.value}>{facetLabel(facet.value, "contentType")} · {facet.count}</option>{/each}
                             </select>
+                        </label>
+                        <label class="glean-mobile-filter-field" style="display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox" bind:checked={mobileFilterDraft.favoriteOnly} />
+                            <span>❤️ {t(i18n, "roaming.favoriteOnly")}</span>
                         </label>
                         <div class="glean-mobile-filter-sort">
                             <label class="glean-mobile-filter-field">

@@ -2763,3 +2763,16 @@ T-3416 承接方向五（有依据的阅读 AI）与同类产品对标（Readwis
    - 平铺与按文章聚类双视图每张摘录卡片增设「📄 著录」按钮，秒级提取原文标题、来源与时间生成国标文献著录；
 3. 严格本地交付保障：
    - 严格在本地完成构建和测试，不执行任何外部推送与远程 API 调用。
+
+## D-0396（2026-10-29）读库星标收藏（favoriteOnly）筛选闭环：高级筛选切换、FilterChip 标签呈现与保存视图贯通（T-3518）
+
+补齐读库收藏好文的完整筛选与持久化视图闭环：
+1. 读库高级筛选与移动筛选抽屉接入（`src/ui/LibraryFilters.svelte` & `src/ui/DockPanel.svelte`）：
+   - 高级筛选浮层增设「❤️ 仅收藏」复选框，移动端筛选抽屉同步增设对应开关；
+   - 激活时严格只保留 `favorite === true` 的星标文章，非收藏文章即时剔除；
+2. FilterChip 胶囊标签呈现（`src/domain/library-filter-chips.ts` & `src/ui/DockPanel.svelte`）：
+   - 顶栏筛选 Chip 列表支持渲染 `❤️ 仅收藏` 标签，点击 `×` 秒级清除收藏过滤；
+3. 保存视图与智能预设 100% 贯通（`src/ui/DockPanel.svelte` & `src/domain/ui-prefs.ts`）：
+   - `applySavedViewState` 与 `currentSavedFilter` 完整同步与还原 `favoriteOnly`，使开箱即用的「星标收藏」智能视图预设（Smart View Preset）无缝生效；
+4. 严格本地交付保障：
+   - 严格在本地完成构建和测试，不执行任何外部推送与远程 API 调用。

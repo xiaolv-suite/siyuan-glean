@@ -1,5 +1,19 @@
 # 更新日志（CHANGELOG）
 
+## v1.3.83（2026-10-29）
+
+### 读库星标收藏（favoriteOnly）筛选闭环：高级筛选切换、FilterChip 标签呈现与保存视图贯通
+
+- **星标收藏筛选闭环（T-3518）**：
+  - `src/domain/library-filter-chips.ts` 扩充 `favoriteOnly` 条件识别与标签映射；
+  - `src/ui/LibraryFilters.svelte` 高级筛选浮层与移动端筛选抽屉嵌入「❤️ 仅收藏」切换项，勾选后仅展示星标收藏文章；
+- **FilterChip 胶囊标签联动（T-3518）**：
+  - 顶部筛选标签栏（`libraryFilterChips`）支持呈现 `❤️ 仅收藏` chip，单点击 `×` 秒级清空收藏过滤；
+- **保存视图与智能预设 100% 贯通（T-3518）**：
+  - `src/ui/DockPanel.svelte` 保存视图完整持久化与回填 `favoriteOnly` 条件，开箱即用的「星标收藏」智能视图预设（Smart View Preset）无缝生效；
+- **本地纯净交付保障**：
+  - 严格保持本地更新构建，不执行任何外部推送，待作者账号解封通知后统一处理。
+
 ## v1.3.82（2026-10-29）
 
 ### 摘录墙（HighlightView）多选批量块引用导出与单卡学术文献著录复制

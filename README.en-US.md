@@ -67,6 +67,16 @@ This release implements floating margin notes in the reader editor for same-focu
 - **Floating Margin Notes (Margin Notes)**: Highlights and user thoughts float as sticky note bubbles along the right margin; clicking a note smoothly scrolls to the source block with pulse focus.
 - **Toggle Margin Notes (Alt+M)**: The reader toolbar offers a dedicated toggle action (Alt+M) to collapse or reveal margin notes at will.
 
+## v1.3.83 update (2026-10-29)
+
+This release implements library favoriteOnly filtering, filter chip presentation, and saved view synchronization.
+
+**New features & improvements:**
+
+- **Favorite-Only Filter Support (T-3518)**: Advanced filters popover (`LibraryFilters`) and mobile filter sheet embed "❤️ Favorites Only" toggle to filter library by starred articles.
+- **FilterChip Presentation**: Filter chips bar displays "❤️ Favorites Only" chip with 1-click removal.
+- **Saved View & Smart Preset Integration**: Fully persists and applies `favoriteOnly` in custom saved views and default "Starred Favorites" smart view preset.
+
 ## v1.3.82 update (2026-10-29)
 
 This release implements highlights wall multi-select batch block ref export and single-card GB/T citation copy.
