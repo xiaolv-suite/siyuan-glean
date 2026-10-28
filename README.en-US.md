@@ -69,12 +69,16 @@ This release implements floating margin notes in the reader editor for same-focu
 
 ## v1.3.72 update (2026-10-28)
 
-This release implements outline heading block reference copy buttons and outline filter Escape quick reset.
+This release implements outline heading block reference copy buttons, outline filter Escape quick reset, and hot-path performance tuning for library filtering.
 
 **New features & improvements:**
 
 - **Outline Heading Block Reference Copy**: Each heading item in companion outline tree embeds a floating "🔗" button to copy exact heading block references directly to clipboard.
 - **Outline Filter Escape Reset**: Pressing `Escape` in the outline filter input instantly clears keyword and resets the full outline tree.
+
+**Performance improvements:**
+
+- **Faster keyword filtering in the library**: Searchable text is cached per entry (WeakMap) and sort keys are pre-computed (decorate-sort-undecorate); filtering + sorting 10k entries with a keyword runs at ~47ms median on the hot path.
 
 ## v1.3.71 update (2026-10-28)
 
