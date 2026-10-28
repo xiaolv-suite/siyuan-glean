@@ -5,6 +5,7 @@
     import { pickRoamingArticle, type RoamingPick } from "../domain/roaming";
     import { loadIndex } from "../services/index-store";
     import { displayWechatAuthor, isWechatUrl } from "../domain/wechat";
+    import { writeClip } from "../services/clip-store";
 
     interface Props {
         facade: GleanFacade;
@@ -67,6 +68,40 @@
         }
     }
 
+    async function markCurrentLater(): Promise<void> {
+        if (loading) return;
+        loading = true;
+        try {
+            const id = currentPick.item.id;
+            await writeClip(facade.pluginInstance, id, { status: "later" }, { force: true });
+            showMessage(t(i18n, "msg.statusChanged"), 2000);
+            facade.notifyDataChanged();
+            await nextPick();
+        } catch (error) {
+            console.warn("[glean] 盲盒稍后读写入失败:", error);
+            showMessage(t(i18n, "msg.statusFailed"), 2500);
+        } finally {
+            loading = false;
+        }
+    }
+
+    async function markCurrentArchive(): Promise<void> {
+        if (loading) return;
+        loading = true;
+        try {
+            const id = currentPick.item.id;
+            await writeClip(facade.pluginInstance, id, { status: "archived" }, { force: true });
+            showMessage(t(i18n, "msg.statusChanged"), 2000);
+            facade.notifyDataChanged();
+            await nextPick();
+        } catch (error) {
+            console.warn("[glean] 盲盒归档写入失败:", error);
+            showMessage(t(i18n, "msg.statusFailed"), 2500);
+        } finally {
+            loading = false;
+        }
+    }
+
     function startRead(): void {
         onClose?.();
         onOpenArticle(currentPick.item.id, currentPick.item.readPoint);
@@ -82,6 +117,12 @@
     } else if (e.key === "ArrowRight" || e.key === " " || e.code === "Space") {
         e.preventDefault();
         void nextPick();
+    } else if ((e.key === "a" || e.key === "A") && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        void markCurrentLater();
+    } else if ((e.key === "e" || e.key === "E") && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        void markCurrentArchive();
     } else if (e.key === "Enter") {
         e.preventDefault();
         startRead();
@@ -142,17 +183,39 @@
     </article>
 
     <div class="glean-roaming-actions">
-        {#if canPrev}
-            <button type="button" class="glean-btn glean-btn--ghost glean-roaming-prev-btn" onclick={prevPick} title={t(i18n, "roaming.prevBlindBox")}>
-                ⏮️ {t(i18n, "roaming.prevBlindBox")}
+        <div class="glean-roaming-triage">
+            <button
+                type="button"
+                class="glean-btn glean-btn--ghost glean-roaming-triage-btn"
+                disabled={loading}
+                onclick={() => void markCurrentLater()}
+                title="稍后读 (A)"
+            >
+                📥 {t(i18n, "queue.later")}
             </button>
-        {/if}
-        <button type="button" class="glean-btn glean-btn--ghost glean-roaming-next-btn" disabled={loading} onclick={() => void nextPick()}>
-            🎲 {t(i18n, "roaming.nextBlindBox")}
-        </button>
-        <button type="button" class="glean-btn glean-btn--pri glean-roaming-read-btn" onclick={startRead}>
-            🎯 {t(i18n, "roaming.startReadNow")}
-        </button>
+            <button
+                type="button"
+                class="glean-btn glean-btn--ghost glean-roaming-triage-btn"
+                disabled={loading}
+                onclick={() => void markCurrentArchive()}
+                title="归档 (E)"
+            >
+                📦 {t(i18n, "queue.archived")}
+            </button>
+        </div>
+        <div class="glean-roaming-nav">
+            {#if canPrev}
+                <button type="button" class="glean-btn glean-btn--ghost glean-roaming-prev-btn" onclick={prevPick} title={t(i18n, "roaming.prevBlindBox")}>
+                    ⏮️ {t(i18n, "roaming.prevBlindBox")}
+                </button>
+            {/if}
+            <button type="button" class="glean-btn glean-btn--ghost glean-roaming-next-btn" disabled={loading} onclick={() => void nextPick()}>
+                🎲 {t(i18n, "roaming.nextBlindBox")}
+            </button>
+            <button type="button" class="glean-btn glean-btn--pri glean-roaming-read-btn" onclick={startRead}>
+                🎯 {t(i18n, "roaming.startReadNow")}
+            </button>
+        </div>
     </div>
 
     <div class="glean-roaming-hint">

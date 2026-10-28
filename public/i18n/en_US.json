@@ -1483,7 +1483,7 @@
   "roaming.prevBlindBox": "Previous",
   "roaming.startReadNow": "Start Reading",
   "roaming.exploreMore": "Open Roaming Blind-Box",
-  "roaming.keyboardTips": "Tips: Arrow keys ← / → or Space to switch, Enter to read",
+  "roaming.keyboardTips": "Tips: ← / → or Space to switch, A for Later, E to Archive, Enter to read",
   "roaming.hasReadPoint": "Bookmark",
   "reader.marginNotes": "Margin Notes",
   "reader.marginNotesToggle": "Toggle Margin Notes (Alt+M)"

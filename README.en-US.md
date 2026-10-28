@@ -67,6 +67,15 @@ This release implements floating margin notes in the reader editor for same-focu
 - **Floating Margin Notes (Margin Notes)**: Highlights and user thoughts float as sticky note bubbles along the right margin; clicking a note smoothly scrolls to the source block with pulse focus.
 - **Toggle Margin Notes (Alt+M)**: The reader toolbar offers a dedicated toggle action (Alt+M) to collapse or reveal margin notes at will.
 
+## v1.3.62 update (2026-10-28)
+
+This release implements instant triage within roaming blind-box (A for Later / E for Archive), auto-switching after status mutations, and grouped action layout.
+
+**New features & improvements:**
+
+- **Instant Triage in Blind-Box**: Adds "📥 Later" (shortcut `A`) and "📦 Archive" (shortcut `E`) actions in the blind-box drawer to triage articles on the fly and seamlessly switch to the next box upon mutation.
+- **Grouped Action Bar Layout**: Reorganizes blind-box footer into left triage group and right navigation group for cleaner hierarchy.
+
 ## v1.3.61 update (2026-10-28)
 
 This release implements reader roaming blind-box drawer integration, bookmark read-point direct navigation, and Space-key instant switching.

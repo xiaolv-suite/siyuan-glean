@@ -16,6 +16,13 @@ test("RoamingDrawerDialog 契约守门：展示推荐理由、匹配得分、换
     assert.match(dialogSource, /currentPick\.item\.readPoint/);
     assert.match(dialogSource, /onOpenArticle\(currentPick\.item\.id,\s*currentPick\.item\.readPoint\)/);
     assert.match(dialogSource, /e\.key === " " \|\| e\.code === "Space"/);
+    assert.match(dialogSource, /e\.key === "a" \|\| e\.key === "A"/);
+    assert.match(dialogSource, /e\.key === "e" \|\| e\.key === "E"/);
+    assert.match(dialogSource, /markCurrentLater/);
+    assert.match(dialogSource, /markCurrentArchive/);
+    assert.match(dialogSource, /writeClip\(facade\.pluginInstance/);
+    assert.match(dialogSource, /queue\.later/);
+    assert.match(dialogSource, /queue\.archived/);
     assert.match(dialogSource, /roaming\.keyboardTips/);
 });
 
