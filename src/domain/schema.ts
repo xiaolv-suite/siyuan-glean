@@ -46,6 +46,8 @@ export const ATTR = {
     favorite: "custom-clip-favorite",
     /** 引述块级颜色标记（不参与文章根块 ClipAttrs 投影）。 */
     highlightColor: "custom-clip-hl-color",
+    /** 引述金句块属性标记（供多维数据库 AV Collection 自动化感知收集，符合 Issue #17 建议） */
+    gleanHighlight: "custom-lv-glean-highlight",
     time: "custom-clip-time",
     status: "custom-clip-status",
     /** 最近一次显式标记读完的时刻；缺键 = 完成时间未知（D-0028）。 */

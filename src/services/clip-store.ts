@@ -94,11 +94,28 @@ export async function readHighlightColor(blockId: string): Promise<string> {
     }
 }
 
-/** 设置或清除引述块颜色标记。仅允许 schema 规定的颜色值。 */
+/** 设置或清除引述块颜色标记与金句收集属性。仅允许 schema 规定的颜色值。 */
 export async function writeHighlightColor(blockId: string, color: string): Promise<void> {
     if (!/^\d{14}-[0-9a-z]{7}$/.test(blockId)) return;
     const value = (CLIP_HIGHLIGHT_COLORS as readonly string[]).includes(color) ? color : "";
-    await setBlockAttrs(blockId, value ? { [ATTR.highlightColor]: value } : { [ATTR.highlightColor]: null });
+    await setBlockAttrs(
+        blockId,
+        value
+            ? { [ATTR.highlightColor]: value, [ATTR.gleanHighlight]: "true" }
+            : { [ATTR.highlightColor]: null, [ATTR.gleanHighlight]: null }
+    );
+}
+
+/** 标记引述金句块属性（符合 Issue #17 联动官方多维数据库建议） */
+export async function markGleanHighlight(blockId: string, color?: string): Promise<void> {
+    if (!/^\d{14}-[0-9a-z]{7}$/.test(blockId)) return;
+    const patch: Record<string, string | null> = {
+        [ATTR.gleanHighlight]: "true",
+    };
+    if (color && (CLIP_HIGHLIGHT_COLORS as readonly string[]).includes(color)) {
+        patch[ATTR.highlightColor] = color;
+    }
+    await setBlockAttrs(blockId, patch);
 }
 
 export async function readClipDocument(docId: string, exportOptions: ExportMarkdownOptions = {}): Promise<{ meta: DocMeta; attrs: ClipAttrs; markdown: string }> {

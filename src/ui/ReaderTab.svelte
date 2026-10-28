@@ -31,6 +31,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
         saveReadingMinutes,
         writeClip,
         writeHighlightColor,
+        markGleanHighlight,
         type ReadingClipContext,
     } from "../services/clip-store";
     import { snapshotClip } from "../services/snapshot-service";
@@ -1370,12 +1371,10 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
         excerptBusy = true;
         try {
             const newBlockId = await insertQuoteExcerpt(excerpt.blockId, excerpt.text, memo);
-            if (color) {
-                try {
-                    await writeHighlightColor(newBlockId, color);
-                } catch (err) {
-                    console.debug("[LvGlean] 高亮色彩写入异常:", err);
-                }
+            try {
+                await markGleanHighlight(newBlockId, color);
+            } catch (err) {
+                console.debug("[LvGlean] 高亮色彩与金句属性写入异常:", err);
             }
             showMessage(t(i18n, memo ? "reader.memoDone" : "reader.excerptDone"), 2500);
             if (docId) void loadDocHighlights(docId);

@@ -8,6 +8,14 @@ Lv Glean organizes clippings and articles already in SiYuan. It does not crawl t
 
 [中文说明](README.md) · [Latest Release](https://github.com/ai68298100/siyuan-glean/releases/latest) · [Capability matrix](docs/CAPABILITY-MATRIX.md) · [Feedback](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.54 update (2026-10-27)
+
+This release implements automatic quote gathering into official AttributeView databases.
+
+**New features & improvements:**
+
+- **Automatic AV Collection Tagging**: Excerpt blocks automatically receive `custom-lv-glean-highlight="true"` to feed official database views without manual scripting.
+
 ## v1.3.53 update (2026-10-27)
 
 This release implements floating margin notes in the reader editor for same-focus smooth navigation.

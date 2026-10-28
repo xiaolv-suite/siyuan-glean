@@ -2431,3 +2431,12 @@ T-3416 承接方向五（有依据的阅读 AI）与同类产品对标（Readwis
    - 卡片左侧带有四色指示条（黄/红/蓝/绿），点击卡片自动平滑滚动对齐原文对应段落并脉冲高亮；
 2. 顶栏边注折叠开关与快捷键（`ReaderTab.svelte`）：
    - 顶栏增设「📑 边注」切换开关（显示当前批注总数），支持快捷键 `Alt+M` 一键展开或收起，大屏阅读与沉浸阅读自适应随心切换。
+
+## D-0367（2026-10-27）剪藏划词金句联动官方多维数据库（AV Collection）自动化收集（T-3488）
+
+打通批注块与官方多维数据库的零代码沉淀：
+1. 金句块属性契约（`src/domain/schema.ts`）：
+   - 声明 `ATTR.gleanHighlight: "custom-lv-glean-highlight"`；
+2. 引述块与金句收集联动（`src/services/clip-store.ts` & `ReaderTab.svelte`）：
+   - 新增 `markGleanHighlight` 服务函数，在划词批注生成引述块时自动写入 `custom-lv-glean-highlight="true"`，并保持分层架构；
+   - 官方多维数据库（AttributeView）可直接按该属性过滤自动聚合全库金句，零代码沉淀全网精华。

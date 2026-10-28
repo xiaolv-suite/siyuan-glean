@@ -1,5 +1,14 @@
 # 更新日志（CHANGELOG）
 
+## v1.3.54（2026-10-27）
+
+### 剪藏划词金句联动官方多维数据库（AV Collection）自动化收集
+
+- **划词金句联动官方多维数据库属性（T-3488）**：
+  - `src/domain/schema.ts` 声明 `ATTR.gleanHighlight: "custom-lv-glean-highlight"` 契约常量；
+  - `src/services/clip-store.ts` 新增 `markGleanHighlight` 并加固 `writeHighlightColor`；
+  - 在 `ReaderTab.svelte` 划词摘录与四色高亮时，自动为生成的引述块写入 `custom-lv-glean-highlight="true"` 与颜色标记，完美联动思源官方灵感与金句多维数据库（AttributeView Collection），实现零代码自动汇聚全网深度研读金句。
+
 ## v1.3.53（2026-10-27）
 
 ### 编辑器右侧边距悬浮注记（Margin Notes）与视线同焦平滑跳转

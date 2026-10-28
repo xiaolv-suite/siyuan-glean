@@ -198,3 +198,8 @@ test("displaySiteName：知名站点映射品牌名，未知域名优雅回退�
     assert.equal(displaySiteName(""), "");
     assert.equal(displaySiteName(undefined), "");
 });
+
+test("ATTR.gleanHighlight 契约守门：符合 Issue #17 建议联动多维数据库自动化", () => {
+    assert.equal(ATTR.gleanHighlight, "custom-lv-glean-highlight");
+    assert.equal(ATTR.highlightColor, "custom-clip-hl-color");
+});

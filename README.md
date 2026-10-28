@@ -8,6 +8,14 @@
 
 [English](README.en-US.md) · [下载最新版](https://github.com/ai68298100/siyuan-glean/releases/latest) · [能力矩阵](docs/CAPABILITY-MATRIX.md) · [反馈与问题](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.54 更新（2026-10-27）
+
+本次版本实现剪藏划词金句联动官方多维数据库（AV Collection）自动化收集。
+
+**新增与体验增强：**
+
+- **划词金句联动官方多维数据库**：摘录引述块自动挂载 `custom-lv-glean-highlight="true"` 属性，无缝汇聚至思源官方多维表格灵感库。
+
 ## v1.3.53 更新（2026-10-27）
 
 本次版本实现编辑器右侧边距悬浮注记（Margin Notes）与视线同焦平滑跳转。
