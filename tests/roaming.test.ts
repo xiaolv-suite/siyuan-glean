@@ -120,3 +120,17 @@ test("pickRoamingArticle 支持 tag 专属主题定向漫游与时间预算复�
     const pickUnknown = pickRoamingArticle(pool, { tag: "未知标签", random: () => 0 });
     assert.equal(pickUnknown, null);
 });
+
+test("pickRoamingArticle 支持 favoriteOnly 仅漫游星标好文（T-3514）", () => {
+    const pool: RoamingCandidate[] = [
+        { id: "doc-1", title: "普通文章", status: "later", priority: 5, favorite: false },
+        { id: "doc-2", title: "珍藏好文", status: "later", priority: 3, favorite: true },
+    ];
+    const pick = pickRoamingArticle(pool, { favoriteOnly: true, random: () => 0 });
+    assert.ok(pick);
+    assert.equal(pick.item.id, "doc-2");
+
+    // 若无收藏文章则返回 null
+    const pickNone = pickRoamingArticle([{ id: "doc-1", title: "普通文章", status: "later" }], { favoriteOnly: true });
+    assert.equal(pickNone, null);
+});

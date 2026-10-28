@@ -40,6 +40,7 @@ export interface RoamingPickOptions {
     excludedIds?: Iterable<string>;
     timeBudget?: RoamingTimeBudget;
     tag?: string;
+    favoriteOnly?: boolean;
     random?: () => number;
 }
 
@@ -93,10 +94,11 @@ export function pickRoamingArticle(
     let excludedIds: Iterable<string> = [];
     let timeBudget: RoamingTimeBudget = "all";
     let targetTag = "";
+    let favoriteOnly = false;
     let random = Math.random;
 
     if (options) {
-        if (typeof (options as any)[Symbol.iterator] === "function" && !(options as RoamingPickOptions).timeBudget && !(options as RoamingPickOptions).excludedIds && !(options as RoamingPickOptions).tag) {
+        if (typeof (options as any)[Symbol.iterator] === "function" && !(options as RoamingPickOptions).timeBudget && !(options as RoamingPickOptions).excludedIds && !(options as RoamingPickOptions).tag && !(options as RoamingPickOptions).favoriteOnly) {
             excludedIds = options as Iterable<string>;
             if (legacyRandom) random = legacyRandom;
         } else {
@@ -104,6 +106,7 @@ export function pickRoamingArticle(
             if (opts.excludedIds) excludedIds = opts.excludedIds;
             if (opts.timeBudget) timeBudget = opts.timeBudget;
             if (opts.tag) targetTag = opts.tag;
+            if (opts.favoriteOnly) favoriteOnly = Boolean(opts.favoriteOnly);
             if (opts.random) random = opts.random;
         }
     }
@@ -113,6 +116,7 @@ export function pickRoamingArticle(
     const pool = candidates.filter((c) => {
         if (c.status !== "inbox" && c.status !== "later" && c.status !== "reading") return false;
         if (excludeSet.has(c.id)) return false;
+        if (favoriteOnly && !c.favorite) return false;
         const m = c.minutes ?? 0;
         if (timeBudget === "short" && !(m > 0 && m <= 5)) return false;
         if (timeBudget === "medium" && !(m > 5 && m <= 15)) return false;

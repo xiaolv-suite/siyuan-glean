@@ -91,6 +91,21 @@
     }
 }
 
+.glean-roaming-fav-filter-btn {
+    border: 1px solid var(--b3-border-color);
+    background: var(--b3-theme-background-light);
+    height: 26px;
+    padding: 0 10px;
+    display: inline-flex;
+    align-items: center;
+
+    &.glean-roaming-budget-btn--active {
+        border-color: var(--lv-brand);
+        color: var(--lv-brand);
+        background: color-mix(in srgb, var(--lv-brand) 10%, var(--b3-theme-surface));
+    }
+}
+
 .glean-roaming-pos {
     font-size: 11px;
     font-weight: 500;

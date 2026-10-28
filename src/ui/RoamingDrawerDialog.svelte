@@ -26,6 +26,7 @@
     const canPrev = $derived(historyIndex > 0);
     let timeBudget = $state<RoamingTimeBudget>("all");
     let selectedTag = $state("");
+    let favoriteOnly = $state(false);
     let availableTags = $state<string[]>([]);
     let loading = $state(false);
 
@@ -65,7 +66,7 @@
         try {
             const index = await loadIndex(facade.pluginInstance);
             const candidates = Object.values(index.clips);
-            const next = pickRoamingArticle(candidates, { timeBudget: budget, tag: selectedTag || undefined });
+            const next = pickRoamingArticle(candidates, { timeBudget: budget, tag: selectedTag || undefined, favoriteOnly });
             if (next) {
                 history = [next];
                 historyIndex = 0;
@@ -90,7 +91,7 @@
         try {
             const index = await loadIndex(facade.pluginInstance);
             const candidates = Object.values(index.clips);
-            const next = pickRoamingArticle(candidates, { timeBudget, tag: selectedTag || undefined });
+            const next = pickRoamingArticle(candidates, { timeBudget, tag: selectedTag || undefined, favoriteOnly });
             if (next) {
                 history = [next];
                 historyIndex = 0;
@@ -102,6 +103,31 @@
             }
         } catch (error) {
             console.warn("[glean] 切换主题漫游异常:", error);
+            showMessage(t(i18n, "msg.actionFailed"), 2500);
+        } finally {
+            loading = false;
+        }
+    }
+
+    async function toggleFavoriteFilter(): Promise<void> {
+        if (loading) return;
+        favoriteOnly = !favoriteOnly;
+        loading = true;
+        try {
+            const index = await loadIndex(facade.pluginInstance);
+            const candidates = Object.values(index.clips);
+            const next = pickRoamingArticle(candidates, { timeBudget, tag: selectedTag || undefined, favoriteOnly });
+            if (next) {
+                history = [next];
+                historyIndex = 0;
+                if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+                    try { navigator.vibrate?.(10); } catch { /* noop */ }
+                }
+            } else {
+                showMessage(t(i18n, "roaming.emptyPool"), 2500);
+            }
+        } catch (error) {
+            console.warn("[glean] 切换收藏过滤漫游异常:", error);
             showMessage(t(i18n, "msg.actionFailed"), 2500);
         } finally {
             loading = false;
@@ -122,7 +148,7 @@
             const excludedIds = new Set(currentList.map((h) => h.item.id));
             const index = await loadIndex(facade.pluginInstance);
             const candidates = Object.values(index.clips);
-            const next = pickRoamingArticle(candidates, { excludedIds, timeBudget, tag: selectedTag || undefined });
+            const next = pickRoamingArticle(candidates, { excludedIds, timeBudget, tag: selectedTag || undefined, favoriteOnly });
             if (next) {
                 history = [...currentList, next];
                 historyIndex = history.length - 1;
@@ -394,6 +420,16 @@
                 {/each}
             </select>
         {/if}
+
+        <button
+            type="button"
+            class="glean-roaming-budget-btn glean-roaming-fav-filter-btn"
+            class:glean-roaming-budget-btn--active={favoriteOnly}
+            onclick={() => void toggleFavoriteFilter()}
+            title={t(i18n, "roaming.favoriteOnlyHint")}
+        >
+            ❤️ {t(i18n, "roaming.favoriteOnly")}
+        </button>
     </div>
 
     <article

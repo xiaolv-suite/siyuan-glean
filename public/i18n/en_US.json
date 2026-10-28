@@ -1494,6 +1494,8 @@
   "roaming.favoriteAdded": "Added to favorites",
   "roaming.favoriteRemoved": "Removed from favorites",
   "roaming.favoriteAction": "Favorite",
+  "roaming.favoriteOnly": "Favorites Only",
+  "roaming.favoriteOnlyHint": "Only roam through starred favorite articles",
   "roaming.budgetAll": "Any time",
   "roaming.budgetShort": "Quick ≤5m",
   "roaming.budgetMedium": "Medium 5-15m",

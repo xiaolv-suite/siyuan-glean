@@ -67,6 +67,15 @@ This release implements floating margin notes in the reader editor for same-focu
 - **Floating Margin Notes (Margin Notes)**: Highlights and user thoughts float as sticky note bubbles along the right margin; clicking a note smoothly scrolls to the source block with pulse focus.
 - **Toggle Margin Notes (Alt+M)**: The reader toolbar offers a dedicated toggle action (Alt+M) to collapse or reveal margin notes at will.
 
+## v1.3.79 update (2026-10-29)
+
+This release implements favoriteOnly roaming blind-box support for revisiting classic starred articles.
+
+**New features & improvements:**
+
+- **Roaming Blind-Box Favorites-Only Filter (T-3514)**: Roaming drawer top bar embeds "❤️ Favorites Only" filter toggle to restrict blind-box draws to user's starred favorite collection.
+- **Algorithm-Level favoriteOnly Orthogonal Constraint**: `pickRoamingArticle` integrates `favoriteOnly` option, combinable with time budget and topic tags for customized revisit sessions.
+
 ## v1.3.78 update (2026-10-29)
 
 This release implements library batch bar block reference export, GB/T citation export, and batch star favorite.

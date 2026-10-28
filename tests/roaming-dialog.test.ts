@@ -25,6 +25,9 @@ test("RoamingDrawerDialog 契约守门：展示推荐理由、匹配得分、换
     assert.match(dialogSource, /markCurrentLater/);
     assert.match(dialogSource, /markCurrentArchive/);
     assert.match(dialogSource, /toggleCurrentFavorite/);
+    assert.match(dialogSource, /toggleFavoriteFilter/);
+    assert.match(dialogSource, /glean-roaming-fav-filter-btn/);
+    assert.match(dialogSource, /roaming\.favoriteOnly/);
     assert.match(dialogSource, /copyCurrentCitation/);
     assert.match(dialogSource, /copyCurrentBlockRef/);
     assert.match(dialogSource, /openOrTakeCurrentSnapshot/);
