@@ -191,8 +191,10 @@ test("DockPanel 接线：键盘光标样式、提示条与动作路由存在", (
     assert.match(dock, /case "copyBibTeX":/);
     assert.match(dock, /formatBibTeX\(citItem\)/);
     assert.match(dock, /formatAPA\(citItem\)/);
+    assert.match(dock, /formatMLA\(citItem\)/);
     assert.match(dock, /onCopyBibTeX=\{batchCopyBibTeX\}/);
     assert.match(dock, /onCopyAPA=\{batchCopyAPA\}/);
+    assert.match(dock, /onCopyMLA=\{batchCopyMLA\}/);
     assert.match(dock, /onCopySummaryList=\{batchCopySummaryList\}/);
     assert.match(dock, /onExportCsv=\{batchExportCsv\}/);
     assert.match(dock, /exportSelectedClipsCsv/);

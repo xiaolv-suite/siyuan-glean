@@ -39,7 +39,7 @@ import { hasSourceAction, openTargetForCarrier, resolveCarrier, sourceUrlForCarr
 import { isWechatUrl, displayWechatAuthor, isWechatSeriesTag } from "../domain/wechat";
 import { pickRoamingArticle } from "../domain/roaming";
 import { openRoamingDialog } from "./roaming-dialog";
-import { formatAPA, formatBibTeX, formatGBT7714, type CitationFormat, type CitationItem } from "../domain/citation";
+import { formatAPA, formatBibTeX, formatGBT7714, formatMLA, type CitationFormat, type CitationItem } from "../domain/citation";
 import { batchRecognizeWechatAuthors, scanAndFillWechatAuthor, purifyWechatArticle } from "../services/wechat-service";
 import ClipStatusActions from "./ClipStatusActions.svelte";
 import ClipRankControls from "./ClipRankControls.svelte";
@@ -1110,6 +1110,30 @@ async function batchCopyAPA(): Promise<void> {
     try {
         await navigator.clipboard.writeText(lines.join("\n"));
         showMessage(t(i18n, "library.batchApaCopied", { n: ids.length }), 2500);
+    } catch {
+        showMessage(t(i18n, "msg.actionFailed"), 2000);
+    }
+}
+
+async function batchCopyMLA(): Promise<void> {
+    if (selection.size === 0) return;
+    const ids = Array.from(selection);
+    const lines = ids.map((id, indexNum) => {
+        const clip = index.clips[id] || index.candidates[id];
+        const citItem: CitationItem = {
+            id,
+            title: clip?.title || t(i18n, "panel.untitled"),
+            author: clip?.author,
+            site: clip?.site,
+            url: clip?.url,
+            time: clip?.time,
+        };
+        const cit = formatMLA(citItem);
+        return `[${indexNum + 1}] ${cit}`;
+    });
+    try {
+        await navigator.clipboard.writeText(lines.join("\n"));
+        showMessage(t(i18n, "library.batchMlaCopied", { n: ids.length }), 2500);
     } catch {
         showMessage(t(i18n, "msg.actionFailed"), 2000);
     }
@@ -2347,8 +2371,8 @@ async function copyEntryCitation(entry: { id: string; title?: string; author?: s
         url: entry.url,
         time: entry.time,
     };
-    const citText = format === "bibtex" ? formatBibTeX(citItem) : (format === "apa" ? formatAPA(citItem) : formatGBT7714(citItem));
-    const msgKey = format === "bibtex" ? "citation.bibtexCopied" : (format === "apa" ? "citation.apaCopied" : "citation.gbtCopied");
+    const citText = format === "bibtex" ? formatBibTeX(citItem) : (format === "apa" ? formatAPA(citItem) : (format === "mla" ? formatMLA(citItem) : formatGBT7714(citItem)));
+    const msgKey = format === "bibtex" ? "citation.bibtexCopied" : (format === "apa" ? "citation.apaCopied" : (format === "mla" ? "citation.mlaCopied" : "citation.gbtCopied"));
     try {
         if (navigator?.clipboard?.writeText) {
             await navigator.clipboard.writeText(citText);
@@ -3553,6 +3577,7 @@ function metaLine(entry: Row): string {
                                                 <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "gbt")}>📄 {t(i18n, "citation.copyGBT")}</button>
                                                 <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "bibtex")}>📚 {t(i18n, "citation.copyBibTeX")}</button>
                                                 <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "apa")}>🎓 {t(i18n, "citation.copyAPA")}</button>
+                                                <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "mla")}>📖 {t(i18n, "citation.copyMLA")}</button>
                                                 {#if entry.status !== "archived"}
                                                     <button class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId) || entry.status === "later"} onclick={() => void setStatus(entry, "later")}>{t(i18n, "action.moveToLater")}</button>
                                                     <button class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId)} onclick={() => facade.openArchiveDialog(entry.id)}>{t(i18n, "action.archive")}</button>
@@ -3760,6 +3785,7 @@ function metaLine(entry: Row): string {
                                         <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "gbt")}>📄 {t(i18n, "citation.copyGBT")}</button>
                                         <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "bibtex")}>📚 {t(i18n, "citation.copyBibTeX")}</button>
                                         <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "apa")}>🎓 {t(i18n, "citation.copyAPA")}</button>
+                                        <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "mla")}>📖 {t(i18n, "citation.copyMLA")}</button>
                                     </ActionPopover>
                                     <button
                                         class="glean-op-btn"
@@ -3853,6 +3879,7 @@ function metaLine(entry: Row): string {
             onCopyCitations={batchCopyCitations}
             onCopyBibTeX={batchCopyBibTeX}
             onCopyAPA={batchCopyAPA}
+            onCopyMLA={batchCopyMLA}
             onCopySummaryList={batchCopySummaryList}
             onExportCsv={batchExportCsv}
             onBatchFavorite={batchFavorite}

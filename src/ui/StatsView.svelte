@@ -598,6 +598,9 @@ function onWindowKeyDown(event: KeyboardEvent): void {
                         <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm glean-stats__copy-apa-btn" onclick={() => void copyCompletedListCitations("apa")} title={t(i18n, "citation.copyAPA")}>
                             🎓 APA
                         </button>
+                        <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm glean-stats__copy-mla-btn" onclick={() => void copyCompletedListCitations("mla")} title={t(i18n, "citation.copyMLA")}>
+                            📖 MLA
+                        </button>
                         <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm glean-stats__export-csv-btn" onclick={() => void exportCompletedCsv()} title={t(i18n, "library.batchExportCsv")}>
                             📊 {t(i18n, "library.batchExportCsv")}
                         </button>
@@ -621,6 +624,9 @@ function onWindowKeyDown(event: KeyboardEvent): void {
                             </button>
                             <button type="button" class="glean-btn glean-btn--ghost glean-btn--xs" onclick={() => void copyCompletedCitation(item, "apa")} title={t(i18n, "citation.copyAPA")}>
                                 🎓
+                            </button>
+                            <button type="button" class="glean-btn glean-btn--ghost glean-btn--xs" onclick={() => void copyCompletedCitation(item, "mla")} title={t(i18n, "citation.copyMLA")}>
+                                📖
                             </button>
                         </div>
                     </li>

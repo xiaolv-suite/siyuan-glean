@@ -42,9 +42,27 @@
             facade.openReadingDocument(article.id);
         }
     }
+
+    function onKeyDown(e: KeyboardEvent): void {
+        const target = e.target instanceof Element ? e.target : null;
+        if (target?.closest("input, textarea, select, [contenteditable]:not([contenteditable='false'])")) return;
+        if (e.isComposing || e.keyCode === 229) return;
+        if (e.key === "Escape") {
+            onClose?.();
+        } else if ((e.key === "c" || e.key === "C") && !e.ctrlKey && !e.metaKey && !e.altKey) {
+            e.preventDefault();
+            void copyLink();
+        } else if (e.key === "Enter") {
+            e.preventDefault();
+            openShelf();
+        } else if ((e.key === "r" || e.key === "R" || e.key === "o" || e.key === "O") && !e.ctrlKey && !e.metaKey && !e.altKey) {
+            e.preventDefault();
+            openLocalReader();
+        }
+    }
 </script>
 
-<svelte:window onkeydown={(e) => { if (e.key === "Escape") onClose?.(); }} />
+<svelte:window onkeydown={onKeyDown} />
 
 <div class="glean-weread-guide">
     <div class="glean-weread-guide__head">
@@ -102,5 +120,14 @@
         <button type="button" class="glean-btn glean-btn--ghost glean-weread-local-btn" onclick={openLocalReader}>
             📖 {t(i18n, "wechat.openLocalReader")}
         </button>
+    </div>
+
+    <div class="glean-kbdhint" style="margin-top: var(--glean-space-3); justify-content: center;">
+        <span class="glean-kbdhint__keys" aria-hidden="true">
+            <kbd>C</kbd> {t(i18n, "wechat.copyCleanLink")}
+            <kbd>Enter</kbd> {t(i18n, "wechat.openWereadShelf")}
+            <kbd>R</kbd> {t(i18n, "wechat.openLocalReader")}
+            <kbd>Esc</kbd> {t(i18n, "action.close")}
+        </span>
     </div>
 </div>

@@ -67,6 +67,15 @@ This release implements floating margin notes in the reader editor for same-focu
 - **Floating Margin Notes (Margin Notes)**: Highlights and user thoughts float as sticky note bubbles along the right margin; clicking a note smoothly scrolls to the source block with pulse focus.
 - **Toggle Margin Notes (Alt+M)**: The reader toolbar offers a dedicated toggle action (Alt+M) to collapse or reveal margin notes at will.
 
+## v1.3.94 update (2026-10-29)
+
+This release implements full keyboard workflow in WeReadGuideDialog (C/Enter/R/Esc) and quadruple academic citation support (GB/T, BibTeX, APA, MLA).
+
+**New features & improvements:**
+
+- **Full Keyboard Workflow in WeRead Guide (T-3529)**: Press `C` to copy clean link, `Enter` to open bookshelf, `R` to open in SiYuan local reader, and `Esc` to close.
+- **Quadruple Academic Citation Standards (T-3529)**: Adds MLA 9th edition support across library batch bar, action popover, workbench preview, companion box, resurface, highlights, and stats.
+
 ## v1.3.93 update (2026-10-29)
 
 This release implements 1-click quote card creation in selection capsule and Alt+Q shortcut in ReaderTab.

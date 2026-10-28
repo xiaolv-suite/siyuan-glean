@@ -1,5 +1,17 @@
 # 更新日志（CHANGELOG）
 
+## v1.3.94（2026-10-29）
+
+### 微信读书向导弹窗全键盘工作流（C / Enter / R / Esc）与四大国际学术引用（GB/T、BibTeX、APA、MLA）大圆满
+
+- **微信读书向导弹窗全键盘工作流（T-3529）**：
+  - `src/ui/WeReadGuideDialog.svelte` 键盘监听全面打通：单敲 `C` 复制纯净短链，`Enter` 一键打开微信读书书架，`R` / `O` 快捷打开思源本地阅读器，`Esc` 退出；底部增设键位指引微标，移动与桌面交互完美对齐；
+- **四大国际学术著录规范大圆满（GB/T、BibTeX、APA、MLA）（T-3529）**：
+  - `src/domain/citation.ts` 新增 `formatMLA` 纯函数并扩展 `CitationFormat = "gbt" | "bibtex" | "apa" | "mla"`，全面覆盖人文历史、哲学艺术与语言学科标准的 MLA 9th 规范；
+  - 读库批量栏（`LibraryBatchBar`）、行表/卡片操作菜单（`ActionPopover`）、侧边预览（`WorkbenchPreview`）、微信展台（`ReaderTab`）、今日拾遗（`ResurfaceView`）、摘录墙（`HighlightView`）与阅读统计（`StatsView`）全量贯通四大著录格式；
+- **本地纯净交付保障**：
+  - 严格保持本地更新构建，不执行任何外部推送，待作者账号解封通知后统一处理。
+
 ## v1.3.93（2026-10-29）
 
 ### 伴读阅读器选区划词胶囊一键制作金句卡片与 Alt+Q 全局快捷键闭环

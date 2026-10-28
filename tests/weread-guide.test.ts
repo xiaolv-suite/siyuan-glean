@@ -22,6 +22,15 @@ test("WeReadGuideDialog 契约守门：三步流转引导、纯净短链复制�
     assert.match(dialogSource, /wechat\.step2Title/);
     assert.match(dialogSource, /wechat\.step3Title/);
     assert.match(dialogSource, /wechat\.localReaderOption/);
+    assert.match(dialogSource, /onKeyDown/);
+    assert.match(dialogSource, /e\.key === "c" \|\| e\.key === "C"/);
+    assert.match(dialogSource, /e\.key === "Enter"/);
+    assert.match(dialogSource, /e\.key === "r" \|\| e\.key === "R"/);
+    assert.match(dialogSource, /glean-kbdhint/);
+    assert.match(dialogSource, /<kbd>C<\/kbd>/);
+    assert.match(dialogSource, /<kbd>Enter<\/kbd>/);
+    assert.match(dialogSource, /<kbd>R<\/kbd>/);
+    assert.match(dialogSource, /<kbd>Esc<\/kbd>/);
 });
 
 test("WorkbenchPreview 与 ReaderTab 契约守门：全场景接入微信读书向导与纯净阅读", () => {

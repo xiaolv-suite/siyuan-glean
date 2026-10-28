@@ -139,7 +139,7 @@ function loadSurfaceControls({ act, undo, pin, replacement, tick, openReading } 
         "../domain/recent-reading": {
             projectActiveRecentReadings: (entries, clips, limit) => [],
         },
-        "../domain/citation": { formatGBT7714: () => "", formatBibTeX: () => "", formatAPA: () => "", formatCitation: () => "" },
+        "../domain/citation": { formatGBT7714: () => "", formatBibTeX: () => "", formatAPA: () => "", formatMLA: () => "", formatCitation: () => "" },
         "../services/snapshot-service": { snapshotClip: async () => ({}) },
     };
     const source = readFileSync(new URL("../src/ui/ResurfaceView.svelte", import.meta.url), "utf8").match(/<script lang="ts">([\s\S]*?)<\/script>/)[1];

@@ -2418,6 +2418,9 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                         <button type="button" class="glean-btn glean-btn--ghost glean-wechat-publisher__btn" onclick={() => void copyCitation("apa")} title={t(i18n, "citation.copyAPA")}>
                             🎓 APA
                         </button>
+                        <button type="button" class="glean-btn glean-btn--ghost glean-wechat-publisher__btn" onclick={() => void copyCitation("mla")} title={t(i18n, "citation.copyMLA")}>
+                            📖 MLA
+                        </button>
                         <button type="button" class="glean-btn glean-btn--ghost glean-wechat-publisher__btn" onclick={() => void copyArticleBlockRef()} title={t(i18n, "action.copyBlockRef")}>
                             🔗 {t(i18n, "action.copyBlockRef")}
                         </button>

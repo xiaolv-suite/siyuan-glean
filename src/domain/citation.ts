@@ -88,7 +88,20 @@ export function formatAPA(item: CitationItem): string {
     return `${author}. (${year}). ${title}. ${site}.${url ? ` ${url}` : ""}`;
 }
 
-export type CitationFormat = "gbt" | "bibtex" | "apa";
+/**
+ * 格式化为 MLA 规范引用（Modern Language Association 9th Edition）
+ */
+export function formatMLA(item: CitationItem): string {
+    const author = item.author?.trim() || "Anonymous";
+    const title = item.title?.trim() || "Untitled";
+    const site = item.site?.trim() || "Web";
+    const fullDate = extractFullDate(item.time);
+    const url = item.url?.trim() || "";
+
+    return `${author}. "${title}." ${site}, ${fullDate}.${url ? ` ${url}` : ""}`;
+}
+
+export type CitationFormat = "gbt" | "bibtex" | "apa" | "mla";
 
 /**
  * 统一引用格式化门面纯函数
@@ -99,6 +112,8 @@ export function formatCitation(item: CitationItem, format: CitationFormat = "gbt
             return formatBibTeX(item);
         case "apa":
             return formatAPA(item);
+        case "mla":
+            return formatMLA(item);
         case "gbt":
         default:
             return formatGBT7714(item, now);

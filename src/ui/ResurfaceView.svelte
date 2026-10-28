@@ -1070,6 +1070,9 @@ function focusCard(id: string): void {
                         <button class="glean-surf-act" title={t(i18n, "citation.copyAPA")} aria-label={t(i18n, "citation.copyAPA")} onclick={() => void copyPickCitation(pick, "apa")}>
                             🎓 APA
                         </button>
+                        <button class="glean-surf-act" title={t(i18n, "citation.copyMLA")} aria-label={t(i18n, "citation.copyMLA")} onclick={() => void copyPickCitation(pick, "mla")}>
+                            📖 MLA
+                        </button>
                         <button class="glean-surf-act" title={(clip?.snapshot ? t(i18n, "snapshot.open") : t(i18n, "snapshot.take")) + " (S)"} aria-label={clip?.snapshot ? t(i18n, "snapshot.open") : t(i18n, "snapshot.take")} onclick={() => void openOrTakePickSnapshot(pick)}>
                             💾 {clip?.snapshot ? t(i18n, "snapshot.open") : t(i18n, "snapshot.take")}
                         </button>

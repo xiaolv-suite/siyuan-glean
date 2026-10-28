@@ -445,6 +445,7 @@ test("StatsView 接线：回顾预览与日期过滤支持 Escape 快捷退出�
     assert.match(view, /glean-stats__copy-citations-btn/);
     assert.match(view, /glean-stats__copy-bibtex-btn/);
     assert.match(view, /glean-stats__copy-apa-btn/);
+    assert.match(view, /glean-stats__copy-mla-btn/);
     assert.match(view, /glean-stats__export-csv-btn/);
     assert.match(view, /exportSelectedClipsCsv/);
     assert.match(view, /formatBibTeX/);

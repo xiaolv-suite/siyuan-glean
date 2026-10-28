@@ -23,6 +23,7 @@
         onCopyCitations?: () => void | Promise<void>;
         onCopyBibTeX?: () => void | Promise<void>;
         onCopyAPA?: () => void | Promise<void>;
+        onCopyMLA?: () => void | Promise<void>;
         onCopySummaryList?: () => void | Promise<void>;
         onExportCsv?: () => void | Promise<void>;
         onBatchFavorite?: (fav: boolean) => void | Promise<void>;
@@ -32,7 +33,7 @@
     let {
         i18n, selectedCount, hiddenCount, displayedCount, displayedSelectedCount, busy = false,
         onApply, onOpenAi, onClear, onSelectDisplayed, onKeepFiltered, onAddTag, onSetAuthor,
-        onPurifyWechat, onCopyBlockRefs, onCopyCitations, onCopyBibTeX, onCopyAPA, onCopySummaryList, onExportCsv, onBatchFavorite, hasWechatSelected = false,
+        onPurifyWechat, onCopyBlockRefs, onCopyCitations, onCopyBibTeX, onCopyAPA, onCopyMLA, onCopySummaryList, onExportCsv, onBatchFavorite, hasWechatSelected = false,
     }: Props = $props();
     const filteredSelectedCount = $derived(Math.max(0, selectedCount - hiddenCount));
     let summaryEl = $state<HTMLElement | null>(null);
@@ -117,6 +118,9 @@
             {/if}
             {#if onCopyAPA}
                 <button type="button" class="glean-bb glean-bb--copy-apa" disabled={busy} onclick={() => void onCopyAPA?.()} title="{t(i18n, 'citation.copyAPA')}">🎓 {t(i18n, "citation.copyAPA")}</button>
+            {/if}
+            {#if onCopyMLA}
+                <button type="button" class="glean-bb glean-bb--copy-mla" disabled={busy} onclick={() => void onCopyMLA?.()} title="{t(i18n, 'citation.copyMLA')}">📖 {t(i18n, "citation.copyMLA")}</button>
             {/if}
             {#if onCopySummaryList}
                 <button type="button" class="glean-bb glean-bb--copy-summary" disabled={busy} onclick={() => void onCopySummaryList?.()} title="{t(i18n, 'library.batchCopySummary')}">📋 {t(i18n, "library.batchCopySummary")}</button>
