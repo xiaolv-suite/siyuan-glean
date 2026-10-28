@@ -359,3 +359,73 @@ test("matchesLibraryFilter：微信公众号来源跨形态自适应融合匹配
     const filterZhihu = filterAndSortLibrary(items, { site: "zhihu.com" });
     assert.deepEqual(filterZhihu.map((i) => i.id), ["zhihu"]);
 });
+
+// ── T-3507 性能调优：搜索文本缓存与装饰排序 ────────────────────────────
+
+test("T-3507 关键词过滤结果与大小写归一在缓存前后保持一致（WeakMap 命中不改语义）", () => {
+    const items = [
+        clip({ id: "a-1", title: "Deep Learning Notes", summary: "transformer 架构", site: "example.com" }),
+        clip({ id: "b-2", title: "深度学习笔记", summary: "Transformer attention", site: "mp.weixin.qq.com" }),
+        clip({ id: "c-3", title: "Cooking Guide", tags: ["生活", "菜谱"] }),
+    ];
+    // 第一遍：冷缓存构建；第二遍：同对象命中缓存——两次结果必须逐位一致
+    const first = filterAndSortLibrary(items, { keyword: "TRANSFORMER" }).map((i) => i.id);
+    const second = filterAndSortLibrary(items, { keyword: "transformer" }).map((i) => i.id);
+    assert.deepEqual(first, ["b-2", "a-1"]);
+    assert.deepEqual(first, second);
+
+    // 命中标签与命中标题交叉一致（缓存文本包含 tags/aiTags/summary/hpath/site/author/url）
+    assert.deepEqual(filterAndSortLibrary(items, { keyword: "菜谱" }).map((i) => i.id), ["c-3"]);
+    assert.deepEqual(filterAndSortLibrary(items, { keyword: "weixin" }).map((i) => i.id), ["b-2"]);
+});
+
+test("T-3507 装饰排序：大小写归一、id 决胜与升降序语义与原实现等价", () => {
+    const items = [
+        clip({ id: "20260101-ccc", title: "beta", time: "20260101000000" }),
+        clip({ id: "20260101-aaa", title: "Beta", time: "20260101000000" }),
+        clip({ id: "20260101-bbb", title: "ALPHA", time: "20260101000000" }),
+    ];
+    // title 升序：小写归一后 alpha < beta < beta，同值按 id 决胜
+    const asc = filterAndSortLibrary(items, { sortBy: "title", direction: "asc" }).map((i) => i.id);
+    assert.deepEqual(asc, ["20260101-bbb", "20260101-aaa", "20260101-ccc"]);
+    // 降序精确反转
+    const desc = filterAndSortLibrary(items, { sortBy: "title", direction: "desc" }).map((i) => i.id);
+    assert.deepEqual(desc, [...asc].reverse());
+    // 数字排序：words 升序按数值而非字典序
+    const byWords = [
+        clip({ id: "n-10", words: 10 }),
+        clip({ id: "n-2", words: 2 }),
+        clip({ id: "n-1", words: 1 }),
+    ];
+    assert.deepEqual(
+        filterAndSortLibrary(byWords, { sortBy: "words", direction: "asc" }).map((i) => i.id),
+        ["n-1", "n-2", "n-10"],
+    );
+});
+
+test("T-3507 性能预算：10k 条目关键词过滤+排序中位耗时应显著低于既有上限", () => {
+    const items = Array.from({ length: 10_000 }, (_, index) =>
+        clip({
+            id: `perf-${String(index).padStart(5, "0")}`,
+            title: `读库文章标题 ${index}`,
+            summary: `第 ${index} 篇文章摘要，包含若干正文关键词 ${index % 97}`,
+            site: index % 2 === 0 ? "example.com" : "mp.weixin.qq.com",
+            tags: ["技术", `专题-${index % 50}`],
+            aiTags: ["AI", `主题-${index % 30}`],
+            time: `202601${String((index % 28) + 1).padStart(2, "0")}000000`,
+        }),
+    );
+    const warmup = filterAndSortLibrary(items, { keyword: "摘要" });
+    assert.equal(warmup.length, 10_000);
+    const timings: number[] = [];
+    for (let round = 0; round < 5; round += 1) {
+        const t0 = performance.now();
+        const out = filterAndSortLibrary(items, { keyword: "正文关键词" });
+        timings.push(performance.now() - t0);
+        assert.equal(out.length, 10_000);
+    }
+    timings.sort((a, b) => a - b);
+    const median = timings[2];
+    // 缓存热路径下 10k 条中位数应远低于 10k×2 次全量字符串重建的成本（宽松上限 150ms 防环境抖动）
+    assert.ok(median < 150, `10k 关键词过滤+排序中位数 ${median.toFixed(1)}ms 应低于 150ms`);
+});

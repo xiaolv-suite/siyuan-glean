@@ -157,8 +157,18 @@ function hasAiTag(item: LibraryItem, expected: string): boolean {
     return (item.aiTags ?? []).some((tag) => key(tag) === wanted);
 }
 
+/**
+ * 条目可搜索文本缓存（T-3506）：关键词过滤是高频击键热路径，同一批投影条目
+ * 在多次过滤间保持稳定对象身份，WeakMap 按对象缓存已归一化的可搜索文本，
+ * 避免每次击键对全库重建数组再小写化。条目投影按不可变快照使用，字段变化时
+ * 调用方生成新对象，旧缓存随旧对象一并被回收，无手动失效面。
+ */
+const searchTextCache = new WeakMap<LibraryItem, string>();
+
 function searchableText(item: LibraryItem): string {
-    return [
+    const cached = searchTextCache.get(item);
+    if (cached !== undefined) return cached;
+    const text = [
         item.title,
         item.summary,
         item.hpath,
@@ -172,6 +182,8 @@ function searchableText(item: LibraryItem): string {
         .filter(Boolean)
         .join(" ")
         .toLocaleLowerCase();
+    searchTextCache.set(item, text);
+    return text;
 }
 
 /** 是否满足当前视图的所有筛选项。 */
@@ -208,17 +220,44 @@ function compareValue(item: LibraryItem, sortBy: LibrarySortKey): string | numbe
     return clean(item.time) || clean(item.updated);
 }
 
-function compareItems(a: LibraryItem, b: LibraryItem, sortBy: LibrarySortKey, direction: LibrarySortDirection): number {
-    const left = compareValue(a, sortBy);
-    const right = compareValue(b, sortBy);
+/**
+ * 预计算排序键（T-3506 装饰-排序-还原）：主键（数字或已小写字符串）与 id 决胜键
+ * 一次性算好，O(n) 次归一化替代 O(n log n) 比较对内的重复 clean/小写化。
+ */
+interface DecoratedSortKey {
+    primary: number | string;
+    id: string;
+}
+
+function decorateSortKey(item: LibraryItem, sortBy: LibrarySortKey): DecoratedSortKey {
+    const value = compareValue(item, sortBy);
+    return {
+        primary: typeof value === "number" ? value : value.toLocaleLowerCase(),
+        id: item.id.toLocaleLowerCase(),
+    };
+}
+
+function compareDecoratedKeys(a: DecoratedSortKey, b: DecoratedSortKey): number {
+    const left = a.primary;
+    const right = b.primary;
     let result: number;
     if (typeof left === "number" && typeof right === "number") {
         result = left - right;
     } else {
-        result = compareText(String(left), String(right));
+        const l = String(left);
+        const r = String(right);
+        result = l < r ? -1 : l > r ? 1 : 0;
     }
-    if (result === 0) result = compareText(a.id, b.id);
-    return direction === "asc" ? result : -result;
+    if (result === 0) result = a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+    return result;
+}
+
+/** 装饰-排序-还原：返回新数组（稳定排序），方向语义与原 compareItems 一致。 */
+function sortDecorated(list: LibraryItem[], sortBy: LibrarySortKey, direction: LibrarySortDirection): LibraryItem[] {
+    const decorated = list.map((item) => ({ item, key: decorateSortKey(item, sortBy) }));
+    const sign = direction === "asc" ? 1 : -1;
+    decorated.sort((a, b) => compareDecoratedKeys(a.key, b.key) * sign);
+    return decorated.map((d) => d.item);
 }
 
 /**
@@ -231,9 +270,9 @@ export function filterAndSortLibrary(items: readonly LibraryItem[], filter: Libr
     const direction = filter.direction ?? (sortBy === "title" ? "asc" : "desc");
     const filtered = items.filter((item) => matchesLibraryFilter(item, filter));
     if (sortBy === "session") {
-        return applySessionOrder(filtered.sort((a, b) => compareItems(a, b, "time", "desc")), filter.sessionOrder ?? []);
+        return applySessionOrder(sortDecorated(filtered, "time", "desc"), filter.sessionOrder ?? []);
     }
-    return filtered.sort((a, b) => compareItems(a, b, sortBy, direction));
+    return sortDecorated(filtered, sortBy, direction);
 }
 
 function addFacet(map: Map<string, LibraryFacet>, value: string | undefined): void {
