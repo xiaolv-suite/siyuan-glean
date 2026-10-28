@@ -1,5 +1,14 @@
 # 进度（PROGRESS）
 
+## T-3494 漫游盲盒提要标签与续读点展示增强、读库工作台 B 键一键呼出与 SCSS 盲盒模块化解耦（2026-10-28）
+
+- [x] 漫游盲盒卡片信息与视觉跃升：`RoamingDrawerDialog.svelte` 盲盒卡片展示 2 行精致摘要、用户与 AI 标签胶囊，并识别续读断点展示「🔖 读至续读点」微标；
+- [x] 续读断点加权轮盘赌算法：`domain/roaming.ts` 识别 `readPoint` 赋予高权重理由（`🔖 断点续读 · 接续灵感`），促进未完长文接续阅读；
+- [x] 读库全场景 B 键呼出：`domain/library-keyboard.ts` 接入 `{ type: "roaming" }` 动作，支持在读库任意位置敲击 `B` 键秒级唤起盲盒，底部提示栏增设 `<kbd>B</kbd>` 徽标；
+- [x] SCSS 盲盒模块化：拆分独立模块 `src/styles/components/roaming.scss`，封装盲盒展台组件全部样式并在 `src/index.scss` 开头引入；
+- [x] 遵照指令本地闭环交付：本地完成 v1.3.60 打包与构建，本轮严格不推送到 GitHub，不调用任何远程接口，等用户通知解封后再行统一推送与发布；
+- [x] 门禁全通：全套单测（1689/1689）、`pnpm check` 0 错误 0 警告，发布门禁与性能基线通过。
+
 ## T-3463 微信公众号合集标签自动聚合、金句卡片生成器与高清图片导出（2026-10-27）
 
 - [x] 微信合集标签提取与回填：`wechat-service.ts` 扫描时提取微信话题专栏合集（`extractWechatSeries`）写入 `custom-clip-ai-tags` 属性，实现侧栏专栏一键下钻聚合。

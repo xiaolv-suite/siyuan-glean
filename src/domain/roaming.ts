@@ -22,6 +22,8 @@ export interface RoamingCandidate {
     site?: string;
     author?: string;
     time?: string;
+    summary?: string;
+    readPoint?: string;
 }
 
 export interface RoamingPick {
@@ -50,6 +52,9 @@ export function calculateRoamingScore(
     if (isSlice) {
         sliceScore = 20;
         reason = "✂️ 渐进切片 · 轻松读完";
+    } else if (item.readPoint) {
+        sliceScore = 19;
+        reason = "🔖 断点续读 · 接续灵感";
     } else if (m > 0 && m <= 10) {
         sliceScore = 18;
         reason = `⏱️ ${m} 分钟短篇 · 快速阅读`;

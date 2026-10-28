@@ -122,7 +122,23 @@
             {#if (currentPick.item.rating ?? 0) > 0}
                 <span class="glean-tier-badge">💖 {currentPick.item.rating}★</span>
             {/if}
+            {#if currentPick.item.readPoint}
+                <span class="glean-tier-badge glean-tier-badge--bookmark" title={t(i18n, "roaming.hasReadPoint")}>🔖 {t(i18n, "roaming.hasReadPoint")}</span>
+            {/if}
         </div>
+        {#if currentPick.item.summary}
+            <p class="glean-roaming-summary">{currentPick.item.summary}</p>
+        {/if}
+        {#if (currentPick.item.tags && currentPick.item.tags.length > 0) || (currentPick.item.aiTags && currentPick.item.aiTags.length > 0)}
+            <div class="glean-roaming-tags">
+                {#each (currentPick.item.tags || []).slice(0, 3) as tag}
+                    <span class="glean-roaming-tag">#{tag}</span>
+                {/each}
+                {#each (currentPick.item.aiTags || []).slice(0, 2) as aiTag}
+                    <span class="glean-roaming-tag glean-roaming-tag--ai">✨{aiTag}</span>
+                {/each}
+            </div>
+        {/if}
     </article>
 
     <div class="glean-roaming-actions">
@@ -138,72 +154,8 @@
             🎯 {t(i18n, "roaming.startReadNow")}
         </button>
     </div>
-</div>
 
-<style>
-    .glean-roaming-dialog {
-        display: flex;
-        flex-direction: column;
-        gap: var(--glean-space-3);
-        padding: var(--glean-space-3) var(--glean-space-4);
-        box-sizing: border-box;
-    }
-    .glean-roaming-banner {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: var(--glean-space-2);
-        padding-bottom: var(--glean-space-2);
-        border-bottom: 1px solid var(--glean-border-soft);
-    }
-    .glean-roaming-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        font-size: var(--glean-text-xs-plus);
-        font-weight: 600;
-        color: var(--lv-brand);
-    }
-    .glean-roaming-score {
-        font-size: 13px;
-        font-weight: 700;
-        color: var(--lv-accent-wheat, #F59E0B);
-        background: color-mix(in srgb, var(--lv-accent-wheat, #F59E0B) 12%, var(--b3-theme-surface));
-        padding: 2px 8px;
-        border-radius: var(--glean-radius-pill);
-    }
-    .glean-roaming-card {
-        background: var(--glean-section-surface, var(--b3-theme-surface));
-        border: 1px solid var(--glean-border-soft);
-        border-radius: var(--glean-radius-md);
-        padding: var(--glean-space-3-5);
-        display: flex;
-        flex-direction: column;
-        gap: var(--glean-space-2-5);
-        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
-    }
-    .glean-roaming-title {
-        margin: 0;
-        font-size: var(--glean-text-base);
-        font-weight: 650;
-        color: var(--b3-theme-on-background);
-        line-height: 1.45;
-    }
-    .glean-roaming-meta {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: var(--glean-space-1-5);
-    }
-    .glean-roaming-actions {
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        gap: var(--glean-space-2);
-        padding-top: var(--glean-space-1);
-    }
-    .glean-roaming-read-btn {
-        min-width: 140px;
-        box-shadow: 0 2px 8px color-mix(in srgb, var(--b3-theme-primary) 30%, transparent);
-    }
-</style>
+    <div class="glean-roaming-hint">
+        <span aria-hidden="true">💡 {t(i18n, "roaming.keyboardTips")}</span>
+    </div>
+</div>

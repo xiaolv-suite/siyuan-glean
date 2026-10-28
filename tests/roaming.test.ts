@@ -27,6 +27,18 @@ test("calculateRoamingScore：综合计算重要度、评分、切片与随机�
     // 优先级 24 + 默认评分 18 + 短文 18 + 随机 0 = 60
     assert.equal(resShort.score, 60);
     assert.equal(resShort.reason, "⏱️ 5 分钟短篇 · 快速阅读");
+
+    const itemReadPoint: RoamingCandidate = {
+        id: "doc-3",
+        title: "未读完长文",
+        status: "later",
+        priority: 4,
+        readPoint: "20261028120000-xxxxxxx",
+    };
+    const resReadPoint = calculateRoamingScore(itemReadPoint, 0);
+    // 优先级 32 + 默认评分 18 + 续读点 19 + 随机 0 = 69
+    assert.equal(resReadPoint.score, 69);
+    assert.equal(resReadPoint.reason, "🔖 断点续读 · 接续灵感");
 });
 
 test("pickRoamingArticle：在未读候选池中挑选最优漫游文章并支持排除项", () => {

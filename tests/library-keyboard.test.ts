@@ -118,6 +118,21 @@ test("批量选择键位：S 需光标，F/C 只需已有勾选（T-3367）", ()
     assert.equal(resolveLibraryShortcut(key("c", { repeat: true }), { hasSelection: true }), null);
 });
 
+test("漫游盲盒键位：B/b 无需激活光标即可全局呼出，长按与输入框保护（T-3494）", () => {
+    assert.deepEqual(resolveLibraryShortcut(key("b"), {}), { type: "roaming" });
+    assert.deepEqual(resolveLibraryShortcut(key("b"), active), { type: "roaming" });
+    assert.deepEqual(resolveLibraryShortcut(key("B"), {}), { type: "roaming" });
+    assert.deepEqual(resolveLibraryShortcut(key("B"), active), { type: "roaming" });
+
+    // 输入框与浮层中让出原生行为
+    assert.equal(resolveLibraryShortcut(key("b"), { textEntry: true }), null);
+    assert.equal(resolveLibraryShortcut(key("b"), { overlay: true }), null);
+
+    // 长按防抖不重复弹窗
+    assert.equal(resolveLibraryShortcut(key("b", { repeat: true }), {}), null);
+    assert.equal(resolveLibraryShortcut(key("b", { repeat: true }), active), null);
+});
+
 test("光标移动：首次进入按方向取端点，边界不回绕，空列表返回空串", () => {
     const ids = ["a", "b", "c"];
     assert.equal(moveLibraryCursor(ids, "", 1), "a");
@@ -147,6 +162,8 @@ test("DockPanel 接线：键盘光标样式、提示条与动作路由存在", (
     assert.match(dock, /case "cyclePriority":[\s\S]*?cyclePriorityValue\(entry\.priority\)/);
     assert.match(dock, /case "setPriority":[\s\S]*?await setPriority\(entry, action\.value\)/);
     assert.match(dock, /case "cycleRating":[\s\S]*?cycleRatingValue\(entry\.rating\)/);
+    assert.match(dock, /if \(action\.type === "roaming"\) \{[\s\S]*?triggerRoamingRead\(\);/);
+    assert.match(dock, /<kbd>B<\/kbd> \{t\(i18n, "roaming\.button"\)\}/);
     assert.match(dock, /<kbd>P<\/kbd><kbd>1-5<\/kbd> \{t\(i18n, "library\.keyboardPriority"\)\}/);
     assert.match(dock, /<kbd>M<\/kbd> \{t\(i18n, "library\.keyboardRating"\)\}/);
     assert.match(dock, /hasSelection: selection\.size > 0/);

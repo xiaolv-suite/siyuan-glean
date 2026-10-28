@@ -2177,6 +2177,10 @@ async function runKeyboardAction(action: LibraryKeyboardAction): Promise<void> {
         clearSelection();
         return;
     }
+    if (action.type === "roaming") {
+        triggerRoamingRead();
+        return;
+    }
     const entry = keyboardEntry;
     if (!entry) return;
     if (action.type === "copyBlockRef") {
@@ -2723,6 +2727,7 @@ function metaLine(entry: Row): string {
                     <kbd>P</kbd><kbd>1-5</kbd> {t(i18n, "library.keyboardPriority")}
                     <kbd>M</kbd> {t(i18n, "library.keyboardRating")}
                     <kbd>Y</kbd> {t(i18n, "action.copyBlockRef")}
+                    <kbd>B</kbd> {t(i18n, "roaming.button")}
                     <kbd>Esc</kbd> {t(i18n, "library.keyboardExit")}
                 </span>
                 <span class="glean-sr-only" role="status" aria-live="polite">

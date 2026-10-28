@@ -12,6 +12,10 @@ test("RoamingDrawerDialog 契约守门：展示推荐理由、匹配得分、换
     assert.match(dialogSource, /prevPick\(\)/);
     assert.match(dialogSource, /pickRoamingArticle/);
     assert.match(dialogSource, /onOpenArticle\(currentPick\.item\.id\)/);
+    assert.match(dialogSource, /currentPick\.item\.summary/);
+    assert.match(dialogSource, /currentPick\.item\.tags/);
+    assert.match(dialogSource, /currentPick\.item\.readPoint/);
+    assert.match(dialogSource, /roaming\.keyboardTips/);
 });
 
 test("DockPanel 漫游盲盒与滑动窗口限流契约", () => {
@@ -20,6 +24,8 @@ test("DockPanel 漫游盲盒与滑动窗口限流契约", () => {
     assert.match(dockSource, /triggerRoamingRead/);
     assert.match(dockSource, /const concurrency = 4;/);
     assert.match(dockSource, /wechatDocIds\.slice\(i, i \+ concurrency\)/);
+    assert.match(dockSource, /action\.type === "roaming"/);
+    assert.match(dockSource, /<kbd>B<\/kbd>/);
 });
 
 test("ResurfaceView 今日拾遗漫游盲盒入口与全部读完空态契约", () => {
@@ -44,4 +50,8 @@ test("双语 i18n 覆盖：漫游盲盒文案对齐", () => {
     assert.ok(en["roaming.startReadNow"]);
     assert.ok(zh["roaming.exploreMore"]);
     assert.ok(en["roaming.exploreMore"]);
+    assert.ok(zh["roaming.keyboardTips"]);
+    assert.ok(en["roaming.keyboardTips"]);
+    assert.ok(zh["roaming.hasReadPoint"]);
+    assert.ok(en["roaming.hasReadPoint"]);
 });

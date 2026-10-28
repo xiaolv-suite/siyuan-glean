@@ -25,7 +25,8 @@ export type LibraryKeyboardAction =
     | { type: "setPriority"; value: number }
     | { type: "cycleRating" }
     | { type: "togglePin" }
-    | { type: "copyBlockRef" };
+    | { type: "copyBlockRef" }
+    | { type: "roaming" };
 
 export interface LibraryKeyboardEventLike {
     key: string;
@@ -55,7 +56,7 @@ export interface LibraryKeyboardContext {
 const REPEAT_SENSITIVE = new Set<LibraryKeyboardAction["type"]>([
     "activate", "openDocument", "startReading", "later", "archive", "toggleSelect",
     "selectDisplayed", "keepFiltered", "clearSelection",
-    "cyclePriority", "setPriority", "cycleRating", "togglePin", "copyBlockRef",
+    "cyclePriority", "setPriority", "cycleRating", "togglePin", "copyBlockRef", "roaming",
 ]);
 
 /**
@@ -94,6 +95,8 @@ export function resolveLibraryShortcut(
     // 选择类动作：F/C 只要存在勾选即可用，便于关掉光标后仍能整批收尾。
     if (lower === "f" && context.hasSelection) return repeatOrNull(event, { type: "keepFiltered" });
     if (lower === "c" && context.hasSelection) return repeatOrNull(event, { type: "clearSelection" });
+    // 漫游盲盒：B 键全局快速呼出，无需前置选中光标
+    if (lower === "b") return repeatOrNull(event, { type: "roaming" });
     if (!cursorActive) return null;
 
     if (lower === "s") return repeatOrNull(event, { type: "selectDisplayed" });
