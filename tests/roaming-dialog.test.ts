@@ -36,6 +36,10 @@ test("RoamingDrawerDialog 契约守门：展示推荐理由、匹配得分、换
     assert.match(dialogSource, /writeClip\(facade\.pluginInstance/);
     assert.match(dialogSource, /queue\.later/);
     assert.match(dialogSource, /queue\.archived/);
+    assert.match(dialogSource, /handleTouchStart/);
+    assert.match(dialogSource, /handleTouchEnd/);
+    assert.match(dialogSource, /glean-roaming-title-btn/);
+    assert.match(dialogSource, /roaming\.mobileSwipeTips/);
     assert.match(dialogSource, /roaming\.favoriteAction/);
     assert.match(dialogSource, /roaming\.keyboardTips/);
 });
@@ -97,6 +101,8 @@ test("双语 i18n 覆盖：漫游盲盒文案对齐", () => {
     assert.ok(en["roaming.allTopics"]);
     assert.ok(zh["roaming.emptyTopicPool"]);
     assert.ok(en["roaming.emptyTopicPool"]);
+    assert.ok(zh["roaming.mobileSwipeTips"]);
+    assert.ok(en["roaming.mobileSwipeTips"]);
     assert.ok(zh["roaming.favoriteAdded"]);
     assert.ok(en["roaming.favoriteAdded"]);
     assert.ok(zh["roaming.favoriteRemoved"]);

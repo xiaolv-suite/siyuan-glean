@@ -1495,6 +1495,7 @@
   "roaming.emptyBudgetPool": "未读池暂无符合当前时间预算的文章",
   "roaming.allTopics": "全部主题",
   "roaming.emptyTopicPool": "该主题下暂无可漫游文章",
+  "roaming.mobileSwipeTips": "提示：卡片左滑切换盲盒，右滑返回上一篇",
   "reader.marginNotes": "边距注记",
   "reader.marginNotesToggle": "展开/收起边距悬浮注记（Alt+M）"
 }

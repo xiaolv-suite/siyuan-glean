@@ -67,6 +67,16 @@ This release implements floating margin notes in the reader editor for same-focu
 - **Floating Margin Notes (Margin Notes)**: Highlights and user thoughts float as sticky note bubbles along the right margin; clicking a note smoothly scrolls to the source block with pulse focus.
 - **Toggle Margin Notes (Alt+M)**: The reader toolbar offers a dedicated toggle action (Alt+M) to collapse or reveal margin notes at will.
 
+## v1.3.70 update (2026-10-28)
+
+This release implements blind-box swipe gestures navigation, title tap-to-read, and adaptive mobile hints.
+
+**New features & improvements:**
+
+- **Card Swipe Gesture Navigation**: On mobile/touch devices, swiping left on the card draws the next box, while swiping right returns to previous.
+- **Title Tap-to-Read**: Card title acts as a direct action button to expand touch target for instant reading.
+- **Adaptive Mobile Hints**: Automatically displays gesture tips on mobile devices while preserving keyboard hints on desktop.
+
 ## v1.3.69 update (2026-10-28)
 
 This release implements topic tag targeted roaming blind-box filtering and time-topic compound exploration.

@@ -117,6 +117,24 @@
     line-height: 1.45;
 }
 
+.glean-roaming-title-btn {
+    border: none;
+    background: transparent;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+    line-height: inherit;
+    transition: color var(--glean-duration-fast) ease;
+
+    &:hover {
+        color: var(--lv-brand);
+        text-decoration: underline;
+    }
+}
+
 .glean-roaming-meta {
     display: flex;
     flex-wrap: wrap;

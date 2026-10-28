@@ -188,6 +188,30 @@
         }
     }
 
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    function handleTouchStart(e: TouchEvent): void {
+        const touch = e.touches[0];
+        if (!touch) return;
+        touchStartX = touch.clientX;
+        touchStartY = touch.clientY;
+    }
+
+    function handleTouchEnd(e: TouchEvent): void {
+        const touch = e.changedTouches[0];
+        if (!touch) return;
+        const deltaX = touch.clientX - touchStartX;
+        const deltaY = touch.clientY - touchStartY;
+        if (Math.abs(deltaX) > 48 && Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
+            if (deltaX < 0) {
+                void nextPick();
+            } else if (deltaX > 0 && canPrev) {
+                prevPick();
+            }
+        }
+    }
+
     function startRead(): void {
         onClose?.();
         onOpenArticle(currentPick.item.id, currentPick.item.readPoint);
@@ -300,8 +324,16 @@
         {/if}
     </div>
 
-    <article class="glean-roaming-card">
-        <h3 class="glean-roaming-title">{currentPick.item.title || t(i18n, "panel.untitled")}</h3>
+    <article
+        class="glean-roaming-card"
+        ontouchstart={handleTouchStart}
+        ontouchend={handleTouchEnd}
+    >
+        <h3 class="glean-roaming-title">
+            <button type="button" class="glean-roaming-title-btn" onclick={startRead} title={t(i18n, "roaming.startReadNow")}>
+                {currentPick.item.title || t(i18n, "panel.untitled")}
+            </button>
+        </h3>
         <div class="glean-roaming-meta">
             {#if isWechat}
                 <span class="glean-badge glean-source-wechat">
@@ -395,6 +427,10 @@
     </div>
 
     <div class="glean-roaming-hint">
-        <span aria-hidden="true">💡 {t(i18n, "roaming.keyboardTips")}</span>
+        {#if facade.isMobile}
+            <span aria-hidden="true">👆 {t(i18n, "roaming.mobileSwipeTips")}</span>
+        {:else}
+            <span aria-hidden="true">💡 {t(i18n, "roaming.keyboardTips")}</span>
+        {/if}
     </div>
 </div>

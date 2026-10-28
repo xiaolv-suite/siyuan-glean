@@ -1495,6 +1495,7 @@
   "roaming.emptyBudgetPool": "No articles match current time budget",
   "roaming.allTopics": "All topics",
   "roaming.emptyTopicPool": "No roaming articles under this topic",
+  "roaming.mobileSwipeTips": "Tips: Swipe left to switch, swipe right to return",
   "reader.marginNotes": "Margin Notes",
   "reader.marginNotesToggle": "Toggle Margin Notes (Alt+M)"
 }
