@@ -67,6 +67,15 @@ This release implements floating margin notes in the reader editor for same-focu
 - **Floating Margin Notes (Margin Notes)**: Highlights and user thoughts float as sticky note bubbles along the right margin; clicking a note smoothly scrolls to the source block with pulse focus.
 - **Toggle Margin Notes (Alt+M)**: The reader toolbar offers a dedicated toggle action (Alt+M) to collapse or reveal margin notes at will.
 
+## v1.3.84 update (2026-10-29)
+
+This release implements library toolbar permanent favorite filter button and Alt+F global shortcut.
+
+**New features & improvements:**
+
+- **Permanent Favorite Filter Button in Toolbar (T-3519)**: The desktop workbench top bar (`glean-libbar`) embeds a permanent "❤️ Favorites Only" toggle button next to view modes, allowing instant switching between all articles and starred favorites.
+- **Alt+F Global Favorite Filter Shortcut**: Pressing `Alt+F` in the library workbench toggles the favorites-only filter instantly.
+
 ## v1.3.83 update (2026-10-29)
 
 This release implements library favoriteOnly filtering, filter chip presentation, and saved view synchronization.

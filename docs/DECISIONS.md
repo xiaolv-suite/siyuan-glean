@@ -2776,3 +2776,13 @@ T-3416 承接方向五（有依据的阅读 AI）与同类产品对标（Readwis
    - `applySavedViewState` 与 `currentSavedFilter` 完整同步与还原 `favoriteOnly`，使开箱即用的「星标收藏」智能视图预设（Smart View Preset）无缝生效；
 4. 严格本地交付保障：
    - 严格在本地完成构建和测试，不执行任何外部推送与远程 API 调用。
+
+## D-0397（2026-10-29）读库工具栏星标收藏常驻切换按钮与 Alt+F 全局筛选快捷键（T-3519）
+
+为宽屏读库工作台打通星标好文秒级直达：
+1. 工具栏常驻收藏切换按钮（`src/ui/DockPanel.svelte`）：
+   - 桌面工作台顶栏（`glean-libbar`）在布局模式切换器与预览开关之间增设常驻「❤️ 仅收藏」按钮（`.glean-libbar__fav-btn`），激活态高亮；
+2. 全局 Alt+F 筛选快捷键（`src/ui/DockPanel.svelte`）：
+   - 读库按键监听接入 `Alt+F`，随时单敲即可反转 `selectedFavoriteOnly` 状态并标记偏好交互；
+3. 严格本地交付保障：
+   - 严格在本地完成构建和测试，不执行任何外部推送与远程 API 调用。

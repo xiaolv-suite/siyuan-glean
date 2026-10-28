@@ -2354,6 +2354,13 @@ $effect(() => {
     if (!root || facade.isMobile || view !== "library") return;
     const onKeyDown = (event: KeyboardEvent) => {
         if (event.defaultPrevented) return;
+        if (event.altKey && (event.key === "f" || event.key === "F")) {
+            event.preventDefault();
+            event.stopPropagation();
+            markPrefsInteraction();
+            selectedFavoriteOnly = !selectedFavoriteOnly;
+            return;
+        }
         const action = resolveLibraryShortcut(event, keyboardContext(event));
         if (!action) return;
         // J/K 在行内按钮上也要生效；其余动作由原生控件优先（见 keyboardContext）。
@@ -2895,6 +2902,16 @@ function metaLine(entry: Row): string {
                     >⇆ {t(i18n, "view.modeKanban")}</button>
                 </div>
                 <div class="glean-libbar__spacer"></div>
+                <button
+                    type="button"
+                    class="glean-btn glean-btn--ghost glean-libbar__fav-btn"
+                    class:glean-btn--active={selectedFavoriteOnly}
+                    aria-pressed={selectedFavoriteOnly}
+                    onclick={() => { markPrefsInteraction(); selectedFavoriteOnly = !selectedFavoriteOnly; }}
+                    title="{t(i18n, 'roaming.favoriteOnlyHint')} (Alt+F)"
+                >
+                    {selectedFavoriteOnly ? "❤️" : "🤍"} {t(i18n, "roaming.favoriteOnly")}
+                </button>
                 <button class="glean-btn glean-btn--ghost" aria-pressed={previewEnabled} onclick={togglePreview}>{t(i18n, "preview.enabled")}</button>
                 <LibraryFilters {i18n} {facets} {tagAliases} onManageTagAliases={openTagAliasManager} bind:site={selectedSite} bind:author={selectedAuthor} bind:tag={selectedTag} bind:aiTag={selectedAiTag} bind:source={selectedSource} bind:timeSource={selectedTimeSource} bind:contentType={selectedContentType} bind:readingTimeTier={selectedReadingTimeTier} bind:favoriteOnly={selectedFavoriteOnly} bind:sortBy bind:direction={sortDirection} {hasFilters} onClear={clearUserFilters} {sourceLabel} {facetLabel} />
             </div>
