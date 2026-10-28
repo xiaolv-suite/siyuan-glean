@@ -512,6 +512,15 @@ function handleResurfaceShortcut(event: KeyboardEvent): void {
         }
         return;
     }
+    // B 漫游盲盒：在今日拾遗中按下 B / b 键即可快速唤起漫游盲盒展台
+    if (!action && !textEntry && (event.key === "b" || event.key === "B")) {
+        if (onStartRoaming) {
+            event.preventDefault();
+            event.stopPropagation();
+            onStartRoaming();
+            return;
+        }
+    }
     if (!action) return;
     if (action.type === "move") {
         event.preventDefault();
@@ -871,6 +880,7 @@ function focusCard(id: string): void {
                     <kbd>A</kbd> {t(i18n, "resurface.later")}
                     <kbd>E</kbd> {t(i18n, "resurface.archive")}
                     <kbd>H</kbd> {t(i18n, "resurface.replace")}
+                    <kbd>B</kbd> {t(i18n, "roaming.button")}
                     <kbd>T</kbd> {t(i18n, "resurface.shortcutPin")}
                     <kbd>Y</kbd> {t(i18n, "action.copyBlockRef")}
                     <kbd>P</kbd><kbd>1-5</kbd> {t(i18n, "library.keyboardPriority")}

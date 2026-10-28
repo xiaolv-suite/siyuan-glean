@@ -25,6 +25,8 @@ test("ResurfaceView 今日拾遗漫游盲盒入口与全部读完空态契约", 
     assert.match(resurfaceSource, /onStartRoaming\?: \(\) => void;/);
     assert.match(resurfaceSource, /roaming\.exploreMore/);
     assert.match(resurfaceSource, /roaming\.buttonHint/);
+    assert.match(resurfaceSource, /event\.key === "b" \|\| event\.key === "B"/);
+    assert.match(resurfaceSource, /<kbd>B<\/kbd>/);
 });
 
 test("双语 i18n 覆盖：漫游盲盒文案对齐", () => {

@@ -8,6 +8,15 @@
 
 [English](README.en-US.md) · [下载最新版](https://github.com/ai68298100/siyuan-glean/releases/latest) · [能力矩阵](docs/CAPABILITY-MATRIX.md) · [反馈与问题](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.57 更新（2026-10-28）
+
+本次版本实现 SCSS 摘录墙独立解耦与今日拾遗 B 键漫游盲盒流。
+
+**新增与体验增强：**
+
+- **摘录墙样式独立解耦**：拆分 `highlights.scss`，主单体样式减少约 500 行，构建更加轻盈。
+- **今日拾遗全键盘 B 键盲盒**：在重浮卡片流中按 `B` 键秒级唤起漫游阅读盲盒展台。
+
 ## v1.3.56 更新（2026-10-28）
 
 本次版本实现今日拾遗漫游盲盒贯通与全部读完空态引导。

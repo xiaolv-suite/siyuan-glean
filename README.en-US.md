@@ -8,6 +8,15 @@ Lv Glean organizes clippings and articles already in SiYuan. It does not crawl t
 
 [中文说明](README.md) · [Latest Release](https://github.com/ai68298100/siyuan-glean/releases/latest) · [Capability matrix](docs/CAPABILITY-MATRIX.md) · [Feedback](https://github.com/ai68298100/siyuan-glean/issues/new/choose)
 
+## v1.3.57 update (2026-10-28)
+
+This release implements highlights SCSS modularization and B-key roaming blind-box access in today's gleaning.
+
+**New features & improvements:**
+
+- **Highlights SCSS Modularization**: Extracted `highlights.scss`, stripping nearly 500 lines from the main stylesheet.
+- **B-Key Blind-Box Roaming**: Press `B` in the resurface card flow to instantly invoke the roaming blind-box drawer dialog.
+
 ## v1.3.56 update (2026-10-28)
 
 This release integrates roaming blind-box access into Today's Gleaning and provides smart exploration in the all-done empty state.
