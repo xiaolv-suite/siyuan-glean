@@ -67,6 +67,15 @@ This release implements floating margin notes in the reader editor for same-focu
 - **Floating Margin Notes (Margin Notes)**: Highlights and user thoughts float as sticky note bubbles along the right margin; clicking a note smoothly scrolls to the source block with pulse focus.
 - **Toggle Margin Notes (Alt+M)**: The reader toolbar offers a dedicated toggle action (Alt+M) to collapse or reveal margin notes at will.
 
+## v1.3.72 update (2026-10-28)
+
+This release implements outline heading block reference copy buttons and outline filter Escape quick reset.
+
+**New features & improvements:**
+
+- **Outline Heading Block Reference Copy**: Each heading item in companion outline tree embeds a floating "🔗" button to copy exact heading block references directly to clipboard.
+- **Outline Filter Escape Reset**: Pressing `Escape` in the outline filter input instantly clears keyword and resets the full outline tree.
+
 ## v1.3.71 update (2026-10-28)
 
 This release implements F-key star favorite keyboard arbitration and Resurface card favorite action button.

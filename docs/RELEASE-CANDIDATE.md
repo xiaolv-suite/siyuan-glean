@@ -1,31 +1,26 @@
 # 发布候选复核
 
-> **v1.3.71 发布候选（2026-10-28）**：本次发布覆盖全库行级 F 键星标收藏仲裁与今日拾遗操作栏红心按钮贯通。
+> **v1.3.72 发布候选（2026-10-28）**：本次发布覆盖伴生栏大纲树章节块引用反链即时复制与过滤框 Escape 快速清空。
 >
 > 真实宿主、读屏、移动端和外部能力仍按能力矩阵及 B-0002、B-0004–B-0008 验收。
 
-## 1. 发布产物与门禁核验（v1.3.71）
+## 1. 发布产物与门禁核验（v1.3.72）
 
 | 项目 | 结果 | 证据 |
 |---|---|---|
-| 源版本 | `1.3.71` | `package.json` 与 `plugin.json` 一致 |
-| 变更记录 | 已有 `v1.3.71` 条目 | `docs/CHANGELOG.md` |
+| 源版本 | `1.3.72` | `package.json` 与 `plugin.json` 一致 |
+| 变更记录 | 已有 `v1.3.72` 条目 | `docs/CHANGELOG.md` |
 | 类型与 Svelte 检查 | 通过，0 错误/0 警告 | `pnpm check` |
-| 全量测试 | 1691/1691 通过；覆盖全套架构、i18n、无障碍与域层回归 | `pnpm test` |
+| 全量测试 | 1692/1692 通过；覆盖全套架构、i18n、无障碍与域层回归 | `pnpm test` |
 | 生产构建 | 通过 | `pnpm build` |
 | 发布产物 | `package.zip` 验证通过 | `pnpm check:release` 通过 |
 | 性能门禁 | 通过；10k 合成输入均在预算内 | `pnpm perf:check` |
 | 视觉矩阵 | 登记检查通过；24 个案例等待真实宿主 | `pnpm visual:check` |
 | 任务账本与差异 | 通过 | `pnpm task:ledger -- --check`、`git diff --check` |
-| 任务账本与差异 | 通过；文档与账本定向 10/10 通过 | `pnpm task:ledger -- --check`、`git diff --check` |
-| 隔离内核 | S1 服务级 E2E 58/58 通过；不替代真实主工作区验收 | 本轮 `scripts/e2e/s1-flow.mjs`，证据 `%TEMP%/siyuan-glean-s1-1792119060362-19972/s1-run-evidence.json` |
-| 隔离宿主界面 | 修复包覆盖加载；引导 2→3 步、普通文档、文章切回与工作台预览冒烟通过；warn/error 日志为空 | 思源 `3.8.8-alpha.1`、独立工作区、IAB（Chrome 当前不可用）；正文切回保留上下文实例 `c1`，普通文档可见阅读栏 0，内嵌预览重复注入 0 |
-| 本地构建包 | `v1.3.71` 已打包 | `package.zip` (待解封后上传 GitHub) |
-| GitHub 工作流 | 发布提交两项均成功 | [Quality gates 38843676470](https://github.com/ai68298100/siyuan-glean/actions/runs/38843676470)、[CodeQL 38843676467](https://github.com/ai68298100/siyuan-glean/actions/runs/38843676467) |
+| 本地构建包 | `v1.3.72` 已打包 | `package.zip` (待解封后上传 GitHub) |
+| GitHub 工作流 | 本轮未触发：GitHub 账号封禁期，严格本地构建与提交 | 本轮无任何远程调用；解封后统一推送 |
 
-本轮变更重点是重复加载/切换事件幂等、后台刷新保留已判定内容或无栏状态，以及内嵌编辑器避免重复注入。AI 仍默认手动且需要用户配置通道；详细前置条件以[能力矩阵](CAPABILITY-MATRIX.md)为准。
-
-界面截图：`output/hotfix-v136/native-reading-context.jpg`（隔离合成数据，本地忽略产物）。宿主启动清单原记录 1.3.5，本轮已覆盖为 1.3.6 并重载，manifest 与 JS 均核对；测试包和最终包的 JS SHA-256 同为 `558BDC688056818BDE797B14B251E8F8FD7C23E96605E274B6557259592BCE3A`。隔离会话已停止。原 issue 视频附件未能读取，本轮未在原设备复现其高频闪烁；已验证的是代码中的重复事件链修复、相关回归与隔离宿主冒烟，#16 保留供原反馈场景复测。
+本轮变更重点在读库过滤热路径：`src/domain/library-view.ts` 的 `searchableText` 引入 WeakMap 按条目对象缓存归一化可搜索文本（标题/摘要/路径/站点/作者/URL/标签/AI 标签），关键词高频击键不再全库重建数组再小写化；`filterAndSortLibrary` 改用装饰-排序-还原预计算排序主键与 id 决胜键，O(n) 次归一化替代比较对内重复计算，升降序与决胜语义逐位等价。条目投影按不可变快照使用，缓存随 GC 回收，无手动失效面。AI 仍默认手动且需要用户配置通道；详细前置条件以[能力矩阵](CAPABILITY-MATRIX.md)为准。
 
 ## 2. 仍需真实环境证据
 

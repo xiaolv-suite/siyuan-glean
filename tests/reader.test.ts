@@ -227,3 +227,11 @@ test("ReaderTab 顶栏红心收藏按钮、Alt+F/Alt+C 快捷键与帮助说明�
     assert.match(tab, /<kbd>Alt\+F<\/kbd>/);
     assert.match(tab, /<kbd>Alt\+C<\/kbd>/);
 });
+
+test("ReaderTab 大纲项章节块引用复制与过滤框 Escape 清空接线（T-3506）", () => {
+    const tab = readFileSync(new URL("../src/ui/ReaderTab.svelte", import.meta.url), "utf8");
+    assert.match(tab, /copyOutlineBlockRef/);
+    assert.match(tab, /glean-reader__outline-copy-ref/);
+    assert.match(tab, /glean-reader__outline-row/);
+    assert.match(tab, /if \(e\.key === "Escape" && outlineFilter\)/);
+});

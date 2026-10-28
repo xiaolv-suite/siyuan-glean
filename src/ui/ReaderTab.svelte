@@ -532,6 +532,17 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
         }
     }
 
+    async function copyOutlineBlockRef(item: OutlineItem): Promise<void> {
+        const title = item.title || t(i18n, "panel.untitled");
+        const refText = `((${item.id} '${title}'))`;
+        try {
+            await navigator.clipboard.writeText(refText);
+            showMessage(t(i18n, "reader.blockRefCopied"), 2000);
+        } catch {
+            showMessage(t(i18n, "msg.actionFailed"), 2000);
+        }
+    }
+
     async function selectPalette(id: ThemePaletteId): Promise<void> {
         currentThemePalette = id;
         applyThemePaletteToDom(null, id);
@@ -2511,6 +2522,7 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                                 bind:value={outlineFilter}
                                 placeholder={t(i18n, "reader.outlineFilterPlaceholder")}
                                 aria-label={t(i18n, "reader.outlineFilterPlaceholder")}
+                                onkeydown={(e) => { if (e.key === "Escape" && outlineFilter) { e.stopPropagation(); outlineFilter = ""; } }}
                             />
                             {#if outlineFilter}
                                 <button type="button" class="glean-reader__outline-filter-clear" onclick={() => { outlineFilter = ""; }}>✕</button>
@@ -2537,19 +2549,31 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                                         </div>
                                     {/if}
                                 {/if}
-                                <button
-                                    class="glean-reader__outline-item"
-                                    class:glean-reader__outline-item--active={activeOutlineId === item.id}
-                                    style={`--glean-outline-level:${item.level}`}
-                                    title={item.title}
-                                    onclick={() => scrollToOutline(item)}
-                                >
-                                    <span class="glean-reader__outline-tag">H{item.level}</span>
-                                    <span class="glean-reader__outline-text">{item.title}</span>
-                                    {#if activeOutlineId === item.id}
-                                        <span class="glean-reader__outline-bookmark" title={t(i18n, "reading.position.title")} aria-label={t(i18n, "reading.position.title")}>🔖</span>
-                                    {/if}
-                                </button>
+                                <div class="glean-reader__outline-row" class:glean-reader__outline-row--active={activeOutlineId === item.id}>
+                                    <button
+                                        type="button"
+                                        class="glean-reader__outline-item"
+                                        class:glean-reader__outline-item--active={activeOutlineId === item.id}
+                                        style={`--glean-outline-level:${item.level}`}
+                                        title={item.title}
+                                        onclick={() => scrollToOutline(item)}
+                                    >
+                                        <span class="glean-reader__outline-tag">H{item.level}</span>
+                                        <span class="glean-reader__outline-text">{item.title}</span>
+                                        {#if activeOutlineId === item.id}
+                                            <span class="glean-reader__outline-bookmark" title={t(i18n, "reading.position.title")} aria-label={t(i18n, "reading.position.title")}>🔖</span>
+                                        {/if}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="glean-reader__outline-copy-ref"
+                                        title={t(i18n, "action.copyBlockRef")}
+                                        aria-label={t(i18n, "action.copyBlockRef")}
+                                        onclick={() => void copyOutlineBlockRef(item)}
+                                    >
+                                        🔗
+                                    </button>
+                                </div>
                             {/each}
                         </nav>
                     {/if}
