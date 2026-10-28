@@ -1446,6 +1446,8 @@
   "reader.shortcutImmersive": "Toggle Immersive Focus",
   "stats.copyReport": "Copy Report",
   "stats.reportCopied": "Review report Markdown copied to clipboard!",
+  "stats.copyCompletedList": "Copy Completed List",
+  "stats.completedListCopied": "Completed articles block ref list copied to clipboard!",
   "wechat.wereadGuide": "Clean article link copied! Send it to the 'WeRead' official account in WeChat to sync to your bookshelf.",
   "wechat.wereadGuideTitle": "WeRead Web Sync & Reading Guide",
   "wechat.wereadGuideDesc": "WeRead Web does not open arbitrary external links directly; sync the article to your WeRead shelf and scan to log in",

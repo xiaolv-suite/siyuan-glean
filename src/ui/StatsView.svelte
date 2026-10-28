@@ -13,6 +13,7 @@ import { t } from "../libs/i18n";
 import type { GleanIndex } from "../services/index-store";
 import { buildReadingReview, previewReadingReview, resolveUnknownReadingReview, saveReadingReviewReport, type ReadingReviewSession } from "../services/stats-service";
 import { buildReadingReviewMarkdown, computeConversionFunnel, computeReadingMilestones, filterCompletedItemsByDate, parseReviewDate, reviewDateInput, type ReadingReviewLabels, type ReviewPeriodKind } from "../domain/stats";
+import { formatGBT7714, type CitationItem } from "../domain/citation";
 
 interface Props {
     facade: GleanFacade;
@@ -204,18 +205,79 @@ async function copyReportMarkdown(): Promise<void> {
     }
 }
 
-function onWindowKeyDown(event: KeyboardEvent): void {
-    if (event.key !== "Escape" || event.defaultPrevented || event.isComposing || event.keyCode === 229 || event.repeat) return;
-    if (session && !busy && (saveState === "ready" || saveState === "saved")) {
-        event.preventDefault();
-        event.stopPropagation();
-        discard();
-        return;
+async function copyCompletedBlockRef(item: { id: string; title: string }): Promise<void> {
+    const title = item.title || t(i18n, "review.untitled");
+    const refText = `((${item.id} '${title}'))`;
+    try {
+        await navigator.clipboard.writeText(refText);
+        showMessage(t(i18n, "reader.blockRefCopied"), 2000);
+    } catch {
+        showMessage(t(i18n, "msg.actionFailed"), 2000);
     }
-    if (selectedDayDate) {
+}
+
+async function copyCompletedCitation(item: { id: string; title: string }): Promise<void> {
+    const clip = index.clips[item.id];
+    const citItem: CitationItem = {
+        id: item.id,
+        title: item.title,
+        author: clip?.author,
+        site: clip?.site,
+        url: clip?.url,
+        time: clip?.time,
+    };
+    const citText = formatGBT7714(citItem);
+    try {
+        await navigator.clipboard.writeText(citText);
+        showMessage(t(i18n, "citation.gbtCopied"), 2000);
+    } catch {
+        showMessage(t(i18n, "msg.actionFailed"), 2000);
+    }
+}
+
+async function copyCompletedListMarkdown(): Promise<void> {
+    if (visibleCompletedItems.length === 0) return;
+    const lines = visibleCompletedItems.map((item) => {
+        const title = item.title || t(i18n, "review.untitled");
+        const dateStr = item.doneTime ? `${item.doneTime.slice(0, 4)}-${item.doneTime.slice(4, 6)}-${item.doneTime.slice(6, 8)}` : "";
+        return `- ((${item.id} '${title}'))${dateStr ? ` · ${dateStr}` : ""}`;
+    });
+    try {
+        await navigator.clipboard.writeText(lines.join("\n"));
+        showMessage(t(i18n, "stats.completedListCopied"), 2500);
+    } catch {
+        showMessage(t(i18n, "msg.actionFailed"), 2500);
+    }
+}
+
+function onWindowKeyDown(event: KeyboardEvent): void {
+    if (event.defaultPrevented || event.isComposing || event.keyCode === 229 || event.repeat) return;
+    const target = event.target instanceof Element ? event.target : null;
+    const textEntry = Boolean(target?.closest("input, textarea, select, [contenteditable]:not([contenteditable='false'])"));
+    if (event.key === "Escape") {
+        if (session && !busy && (saveState === "ready" || saveState === "saved")) {
+            event.preventDefault();
+            event.stopPropagation();
+            discard();
+            return;
+        }
+        if (selectedDayDate) {
+            event.preventDefault();
+            event.stopPropagation();
+            selectedDayDate = "";
+            return;
+        }
+    }
+    if (textEntry || event.ctrlKey || event.metaKey || event.altKey) return;
+    const lower = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+    if (lower === "p" && !session && !busy && reference) {
         event.preventDefault();
         event.stopPropagation();
-        selectedDayDate = "";
+        void preview();
+    } else if (lower === "m" && !busy) {
+        event.preventDefault();
+        event.stopPropagation();
+        void copyReportMarkdown();
     }
 }
 </script>
@@ -266,11 +328,11 @@ function onWindowKeyDown(event: KeyboardEvent): void {
         </div>
         <div class="glean-stats__toolbar glean-stats__toolbar--actions">
             {#if !session}
-                <button class="glean-btn glean-btn--pri" disabled={busy || !reference} onclick={() => void preview()}>{t(i18n, "review.preview")}</button>
-                <button type="button" class="glean-btn glean-btn--ghost" disabled={busy} onclick={() => void copyReportMarkdown()}>📋 {t(i18n, "stats.copyReport")}</button>
+                <button class="glean-btn glean-btn--pri" disabled={busy || !reference} onclick={() => void preview()} title="{t(i18n, 'review.preview')} (P)">{t(i18n, "review.preview")}</button>
+                <button type="button" class="glean-btn glean-btn--ghost" disabled={busy} onclick={() => void copyReportMarkdown()} title="{t(i18n, 'stats.copyReport')} (M)">📋 {t(i18n, "stats.copyReport")}</button>
             {:else}
                 <button class="glean-btn glean-btn--ghost" disabled={busy} onclick={downloadCsv}>{t(i18n, "review.csv")}</button>
-                <button type="button" class="glean-btn glean-btn--ghost" disabled={busy} onclick={() => void copyReportMarkdown()}>📋 {t(i18n, "stats.copyReport")}</button>
+                <button type="button" class="glean-btn glean-btn--ghost" disabled={busy} onclick={() => void copyReportMarkdown()} title="{t(i18n, 'stats.copyReport')} (M)">📋 {t(i18n, "stats.copyReport")}</button>
                 {#if saveState === "ready" || saveState === "created"}
                     <button class="glean-btn glean-btn--pri" disabled={busy} onclick={() => void save()}>{t(i18n, saveState === "created" ? "review.retryMark" : "review.confirm")}</button>
                 {/if}
@@ -422,17 +484,34 @@ function onWindowKeyDown(event: KeyboardEvent): void {
         <summary>{t(i18n, "review.completedList")}</summary>
         <section class="glean-stats__completed-section" aria-labelledby={idFor("completed-title")}>
             <h3 id={idFor("completed-title")} class="glean-sr-only">{t(i18n, "review.completedList")}</h3>
-            {#if selectedDayDate}
-                <div class="glean-stats__completed-filter-banner" role="status">
-                    <span>{t(i18n, "review.filterDay", { date: selectedDayDate })} ({visibleCompletedItems.length})</span>
-                    <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm" onclick={() => selectedDayDate = ""}>{t(i18n, "review.clearDayFilter")}</button>
-                </div>
-            {/if}
+            <div class="glean-stats__completed-header" style="display: flex; align-items: center; justify-content: space-between; gap: var(--glean-space-2); margin-bottom: var(--glean-space-2); flex-wrap: wrap;">
+                {#if selectedDayDate}
+                    <div class="glean-stats__completed-filter-banner" role="status" style="margin-bottom: 0;">
+                        <span>{t(i18n, "review.filterDay", { date: selectedDayDate })} ({visibleCompletedItems.length})</span>
+                        <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm" onclick={() => selectedDayDate = ""}>{t(i18n, "review.clearDayFilter")}</button>
+                    </div>
+                {:else}
+                    <span></span>
+                {/if}
+                {#if visibleCompletedItems.length > 0}
+                    <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm glean-stats__copy-completed-btn" onclick={() => void copyCompletedListMarkdown()} title={t(i18n, "stats.copyCompletedList")}>
+                        📋 {t(i18n, "stats.copyCompletedList")}
+                    </button>
+                {/if}
+            </div>
             <ul class="glean-stats__completed">
                 {#each visibleCompletedItems as item (item.id)}
                     <li>
                         <button class="glean-stats__link" title={item.title || t(i18n, "review.untitled")} onclick={() => facade.openReadingDocument(item.id)}>{item.title || t(i18n, "review.untitled")}</button>
                         <span>{item.doneTime.slice(0, 4)}-{item.doneTime.slice(4, 6)}-{item.doneTime.slice(6, 8)}</span>
+                        <div class="glean-stats__completed-acts" style="display: inline-flex; align-items: center; gap: 4px; margin-left: 8px;">
+                            <button type="button" class="glean-btn glean-btn--ghost glean-btn--xs" onclick={() => void copyCompletedBlockRef(item)} title={t(i18n, "action.copyBlockRef")}>
+                                🔗
+                            </button>
+                            <button type="button" class="glean-btn glean-btn--ghost glean-btn--xs" onclick={() => void copyCompletedCitation(item)} title={t(i18n, "citation.copyGBT")}>
+                                📄
+                            </button>
+                        </div>
                     </li>
                 {:else}<li class="glean-stats__completed-empty">{t(i18n, "review.noCompleted")}</li>{/each}
             </ul>

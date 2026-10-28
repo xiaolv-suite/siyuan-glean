@@ -67,6 +67,16 @@ This release implements floating margin notes in the reader editor for same-focu
 - **Floating Margin Notes (Margin Notes)**: Highlights and user thoughts float as sticky note bubbles along the right margin; clicking a note smoothly scrolls to the source block with pulse focus.
 - **Toggle Margin Notes (Alt+M)**: The reader toolbar offers a dedicated toggle action (Alt+M) to collapse or reveal margin notes at will.
 
+## v1.3.77 update (2026-10-29)
+
+This release implements stats view completed list block ref & citation copying, full completed list Markdown export, and keyboard shortcuts.
+
+**New features & improvements:**
+
+- **Stats View Completed List Block Ref & Citation Copying (T-3512)**: Each row in the completed readings list embeds "🔗" block ref and "📄" GB/T 7714 citation buttons for quick referencing into journals.
+- **Copy Full Completed List Markdown**: Completed section header embeds "📋 Copy Completed List" button to format visible completed readings into structured Markdown bullet points with block links.
+- **Stats View P / M Shortcut Flow**: Pressing `P` previews review reports instantly, and `M` copies review report Markdown directly to clipboard.
+
 ## v1.3.76 update (2026-10-29)
 
 This release implements quote card full keyboard flow, block reference direct copying, and workbench excerpt card generation.

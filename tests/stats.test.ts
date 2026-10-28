@@ -424,12 +424,18 @@ test("filterCompletedItemsByDate：按日历日期过滤完成文章清单（T-1
     assert.equal(filterCompletedItemsByDate(items, "2026-10-01").length, 0);
 });
 
-test("StatsView 接线：回顾预览与日期过滤支持 Escape 快捷退出（T-3395）", () => {
+test("StatsView 接线：回顾预览与日期过滤支持 Escape 快捷退出（T-3395 / T-3512）", () => {
     const view = readFileSync(new URL("../src/ui/StatsView.svelte", import.meta.url), "utf8");
     assert.match(view, /<svelte:window onkeydown=\{onWindowKeyDown\} \/>/);
-    assert.match(view, /if \(event\.key !== "Escape"/);
+    assert.match(view, /if \(event\.key === "Escape"\)/);
     assert.match(view, /if \(session && !busy && \(saveState === "ready" \|\| saveState === "saved"\)\) \{[\s\S]*?discard\(\);/);
     assert.match(view, /if \(selectedDayDate\) \{[\s\S]*?selectedDayDate = "";/);
+    assert.match(view, /lower === "p"/);
+    assert.match(view, /lower === "m"/);
+    assert.match(view, /copyCompletedBlockRef/);
+    assert.match(view, /copyCompletedCitation/);
+    assert.match(view, /copyCompletedListMarkdown/);
+    assert.match(view, /glean-stats__copy-completed-btn/);
 });
 
 test("computeRecent7DaysStatus：准确计算近 7 天每日打卡完成状态（对标 Days Logged In）", () => {
