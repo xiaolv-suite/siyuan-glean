@@ -541,18 +541,48 @@ export function computeConversionFunnel(
     };
 }
 
+export interface CompletedItemFilterOptions {
+    dateStamp?: string;
+    search?: string;
+}
+
+/**
+ * 按本地日历日期及关键词对完成文章进行纯投影过滤（T-1770 / T-1946 / T-3387 / T-3531）：
+ * 支持按日期精确分桶以及按标题、作者、站点和标签模糊匹配。
+ */
+export function filterCompletedItems<T extends { doneTime: string; title?: string; author?: string; site?: string; tags?: string[]; aiTags?: string[] }>(
+    items: readonly T[],
+    options: CompletedItemFilterOptions = {}
+): T[] {
+    const cleanDate = (options.dateStamp || "").replaceAll("-", "").trim();
+    const query = (options.search || "").trim().toLowerCase();
+
+    if (!cleanDate && !query) return [...items];
+
+    return items.filter((item) => {
+        if (cleanDate && !item.doneTime.startsWith(cleanDate)) return false;
+        if (!query) return true;
+
+        if (item.title && item.title.toLowerCase().includes(query)) return true;
+        if (item.author && item.author.toLowerCase().includes(query)) return true;
+        if (item.site && item.site.toLowerCase().includes(query)) return true;
+        if (item.tags?.some((t) => t.toLowerCase().includes(query))) return true;
+        if (item.aiTags?.some((t) => t.toLowerCase().includes(query))) return true;
+
+        return false;
+    });
+}
+
 /**
  * 按本地日历日期对完成文章进行纯投影过滤（T-1770 / T-1946 / T-3387）：
  * 若 dateStamp（形如 "YYYY-MM-DD" 或 "YYYYMMDD"）为空，返回原列表；
  * 否则返回 doneTime 以该日期开头的文章子集。
  */
-export function filterCompletedItemsByDate<T extends { doneTime: string }>(
+export function filterCompletedItemsByDate<T extends { doneTime: string; title?: string; author?: string; site?: string; tags?: string[]; aiTags?: string[] }>(
     items: readonly T[],
     dateStamp: string | undefined
 ): T[] {
-    const clean = (dateStamp || "").replaceAll("-", "").trim();
-    if (!clean) return [...items];
-    return items.filter((item) => item.doneTime.startsWith(clean));
+    return filterCompletedItems(items, { dateStamp });
 }
 
 export interface DailyCompletionStep {

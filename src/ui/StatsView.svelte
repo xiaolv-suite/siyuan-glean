@@ -5,7 +5,7 @@
 // 其余指标、全年热力图与分布收进可展开区，避免统计页一打开就被次要数字淹没。
 // .glean-stats__distributions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }，
 // .glean-stats__distribution { min-width: 0; }。
-import { onDestroy } from "svelte";
+import { onDestroy, tick } from "svelte";
 import { showMessage } from "siyuan";
 import type { GleanFacade } from "../types";
 import DistributionList from "./DistributionList.svelte";
@@ -13,7 +13,7 @@ import { t } from "../libs/i18n";
 import type { GleanIndex } from "../services/index-store";
 import { buildReadingReview, previewReadingReview, resolveUnknownReadingReview, saveReadingReviewReport, type ReadingReviewSession } from "../services/stats-service";
 import { exportSelectedClipsCsv } from "../services/library-export-service";
-import { buildReadingReviewMarkdown, computeConversionFunnel, computeReadingMilestones, filterCompletedItemsByDate, parseReviewDate, reviewDateInput, type ReadingReviewLabels, type ReviewPeriodKind } from "../domain/stats";
+import { buildReadingReviewMarkdown, computeConversionFunnel, computeReadingMilestones, filterCompletedItems, parseReviewDate, reviewDateInput, type ReadingReviewLabels, type ReviewPeriodKind } from "../domain/stats";
 import { formatBibTeX, formatGBT7714, formatCitation, type CitationFormat, type CitationItem } from "../domain/citation";
 
 interface Props {
@@ -48,6 +48,8 @@ let session = $state.raw<ReadingReviewSession | null>(null);
 let saveState = $state<ReadingReviewSession["state"]>("ready");
 let busy = $state(false);
 let message = $state("");
+let completedSearch = $state("");
+let searchInputEl = $state<HTMLInputElement | null>(null);
 let disposed = false;
 const reference = $derived(parseReviewDate(referenceDate));
 const liveReview = $derived(buildReadingReview(index, { period, reference: reference ?? currentTime, now: currentTime }));
@@ -56,7 +58,7 @@ const stats = $derived(review.stats);
 const maxHeat = $derived(Math.max(1, ...stats.heatmap.map((day) => day.count)));
 const heatmapPadding = $derived((new Date(`${stats.heatmap[0].date}T12:00:00`).getDay() + 6) % 7);
 const recentDays = $derived(stats.recentCompletionTrend);
-const visibleCompletedItems = $derived(filterCompletedItemsByDate(review.completedItems, selectedDayDate));
+const visibleCompletedItems = $derived(filterCompletedItems(review.completedItems, { dateStamp: selectedDayDate, search: completedSearch }));
 const funnel = $derived(computeConversionFunnel(index.clips, index.candidates));
 const readingMilestones = $derived(computeReadingMilestones(stats));
 const maxRecent = $derived(Math.max(1, ...recentDays.map((day) => day.count)));
@@ -333,7 +335,25 @@ function onWindowKeyDown(event: KeyboardEvent): void {
     if (event.defaultPrevented || event.isComposing || event.keyCode === 229 || event.repeat) return;
     const target = event.target instanceof Element ? event.target : null;
     const textEntry = Boolean(target?.closest("input, textarea, select, [contenteditable]:not([contenteditable='false'])"));
+    if ((event.ctrlKey || event.metaKey) && (event.key === "f" || event.key === "F")) {
+        if (!textEntry) {
+            event.preventDefault();
+            event.stopPropagation();
+            if (!completedListOpen) completedListOpen = true;
+            void tick().then(() => {
+                searchInputEl?.focus();
+                searchInputEl?.select();
+            });
+            return;
+        }
+    }
     if (event.key === "Escape") {
+        if (completedSearch) {
+            event.preventDefault();
+            event.stopPropagation();
+            completedSearch = "";
+            return;
+        }
         if (session && !busy && (saveState === "ready" || saveState === "saved")) {
             event.preventDefault();
             event.stopPropagation();
@@ -348,6 +368,16 @@ function onWindowKeyDown(event: KeyboardEvent): void {
         }
     }
     if (textEntry || event.ctrlKey || event.metaKey || event.altKey) return;
+    if (event.key === "/") {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!completedListOpen) completedListOpen = true;
+        void tick().then(() => {
+            searchInputEl?.focus();
+            searchInputEl?.select();
+        });
+        return;
+    }
     const lower = event.key.length === 1 ? event.key.toLowerCase() : event.key;
     if (lower === "p" && !session && !busy && reference) {
         event.preventDefault();
@@ -573,14 +603,31 @@ function onWindowKeyDown(event: KeyboardEvent): void {
         <section class="glean-stats__completed-section" aria-labelledby={idFor("completed-title")}>
             <h3 id={idFor("completed-title")} class="glean-sr-only">{t(i18n, "review.completedList")}</h3>
             <div class="glean-stats__completed-header" style="display: flex; align-items: center; justify-content: space-between; gap: var(--glean-space-2); margin-bottom: var(--glean-space-2); flex-wrap: wrap;">
-                {#if selectedDayDate}
-                    <div class="glean-stats__completed-filter-banner" role="status" style="margin-bottom: 0;">
-                        <span>{t(i18n, "review.filterDay", { date: selectedDayDate })} ({visibleCompletedItems.length})</span>
-                        <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm" onclick={() => selectedDayDate = ""}>{t(i18n, "review.clearDayFilter")}</button>
+                <div style="display: flex; align-items: center; gap: var(--glean-space-2); flex-wrap: wrap;">
+                    <div class="glean-stats__completed-search" style="display: inline-flex; align-items: center; position: relative;">
+                        <input
+                            bind:this={searchInputEl}
+                            type="search"
+                            class="glean-stats__field"
+                            style="min-height: 32px; padding: 4px 8px; font-size: 12px; width: 220px; margin-top: 0;"
+                            bind:value={completedSearch}
+                            placeholder={t(i18n, "stats.searchCompletedPlaceholder")}
+                            aria-label={t(i18n, "action.search")}
+                            onkeydown={(e) => {
+                                if (e.key === "Escape" && completedSearch) {
+                                    e.stopPropagation();
+                                    completedSearch = "";
+                                }
+                            }}
+                        />
                     </div>
-                {:else}
-                    <span></span>
-                {/if}
+                    {#if selectedDayDate}
+                        <div class="glean-stats__completed-filter-banner" role="status" style="margin-bottom: 0;">
+                            <span>{t(i18n, "review.filterDay", { date: selectedDayDate })} ({visibleCompletedItems.length})</span>
+                            <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm" onclick={() => selectedDayDate = ""}>{t(i18n, "review.clearDayFilter")}</button>
+                        </div>
+                    {/if}
+                </div>
                 {#if visibleCompletedItems.length > 0}
                     <div style="display: inline-flex; align-items: center; gap: 4px; flex-wrap: wrap;">
                         <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm glean-stats__copy-completed-btn" onclick={() => void copyCompletedListMarkdown()} title="{t(i18n, 'stats.copyCompletedList')} (Y)">
@@ -630,7 +677,11 @@ function onWindowKeyDown(event: KeyboardEvent): void {
                             </button>
                         </div>
                     </li>
-                {:else}<li class="glean-stats__completed-empty">{t(i18n, "review.noCompleted")}</li>{/each}
+                {:else}
+                    <li class="glean-stats__completed-empty">
+                        {completedSearch || selectedDayDate ? t(i18n, "stats.noCompletedMatch") : t(i18n, "review.noCompleted")}
+                    </li>
+                {/each}
             </ul>
         </section>
     </details>
@@ -640,6 +691,20 @@ function onWindowKeyDown(event: KeyboardEvent): void {
             {t(i18n, "review.preview")}
             <textarea class="glean-stats__field" readonly value={session.markdown} spellcheck="false"></textarea>
         </label>
+    {/if}
+    {#if !facade.isMobile}
+        <div class="glean-kbdhint">
+            <span class="glean-kbdhint__keys" aria-hidden="true">
+                <kbd>P</kbd> {t(i18n, "review.preview")}
+                <kbd>M</kbd> {t(i18n, "stats.copyReport")}
+                <kbd>Y</kbd> {t(i18n, "action.copyBlockRef")}
+                <kbd>Shift+Y</kbd> {t(i18n, "stats.copyCompletedSummary")}
+                <kbd>C</kbd> {t(i18n, "citation.copyGBT")}
+                <kbd>Shift+C</kbd> BibTeX
+                <kbd>/</kbd> {t(i18n, "action.search")}
+                <kbd>Esc</kbd> {t(i18n, "library.keyboardExit")}
+            </span>
+        </div>
     {/if}
     {/if}
 </div>

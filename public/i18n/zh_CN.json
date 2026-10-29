@@ -1471,6 +1471,8 @@
   "stats.copyCompletedSummary": "复制大纲摘要",
   "stats.completedListCopied": "已复制完成文章块引用清单到剪贴板！",
   "stats.completedCsvExported": "已导出 ${n} 篇已完成文章元数据为 CSV！",
+  "stats.searchCompletedPlaceholder": "搜索已读文章（标题/作者/标签）…",
+  "stats.noCompletedMatch": "没有找到匹配的已读文章",
   "wechat.wereadGuide": "已复制文章纯净短链！可在微信中发送给【微信读书】公众号，即可自动同步至书架并阅读",
   "wechat.wereadGuideTitle": "微信读书网页版同步阅读向导",
   "wechat.wereadGuideDesc": "微信读书网页版不支持外部任意链接直读，需先同步至微信读书个人书架，扫码登录后即可畅读",

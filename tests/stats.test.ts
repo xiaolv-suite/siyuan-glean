@@ -7,7 +7,7 @@ import { summarizeDistribution } from "../src/domain/distribution.ts";
 
 import {
     aggregateStats, aggregateReadingReview, buildReadingReviewCsv, buildReadingReviewMarkdown,
-    completedReviewItems, computeConversionFunnel, computeRecent7DaysStatus, computeReadingMilestones, currentCompletionStreak, filterCompletedItemsByDate, csvCell, parseLocalTimestamp, parseReviewDate, reviewPeriod, withinWeek,
+    completedReviewItems, computeConversionFunnel, computeRecent7DaysStatus, computeReadingMilestones, currentCompletionStreak, filterCompletedItems, filterCompletedItemsByDate, csvCell, parseLocalTimestamp, parseReviewDate, reviewPeriod, withinWeek,
     type ReadingReview, type StatsInput,
 } from "../src/domain/stats.ts";
 
@@ -424,6 +424,40 @@ test("filterCompletedItemsByDate：按日历日期过滤完成文章清单（T-1
     assert.equal(filterCompletedItemsByDate(items, "2026-10-01").length, 0);
 });
 
+test("filterCompletedItems：已读文章按日期与关键词（标题/作者/站点/标签）多维过滤（T-3531）", () => {
+    const items = [
+        { id: "1", title: "深度工作指南", author: "Cal Newport", site: "calnewport.com", doneTime: "20261019100000", tags: ["专注", "生产力"], aiTags: ["自我管理"] },
+        { id: "2", title: "原子习惯精要", author: "James Clear", site: "jamesclear.com", doneTime: "20261019120000", tags: ["习惯"], aiTags: ["行为设计"] },
+        { id: "3", title: "代码整洁之道", author: "Robert Martin", site: "cleancode.org", doneTime: "20261018090000", tags: ["工程"], aiTags: ["架构"] },
+        { id: "4", title: "现代 JavaScript 教程", author: "Ilya Kantor", site: "javascript.info", doneTime: "20260901000000", tags: ["前端"], aiTags: ["编程"] },
+    ];
+
+    // 1. 标题模糊搜索（大小写不敏感）
+    assert.deepEqual(filterCompletedItems(items, { search: "深度" }).map((i) => i.id), ["1"]);
+    assert.deepEqual(filterCompletedItems(items, { search: "JAVASCRIPT" }).map((i) => i.id), ["4"]);
+
+    // 2. 作者搜索
+    assert.deepEqual(filterCompletedItems(items, { search: "James" }).map((i) => i.id), ["2"]);
+
+    // 3. 站点域名搜索
+    assert.deepEqual(filterCompletedItems(items, { search: "cleancode.org" }).map((i) => i.id), ["3"]);
+
+    // 4. 用户标签与 AI 标签搜索
+    assert.deepEqual(filterCompletedItems(items, { search: "生产力" }).map((i) => i.id), ["1"]);
+    assert.deepEqual(filterCompletedItems(items, { search: "架构" }).map((i) => i.id), ["3"]);
+
+    // 5. 复合条件：日期 + 关键词联合匹配
+    assert.deepEqual(filterCompletedItems(items, { dateStamp: "2026-10-19", search: "习惯" }).map((i) => i.id), ["2"]);
+    assert.deepEqual(filterCompletedItems(items, { dateStamp: "2026-10-18", search: "深度" }).map((i) => i.id), []);
+
+    // 6. 空条件返回全集
+    assert.equal(filterCompletedItems(items, {}).length, 4);
+    assert.equal(filterCompletedItems(items, { search: "   " }).length, 4);
+
+    // 7. 无匹配返回空数组
+    assert.deepEqual(filterCompletedItems(items, { search: "non-existent-keyword" }), []);
+});
+
 test("StatsView 接线：回顾预览与日期过滤支持 Escape 快捷退出（T-3395 / T-3512 / T-3521）", () => {
     const view = readFileSync(new URL("../src/ui/StatsView.svelte", import.meta.url), "utf8");
     assert.match(view, /<svelte:window onkeydown=\{onWindowKeyDown\} \/>/);
@@ -450,6 +484,14 @@ test("StatsView 接线：回顾预览与日期过滤支持 Escape 快捷退出�
     assert.match(view, /exportSelectedClipsCsv/);
     assert.match(view, /formatBibTeX/);
     assert.match(view, /formatCitation/);
+    assert.match(view, /filterCompletedItems/);
+    assert.match(view, /completedSearch/);
+    assert.match(view, /searchInputEl/);
+    assert.match(view, /event\.key === "\/"/);
+    assert.match(view, /event\.key === "f" \|\| event\.key === "F"/);
+    assert.match(view, /stats\.searchCompletedPlaceholder/);
+    assert.match(view, /stats\.noCompletedMatch/);
+    assert.match(view, /<kbd>\/<\/kbd>/);
 });
 
 test("computeRecent7DaysStatus：准确计算近 7 天每日打卡完成状态（对标 Days Logged In）", () => {

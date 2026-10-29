@@ -1,5 +1,12 @@
 # 进度（PROGRESS）
 
+## T-3531 阅读统计已完成清单关键词即时检索、全键盘聚焦（/ 与 Ctrl+F）与清空交互闭环（2026-10-29）
+
+- [x] 已读文章多维检索纯函数：`src/domain/stats.ts` 导出 `filterCompletedItems` 纯函数，支持日期分桶（`dateStamp`）与模糊检索（`search`），覆盖标题、作者、站点域名、用户标签与 AI 标签全字段匹配；原 `filterCompletedItemsByDate` 保持委托调用；
+- [x] 统计回顾页检索框、快捷聚焦与底部键位指引：`src/ui/StatsView.svelte` 在已完成文章清单头部接入即时检索输入框，单敲 `/` 键或 `Ctrl+F` / `Cmd+F` 自动展开清单并秒级聚焦选中文本；键盘监听支持 `Escape` 优先清空当前搜索词，底部补充 `glean-kbdhint` 键位指引条；
+- [x] 遵照指令本地闭环交付：本地完成 v1.3.96 打包与构建，本轮严格不推送到 GitHub，不调用任何远程接口，等用户通知解封后再行统一推送与发布；
+- [x] 门禁全通：全套单测（1733/1733）、`pnpm check` 0 错误 0 警告，发布门禁与性能基线通过。
+
 ## T-3530 全表面全局快速检索流：/ 键全局聚焦检索输入框、Ctrl+F/Cmd+F 快速唤起与按键提示闭环（2026-10-29）
 
 - [x] 全局按键仲裁扩展：`src/domain/library-keyboard.ts` 新增 `{ type: "focusSearch" }` 动作并纳入 `REPEAT_SENSITIVE` 长按防抖保护集合，单敲 `/` 键全局调度为 `focusSearch`；在原生输入框或浮层内打斜杠严格放行，不发生按键侵入；

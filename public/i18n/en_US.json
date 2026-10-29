@@ -1471,6 +1471,8 @@
   "stats.copyCompletedSummary": "Copy Digest List",
   "stats.completedListCopied": "Completed articles block ref list copied to clipboard!",
   "stats.completedCsvExported": "Exported ${n} completed article(s) to CSV!",
+  "stats.searchCompletedPlaceholder": "Search completed articles (title/author/tag)…",
+  "stats.noCompletedMatch": "No completed articles matched the query",
   "wechat.wereadGuide": "Clean article link copied! Send it to the 'WeRead' official account in WeChat to sync to your bookshelf.",
   "wechat.wereadGuideTitle": "WeRead Web Sync & Reading Guide",
   "wechat.wereadGuideDesc": "WeRead Web does not open arbitrary external links directly; sync the article to your WeRead shelf and scan to log in",

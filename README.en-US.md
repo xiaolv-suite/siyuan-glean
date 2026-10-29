@@ -67,6 +67,15 @@ This release implements floating margin notes in the reader editor for same-focu
 - **Floating Margin Notes (Margin Notes)**: Highlights and user thoughts float as sticky note bubbles along the right margin; clicking a note smoothly scrolls to the source block with pulse focus.
 - **Toggle Margin Notes (Alt+M)**: The reader toolbar offers a dedicated toggle action (Alt+M) to collapse or reveal margin notes at will.
 
+## v1.3.96 update (2026-10-29)
+
+This release implements instant keyword search, keyboard focus (/ and Ctrl+F), and Escape clearing in completed reading review list.
+
+**New features & improvements:**
+
+- **Multi-Dimensional Completed Items Search (T-3531)**: Domain layer introduces `filterCompletedItems` pure function, supporting date binning alongside fuzzy keyword search across title, author, site, and tags.
+- **Search Box, Shortcut Focus & Keyboard Hints in Stats (T-3531)**: Header of completed articles features an instant search input, auto-expanding and focusing on `/` or `Ctrl+F` / `Cmd+F`, with Escape clearing and bottom `glean-kbdhint` shortcut guide.
+
 ## v1.3.95 update (2026-10-29)
 
 This release implements the global search flow: press `/` to focus the search input, `Ctrl+F`/`Cmd+F` quick activation, and updated shortcut hints.
