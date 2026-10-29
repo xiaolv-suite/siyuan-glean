@@ -955,6 +955,9 @@ function applyMobileFilters(): void {
 }
 
 const kanbanCols = $derived.by(() => {
+    if (!isTabCanvas || layoutMode !== "kanban") {
+        return queues.map((status) => ({ status, label: queueLabel(status), items: [] as ClipIndexEntry[] }));
+    }
     const filtered = filterAndSortLibrary(libraryItems, {
         ...activeFilter,
         status: "all",
@@ -979,7 +982,7 @@ const kanbanCols = $derived.by(() => {
     }
     return queues.map((status) => ({ status, label: queueLabel(status), items: byStatus[status] }));
 });
-const visibleKanbanCols = $derived(kanbanCols.map((column) => ({ ...column, items: column.items.slice(0, renderLimit) })));
+const visibleKanbanCols = $derived(kanbanCols.map((column) => ({ ...column, items: column.items.slice(0, renderLimit), totalCount: column.items.length })));
 const renderedKanbanCount = $derived(visibleKanbanCols.reduce((total, column) => total + column.items.length, 0));
 const totalKanbanCount = $derived(kanbanCols.reduce((total, column) => total + column.items.length, 0));
 const hasMoreKanban = $derived(renderedKanbanCount < totalKanbanCount);
@@ -1154,21 +1157,23 @@ async function batchFavorite(nextFav: boolean): Promise<void> {
     if (batchBusy || selection.size === 0) return;
     batchBusy = true;
     const ids = Array.from(selection);
+    let count = 0;
     try {
-        let count = 0;
         for (const id of ids) {
             const clip = index.clips[id];
             if (!clip || clip.favorite === nextFav) continue;
             await writeClip(facade.pluginInstance, id, { favorite: nextFav }, { force: true });
             count += 1;
         }
-        facade.notifyDataChanged();
-        await reload();
         showMessage(t(i18n, nextFav ? "library.batchFavoriteAdded" : "library.batchFavoriteRemoved", { n: count }), 2500);
     } catch (err) {
         console.warn("[LvGlean] 批量收藏失败:", err);
         showMessage(t(i18n, "msg.actionFailed"), 3000);
     } finally {
+        if (count > 0) {
+            facade.notifyDataChanged();
+            await reload();
+        }
         batchBusy = false;
     }
 }
@@ -1177,21 +1182,24 @@ async function batchSetPriority(priority: number): Promise<void> {
     if (batchBusy || selection.size === 0) return;
     batchBusy = true;
     const ids = Array.from(selection);
+    let count = 0;
     try {
-        let count = 0;
         for (const id of ids) {
             const clip = index.clips[id];
             if (!clip || clip.priority === priority) continue;
             await writeClip(facade.pluginInstance, id, { priority }, { force: true });
             count += 1;
         }
-        facade.notifyDataChanged();
-        await reload();
         showMessage(t(i18n, "library.batchPrioritySet", { n: count, p: priority }), 2500);
     } catch (err) {
         console.warn("[LvGlean] 批量设置优先级失败:", err);
         showMessage(t(i18n, "msg.actionFailed"), 3000);
     } finally {
+        if (count > 0) {
+            selection = new Set();
+            facade.notifyDataChanged();
+            await reload();
+        }
         batchBusy = false;
     }
 }
@@ -1200,21 +1208,24 @@ async function batchSetRating(rating: number): Promise<void> {
     if (batchBusy || selection.size === 0) return;
     batchBusy = true;
     const ids = Array.from(selection);
+    let count = 0;
     try {
-        let count = 0;
         for (const id of ids) {
             const clip = index.clips[id];
             if (!clip || clip.rating === rating) continue;
             await writeClip(facade.pluginInstance, id, { rating }, { force: true });
             count += 1;
         }
-        facade.notifyDataChanged();
-        await reload();
         showMessage(t(i18n, "library.batchRatingSet", { n: count, r: rating }), 2500);
     } catch (err) {
         console.warn("[LvGlean] 批量设置评分失败:", err);
         showMessage(t(i18n, "msg.actionFailed"), 3000);
     } finally {
+        if (count > 0) {
+            selection = new Set();
+            facade.notifyDataChanged();
+            await reload();
+        }
         batchBusy = false;
     }
 }
@@ -1230,8 +1241,11 @@ async function batchCopySummaryList(): Promise<void> {
         if (clip?.site) parts.push(`*来源: ${clip.site}*`);
         if (clip?.minutes) parts.push(`*⏱️ ${clip.minutes}m*`);
         if (clip?.tags?.length) parts.push(`#${clip.tags.join(" #")}`);
-        if (clip?.summary) parts.push(`\n  > ${clip.summary}`);
-        return parts.join(" · ");
+        let line = parts.join(" · ");
+        if (clip?.summary) {
+            line += `\n  > ${clip.summary.trim()}`;
+        }
+        return line;
     });
     try {
         await navigator.clipboard.writeText(lines.join("\n\n"));
@@ -1369,9 +1383,9 @@ function retainSelectionToFilter(): void {
 
 
 async function moveTo(entry: ClipIndexEntry, status: ClipStatus) {
-    if (entry.status === status) return;
     dragId = "";
     dragOverCol = null;
+    if (entry.status === status) return;
     await setStatus(entry, status);
 }
 
@@ -2846,6 +2860,10 @@ function metaLine(entry: Row): string {
                                 <svg class="glean-mobile-more__icon" aria-hidden="true"><use href="#iconGleanPopup" /></svg>
                                 {t(i18n, "panel.popup")}
                             </button>
+                            <button type="button" class="glean-mobile-more__item" role="menuitem" onclick={() => { closeMobileMore(); triggerRoamingRead(); }}>
+                                <span class="glean-mobile-more__icon glean-mobile-more__icon--emoji" aria-hidden="true">🎲</span>
+                                {t(i18n, "roaming.button")}
+                            </button>
                             <button type="button" class="glean-mobile-more__item" role="menuitem" aria-current={view === "stats" ? "page" : undefined} onclick={() => { closeMobileMore(true); selectMobileView("stats"); }}>
                                 <svg class="glean-mobile-more__icon" aria-hidden="true"><use href="#iconGleanNews" /></svg>
                                 {t(i18n, "view.stats")}
@@ -2916,7 +2934,7 @@ function metaLine(entry: Row): string {
                         aria-label={t(i18n, "settings.themePalette")}
                         onclick={() => { paletteMenuOpen = !paletteMenuOpen; }}
                     >
-                        <span class="glean-head-palette-dot" style="background: var(--lv-brand);"></span>
+                        <span class="glean-head-palette-dot"></span>
                     </button>
                     {#if paletteMenuOpen}
                         <div class="glean-palette-quick-menu" role="menu">
@@ -2992,7 +3010,7 @@ function metaLine(entry: Row): string {
                 <button
                     bind:this={searchToggle}
                     class="glean-icon-btn"
-                    title={t(i18n, "panel.searchPlaceholder")}
+                    title="{t(i18n, 'panel.searchPlaceholder')} (/)"
                     aria-label={t(i18n, "panel.searchPlaceholder")}
                     onclick={() => (searchOpen = true)}
                 >
@@ -3245,7 +3263,7 @@ function metaLine(entry: Row): string {
                                 {#each facets.contentTypes as facet (facet.value)}<option value={facet.value}>{facetLabel(facet.value, "contentType")} · {facet.count}</option>{/each}
                             </select>
                         </label>
-                        <label class="glean-mobile-filter-field" style="display: flex; align-items: center; gap: 8px;">
+                        <label class="glean-mobile-filter-field glean-mobile-filter-field--checkbox">
                             <input type="checkbox" bind:checked={mobileFilterDraft.favoriteOnly} />
                             <span>❤️ {t(i18n, "roaming.favoriteOnly")}</span>
                         </label>
@@ -3285,7 +3303,7 @@ function metaLine(entry: Row): string {
         {#if currentViewWechatWithoutAuthor.length > 0}
             <div class="glean-quota glean-wechat-banner" role="status">
                 <svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanSpark" /></svg>
-                <span style="flex:1">{t(i18n, "wechat.unrecognizedBanner", { n: currentViewWechatWithoutAuthor.length })}</span>
+                <span class="glean-banner__text">{t(i18n, "wechat.unrecognizedBanner", { n: currentViewWechatWithoutAuthor.length })}</span>
                 <button
                     type="button"
                     class="glean-cap-btn glean-cap-btn--pri"
@@ -3299,8 +3317,8 @@ function metaLine(entry: Row): string {
         {/if}
         {#if governanceCueCount > 1 && !governanceExpanded}
             <div class="glean-governance-summary" role="status">
-                <span aria-hidden="true">💡</span>
-                <span style="flex:1">{t(i18n, "panel.governanceSummary", { n: governanceCueCount })}</span>
+                <svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanSpark" /></svg>
+                <span class="glean-banner__text">{t(i18n, "panel.governanceSummary", { n: governanceCueCount })}</span>
                 <button type="button" class="glean-cap-btn" aria-expanded={governanceExpanded} onclick={() => (governanceExpanded = true)}>
                     {t(i18n, "panel.governanceExpand")}
                 </button>
@@ -3316,15 +3334,15 @@ function metaLine(entry: Row): string {
             {/if}
             {#if overQuota && activeQueue === "inbox" && !authorTimeline && !governanceCueMuted("quota", governanceMuted)}
                 <div class="glean-quota">
-                    <span>⚖️</span>
-                    <span style="flex:1">{t(i18n, "panel.quotaOver", { total: inboxTotal, quota: facade.settings.inboxQuota })}</span>
+                    <svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanInbox" /></svg>
+                    <span class="glean-banner__text">{t(i18n, "panel.quotaOver", { total: inboxTotal, quota: facade.settings.inboxQuota })}</span>
                     <button class="glean-linkish" onclick={() => void muteGovernanceCue("quota")}>{t(i18n, "panel.governanceMuteToday")}</button>
                 </div>
             {/if}
             {#if stalePool.length > 0 && (activeQueue === "inbox" || activeQueue === "later") && !governanceCueMuted("stale", governanceMuted)}
             <div class="glean-quota">
                 <svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanArchive" /></svg>
-                <span style="flex:1">{t(i18n, "panel.staleCandidates", { n: stalePool.length })}</span>
+                <span class="glean-banner__text">{t(i18n, "panel.staleCandidates", { n: stalePool.length })}</span>
                 <button class="glean-cap-btn" onclick={() => toggleStalePreview()}>
                     {stalePreviewOpen ? t(i18n, "panel.staleHide") : t(i18n, "panel.archiveStale")}
                 </button>
@@ -3362,7 +3380,7 @@ function metaLine(entry: Row): string {
             {#if candidateCount > 0 && !governanceCueMuted("candidates", governanceMuted)}
             <div class="glean-candidates" role="status" aria-live="polite" aria-atomic="true">
                 <svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanInbox" /></svg>
-                <span style="flex:1">{t(i18n, "panel.candidatesDetected", { n: candidateCount })}</span>
+                <span class="glean-banner__text">{t(i18n, "panel.candidatesDetected", { n: candidateCount })}</span>
                 <button class="glean-cap-btn" onclick={openCandidateQueue}>{t(i18n, "panel.viewCandidates")}</button>
                 <button class="glean-linkish" onclick={() => void muteGovernanceCue("candidates")}>{t(i18n, "panel.governanceMuteToday")}</button>
             </div>
@@ -3388,13 +3406,15 @@ function metaLine(entry: Row): string {
                         ondrop={(e) => {
                             e.preventDefault();
                             const source = draggedEntry();
-                            if (source) void moveTo(source, col.status);
+                            dragOverCol = null;
+                            if (source && source.status !== col.status) void moveTo(source, col.status);
+                            else dragId = "";
                         }}
                     >
                         <div class="glean-kcol__head">
                             <span class={statusDotClass(col.status)}></span>
-                            {col.label}
-                            <span class="glean-kcol__n">{col.items.length}</span>
+                            <span class="glean-kcol__label">{col.label}</span>
+                            <span class="glean-kcol__n">{col.totalCount !== undefined && col.items.length < col.totalCount ? `${col.items.length}/${col.totalCount}` : col.items.length}</span>
                         </div>
                         {#if col.items.length === 0}
                             <div class="glean-kcol__empty" role="status">
@@ -3447,6 +3467,15 @@ function metaLine(entry: Row): string {
                                         </button>
                                     {/if}
                                     {#if entry.minutes > 0}<span class="glean-tier-badge glean-tier-badge--{resolveReadingTimeTier(entry.minutes)}">· {t(i18n, "panel.minutes", { n: entry.minutes })}</span>{/if}
+                                    {#if entry.priority && entry.priority > 0}
+                                        <span class="glean-tier-badge" title={t(i18n, "library.keyboardPriority")}>⚡ P{entry.priority}</span>
+                                    {/if}
+                                    {#if entry.rating && entry.rating > 0}
+                                        <span class="glean-tier-badge" title={t(i18n, "library.keyboardRating")}>⭐ {entry.rating}★</span>
+                                    {/if}
+                                    {#if entry.favorite}
+                                        <span class="glean-tier-badge glean-tier-badge--fav" title={t(i18n, "roaming.favoriteOnly")}>❤️</span>
+                                    {/if}
                                     {#if entry.readPoint && (entry.status === "reading" || entry.status === "later")}<span class="glean-read-point-badge" title={t(i18n, "reading.resumePoint")}>🔖 {t(i18n, "reading.resumePointShort")}</span>{/if}
                                     {#if (entry.status === "inbox" || entry.status === "later") && staleText(entry.time) !== null}
                                         <span class="glean-stale">{staleText(entry.time)}</span>
@@ -3483,6 +3512,17 @@ function metaLine(entry: Row): string {
                                 />
                             </div>
                         {/each}
+                        {#if col.totalCount !== undefined && col.items.length < col.totalCount}
+                            <div class="glean-kcol__more">
+                                <button
+                                    type="button"
+                                    class="glean-btn glean-btn--ghost glean-btn--sm glean-kcol__more-btn"
+                                    onclick={loadMoreRows}
+                                >
+                                    {t(i18n, "library.loadMore")}
+                                </button>
+                            </div>
+                        {/if}
                     </div>
                 {/each}
             </div>
@@ -3578,7 +3618,7 @@ function metaLine(entry: Row): string {
                                     </button>
                                 </div>
                             {:else if hasFilters}
-                                <button class="glean-btn glean-btn--ghost" style="margin-top:10px" onclick={clearUserFilters}>
+                                <button class="glean-btn glean-btn--ghost glean-empty__clear-btn" onclick={clearUserFilters}>
                                     {t(i18n, "library.clearFilters")}
                                 </button>
                             {/if}
@@ -3587,6 +3627,7 @@ function metaLine(entry: Row): string {
                         <div class="glean-dtable">
                             {#each visibleRows as entry (entry.id)}
                                 {#if entry.kind === "clip"}
+                                    {@const badge = matchBadge(entry)}
                                     <div
                                         class="glean-drow"
                                         data-glean-clip-id={entry.id}
@@ -3602,8 +3643,8 @@ function metaLine(entry: Row): string {
                                         <div class="glean-drow__body">
                                             <button type="button" class="glean-drow__ti" aria-label={articleActionLabel(entry.title, true)} title={entry.title || t(i18n, "panel.untitled")} onclick={() => selectPreview(entry.id)}>{entry.title || t(i18n, "panel.untitled")}</button>
                                             <div class="glean-drow__meta">
-                                                {#if matchBadge(entry)}
-                                                    <span class="glean-badge glean-badge--match" title={matchBadge(entry)}>{matchBadge(entry)}</span>
+                                                {#if badge}
+                                                    <span class="glean-badge glean-badge--match" title={badge}>{badge}</span>
                                                 {/if}
                                                 <span class="glean-drow__site" class:glean-source-wechat={isWechatEntry(entry)} title={entry.site || sourceFallback(entry)}><button type="button" class="glean-source-site" onclick={(event) => { event.stopPropagation(); handleSiteClick(entry); }}>{siteDisplayLabel(entry)}</button>{#if displayWechatAuthor(entry.author)}<button class="glean-source-author" onclick={(event) => { event.stopPropagation(); selectAuthor(entry.author!); }}>· {displayWechatAuthor(entry.author)}</button>{/if}</span>
                                                 {#if isWechatEntry(entry) && (!entry.author || !entry.author.trim())}
@@ -3634,6 +3675,15 @@ function metaLine(entry: Row): string {
                                                     <span class="glean-body-pending" title={t(i18n, "clip.bodyPendingHint")}>{t(i18n, "clip.bodyPending")}</span>
                                                 {/if}
                                                 <span class="glean-drow__len glean-drow__len--{resolveReadingTimeTier(entry.minutes)}" title={timeSource(entry)}>{lengthLabel(entry)}</span>
+                                                {#if entry.priority && entry.priority > 0}
+                                                    <span class="glean-tier-badge" title={t(i18n, "library.keyboardPriority")}>⚡ P{entry.priority}</span>
+                                                {/if}
+                                                {#if entry.rating && entry.rating > 0}
+                                                    <span class="glean-tier-badge" title={t(i18n, "library.keyboardRating")}>⭐ {entry.rating}★</span>
+                                                {/if}
+                                                {#if entry.favorite}
+                                                    <span class="glean-tier-badge glean-tier-badge--fav" title={t(i18n, "roaming.favoriteOnly")}>❤️</span>
+                                                {/if}
                                                 {#if entry.readPoint && (entry.status === "reading" || entry.status === "later")}<span class="glean-read-point-badge" title={t(i18n, "reading.resumePoint")}>🔖 {t(i18n, "reading.resumePointShort")}</span>{/if}
                                                 <span class="glean-drow__st">
                                                     <span class="glean-st-badge glean-st-badge--{entry.status}">{queueLabel(entry.status)}</span>
@@ -3770,6 +3820,7 @@ function metaLine(entry: Row): string {
                     </div>
                 {:else}
                     {#each visibleRows as entry (entry.id)}
+                        {@const badge = matchBadge(entry)}
                         <article
                             class="glean-card"
                             data-glean-clip-id={entry.id}
@@ -3784,8 +3835,8 @@ function metaLine(entry: Row): string {
                                     {#if entry.kind === "clip"}
                                         <span class={statusDotClass(entry.status)}></span>
                                     {/if}
-                                    {#if matchBadge(entry)}
-                                        <span class="glean-badge glean-badge--match" title={matchBadge(entry)}>{matchBadge(entry)}</span>
+                                    {#if badge}
+                                        <span class="glean-badge glean-badge--match" title={badge}>{badge}</span>
                                     {/if}
                                     {#if entry.kind === "clip" && (entry.site || isWechatEntry(entry))}
                                         <button type="button" class="glean-card__site glean-card__site-btn" class:glean-source-wechat={isWechatEntry(entry)} onclick={(event) => { event.stopPropagation(); handleSiteClick(entry); }}>{siteDisplayLabel(entry)}</button>
@@ -3826,6 +3877,15 @@ function metaLine(entry: Row): string {
                                         <span class="glean-tier-badge glean-tier-badge--{entry.kind === 'clip' ? resolveReadingTimeTier(entry.minutes) : 'unknown'}">· {metaLine(entry)}</span>
                                     {/if}
                                     {#if entry.kind === "clip" && entry.readPoint && (entry.status === "reading" || entry.status === "later")}<span class="glean-read-point-badge" title={t(i18n, "reading.resumePoint")}>🔖 {t(i18n, "reading.resumePointShort")}</span>{/if}
+                                    {#if entry.kind === "clip" && entry.priority && entry.priority > 0}
+                                        <span class="glean-tier-badge" title={t(i18n, "library.keyboardPriority")}>⚡ P{entry.priority}</span>
+                                    {/if}
+                                    {#if entry.kind === "clip" && entry.rating && entry.rating > 0}
+                                        <span class="glean-tier-badge" title={t(i18n, "library.keyboardRating")}>⭐ {entry.rating}★</span>
+                                    {/if}
+                                    {#if entry.kind === "clip" && entry.favorite}
+                                        <span class="glean-tier-badge glean-tier-badge--fav" title={t(i18n, "roaming.favoriteOnly")}>❤️</span>
+                                    {/if}
                                     {#if entry.kind === "clip"}
                                         {@const days = staleDays(entry.time)}
                                         {#if days !== null && (entry.status === "inbox" || entry.status === "later")}

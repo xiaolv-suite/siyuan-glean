@@ -70,10 +70,30 @@
     --glean-color-status-reading: #7C3AED; /* 研读紫罗兰 */
     --glean-color-status-done: #059669; /* 读毕翡翠绿 */
     --glean-color-status-archived: #64748B; /* 归档石板灰 */
+    --glean-color-wechat: #07c160; /* 微信生态绿 */
+
+    /* 两色分工架构：操作语义 vs 数据语义 */
+    --glean-color-action: var(--lv-brand);
+    --glean-color-action-hover: var(--lv-brand-hover);
+    --glean-color-action-soft: var(--lv-brand-soft);
+    --glean-color-data: #10B981;
+    --glean-color-data-hover: #059669;
+    --glean-color-data-soft: color-mix(in srgb, var(--glean-color-data) 12%, transparent);
+
+    /* 品牌底色与卡片双层浮起 */
+    --glean-app-background: color-mix(in srgb, var(--lv-brand) 3.5%, var(--b3-theme-background));
+    --glean-card-surface: var(--b3-theme-surface, #ffffff);
+    --glean-card-surface-elevated: color-mix(in srgb, var(--b3-theme-surface) 97%, var(--lv-brand-soft));
+
+    /* 重点对比块（视觉重音）：主题色相深色卡片与极高可读近白文字 */
+    --glean-surface-dark-contrast: color-mix(in srgb, var(--lv-brand) 12%, #0B1317);
+    --glean-text-dark-contrast: #F8FAFC;
+    --glean-text-dark-contrast-muted: color-mix(in srgb, var(--glean-text-dark-contrast) 68%, transparent);
+
     --glean-accent-a: var(--lv-brand);
     --glean-accent-b: var(--lv-brand-hover);
-    --glean-grad: linear-gradient(135deg, var(--lv-brand) 0%, var(--lv-brand-hover) 100%);
-    --glean-grad-soft: linear-gradient(135deg, color-mix(in srgb, var(--lv-brand) 12%, transparent), color-mix(in srgb, var(--lv-brand) 6%, transparent));
+    --glean-grad: var(--glean-color-action);
+    --glean-grad-soft: color-mix(in srgb, var(--glean-color-action) 12%, var(--b3-theme-surface));
     --glean-st-inbox: var(--glean-color-status-inbox);
     --glean-st-later: var(--glean-color-status-later);
     --glean-st-reading: var(--glean-color-status-reading);
@@ -88,35 +108,37 @@
     --glean-glass: color-mix(in srgb, var(--b3-theme-surface) 72%, transparent);
     --glean-glass-border: var(--b3-border-color);
     --glean-radius: 16px;
-    --glean-shadow-card: 0 1px 2px rgba(16, 24, 40, 0.04), 0 8px 24px -12px rgba(16, 24, 40, 0.14);
-    --glean-shadow-float: 0 12px 32px -8px rgba(16, 24, 40, 0.22), 0 2px 6px rgba(16, 24, 40, 0.08);
-    --glean-shadow-control: 0 1px 4px rgba(16, 24, 40, 0.14), 0 0 0 0.5px var(--b3-border-color);
-    --glean-shadow-knob: 0 1px 3px rgba(16, 24, 40, 0.25);
-    --glean-shadow-accent: 0 4px 14px -4px color-mix(in srgb, var(--lv-brand) 36%, transparent);
+    --glean-shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px -2px rgba(0, 0, 0, 0.05);
+    --glean-shadow-float: 0 8px 24px -4px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.04);
+    --glean-shadow-control: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --glean-shadow-knob: 0 1px 2px rgba(0, 0, 0, 0.2);
+    --glean-shadow-accent: 0 2px 8px -1px color-mix(in srgb, var(--b3-theme-primary, var(--lv-brand)) 28%, transparent);
+    --glean-shadow-focus: 0 0 0 3px color-mix(in srgb, var(--b3-theme-primary) 20%, transparent);
+    --glean-focus-ring: 0 0 0 3px color-mix(in srgb, var(--b3-theme-primary) 20%, transparent);
     /* Optical/focus shadows: named once so feedback remains consistent while
        preserving the existing contrast of each surface. */
     --glean-shadow-focus-current: 0 0 0 3px color-mix(in srgb, currentColor 16%, transparent);
     --glean-shadow-focus-current-soft: 0 0 0 3px color-mix(in srgb, currentColor 14%, transparent);
-    --glean-shadow-soft: 0 1px 3px color-mix(in srgb, var(--b3-theme-on-background) 10%, transparent);
-    --glean-shadow-focus-primary: 0 0 0 3px color-mix(in srgb, var(--b3-theme-primary) 10%, transparent);
-    --glean-shadow-focus-primary-soft: 0 0 0 3px color-mix(in srgb, var(--b3-theme-primary) 12%, transparent);
-    --glean-shadow-focus-primary-medium: 0 0 0 3px color-mix(in srgb, var(--b3-theme-primary) 14%, transparent);
-    --glean-shadow-focus-error: 0 0 0 3px color-mix(in srgb, var(--b3-theme-error) 12%, transparent);
-    --glean-shadow-inset-current: inset 0 0 0 1px color-mix(in srgb, currentColor 16%, transparent);
-    --glean-shadow-inset-highlight: inset 0 1px 0 color-mix(in srgb, var(--b3-theme-on-background) 5%, transparent);
-    --glean-shadow-inset-primary: inset 0 0 0 2px color-mix(in srgb, var(--b3-theme-primary) 22%, transparent);
-    --glean-shadow-inset-primary-bar: inset 3px 0 0 var(--b3-theme-primary);
-    --glean-shadow-inset-primary-thin: inset 2px 0 0 var(--b3-theme-primary);
-    --glean-shadow-glow: 0 0 5px currentColor;
-    --glean-shadow-divider: 0 1px 0 color-mix(in srgb, var(--b3-theme-on-background) 3%, transparent);
-    --glean-shadow-divider-strong: 0 1px 0 color-mix(in srgb, var(--b3-theme-on-background) 4%, transparent);
-    --glean-shadow-inset: inset 0 1px 1px color-mix(in srgb, var(--b3-theme-on-background) 3%, transparent);
-    --glean-shadow-bottom-sheet: 0 -8px 18px color-mix(in srgb, var(--b3-theme-background) 32%, transparent);
-    --glean-shadow-bottom-sheet-strong: 0 -8px 22px color-mix(in srgb, var(--b3-theme-background) 24%, transparent);
-    --glean-shadow-bottom-sheet-dark: 0 -8px 18px color-mix(in srgb, var(--b3-theme-background) 26%, transparent);
-    --glean-shadow-popover-soft: 0 4px 16px color-mix(in srgb, var(--b3-theme-background) 18%, transparent);
-    --glean-shadow-control-soft: 0 1px 3px color-mix(in srgb, var(--b3-border-color) 34%, transparent);
-    --glean-shadow-focus-ring-current: 0 0 0 4px color-mix(in srgb, currentColor 12%, transparent);
+    --glean-shadow-soft: 0 1px 3px color-mix(in srgb, var(--b3-theme-on-background) 8%, transparent);
+    --glean-shadow-focus-primary: 0 0 0 3px color-mix(in srgb, var(--b3-theme-primary) 20%, transparent);
+    --glean-shadow-focus-primary-soft: 0 0 0 3px color-mix(in srgb, var(--b3-theme-primary) 14%, transparent);
+    --glean-shadow-focus-primary-medium: 0 0 0 3px color-mix(in srgb, var(--b3-theme-primary) 18%, transparent);
+    --glean-shadow-focus-error: 0 0 0 3px color-mix(in srgb, var(--b3-theme-error) 18%, transparent);
+    --glean-shadow-inset-current: none;
+    --glean-shadow-inset-highlight: none;
+    --glean-shadow-inset-primary: none;
+    --glean-shadow-inset-primary-bar: none;
+    --glean-shadow-inset-primary-thin: none;
+    --glean-shadow-glow: 0 0 4px currentColor;
+    --glean-shadow-divider: none;
+    --glean-shadow-divider-strong: none;
+    --glean-shadow-inset: none;
+    --glean-shadow-bottom-sheet: 0 -8px 24px rgba(0, 0, 0, 0.12);
+    --glean-shadow-bottom-sheet-strong: 0 -12px 28px rgba(0, 0, 0, 0.16);
+    --glean-shadow-bottom-sheet-dark: 0 -8px 24px rgba(0, 0, 0, 0.32);
+    --glean-shadow-popover-soft: 0 4px 16px rgba(0, 0, 0, 0.08);
+    --glean-shadow-control-soft: 0 1px 2px rgba(0, 0, 0, 0.04);
+    --glean-shadow-focus-ring-current: 0 0 0 3px color-mix(in srgb, currentColor 16%, transparent);
     /* v2 视觉令牌：所有新增间距按 4px 栅格，避免组件各自漂移。 */
     --glean-space-0: 0px;
     --glean-space-1: 4px;
@@ -190,14 +212,14 @@
     --glean-weight-regular: 400;
     --glean-weight-medium: 500;
     --glean-weight-semibold: 600;
-    --glean-weight-bold: 700;
-    --glean-weight-display: 800;
-    --glean-weight-450: 450;
-    --glean-weight-550: 550;
-    --glean-weight-650: 650;
-    --glean-weight-720: 720;
-    --glean-weight-750: 750;
-    --glean-weight-760: 760;
+    --glean-weight-bold: 600;
+    --glean-weight-display: 600;
+    --glean-weight-450: 400;
+    --glean-weight-550: 500;
+    --glean-weight-650: 600;
+    --glean-weight-720: 600;
+    --glean-weight-750: 600;
+    --glean-weight-760: 600;
     --glean-tracking-normal: 0;
     --glean-tracking-tight: -0.01em;
     --glean-tracking-tightest: -0.005em;
@@ -217,31 +239,37 @@
     --glean-tracking-0-03em: 0.03em;
     --glean-tracking-0-04em: 0.04em;
     --glean-tracking-0-055em: 0.055em;
-    --glean-radius-sm: 8px;
-    --glean-radius-md: 12px;
+    --glean-radius-xl: 20px;
     --glean-radius-lg: 16px;
+    --glean-radius-md: 12px;
+    --glean-radius-sm: 8px;
+    --glean-radius-xs: 4px;
     --glean-radius-pill: 999px;
     --glean-radius-none: 0;
     --glean-radius-circle: 50%;
+    --glean-radius-control: var(--glean-radius-sm);
+    --glean-radius-card: var(--glean-radius-lg);
     --glean-radius-2: 2px;
     --glean-radius-3: 3px;
     --glean-radius-4: 4px;
     --glean-radius-6: 6px;
     --glean-radius-7: 7px;
-    --glean-radius-9: 9px;
+    --glean-radius-9: 8px;
     --glean-radius-10: 10px;
-    --glean-radius-14: 14px;
-    --glean-radius-18: 18px;
-    --glean-radius-24: 24px;
-    --glean-radius-control: var(--glean-radius-sm);
-    --glean-radius-card: var(--glean-radius-lg);
-    --glean-duration-base: 200ms;
-    --glean-duration-quick: 140ms;
-    --glean-duration-fast: 160ms;
-    --glean-duration-micro: 150ms;
-    --glean-duration-press: 180ms;
-    --glean-duration-normal: 220ms;
-    --glean-duration-enter: 240ms;
+    --glean-radius-14: 12px;
+    --glean-radius-18: 16px;
+    --glean-radius-24: 20px;
+    --glean-shadow-card-hover: 0 3px 6px rgba(15, 23, 42, 0.04), 0 12px 26px -4px rgba(15, 23, 42, 0.08);
+    --glean-ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+    --glean-ease-exit: cubic-bezier(0.4, 0, 1, 1);
+    --glean-duration-enter: 160ms;
+    --glean-duration-exit: 110ms;
+    --glean-duration-base: 180ms;
+    --glean-duration-quick: 120ms;
+    --glean-duration-fast: 140ms;
+    --glean-duration-micro: 120ms;
+    --glean-duration-press: 140ms;
+    --glean-duration-normal: 200ms;
     --glean-duration-spin: 720ms;
     --glean-duration-spin-slow: 760ms;
     --glean-duration-pulse: 1.2s;
@@ -282,6 +310,30 @@
     --glean-section-surface: color-mix(in srgb, var(--b3-theme-surface) 76%, transparent);
     --glean-inset-surface: color-mix(in srgb, var(--b3-theme-background) 72%, transparent);
     --glean-muted-badge-surface: color-mix(in srgb, var(--b3-theme-on-surface) 12%, transparent);
+
+    /* 运行时自适应变量默认基线 */
+    --glean-text-meta: 11px;
+    --glean-text-body: 13px;
+    --glean-motion-fast: 140ms;
+    --glean-radius-s: 8px;
+    --glean-radius-m: 12px;
+    --glean-safe-bottom: 0px;
+    --glean-keyboard-inset: 0px;
+    --glean-mobile-nav-space: 0px;
+    --glean-safe-top: 0px;
+    --glean-safe-right: 0px;
+    --glean-safe-left: 0px;
+    --glean-reader-background: var(--b3-theme-background);
+    --glean-reader-foreground: var(--b3-theme-on-background);
+    --glean-reader-font-size: 1em;
+    --glean-reader-line-height: 1.6;
+    --glean-reader-width: min(100%, 760px);
+    --glean-outline-level: 1;
+    --glean-visual-viewport-height: 100vh;
+    --glean-preview-rail-width: 220px;
+    --glean-preview-ratio: 0.5;
+    --glean-swipe-offset: 0px;
+    --glean-surf-index: 0;
 }
 
 .glean-reader-help {
@@ -318,16 +370,16 @@
 .glean-card__tags-row {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--glean-space-1);
     flex-wrap: wrap;
-    margin-top: 2px;
+    margin-top: var(--glean-space-micro);
 }
 
 .glean-mini-tag {
-    font-size: 10px;
+    font-size: var(--glean-text-caption);
     line-height: 1.2;
     padding: 1px 5px;
-    border-radius: var(--glean-radius-pill, 9999px);
+    border-radius: var(--glean-radius-pill);
     background: color-mix(in srgb, var(--b3-theme-on-surface) 6%, transparent);
     color: var(--b3-theme-on-surface);
     border: 1px solid var(--glean-border-soft);
@@ -363,8 +415,8 @@ body.b3-theme-dark {
     --glean-shadow-accent: 0 4px 14px -4px rgba(20, 184, 166, 0.32);
     --glean-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.25), 0 10px 28px -14px rgba(0, 0, 0, 0.5);
     --glean-shadow-float: 0 16px 40px -10px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.4);
-    --glean-shadow-control: 0 1px 3px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.04);
-    --glean-shadow-knob: 0 1px 3px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08);
+    --glean-shadow-control: 0 1px 3px rgba(0, 0, 0, 0.4);
+    --glean-shadow-knob: 0 1px 3px rgba(0, 0, 0, 0.5);
     --glean-grad-soft: linear-gradient(135deg, color-mix(in srgb, var(--glean-accent-a) 12%, var(--b3-theme-surface)), color-mix(in srgb, var(--glean-accent-b) 8%, var(--b3-theme-surface)));
     --glean-border-soft: color-mix(in srgb, var(--b3-border-color) 54%, transparent);
     /* 暗色表面需要更明显的占位层级，避免低透明度骨架和选中态融入背景。 */
@@ -387,15 +439,15 @@ body.b3-theme-dark {
 .lv-dialog-title-wrap {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--glean-space-2);
     vertical-align: middle;
 
     .lv-dialog-title-icon {
         width: 22px;
         height: 22px;
-        border-radius: 6px;
-        background: linear-gradient(135deg, var(--lv-brand, #0D9488), #0F766E);
-        color: var(--b3-theme-on-primary, #ffffff);
+        border-radius: var(--glean-radius-sm);
+        background: var(--glean-grad);
+        color: var(--b3-theme-on-primary);
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -408,19 +460,19 @@ body.b3-theme-dark {
     }
 
     .lv-dialog-title-text {
-        font-weight: 600;
-        font-size: var(--glean-text-md, 14px);
+        font-weight: var(--glean-weight-semibold);
+        font-size: var(--glean-text-md);
         color: var(--b3-theme-on-background);
     }
 
     .lv-dialog-title-pill {
-        font-size: 10px;
+        font-size: var(--glean-text-caption);
         padding: 1px 6px;
-        border-radius: 9999px;
-        background-color: var(--lv-brand-soft, rgba(13, 148, 136, 0.12));
-        color: var(--lv-brand, #0D9488);
-        border: 1px solid rgba(13, 148, 136, 0.25);
-        font-weight: 600;
+        border-radius: var(--glean-radius-pill);
+        background-color: var(--lv-brand-soft);
+        color: var(--lv-brand);
+        border: 1px solid color-mix(in srgb, var(--lv-brand) 25%, transparent);
+        font-weight: var(--glean-weight-semibold);
         line-height: normal;
     }
 }
@@ -446,7 +498,7 @@ body.b3-theme-dark {
 
 /* 暗色空态与异步态保持独立表面，避免图标和提示文字漂在同一层背景上。 */
 :where([data-theme-mode="dark"], body.body--dark, body.b3-theme-dark) :is(.glean-empty__art, .glean-panel__loading, .glean-highlights__status, .glean-stats__status:not(:empty), .glean-load-error) {
-    box-shadow: var(--glean-shadow-card), inset 0 1px 0 color-mix(in srgb, var(--b3-theme-on-background) 5%, transparent);
+    box-shadow: var(--glean-shadow-card);
 }
 
 :where([data-theme-mode="dark"], body.body--dark, body.b3-theme-dark) .glean-empty__art {
@@ -467,7 +519,7 @@ body.b3-theme-dark {
     flex-direction: column;
     height: 100%;
     min-height: 0;
-    background: var(--b3-theme-background);
+    background: var(--glean-app-background);
     color: var(--b3-theme-on-background);
     font-size: var(--glean-text-md);
     position: relative;
@@ -508,7 +560,7 @@ body.b3-theme-dark {
     place-items: center;
     color: var(--b3-theme-on-primary);
     flex-shrink: 0;
-    box-shadow: var(--glean-shadow-accent), inset 0 1px 0 color-mix(in srgb, var(--b3-theme-on-primary) 35%, transparent);
+    box-shadow: var(--glean-shadow-accent);
 
     svg {
         width: 16px;
@@ -529,6 +581,47 @@ body.b3-theme-dark {
     color: var(--b3-theme-on-surface);
     letter-spacing: var(--glean-tracking-0-4);
     text-transform: uppercase;
+}
+
+.glean-head-palette-dot,
+.glean-palette-preview-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--lv-brand);
+    display: inline-block;
+}
+
+.glean-banner__text {
+    flex: 1;
+    min-width: 0;
+}
+
+.glean-mobile-more__icon--emoji {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+}
+
+.glean-mobile-filter-field--checkbox {
+    display: flex;
+    align-items: center;
+    gap: var(--glean-space-2);
+}
+
+.glean-kcol__more {
+    padding: var(--glean-space-2) 0;
+    text-align: center;
+}
+
+.glean-kcol__more-btn {
+    font-size: var(--glean-text-meta);
+    width: 100%;
+}
+
+.glean-empty__clear-btn {
+    margin-top: var(--glean-space-2-5);
 }
 
 .glean-icon-btn {
@@ -620,7 +713,7 @@ body.b3-theme-dark {
     .glean-head-action--primary {
         border-color: color-mix(in srgb, var(--lv-brand-hover) 60%, transparent);
         background: var(--glean-grad);
-        color: #ffffff;
+        color: var(--b3-theme-on-primary);
         box-shadow: 0 2px 8px -1px color-mix(in srgb, var(--lv-brand) 32%, transparent);
 
         &:hover {
@@ -674,8 +767,8 @@ body.b3-theme-dark {
     }
 
     &:focus-visible {
-        outline: 2px solid var(--b3-theme-primary);
-        outline-offset: -2px;
+        outline: none;
+        box-shadow: var(--glean-shadow-focus);
     }
 
     &:disabled {
@@ -1016,8 +1109,8 @@ body.b3-theme-dark {
     }
 
     &:focus-visible {
-        outline: 2px solid var(--b3-theme-primary);
-        outline-offset: -2px;
+        outline: none;
+        box-shadow: var(--glean-shadow-focus);
     }
 
     svg {
@@ -1150,7 +1243,7 @@ body.b3-theme-dark {
         background: color-mix(in srgb, var(--lv-brand) 10%, var(--b3-theme-surface));
         font-weight: var(--glean-weight-semibold);
         border-color: color-mix(in srgb, var(--lv-brand) 28%, transparent);
-        box-shadow: 0 1px 3px rgba(13, 148, 136, 0.1);
+        box-shadow: var(--glean-shadow-control);
     }
 
     &:not(.glean-q--on):hover {
@@ -1751,7 +1844,7 @@ body.b3-theme-dark {
     display: flex;
     align-items: center;
     gap: var(--glean-space-1-5);
-    padding: 3px 8px;
+    padding: var(--glean-space-tight) var(--glean-space-2);
     border-radius: var(--glean-radius-sm);
     background: var(--glean-inset-surface);
     border: 1px solid color-mix(in srgb, var(--glean-border-soft) 80%, transparent);
@@ -1761,13 +1854,13 @@ body.b3-theme-dark {
 
 .glean-reader__shortcuts kbd {
     min-width: 22px;
-    padding: 2px 6px;
+    padding: var(--glean-space-micro) var(--glean-space-1-5);
     border: 1px solid var(--b3-border-color);
-    border-radius: 4px;
+    border-radius: var(--glean-radius-sm);
     background: var(--b3-theme-surface);
-    box-shadow: 0 1.5px 0 var(--b3-border-color), 0 2px 4px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--glean-shadow-control);
     color: var(--b3-theme-on-background);
-    font-size: 11px;
+    font-size: var(--glean-text-meta);
     font-weight: var(--glean-weight-bold);
     font-family: inherit;
     text-align: center;
@@ -1803,7 +1896,8 @@ body.b3-theme-dark {
     color: var(--glean-reader-foreground, var(--b3-theme-on-background));
     font-size: var(--glean-reader-font-size, 1em);
     line-height: var(--glean-reader-line-height, 1.6);
-    max-width: var(--glean-reader-width, none);
+    max-width: var(--glean-reader-width, min(100%, 760px));
+    margin-inline: auto;
     min-height: 100%;
     padding: var(--glean-space-8) clamp(var(--glean-space-6), 5vw, 56px) var(--glean-space-16);
     margin-inline: auto;
@@ -1824,11 +1918,11 @@ body.b3-theme-dark {
 }
 
 mark.glean-search-highlight {
-    background-color: var(--b3-protyle-inline-mark-background, rgba(255, 230, 0, 0.45));
+    background-color: var(--b3-protyle-inline-mark-background, color-mix(in srgb, var(--glean-st-inbox) 45%, transparent));
     color: inherit;
-    border-radius: 2px;
+    border-radius: var(--glean-radius-2);
     padding: 0 1px;
-    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--b3-theme-on-background) 6%, transparent);
 
     &--current,
     &[data-glean-search-current="true"] {
@@ -1866,10 +1960,10 @@ mark.glean-search-highlight {
         background: transparent;
     }
     &--paper {
-        background: #fde68a;
+        background: color-mix(in srgb, var(--glean-st-inbox) 28%, #fff);
     }
     &--eye {
-        background: #86efac;
+        background: color-mix(in srgb, var(--glean-st-done) 28%, #fff);
     }
 }
 
@@ -1902,8 +1996,8 @@ mark.glean-search-highlight {
     flex-shrink: 0;
     display: flex;
     align-items: center;
-    gap: 4px;
-    padding: 3px;
+    gap: var(--glean-space-1);
+    padding: var(--glean-space-tight);
     background: var(--glean-inset-surface);
     border: 1px solid var(--glean-border-soft);
     border-radius: var(--glean-radius-sm);
@@ -1923,9 +2017,9 @@ mark.glean-search-highlight {
     border-radius: calc(var(--glean-radius-sm) - 1px);
     background: transparent;
     color: var(--b3-theme-on-surface);
-    font-size: 11px;
+    font-size: var(--glean-text-meta);
     cursor: pointer;
-    transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+    transition: background-color var(--glean-motion-fast) var(--glean-ease-out), color var(--glean-motion-fast) var(--glean-ease-out), box-shadow var(--glean-motion-fast) var(--glean-ease-out);
 
     &:hover {
         color: var(--b3-theme-on-background);
@@ -1936,7 +2030,7 @@ mark.glean-search-highlight {
         background: var(--b3-theme-surface);
         color: var(--b3-theme-primary);
         font-weight: var(--glean-weight-bold);
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        box-shadow: var(--glean-shadow-control);
     }
 }
 
@@ -1974,7 +2068,7 @@ mark.glean-search-highlight {
 }
 
 .glean-reader__metric-lbl {
-    font-size: 10px;
+    font-size: var(--glean-text-caption);
     color: var(--b3-theme-on-surface);
     opacity: 0.68;
     white-space: nowrap;
@@ -1991,13 +2085,13 @@ mark.glean-search-highlight {
     flex-shrink: 0;
     display: flex;
     flex-wrap: wrap;
-    gap: 4px;
+    gap: var(--glean-space-1);
     margin-top: -2px;
 }
 
 .glean-reader__tag {
     font-size: 10.5px;
-    padding: 2px 6px;
+    padding: var(--glean-space-micro) var(--glean-space-1-5);
     border-radius: var(--glean-radius-sm);
     background: var(--glean-inset-surface);
     color: var(--b3-theme-on-surface);
@@ -2015,8 +2109,8 @@ mark.glean-search-highlight {
     padding: var(--glean-space-2-5) var(--glean-space-3);
     background: var(--b3-theme-surface);
     border: 1px solid var(--glean-border-soft);
-    border-radius: var(--glean-radius);
-    box-shadow: var(--glean-shadow-card);
+    border-radius: var(--glean-radius-md);
+    box-shadow: none;
 }
 
 .glean-reader__appearance label {
@@ -2033,6 +2127,8 @@ mark.glean-search-highlight {
     display: flex;
     flex-direction: column;
     gap: var(--glean-space-micro);
+    content-visibility: auto;
+    contain-intrinsic-size: 1px 32px;
 }
 
 .glean-reader__outline-filter-box {
@@ -2059,8 +2155,8 @@ mark.glean-search-highlight {
     background: transparent;
     color: var(--b3-theme-on-surface);
     opacity: 0.6;
-    font-size: 11px;
-    padding: 2px 4px;
+    font-size: var(--glean-text-meta);
+    padding: var(--glean-space-micro) var(--glean-space-1);
     cursor: pointer;
     &:hover { opacity: 1; color: var(--b3-theme-primary); }
 }
@@ -2068,37 +2164,37 @@ mark.glean-search-highlight {
 .glean-reader__highlights-actions {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--glean-space-1);
     margin-left: auto;
 }
 
 .glean-reader__highlights-copy-all,
 .glean-reader__highlights-doc-btn {
-    font-size: 11px;
-    padding: 2px 6px;
+    font-size: var(--glean-text-meta);
+    padding: var(--glean-space-micro) var(--glean-space-1-5);
     height: 22px;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--glean-space-1);
 }
 
 .glean-reader__preset-prompts {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
+    gap: var(--glean-space-1-5);
     margin: var(--glean-space-1-5) 0;
 }
 
 .glean-reader__preset-chip {
     display: inline-flex;
     align-items: center;
-    gap: 3px;
-    padding: 3px 8px;
+    gap: var(--glean-space-tight);
+    padding: var(--glean-space-tight) var(--glean-space-2);
     border: 1px solid color-mix(in srgb, var(--b3-theme-primary) 22%, var(--glean-border-soft));
     border-radius: var(--glean-radius-pill);
     background: color-mix(in srgb, var(--b3-theme-primary) 6%, transparent);
     color: var(--b3-theme-on-background);
-    font-size: 11px;
+    font-size: var(--glean-text-meta);
     cursor: pointer;
     transition: all 0.15s var(--glean-ease-out);
 
@@ -2140,8 +2236,8 @@ mark.glean-search-highlight {
     opacity: 0;
     border: none;
     background: transparent;
-    padding: 2px 6px;
-    font-size: 11px;
+    padding: var(--glean-space-micro) var(--glean-space-1-5);
+    font-size: var(--glean-text-meta);
     cursor: pointer;
     border-radius: var(--glean-radius-sm);
     color: var(--b3-theme-on-surface);
@@ -2208,7 +2304,7 @@ mark.glean-search-highlight {
 
 .glean-reader__outline-bookmark {
     flex: 0 0 auto;
-    font-size: 11px;
+    font-size: var(--glean-text-meta);
     line-height: 1;
 }
 
@@ -2281,18 +2377,18 @@ mark.glean-search-highlight {
     right: var(--glean-space-4);
     bottom: calc(var(--glean-space-4) + 44px);
     z-index: var(--glean-z-sticky);
-    padding: 3px 8px;
+    padding: var(--glean-space-tight) var(--glean-space-2);
     border-radius: var(--glean-radius-pill);
     background: color-mix(in srgb, var(--b3-theme-surface) 85%, transparent);
     backdrop-filter: blur(8px);
     border: 1px solid var(--glean-border-soft);
     color: var(--b3-theme-on-surface);
-    font-size: 11px;
+    font-size: var(--glean-text-meta);
     font-weight: var(--glean-weight-medium);
     box-shadow: var(--glean-shadow-card);
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--glean-space-1);
     animation: glean-slide-up 0.18s var(--glean-ease-spring);
     pointer-events: none;
     user-select: none;
@@ -2328,7 +2424,7 @@ mark.glean-search-highlight {
 .glean-reader__speech-pulse {
     display: inline-flex;
     align-items: flex-end;
-    gap: 2px;
+    gap: var(--glean-space-micro);
     height: 12px;
 }
 
@@ -2354,7 +2450,7 @@ mark.glean-search-highlight {
 }
 
 .glean-reader__speech-progress {
-    font-size: 11px;
+    font-size: var(--glean-text-meta);
     color: var(--b3-theme-on-surface);
     font-variant-numeric: tabular-nums;
 }
@@ -2367,7 +2463,7 @@ mark.glean-search-highlight {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 11px;
+    font-size: var(--glean-text-meta);
     color: var(--b3-theme-on-surface);
 
     &:hover {
@@ -2390,7 +2486,7 @@ mark.glean-search-highlight {
     border-radius: var(--glean-radius-sm);
     background: var(--b3-theme-surface);
     border: 1px solid var(--glean-border-soft);
-    border-left: 3px solid #EAB308;
+    border-left: 3px solid var(--glean-st-inbox);
     cursor: pointer;
     transition: border-color var(--glean-duration-fast) ease, background var(--glean-duration-fast) ease, transform var(--glean-duration-micro) ease;
 
@@ -2398,10 +2494,10 @@ mark.glean-search-highlight {
         transform: translateX(1px);
     }
 
-    &--color-yellow { border-left-color: #EAB308; }
-    &--color-red { border-left-color: #EF4444; }
-    &--color-blue { border-left-color: #3B82F6; }
-    &--color-green { border-left-color: #10B981; }
+    &--color-yellow { border-left-color: var(--glean-st-inbox); }
+    &--color-red { border-left-color: var(--b3-theme-error); }
+    &--color-blue { border-left-color: var(--glean-st-later); }
+    &--color-green { border-left-color: var(--glean-st-done); }
 }
 
 .glean-reader__highlight-header {
@@ -2418,10 +2514,10 @@ mark.glean-search-highlight {
     display: inline-block;
     background: var(--b3-theme-primary);
 
-    &--yellow { background: #facc15; }
-    &--red { background: #f87171; }
-    &--blue { background: #60a5fa; }
-    &--green { background: #4ade80; }
+    &--yellow { background: var(--glean-st-inbox); }
+    &--red { background: var(--b3-theme-error); }
+    &--blue { background: var(--glean-st-later); }
+    &--green { background: var(--glean-st-done); }
 }
 
 .glean-reader__highlight-dot-btn {
@@ -2443,9 +2539,9 @@ mark.glean-search-highlight {
 .glean-reader__highlight-color-filters {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--glean-space-1);
     margin-bottom: var(--glean-space-2);
-    padding: 2px 4px;
+    padding: var(--glean-space-micro) var(--glean-space-1);
     background: var(--glean-inset-surface);
     border-radius: var(--glean-radius-sm);
     border: 1px solid var(--glean-border-soft);
@@ -2454,9 +2550,9 @@ mark.glean-search-highlight {
 .glean-reader__color-filter-btn {
     border: 0;
     background: transparent;
-    font-size: 10px;
-    padding: 2px 6px;
-    border-radius: 3px;
+    font-size: var(--glean-text-caption);
+    padding: var(--glean-space-micro) var(--glean-space-1-5);
+    border-radius: var(--glean-radius-sm);
     color: var(--b3-theme-on-surface);
     cursor: pointer;
 
@@ -2472,7 +2568,7 @@ mark.glean-search-highlight {
 
     &--active {
         background: var(--b3-theme-surface);
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+        box-shadow: var(--glean-shadow-control);
         font-weight: var(--glean-weight-bold);
     }
 }
@@ -2485,9 +2581,9 @@ mark.glean-search-highlight {
     margin-right: 3px;
     vertical-align: middle;
 
-    &--short { background: #10b981; }
-    &--medium { background: #3b82f6; }
-    &--long { background: #f59e0b; }
+    &--short { background: var(--glean-st-done); }
+    &--medium { background: var(--glean-st-later); }
+    &--long { background: var(--glean-st-inbox); }
 }
 
 .glean-highlights__item-head .glean-reader__highlight-dot {
@@ -2495,7 +2591,7 @@ mark.glean-search-highlight {
 }
 
 .glean-reader__highlight-time {
-    font-size: 10px;
+    font-size: var(--glean-text-caption);
     color: var(--b3-theme-on-surface);
     opacity: 0.65;
 }
@@ -2542,7 +2638,7 @@ mark.glean-search-highlight {
     background: var(--b3-theme-surface);
     border: 1px solid var(--b3-border-color);
     border-radius: var(--glean-radius-pill);
-    box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--glean-shadow-float);
     backdrop-filter: blur(8px);
     animation: glean-slide-up 0.18s var(--glean-ease-spring);
 }
@@ -2590,8 +2686,8 @@ mark.glean-search-highlight {
 .glean-reader__selection-colors {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 0 6px;
+    gap: var(--glean-space-1);
+    padding: 0 var(--glean-space-1-5);
     border-left: 1px solid var(--glean-border-soft);
     border-right: 1px solid var(--glean-border-soft);
 }
@@ -2627,30 +2723,65 @@ mark.glean-search-highlight {
 .glean-surf-streak-card {
     flex: 1 1 180px;
     min-width: 160px;
-    padding: var(--glean-space-3) var(--glean-space-4);
-    border-radius: var(--glean-radius);
-    background: var(--glean-grad);
-    color: #fff;
+    padding: var(--glean-space-3-5) var(--glean-space-4);
+    border-radius: var(--glean-radius-lg);
+    background: var(--glean-surface-dark-contrast);
+    color: var(--glean-text-dark-contrast);
+    border: 1px solid color-mix(in srgb, var(--glean-color-action) 20%, transparent);
     box-shadow: var(--glean-shadow-card);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+
+    /* 几何抽象色块点缀：取主题色三档明度，体积感柔和圆润，不干扰信息读取 */
+    &::before {
+        content: "";
+        position: absolute;
+        top: -24px;
+        right: -24px;
+        width: 80px;
+        height: 80px;
+        border-radius: var(--glean-radius-pill);
+        background: radial-gradient(circle, color-mix(in srgb, var(--lv-brand-hover) 22%, transparent) 0%, color-mix(in srgb, var(--lv-brand) 12%, transparent) 70%, transparent 100%);
+        pointer-events: none;
+    }
+
+    &::after {
+        content: "";
+        position: absolute;
+        right: 18px;
+        bottom: -28px;
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: color-mix(in srgb, var(--lv-brand-active) 24%, transparent);
+        pointer-events: none;
+    }
 }
 
 .glean-surf-streak-card__head {
     display: flex;
     align-items: center;
-    gap: var(--glean-space-1);
-    font-size: var(--glean-text-xs);
+    gap: var(--glean-space-1-25);
+    font-size: var(--glean-text-caption);
     font-weight: var(--glean-weight-medium);
-    opacity: 0.9;
+    color: var(--glean-text-dark-contrast-muted);
+
+    svg {
+        color: var(--glean-color-data);
+    }
 }
 
 .glean-surf-streak-card__count {
-    font-size: 22px;
-    font-weight: var(--glean-weight-bold);
+    font-size: 32px;
+    line-height: 1.1;
+    font-weight: var(--glean-weight-semibold);
     letter-spacing: -0.02em;
-    margin-top: var(--glean-space-1);
+    font-variant-numeric: tabular-nums;
+    margin-top: var(--glean-space-1-5);
+    color: var(--glean-color-data);
 }
 
 .glean-surf-stepper {
@@ -2659,10 +2790,10 @@ mark.glean-search-highlight {
     align-items: center;
     justify-content: space-between;
     gap: var(--glean-space-1);
-    padding: var(--glean-space-2) var(--glean-space-3);
-    background: var(--glean-section-surface);
-    border: 1px solid var(--glean-border-soft);
-    border-radius: var(--glean-radius);
+    padding: var(--glean-space-2-5) var(--glean-space-3-5);
+    background: var(--glean-card-surface);
+    border: 1px solid color-mix(in srgb, var(--b3-border-color) 40%, transparent);
+    border-radius: var(--glean-radius-lg);
     box-shadow: var(--glean-shadow-card);
 }
 
@@ -2682,7 +2813,7 @@ mark.glean-search-highlight {
 }
 
 .glean-surf-step__day {
-    font-size: 11px;
+    font-size: var(--glean-text-meta);
     color: var(--b3-theme-on-surface);
     opacity: 0.7;
 }
@@ -2694,17 +2825,17 @@ mark.glean-search-highlight {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 11px;
-    border: 1px solid var(--b3-border-color);
+    font-size: var(--glean-text-meta);
+    border: 1px solid color-mix(in srgb, var(--b3-border-color) 45%, transparent);
     background: var(--b3-theme-surface);
     color: var(--b3-theme-on-surface);
     transition: all var(--glean-duration-fast) ease;
 }
 
 .glean-surf-step--done .glean-surf-step__circle {
-    background: var(--b3-theme-primary);
-    border-color: var(--b3-theme-primary);
-    color: #fff;
+    background: var(--glean-color-data);
+    border-color: var(--glean-color-data);
+    color: var(--b3-theme-on-primary);
     font-weight: bold;
 }
 
@@ -2789,7 +2920,7 @@ mark.glean-search-highlight {
 }
 
 .glean-milestone-chip__desc {
-    font-size: 10px;
+    font-size: var(--glean-text-caption);
     color: var(--b3-theme-on-surface);
     opacity: 0.7;
     white-space: nowrap;
@@ -3076,8 +3207,8 @@ mark.glean-search-highlight {
         min-height: 0;
         gap: var(--glean-space-3);
         padding: var(--glean-space-5-5) var(--glean-space-3-5) var(--glean-space-4-5);
-        border-right: 1px solid var(--glean-border-soft);
-        background: var(--b3-theme-background);
+        border-right: 1px solid color-mix(in srgb, var(--b3-border-color) 40%, transparent);
+        background: var(--glean-app-background);
     }
 
     .glean-workbench-rail__brand {
@@ -3094,18 +3225,18 @@ mark.glean-search-highlight {
         height: 36px;
         flex: 0 0 36px;
         place-items: center;
-        border-radius: var(--glean-radius-10);
+        border-radius: var(--glean-radius-md);
         background: color-mix(in srgb, var(--lv-brand) 12%, var(--b3-theme-surface));
         color: var(--lv-brand);
         box-shadow: 0 2px 8px -2px color-mix(in srgb, var(--lv-brand) 20%, transparent);
     }
 
     .glean-workbench-rail__mark svg { width: 20px; height: 20px; fill: currentColor; }
-    .glean-workbench-rail__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: var(--glean-text-lg); font-weight: 700; letter-spacing: -0.01em; }
+    .glean-workbench-rail__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: var(--glean-text-lg); font-weight: var(--glean-weight-semibold); letter-spacing: -0.01em; }
     .glean-workbench-rail__capture {
         min-height: 42px;
         justify-content: center;
-        gap: 8px;
+        gap: var(--glean-space-2);
         font-weight: var(--glean-weight-semibold);
         letter-spacing: var(--glean-tracking-0-2);
         border-radius: var(--glean-radius-md);
@@ -3118,7 +3249,7 @@ mark.glean-search-highlight {
         }
     }
     .glean-workbench-rail__capture svg { width: 16px; height: 16px; fill: currentColor; }
-    .glean-workbench-rail__nav { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
+    .glean-workbench-rail__nav { display: flex; flex-direction: column; gap: var(--glean-space-1); margin-top: var(--glean-space-2); }
     .glean-workbench-rail__item {
         display: flex;
         align-items: center;
@@ -3128,7 +3259,7 @@ mark.glean-search-highlight {
         width: 100%;
         padding: var(--glean-space-2) var(--glean-space-3);
         border: 1px solid transparent;
-        border-radius: var(--glean-radius-10);
+        border-radius: var(--glean-radius-sm);
         background: transparent;
         color: var(--b3-theme-on-surface);
         font-size: var(--glean-text-md);
@@ -3144,13 +3275,13 @@ mark.glean-search-highlight {
     .glean-workbench-rail__item--on {
         background: color-mix(in srgb, var(--lv-brand) 12%, var(--b3-theme-surface));
         color: var(--lv-brand);
-        font-weight: 650;
+        font-weight: var(--glean-weight-bold);
         border-color: color-mix(in srgb, var(--lv-brand) 22%, transparent);
         box-shadow: 0 2px 8px -2px color-mix(in srgb, var(--lv-brand) 16%, transparent);
     }
-    .glean-workbench-rail__item:focus-visible { outline: 2px solid var(--b3-theme-primary); outline-offset: 2px; }
+    .glean-workbench-rail__item:focus-visible { outline: none; box-shadow: var(--glean-shadow-focus); }
     .glean-workbench-rail__spacer { flex: 1 1 auto; min-height: 12px; }
-    .glean-workbench-rail__hint { padding: 10px; border-top: 1px solid var(--glean-border-soft); color: var(--b3-theme-on-surface); font-size: 11px; line-height: 1.6; }
+    .glean-workbench-rail__hint { padding: var(--glean-space-2-5); border-top: 1px solid var(--glean-border-soft); color: var(--b3-theme-on-surface); font-size: var(--glean-text-meta); line-height: 1.6; }
 }
 
 @container glean-shell (max-width: 759px) {
@@ -3997,7 +4128,7 @@ mark.glean-search-highlight {
 .glean-surf-continue__label {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--glean-space-1);
     font-weight: var(--glean-weight-semibold);
     color: var(--b3-theme-primary);
 }
@@ -4471,7 +4602,7 @@ mark.glean-search-highlight {
     box-sizing: border-box;
     margin: var(--glean-space-2) var(--glean-space-4) var(--glean-space-3-5);
     padding: var(--glean-space-2-5) var(--glean-space-3) var(--glean-space-2-5) var(--glean-space-3-5);
-    border-radius: var(--glean-radius-18);
+    border-radius: var(--glean-radius-xl);
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -4479,10 +4610,10 @@ mark.glean-search-highlight {
     overflow-y: auto;
     overscroll-behavior: contain;
     scrollbar-width: thin;
-    background: color-mix(in srgb, var(--b3-theme-surface) 94%, transparent);
+    background: var(--glean-card-surface);
     backdrop-filter: blur(12px);
-    border: 1px solid var(--glean-border-soft);
-    box-shadow: 0 10px 32px -8px rgba(0, 0, 0, 0.12), var(--glean-shadow-card);
+    border: 1px solid color-mix(in srgb, var(--b3-border-color) 40%, transparent);
+    box-shadow: var(--glean-shadow-float);
     font-size: var(--glean-text-xs-plus);
     animation: var(--glean-motion-none);
 }
@@ -4497,8 +4628,8 @@ mark.glean-search-highlight {
 }
 
 .glean-batchbar__summary:focus-visible {
-    outline: 2px solid var(--b3-theme-primary);
-    outline-offset: 2px;
+    outline: none;
+    box-shadow: var(--glean-shadow-focus);
 }
 
 .glean-batchbar__hidden {
@@ -4540,11 +4671,26 @@ mark.glean-search-highlight {
     border: none;
     font-size: var(--glean-text-xs);
     padding: var(--glean-space-1-25) var(--glean-space-2-5);
-    border-radius: var(--glean-radius-9);
+    border-radius: var(--glean-radius-sm);
     cursor: pointer;
-    background: color-mix(in srgb, var(--b3-theme-on-surface) 12%, transparent);
+    background: color-mix(in srgb, var(--b3-theme-on-surface) 10%, transparent);
     color: var(--b3-theme-on-background);
-    transition: all var(--glean-duration-base);
+    transition: transform var(--glean-duration-fast) var(--glean-ease-enter), background-color var(--glean-duration-fast) var(--glean-ease-enter), color var(--glean-duration-fast) var(--glean-ease-enter);
+
+    &:hover:not(:disabled) {
+        transform: translateY(-1px);
+        background: color-mix(in srgb, var(--b3-theme-on-surface) 18%, transparent);
+        color: var(--b3-theme-on-background);
+    }
+
+    &:active:not(:disabled) {
+        transform: scale(0.98);
+    }
+
+    &:focus-visible {
+        outline: none;
+        box-shadow: var(--glean-shadow-focus);
+    }
 
     &:focus-visible {
         outline: 2px solid var(--b3-theme-primary);
@@ -4560,6 +4706,10 @@ mark.glean-search-highlight {
         background: var(--b3-theme-background-light);
     }
 
+    &:active:not(:disabled) {
+        transform: scale(0.97);
+    }
+
     &.glean-bb--pri {
         background: var(--glean-grad);
         color: var(--b3-theme-on-primary);
@@ -4570,6 +4720,38 @@ mark.glean-search-highlight {
         background: var(--glean-primary-soft);
         color: var(--b3-theme-primary);
         border: 1px solid color-mix(in srgb, var(--b3-theme-primary) 24%, var(--glean-border-soft));
+    }
+
+    &.glean-bb--priority {
+        border: 1px solid color-mix(in srgb, var(--glean-st-inbox) 30%, transparent);
+        background: color-mix(in srgb, var(--glean-st-inbox) 10%, transparent);
+        &:hover:not(:disabled) {
+            background: color-mix(in srgb, var(--glean-st-inbox) 18%, transparent);
+        }
+    }
+
+    &.glean-bb--rating {
+        border: 1px solid color-mix(in srgb, var(--lv-accent-wheat) 30%, transparent);
+        background: color-mix(in srgb, var(--lv-accent-wheat) 10%, transparent);
+        &:hover:not(:disabled) {
+            background: color-mix(in srgb, var(--lv-accent-wheat) 18%, transparent);
+        }
+    }
+
+    &.glean-bb--fav {
+        border: 1px solid color-mix(in srgb, var(--b3-theme-error) 30%, transparent);
+        background: color-mix(in srgb, var(--b3-theme-error) 10%, transparent);
+        &:hover:not(:disabled) {
+            background: color-mix(in srgb, var(--b3-theme-error) 18%, transparent);
+        }
+    }
+
+    &.glean-bb--csv {
+        border: 1px solid color-mix(in srgb, var(--b3-theme-success) 30%, transparent);
+        background: color-mix(in srgb, var(--b3-theme-success) 10%, transparent);
+        &:hover:not(:disabled) {
+            background: color-mix(in srgb, var(--b3-theme-success) 18%, transparent);
+        }
     }
 }
 
@@ -5039,12 +5221,12 @@ mark.glean-search-highlight {
     }
 
     &:active:not(:disabled) {
-        transform: translateY(0) scale(.98);
+        transform: scale(.98);
     }
 
     &:focus-visible {
-        outline: 2px solid var(--b3-theme-primary);
-        outline-offset: 2px;
+        outline: none;
+        box-shadow: var(--glean-shadow-focus);
     }
 
     &.glean-btn--pri {
@@ -5655,16 +5837,33 @@ mark.glean-search-highlight {
     padding: var(--glean-space-1) var(--glean-space-3);
     border-radius: var(--glean-radius-pill);
     cursor: pointer;
-    transition: all var(--glean-duration-base) var(--glean-ease-out);
+    transition: background-color var(--glean-motion-fast) var(--glean-ease-out), color var(--glean-motion-fast) var(--glean-ease-out), transform var(--glean-motion-fast) var(--glean-ease-out);
 
-    &:active {
-        transform: scale(0.96);
+    &:hover:not(:disabled) {
+        color: var(--b3-theme-on-background);
+        background: color-mix(in srgb, var(--b3-theme-on-surface) 6%, transparent);
     }
 
-    &.glean-seg__btn--on {
+    &:active:not(:disabled) {
+        transform: scale(0.98);
+    }
+
+    &:focus-visible {
+        outline: none;
+        box-shadow: var(--glean-shadow-focus);
+    }
+
+    &.glean-seg__btn--on,
+    &[aria-pressed="true"] {
         background: var(--b3-theme-surface);
-        color: var(--b3-theme-on-background);
+        color: var(--b3-theme-primary);
+        font-weight: var(--glean-weight-bold);
         box-shadow: var(--glean-shadow-control);
+    }
+
+    &:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
     }
 }
 
@@ -5708,29 +5907,40 @@ mark.glean-search-highlight {
 .glean-kcol__head {
     display: flex;
     align-items: center;
-    gap: var(--glean-space-1-75);
+    gap: var(--glean-space-2);
     position: sticky;
     top: -8px;
     z-index: var(--glean-z-base);
     margin: -8px -2px var(--glean-space-0);
     padding: var(--glean-space-2-5) var(--glean-space-2) var(--glean-space-1-75);
     background: var(--glean-inset-surface);
-    border-bottom: 1px solid var(--glean-border-soft);
+    border-bottom: 1px solid color-mix(in srgb, var(--b3-border-color) 35%, transparent);
     font-size: var(--glean-text-xs-plus);
-    font-weight: var(--glean-weight-bold);
+    font-weight: var(--glean-weight-semibold);
 
     .glean-dot {
         width: 7px;
         height: 7px;
+        flex-shrink: 0;
+    }
+
+    .glean-kcol__label {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .glean-kcol__n {
         margin-left: auto;
         font-size: var(--glean-text-caption);
-        background: var(--glean-inset-surface);
+        background: color-mix(in srgb, var(--b3-theme-on-surface) 6%, transparent);
         border-radius: var(--glean-radius-pill);
         padding: var(--glean-space-0-25) var(--glean-space-1-75);
         color: var(--b3-theme-on-surface);
+        opacity: 0.82;
+        font-variant-numeric: tabular-nums;
+        font-weight: var(--glean-weight-medium);
     }
 }
 
@@ -5760,18 +5970,18 @@ mark.glean-search-highlight {
 }
 
 .glean-kcard {
-    background: var(--b3-theme-surface);
+    background: var(--glean-card-surface);
     border-radius: var(--glean-radius-md);
     padding: var(--glean-space-2-5) var(--glean-space-3);
     font-size: var(--glean-text-sm);
-    border: 1px solid var(--glean-border-soft);
+    border: 1px solid color-mix(in srgb, var(--b3-border-color) 40%, transparent);
     cursor: grab;
-    transition: transform var(--glean-duration-press) var(--glean-ease-out), box-shadow var(--glean-duration-press), border-color var(--glean-duration-press), background-color var(--glean-duration-press);
+    transition: transform var(--glean-duration-fast) var(--glean-ease-enter), box-shadow var(--glean-duration-fast) var(--glean-ease-enter), border-color var(--glean-duration-fast) var(--glean-ease-enter), background-color var(--glean-duration-fast) var(--glean-ease-enter);
 
     &:hover {
         transform: translateY(-1px);
         box-shadow: var(--glean-shadow-card);
-        border-color: color-mix(in srgb, var(--glean-accent-b) 24%, var(--glean-border-soft));
+        border-color: color-mix(in srgb, var(--glean-color-action) 28%, var(--glean-border-soft));
     }
 
     &:active {
@@ -5860,15 +6070,15 @@ mark.glean-search-highlight {
 /* 预览行统一"左侧主色指示条 + 轻选中背景"语义（工作台容器内再叠加卡片阴影），不再用全包围描边 */
 .glean-drow--preview { outline: none; box-shadow: inset 3px 0 0 var(--b3-theme-primary); background: var(--glean-selection-surface); }
 .glean-preview { display: flex; flex: 1; min-width: 0; min-height: 0; flex-direction: column; background: var(--b3-theme-background); color: var(--b3-theme-on-background); }
-.glean-preview__header, .glean-preview__actions, .glean-preview__url, .glean-preview__excerpt { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px; border-bottom: 1px solid var(--glean-border-soft); }
+.glean-preview__header, .glean-preview__actions, .glean-preview__url, .glean-preview__excerpt { display: flex; flex-wrap: wrap; align-items: center; gap: var(--glean-space-1-5); padding: var(--glean-space-2); border-bottom: 1px solid var(--glean-border-soft); }
 .glean-preview__header { position: sticky; top: 0; z-index: var(--glean-z-sticky); padding: 10px 12px; background: color-mix(in srgb, var(--b3-theme-surface) 90%, transparent); backdrop-filter: blur(12px); }
 .glean-preview__header strong { flex: 1 1 160px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; line-height: 1.35; }
 .glean-preview__header .glean-btn { min-height: var(--glean-btn-height-sm); }
 .glean-preview__actions { padding: 8px 12px; background: var(--glean-inset-surface); }
 .glean-preview__actions[aria-busy="true"] { opacity: 0.72; }
-.glean-preview__actions > span[role="status"] { color: var(--b3-theme-on-surface); font-size: 11px; }
+.glean-preview__actions > span[role="status"] { color: var(--b3-theme-on-surface); font-size: var(--glean-text-meta); }
 .glean-preview__actions .glean-btn { min-height: var(--glean-btn-height-sm); }
-.glean-preview__meta { display: flex; flex-direction: column; padding: 0 12px 9px; gap: 5px; font-size: 11px; color: var(--b3-theme-on-surface); background: var(--glean-inset-surface); }
+.glean-preview__meta { display: flex; flex-direction: column; padding: 0 12px 9px; gap: var(--glean-space-1-25); font-size: var(--glean-text-meta); color: var(--b3-theme-on-surface); background: var(--glean-inset-surface); }
 .glean-preview__meta a { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--b3-theme-primary); }
 .glean-preview__evidence {
     display: flex;
@@ -5979,13 +6189,13 @@ mark.glean-search-highlight {
         margin-left: auto;
     }
 }
-.glean-action-popover__body { display: none; position: fixed; inset: auto; margin: 0; width: min(280px, calc(100vw - 16px)); max-height: min(450px, calc(100dvh - 16px)); overflow-y: auto; box-sizing: border-box; padding: 10px; border: 1px solid var(--glean-border-soft); border-radius: var(--glean-radius-md); background: var(--b3-theme-surface); color: var(--b3-theme-on-background); box-shadow: var(--glean-shadow-float); }
-.glean-action-popover__body:popover-open { display: flex; flex-direction: column; gap: 8px; }
-.glean-action-popover__body label { display: flex; flex-direction: column; gap: 4px; }
+.glean-action-popover__body { display: none; position: fixed; inset: auto; margin: 0; width: min(280px, calc(100vw - 16px)); max-height: min(450px, calc(100dvh - 16px)); overflow-y: auto; box-sizing: border-box; padding: var(--glean-space-2-5); border: 1px solid var(--glean-border-soft); border-radius: var(--glean-radius-md); background: var(--b3-theme-surface); color: var(--b3-theme-on-background); box-shadow: var(--glean-shadow-float); }
+.glean-action-popover__body:popover-open { display: flex; flex-direction: column; gap: var(--glean-space-2); }
+.glean-action-popover__body label { display: flex; flex-direction: column; gap: var(--glean-space-1); }
 .glean-action-popover__body label.glean-row-select { flex-direction: row; align-items: center; }
 .glean-action-popover__body .glean-filter { width: 100%; max-width: 100%; }
-.glean-filter-chips { display: flex; flex-wrap: wrap; gap: 5px; padding: 6px 12px; }
-.glean-filter-chip { display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--b3-border-color); border-radius: var(--glean-radius-lg); background: var(--b3-theme-surface); color: var(--b3-theme-on-background); cursor: pointer; padding: 4px 8px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.glean-filter-chips { display: flex; flex-wrap: wrap; gap: var(--glean-space-1-25); padding: var(--glean-space-1-5) var(--glean-space-3); }
+.glean-filter-chip { display: inline-flex; align-items: center; gap: var(--glean-space-1-25); border: 1px solid var(--b3-border-color); border-radius: var(--glean-radius-pill); background: var(--b3-theme-surface); color: var(--b3-theme-on-background); cursor: pointer; padding: var(--glean-space-1) var(--glean-space-2); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .glean-filter-chip__label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .glean-panel--mobile .glean-filter-chip { min-height: 44px; }
 
@@ -6022,13 +6232,13 @@ mark.glean-search-highlight {
 .glean-rail__toolbar-actions {
     display: flex;
     align-items: center;
-    gap: 2px;
+    gap: var(--glean-space-micro);
 }
 
 .glean-icon-btn--sm {
     width: 22px;
     height: 22px;
-    padding: 3px;
+    padding: var(--glean-space-tight);
     border-radius: var(--glean-radius-sm);
 
     svg {
@@ -6072,9 +6282,9 @@ mark.glean-search-highlight {
     font-size: var(--glean-text-xs);
 }
 .glean-rail__empty::before { content: "⌕"; color: var(--b3-theme-primary); font-size: 13px; line-height: 1; }
-.glean-rail__more { border: 0; border-radius: var(--glean-radius-sm); background: transparent; color: var(--b3-theme-primary); font-size: 11px; text-align: left; padding: 6px 10px; cursor: pointer; transition: background 180ms ease; }
+.glean-rail__more { border: 0; border-radius: var(--glean-radius-sm); background: transparent; color: var(--b3-theme-primary); font-size: var(--glean-text-meta); text-align: left; padding: var(--glean-space-1-5) var(--glean-space-2-5); cursor: pointer; transition: background 180ms ease; }
 .glean-rail__more:hover { background: var(--glean-primary-soft); }
-.glean-rail__more:focus-visible { outline: 2px solid var(--b3-theme-primary); outline-offset: -2px; }
+.glean-rail__more:focus-visible { outline: none; box-shadow: var(--glean-shadow-focus); }
 .glean-rail__more:disabled { opacity: 0.5; cursor: wait; }
 
 .glean-rail__item {
@@ -6100,15 +6310,15 @@ mark.glean-search-highlight {
     }
 
     &:focus-visible {
-        outline: 2px solid var(--b3-theme-primary);
-        outline-offset: -2px;
+        outline: none;
+        box-shadow: var(--glean-shadow-focus);
     }
 
     &.glean-rail__item--on {
         background: color-mix(in srgb, var(--lv-brand) 10%, var(--b3-theme-surface));
         color: var(--lv-brand);
         font-weight: var(--glean-weight-semibold);
-        box-shadow: inset 3px 0 0 var(--lv-brand);
+        border: 1px solid color-mix(in srgb, var(--lv-brand) 22%, transparent);
     }
 
     .glean-rail__n {
@@ -6153,16 +6363,16 @@ mark.glean-search-highlight {
     min-width: 0;
     min-height: 0;
     padding: var(--glean-space-2-75) var(--glean-space-3);
-    border-radius: var(--glean-radius-14);
-    background: var(--b3-theme-surface);
-    border: 1px solid var(--glean-border-soft);
+    border-radius: var(--glean-radius-md);
+    background: var(--glean-card-surface);
+    border: 1px solid color-mix(in srgb, var(--b3-border-color) 35%, transparent);
     cursor: default;
-    transition: transform var(--glean-duration-base) var(--glean-ease-out), box-shadow var(--glean-duration-base), border-color var(--glean-duration-base), background-color var(--glean-duration-base);
+    transition: transform var(--glean-duration-fast) var(--glean-ease-enter), box-shadow var(--glean-duration-fast) var(--glean-ease-enter), border-color var(--glean-duration-fast) var(--glean-ease-enter), background-color var(--glean-duration-fast) var(--glean-ease-enter);
 
     &:hover {
         transform: translateY(-1px);
         box-shadow: var(--glean-shadow-card);
-        border-color: color-mix(in srgb, var(--glean-accent-b) 23%, var(--glean-border-soft));
+        border-color: color-mix(in srgb, var(--glean-color-action) 28%, var(--glean-border-soft));
 
         .glean-drow__ops {
             opacity: 1;
@@ -6172,7 +6382,7 @@ mark.glean-search-highlight {
     &.glean-drow--selected {
         border-color: color-mix(in srgb, var(--glean-accent-b) 58%, var(--glean-border-soft));
         background: var(--glean-selection-surface);
-        box-shadow: inset 3px 0 0 var(--glean-accent-b), var(--glean-shadow-card);
+        box-shadow: var(--glean-shadow-card);
     }
 
     > .glean-drow__select {
@@ -6556,20 +6766,31 @@ mark.glean-search-highlight {
 }
 
 .glean-surf-card {
-    border-radius: var(--glean-radius-18);
-    padding: var(--glean-space-3-25) var(--glean-space-3-5);
-    background: var(--b3-theme-surface);
-    border: 1px solid var(--glean-border-soft);
+    border-radius: var(--glean-radius-xl);
+    padding: var(--glean-space-4) var(--glean-space-4-5);
+    background: var(--glean-card-surface);
+    border: 1px solid color-mix(in srgb, var(--b3-border-color) 45%, transparent);
     box-shadow: var(--glean-shadow-card);
     position: relative;
     overflow: hidden;
-    animation: glean-surf-in var(--glean-duration-enter) var(--glean-ease-out) both;
+    animation: glean-surf-in var(--glean-duration-enter) var(--glean-ease-enter) both;
     transform: translateX(var(--glean-swipe-offset, 0px));
-    transition: transform var(--glean-duration-press) var(--glean-ease-out);
+    transition: transform var(--glean-duration-fast) var(--glean-ease-enter), box-shadow var(--glean-duration-fast) var(--glean-ease-enter), border-color var(--glean-duration-fast) var(--glean-ease-enter);
+
+    &:hover {
+        transform: translateY(-1.5px);
+        box-shadow: var(--glean-shadow-card-hover);
+        border-color: color-mix(in srgb, var(--glean-color-action) 35%, transparent);
+    }
 
     &:focus-within {
-        border-color: color-mix(in srgb, var(--glean-accent-b) 55%, var(--glean-border-soft));
-        box-shadow: var(--glean-shadow-card), 0 0 0 2px color-mix(in srgb, var(--glean-accent-b) 12%, transparent);
+        border-color: color-mix(in srgb, var(--glean-color-action) 55%, var(--glean-border-soft));
+        box-shadow: var(--glean-shadow-card-hover), 0 0 0 2px color-mix(in srgb, var(--glean-color-action) 12%, transparent);
+    }
+
+    &.glean-surf-card--cursor {
+        border-color: var(--glean-color-action);
+        box-shadow: var(--glean-shadow-card-hover), 0 0 0 2px color-mix(in srgb, var(--glean-color-action) 26%, transparent);
     }
 
     &::before {
@@ -6577,14 +6798,14 @@ mark.glean-search-highlight {
         position: absolute;
         inset: 0 auto 0 0;
         width: 3px;
-        background: var(--glean-grad);
+        background: var(--glean-color-action);
     }
 
     .glean-surf__tag {
-        font-size: var(--glean-text-2xs-plus);
-        font-weight: var(--glean-weight-bold);
-        letter-spacing: var(--glean-tracking-0-8);
-        color: var(--glean-accent-b);
+        font-size: var(--glean-text-caption);
+        font-weight: var(--glean-weight-medium);
+        letter-spacing: 0.04em;
+        color: var(--glean-color-action);
         text-transform: uppercase;
     }
 
@@ -6594,21 +6815,22 @@ mark.glean-search-highlight {
 
     .glean-surf__title {
         margin-top: var(--glean-space-1-25);
-        font-size: var(--glean-text-md-plus);
-        font-weight: var(--glean-weight-bold);
-        line-height: var(--glean-leading-readable);
+        font-size: var(--glean-text-lg);
+        font-weight: var(--glean-weight-semibold);
+        line-height: 1.35;
+        color: var(--b3-theme-on-background);
         cursor: pointer;
-        transition: color var(--glean-duration-base);
+        transition: color var(--glean-duration-fast) var(--glean-ease-enter);
 
         &:hover {
-            color: var(--glean-accent-b);
+            color: var(--glean-color-action);
         }
     }
 
     .glean-surf__summary {
         margin-top: var(--glean-space-1-5);
-        font-size: var(--glean-text-xs-plus);
-        line-height: var(--glean-leading-1-65);
+        font-size: var(--glean-text-body);
+        line-height: 1.68;
         color: var(--b3-theme-on-surface);
         max-width: 68ch;
     }
@@ -6628,7 +6850,7 @@ mark.glean-search-highlight {
         display: flex;
         gap: var(--glean-space-1-5);
         padding-top: var(--glean-space-3);
-        border-top: 1px solid var(--glean-border-soft);
+        border-top: 1px solid color-mix(in srgb, var(--b3-border-color) 35%, transparent);
     }
 }
 
@@ -6641,7 +6863,7 @@ mark.glean-search-highlight {
     min-height: 32px;
     border: 1px solid var(--glean-border-soft);
     padding: var(--glean-space-1-75) var(--glean-space-0);
-    border-radius: var(--glean-radius-10);
+    border-radius: var(--glean-radius-sm);
     font-size: var(--glean-text-xs-plus);
     font-weight: var(--glean-weight-semibold);
     line-height: var(--glean-leading-snug);
@@ -6657,8 +6879,8 @@ mark.glean-search-highlight {
     }
 
     &:focus-visible {
-        outline: 2px solid var(--b3-theme-primary);
-        outline-offset: 2px;
+        outline: none;
+        box-shadow: var(--glean-shadow-focus);
     }
 
     &:disabled,
@@ -6833,18 +7055,18 @@ mark.glean-search-highlight {
 }
 
 .glean-wechat-banner {
-    border: 1px solid color-mix(in srgb, #07c160 40%, var(--b3-border-color));
-    background: color-mix(in srgb, #07c160 7%, var(--b3-theme-surface));
-    box-shadow: 0 2px 8px -2px rgba(7, 193, 96, 0.12);
+    border: 1px solid color-mix(in srgb, var(--glean-color-wechat) 40%, var(--b3-border-color));
+    background: color-mix(in srgb, var(--glean-color-wechat) 7%, var(--b3-theme-surface));
+    box-shadow: 0 2px 8px -2px color-mix(in srgb, var(--glean-color-wechat) 12%, transparent);
 
     .glean-icon {
-        color: #07c160;
+        color: var(--glean-color-wechat);
     }
 
     .glean-cap-btn--pri {
-        background: #07c160;
-        color: #fff;
-        border-color: #07c160;
+        background: var(--glean-color-wechat);
+        color: var(--b3-theme-on-primary);
+        border-color: var(--glean-color-wechat);
         &:hover { filter: brightness(1.08); }
     }
 }
@@ -6945,7 +7167,7 @@ mark.glean-search-highlight {
 }
 
 .glean-inbox__spacer { flex: 1; }
-.glean-inbox__arrow { color: var(--b3-theme-on-surface); font-size: 11px; opacity: 0.72; }
+.glean-inbox__arrow { color: var(--b3-theme-on-surface); font-size: var(--glean-text-meta); opacity: 0.72; }
 
 .glean-inbox__empty {
     display: flex;
@@ -6996,7 +7218,7 @@ mark.glean-search-highlight {
     text-overflow: ellipsis;
     white-space: nowrap;
 }
-.glean-inbox__ops { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.glean-inbox__ops { display: flex; align-items: center; gap: var(--glean-space-1); flex-shrink: 0; }
 .glean-inbox__duplicate {
     display: flex;
     align-items: center;
@@ -7300,13 +7522,13 @@ mark.glean-search-highlight {
 }
 
 @media (max-width: 640px) {
-    .glean-reading-context { align-items: flex-start; flex-direction: column; gap: 6px; }
+    .glean-reading-context { align-items: flex-start; flex-direction: column; gap: var(--glean-space-1-5); }
     .glean-reading-context__main { width: 100%; }
     .glean-reading-context__actions { max-width: 100%; width: 100%; }
 }
 
 @container glean-reading-context (max-width: 640px) {
-    .glean-reading-context { align-items: flex-start; flex-direction: column; gap: 6px; }
+    .glean-reading-context { align-items: flex-start; flex-direction: column; gap: var(--glean-space-1-5); }
     .glean-reading-context__main { width: 100%; }
     .glean-reading-context__actions { max-width: 100%; width: 100%; }
 }
@@ -7696,15 +7918,15 @@ mark.glean-search-highlight {
 .glean-onb-preview__item:last-child { border-bottom: 0; }
 
 /* Sticky 表头始终遮住滚动内容，优先于迁移弹窗的透明渐变与忙碌态透明度。 */
-.glean-import .glean-dlg-head.glean-import__head { position: sticky; top: 0; z-index: var(--glean-z-sticky); background: var(--b3-theme-background); opacity: 1; }
-.glean-import[data-phase="importing"] .glean-dlg-head { border-color: color-mix(in srgb, var(--glean-accent-b) 34%, var(--glean-border-soft)); }
-.glean-import__field:focus-within { background: var(--glean-primary-soft); box-shadow: inset 3px 0 0 var(--b3-theme-primary); }
-.glean-import__mapping { box-shadow: var(--glean-shadow-card); }
+.glean-import .glean-dlg-head.glean-import__head { position: sticky; top: 0; z-index: var(--glean-z-sticky); background: var(--b3-theme-surface); opacity: 1; }
+.glean-import[data-phase="importing"] .glean-dlg-head { border-color: color-mix(in srgb, var(--glean-color-action) 34%, var(--glean-border-soft)); }
+.glean-import__field:focus-within { background: var(--glean-primary-soft); box-shadow: var(--glean-shadow-focus); }
+.glean-import__mapping { box-shadow: var(--glean-shadow-card); border-radius: var(--glean-radius-md); }
 /* 导入根已负责纵向滚动，恢复卡/说明不能把预览行压缩为零高度。 */
-.glean-import .glean-import__table { flex: 0 0 auto; box-shadow: var(--glean-shadow-card); }
+.glean-import .glean-import__table { flex: 0 0 auto; box-shadow: var(--glean-shadow-card); border-radius: var(--glean-radius-md); border: 1px solid color-mix(in srgb, var(--b3-border-color) 40%, transparent); }
 .glean-import .glean-mrow--duplicate { background: color-mix(in srgb, var(--b3-theme-on-surface) 4%, var(--glean-section-surface)); }
 .glean-import .glean-mrow__st { min-width: 64px; text-align: center; }
-.glean-import[data-phase="done"] .glean-mstats .glean-mstat:first-child .glean-mstat__n { color: var(--glean-st-done); }
+.glean-import[data-phase="done"] .glean-mstats .glean-mstat:first-child .glean-mstat__n { color: var(--glean-color-data); }
 .glean-import--busy .glean-dlg-head { opacity: .78; }
 
 @media (max-width: 560px) {
@@ -8089,6 +8311,18 @@ mark.glean-search-highlight {
         --glean-shadow-float: none;
         --glean-shadow-control: none;
         --glean-shadow-accent: none;
+
+        /* 两色与深色对比块的高对比度自适应映射 */
+        --glean-color-action: Highlight;
+        --glean-color-action-hover: Highlight;
+        --glean-color-data: Highlight;
+        --glean-color-data-hover: Highlight;
+        --glean-app-background: Canvas;
+        --glean-card-surface: Canvas;
+        --glean-card-surface-elevated: Canvas;
+        --glean-surface-dark-contrast: Canvas;
+        --glean-text-dark-contrast: CanvasText;
+        --glean-text-dark-contrast-muted: CanvasText;
 
         /* Host bridge variables */
         --b3-theme-primary: Highlight;
@@ -8790,15 +9024,15 @@ mark.glean-search-highlight {
 .glean-btn:active:not(:disabled),
 .glean-primary-btn:active:not(:disabled),
 .glean-surf-act:active:not(:disabled):not([aria-disabled="true"]) {
-    transform: translateY(1.5px) scale(0.985);
+    transform: scale(0.98);
 }
 
 .glean-ghost-btn {
-    opacity: 0.45 !important;
-    transition: opacity 0.15s ease;
+    opacity: 0.6 !important;
+    transition: opacity var(--glean-motion-fast) ease;
 
     &:hover {
-        opacity: 0.8 !important;
+        opacity: 1 !important;
     }
 }
 
@@ -8811,8 +9045,22 @@ mark.glean-search-highlight {
 .glean-drow__ti:focus-visible,
 .glean-kcard__t:focus-visible,
 .glean-dialog-root :where(button, a, input, select, textarea, [tabindex]):focus-visible {
-    outline: 2px solid var(--b3-theme-primary);
-    outline-offset: 2px;
+    outline: none;
+    box-shadow: var(--glean-shadow-focus);
+}
+
+.glean-btn:is([aria-busy="true"], .is-loading),
+.glean-primary-btn:is([aria-busy="true"], .is-loading) {
+    opacity: 0.65;
+    cursor: wait;
+    pointer-events: none;
+}
+
+.glean-btn:is([aria-pressed="true"], [aria-selected="true"]) {
+    background: var(--glean-primary-soft);
+    color: var(--b3-theme-primary);
+    border-color: color-mix(in srgb, var(--b3-theme-primary) 35%, transparent);
+    font-weight: var(--glean-weight-bold);
 }
 
 .glean-surf-card {
@@ -9000,7 +9248,7 @@ mark.glean-search-highlight {
 
 .glean-meta-icon > :not(svg) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-.glean-surf__pinned { display: inline-flex; align-items: center; gap: 4px; }
+.glean-surf__pinned { display: inline-flex; align-items: center; gap: var(--glean-space-1); }
 
 /* ============ 统计回顾 (核心已拆解至 components/stats.scss) ============ */
 
@@ -10551,17 +10799,17 @@ body.b3-theme-dark .glean-panel--mobile,
 
 .glean-drow__len--short,
 .glean-tier-badge--short {
-    color: #10b981;
+    color: var(--glean-st-done);
 }
 
 .glean-drow__len--medium,
 .glean-tier-badge--medium {
-    color: #3b82f6;
+    color: var(--glean-st-later);
 }
 
 .glean-drow__len--long,
 .glean-tier-badge--long {
-    color: #f59e0b;
+    color: var(--glean-st-inbox);
 }
 
 .glean-drow__ops {
@@ -10569,7 +10817,8 @@ body.b3-theme-dark .glean-panel--mobile,
 }
 
 .glean-drow--preview {
-    box-shadow: inset 3px 0 0 var(--b3-theme-primary), var(--glean-shadow-card);
+    border-color: var(--b3-theme-primary);
+    box-shadow: var(--glean-shadow-card);
 }
 
 .glean-kcol {
@@ -10911,7 +11160,7 @@ body.b3-theme-dark .glean-panel--mobile,
 .glean-kcard.glean-kcard--selected {
     border-color: color-mix(in srgb, var(--glean-accent-b) 58%, var(--glean-border-soft));
     background: var(--glean-selection-surface);
-    box-shadow: inset 3px 0 0 var(--glean-accent-b), var(--glean-shadow-card);
+    box-shadow: var(--glean-shadow-card);
 }
 
 @media (max-width: 560px) {
@@ -11554,7 +11803,7 @@ body.b3-theme-dark .glean-panel--mobile,
 .glean-surf-candidate-banner__label {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--glean-space-1-5);
     font-weight: var(--glean-weight-medium);
     color: var(--b3-theme-primary);
 }
@@ -11571,7 +11820,7 @@ body.b3-theme-dark .glean-panel--mobile,
 .glean-surf-recent-captured__title {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--glean-space-1-5);
     font-size: var(--glean-text-caption);
     font-weight: var(--glean-weight-semibold);
     color: var(--b3-theme-on-surface);
@@ -11587,13 +11836,13 @@ body.b3-theme-dark .glean-panel--mobile,
 .glean-surf-recent-captured__item {
     background: none;
     border: none;
-    padding: 4px 6px;
+    padding: var(--glean-space-1) var(--glean-space-1-5);
     margin: 0;
     text-align: left;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--glean-space-1-5);
     border-radius: var(--glean-radius-s);
     color: var(--b3-theme-on-background);
     font-size: var(--glean-text-caption-plus);
@@ -11663,8 +11912,8 @@ body.b3-theme-dark .glean-panel--mobile,
 .glean-stats__funnel-stage {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 4px 8px;
+    gap: var(--glean-space-1-5);
+    padding: var(--glean-space-1) var(--glean-space-2);
     background: var(--b3-theme-background);
     border-radius: var(--glean-radius-s);
     font-size: var(--glean-text-caption);
@@ -11689,6 +11938,44 @@ body.b3-theme-dark .glean-panel--mobile,
 .glean-stats__funnel-stage--archived {
     margin-left: auto;
     opacity: 0.85;
+}
+
+@media (max-width: 520px) {
+    .glean-stats__funnel-stages {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--glean-space-1-5);
+    }
+
+    .glean-stats__funnel-arrow {
+        align-self: center;
+        transform: rotate(90deg);
+        line-height: 1;
+    }
+
+    .glean-stats__funnel-stage--archived {
+        margin-left: 0;
+        margin-top: var(--glean-space-1);
+    }
+}
+
+@container glean-content (max-width: 520px) {
+    .glean-stats__funnel-stages {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--glean-space-1-5);
+    }
+
+    .glean-stats__funnel-arrow {
+        align-self: center;
+        transform: rotate(90deg);
+        line-height: 1;
+    }
+
+    .glean-stats__funnel-stage--archived {
+        margin-left: 0;
+        margin-top: var(--glean-space-1);
+    }
 }
 
 .glean-stats__day--selected {

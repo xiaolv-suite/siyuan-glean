@@ -20,28 +20,30 @@
 
 .glean-margin-note-card {
     pointer-events: auto;
-    background: var(--b3-theme-surface);
-    border: 1px solid var(--glean-border-soft, var(--b3-border-color));
-    border-radius: var(--glean-radius-md, 8px);
+    content-visibility: auto;
+    contain-intrinsic-size: 1px 72px;
+    background: var(--glean-card-surface, var(--b3-theme-surface));
+    border: 1px solid color-mix(in srgb, var(--b3-border-color) 40%, transparent);
+    border-radius: var(--glean-radius-md);
     padding: var(--glean-space-2, 8px) var(--glean-space-2-5, 10px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    box-shadow: var(--glean-shadow-card);
     display: flex;
     flex-direction: column;
     gap: 4px;
     cursor: pointer;
     text-align: left;
-    transition: all var(--glean-duration-fast, 140ms) ease;
-    border-left: 3.5px solid var(--b3-theme-primary);
+    transition: transform var(--glean-duration-fast) var(--glean-ease-enter), box-shadow var(--glean-duration-fast) var(--glean-ease-enter), border-color var(--glean-duration-fast) var(--glean-ease-enter);
+    border-left: 3.5px solid var(--glean-color-action);
 
-    &--color-yellow { border-left-color: #F59E0B; }
-    &--color-red { border-left-color: #EF4444; }
-    &--color-blue { border-left-color: #3B82F6; }
-    &--color-green { border-left-color: #10B981; }
+    &--color-yellow { border-left-color: var(--glean-st-inbox); }
+    &--color-red { border-left-color: var(--b3-theme-error); }
+    &--color-blue { border-left-color: var(--glean-st-later); }
+    &--color-green { border-left-color: var(--glean-st-done); }
 
     &:hover {
-        transform: translateX(-3px);
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
-        border-color: var(--lv-brand);
+        transform: translateX(-2px);
+        box-shadow: var(--glean-shadow-card-hover);
+        border-color: var(--glean-color-action);
     }
 
     &__head {
@@ -73,7 +75,7 @@
         line-height: 1.4;
         color: var(--lv-brand);
         background: color-mix(in srgb, var(--lv-brand) 8%, var(--b3-theme-surface));
-        border-radius: var(--glean-radius-sm, 4px);
+        border-radius: var(--glean-radius-sm);
         padding: 2px 6px;
         display: -webkit-box;
         -webkit-line-clamp: 2;
@@ -99,7 +101,7 @@
         background: transparent;
         border: none;
         padding: 2px 4px;
-        border-radius: var(--glean-radius-sm, 4px);
+        border-radius: var(--glean-radius-sm);
         font-size: 11px;
         color: var(--b3-theme-on-surface);
         opacity: 0.75;
@@ -110,5 +112,11 @@
             opacity: 1;
             background: color-mix(in srgb, var(--b3-theme-on-surface) 10%, transparent);
         }
+    }
+}
+
+@media (max-width: 900px) {
+    .glean-margin-notes {
+        display: none !important;
     }
 }

@@ -582,8 +582,8 @@ function handleResurfaceShortcut(event: KeyboardEvent): void {
             return;
         }
     }
-    // S 离线快照：在今日拾遗中按下 S / s 键查看或补拍当前卡片的离线快照
-    if (!action && !textEntry && Boolean(cursorId) && (event.key === "s" || event.key === "S") && !event.ctrlKey && !event.metaKey && !event.altKey) {
+    // S 离线快照：在今日拾遗中按下 S / s 键查看或补拍当前卡片的离线快照（优先级高于读库勾选）
+    if (!textEntry && Boolean(cursorId) && (event.key === "s" || event.key === "S") && !event.ctrlKey && !event.metaKey && !event.altKey) {
         const pick = activePick;
         if (pick && !actingId && !undoingId) {
             event.preventDefault();
@@ -734,7 +734,7 @@ function setCursor(id: string): void {
 function focusCard(id: string): void {
     void tick().then(() => {
         if (!id) return;
-        panelRoot?.querySelector<HTMLElement>(`[data-glean-surf-id="${CSS.escape(id)}"] .glean-surf-card__title button`)?.focus({ preventScroll: true });
+        panelRoot?.querySelector<HTMLElement>(`[data-glean-surf-id="${CSS.escape(id)}"] button.glean-surf__title-action, [data-glean-surf-id="${CSS.escape(id)}"] .glean-surf__title button`)?.focus({ preventScroll: true });
     });
 }
 </script>
@@ -837,7 +837,7 @@ function focusCard(id: string): void {
         </div>
     {:else if picks.length === 0 && startedToday.length === 0 && !activeContinue}
         {#if completionStreak > 0 || recent7Days.some((d) => d.completed)}
-            <div class="glean-surf-banner" style="margin-top: var(--glean-space-3);">
+            <div class="glean-surf-banner glean-resurface__streak-banner">
                 <div class="glean-surf-streak-card">
                     <div class="glean-surf-streak-card__head">
                         <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg>
@@ -866,9 +866,10 @@ function focusCard(id: string): void {
             <div class="glean-empty__title">{t(i18n, "resurface.allDone")}</div>
             <div class="glean-empty__hint">{t(i18n, "resurface.allDoneHint")}</div>
             {#if onStartRoaming}
-                <div style="margin-top: 14px;">
+                <div class="glean-resurface__roaming-action">
                     <button type="button" class="glean-btn glean-btn--pri" onclick={onStartRoaming}>
-                        🎲 {t(i18n, "roaming.exploreMore")}
+                        <svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanSpark" /></svg>
+                        <span>{t(i18n, "roaming.exploreMore")}</span>
                     </button>
                 </div>
             {/if}
@@ -1107,7 +1108,7 @@ function focusCard(id: string): void {
                         {:else if pick.item.contentType === "link"}
                             <span class="glean-surf-source-missing">{t(i18n, "clip.sourceMissing")}</span>
                         {/if}
-                        <button class="glean-surf-act" aria-busy={false} aria-disabled={!!actingId || !!undoingId} onclick={() => void replacePick(pickIdx, pick)}>
+                        <button class="glean-surf-act" aria-busy={actingId === pick.item.id} aria-disabled={!!actingId || !!undoingId} onclick={() => void replacePick(pickIdx, pick)}>
                             <svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanRefresh" /></svg>{t(i18n, "resurface.replace")}
                         </button>
                         <button class="glean-surf-act" aria-busy={actingId === pick.item.id} aria-disabled={!!actingId || !!undoingId} onclick={() => void act(pick, "later")}>
@@ -1171,6 +1172,14 @@ function focusCard(id: string): void {
 </div>
 
 <style>
+    .glean-resurface__streak-banner {
+        margin-top: var(--glean-space-3);
+    }
+
+    .glean-resurface__roaming-action {
+        margin-top: var(--glean-space-3-5);
+    }
+
     .glean-resurface .glean-surf__title-action {
         display: -webkit-box;
         width: 100%;

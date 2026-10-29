@@ -626,6 +626,8 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
             title: context.title,
             author: context.author,
             site: context.site,
+            url: context.url,
+            time: context.time,
             color: item.color,
             docId: context.id,
             blockId: item.id,
@@ -639,6 +641,8 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
             title: context.title,
             author: context.author,
             site: context.site,
+            url: context.url,
+            time: context.time,
             docId: context.id,
             blockId: excerpt.blockId,
         });
@@ -1080,7 +1084,7 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
             }
             return;
         }
-        if (isFindShortcut(event)) {
+        if (isFindShortcut(event) || (event.key === "/" && mode === "read" && !blockedTarget && !modalOpen && !event.ctrlKey && !event.altKey && !event.metaKey)) {
             event.preventDefault();
             event.stopPropagation();
             searchOpen = true;
@@ -2037,7 +2041,7 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                     aria-label={t(i18n, "settings.themePalette")}
                     onclick={() => { paletteMenuOpen = !paletteMenuOpen; }}
                 >
-                    🎨 <span class="glean-palette-preview-dot" style="background: var(--lv-brand);"></span>
+                    <span class="glean-palette-preview-dot"></span>
                 </button>
                 {#if paletteMenuOpen}
                     <div class="glean-reader__palette-dropdown" role="menu">
@@ -2120,7 +2124,7 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                     <div><dt><kbd>Shift+h</kbd></dt><dd>{t(i18n, "reader.shortcutPrevHighlight")}</dd></div>
                     <div><dt><kbd>Shift+F</kbd></dt><dd>{t(i18n, "reader.shortcutImmersive")}</dd></div>
                     <div><dt><kbd>y</kbd></dt><dd>{t(i18n, "action.copyBlockRef")}</dd></div>
-                    <div><dt><kbd>Ctrl+F</kbd></dt><dd>{t(i18n, "reader.searchTitle")}</dd></div>
+                    <div><dt><kbd>/ / Ctrl+F</kbd></dt><dd>{t(i18n, "reader.searchTitle")}</dd></div>
                     <div><dt><kbd>?</kbd></dt><dd>{t(i18n, "reader.shortcutHelp")}</dd></div>
                     <div><dt><kbd>Esc</kbd></dt><dd>{t(i18n, "reader.shortcutEscape")}</dd></div>
                 </dl>
@@ -2323,7 +2327,7 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
             {/if}
         {:else}
             <div class="glean-reader__empty">
-                <div class="glean-reader__empty-art">📖</div>
+                <div class="glean-reader__empty-art"><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanCard" /></svg></div>
                 <div class="glean-reader__empty-title">{t(i18n, "reader.empty")}</div>
                 <div class="glean-reader__empty-hint">{t(i18n, "reader.emptyHint")}</div>
             </div>
@@ -2345,7 +2349,7 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                         class="glean-reader__side-nav-btn"
                         class:glean-reader__side-nav-btn--active={companionTab === "outline"}
                         onclick={() => companionTab = "outline"}
-                    >📑 {t(i18n, "reader.companionNavOutline")} ({outline.length})</button>
+                    >{t(i18n, "reader.companionNavOutline")} ({outline.length})</button>
                 {/if}
                 {#if docHighlights.length > 0}
                     <button
@@ -2353,7 +2357,7 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                         class="glean-reader__side-nav-btn"
                         class:glean-reader__side-nav-btn--active={companionTab === "notes"}
                         onclick={() => companionTab = "notes"}
-                    >💡 {t(i18n, "reader.companionNavNotes")} ({docHighlights.length})</button>
+                    >{t(i18n, "reader.companionNavNotes")} ({docHighlights.length})</button>
                 {/if}
                 {#if aiOn}
                     <button
@@ -2361,7 +2365,7 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                         class="glean-reader__side-nav-btn"
                         class:glean-reader__side-nav-btn--active={companionTab === "ai"}
                         onclick={() => companionTab = "ai"}
-                    >✨ {t(i18n, "reader.companionNavAi")}</button>
+                    >{t(i18n, "reader.companionNavAi")}</button>
                 {/if}
             </div>
             {#if isWechatArticle}

@@ -6,7 +6,7 @@
 }
 
 .glean-tile {
-    border-radius: var(--glean-radius-18);
+    border-radius: var(--glean-radius-lg);
     padding: var(--glean-space-3-25) var(--glean-space-3-5);
     background: var(--b3-theme-surface);
     border: 1px solid var(--b3-border-color);
@@ -14,14 +14,7 @@
     overflow: hidden;
 
     .glean-tile__glow {
-        position: absolute;
-        right: -22px;
-        top: -22px;
-        width: 74px;
-        height: 74px;
-        border-radius: var(--glean-radius-circle);
-        filter: blur(2px);
-        pointer-events: none;
+        display: none;
     }
 
     .glean-tile__k {
@@ -33,15 +26,13 @@
     }
 
     .glean-tile__v {
-        font-size: var(--glean-text-metric-lg);
-        font-weight: var(--glean-weight-display);
-        margin-top: var(--glean-space-1-5);
-        letter-spacing: var(--glean-tracking-tight-px);
+        font-size: 34px;
+        line-height: 1.15;
+        font-weight: var(--glean-weight-semibold);
+        margin-top: var(--glean-space-1);
+        letter-spacing: -0.02em;
         font-variant-numeric: tabular-nums;
-        background: linear-gradient(135deg, var(--b3-theme-on-background) 20%, var(--glean-accent-b) 130%);
-        -webkit-background-clip: text;
-        background-clip: text;
-        -webkit-text-fill-color: transparent;
+        color: var(--b3-theme-on-background);
     }
 
     .glean-tile__u {
@@ -64,9 +55,8 @@
             background: color-mix(in srgb, var(--b3-theme-on-surface) 14%, transparent);
 
             &.glean-tile__spark--hot {
-                background: var(--glean-grad);
-                opacity: 0.9;
-                box-shadow: 0 0 6px color-mix(in srgb, var(--glean-accent-b) 35%, transparent);
+                background: var(--glean-color-data);
+                opacity: 0.95;
             }
         }
     }
@@ -82,7 +72,7 @@
 }
 
 .glean-block {
-    border-radius: var(--glean-radius-18);
+    border-radius: var(--glean-radius-lg);
     padding: var(--glean-space-3) var(--glean-space-3-5);
     background: var(--b3-theme-surface);
     border: 1px solid var(--b3-border-color);
@@ -114,8 +104,8 @@
         i {
             display: block;
             height: 100%;
-            border-radius: var(--glean-radius-3);
-            background: var(--glean-grad);
+            border-radius: var(--glean-radius-sm);
+            background: var(--glean-color-data);
             transition: width var(--glean-duration-normal) var(--glean-ease-out);
         }
     }
@@ -154,13 +144,13 @@
     font-weight: var(--glean-weight-semibold);
     color: var(--b3-theme-on-primary);
     padding: var(--glean-space-2-5);
-    border-radius: var(--glean-radius-14);
+    border-radius: var(--glean-radius-sm);
     background: var(--glean-grad);
     cursor: pointer;
     box-shadow: var(--glean-shadow-accent);
     transition: transform var(--glean-duration-base) var(--glean-ease-spring);
 
     &:active {
-        transform: scale(0.97);
+        transform: scale(0.98);
     }
 }

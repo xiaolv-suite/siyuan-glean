@@ -52,6 +52,47 @@ test("scanAndFillWechatAuthor：从传入的正文或 DOM 片段精准提取微�
     assert.match(written[0].attrs["custom-clip-ai-tags"], /大模型深度前沿/);
 });
 
+test("scanAndFillWechatAuthor：当传入 url 时仍必须完整保留文档存量 aiTags 与 summary（防止抹除数据）", async () => {
+    const written = [];
+    globalThis.__gleanWechatPost = async (route, body) => {
+        if (route === "/api/attr/getBlockAttrs") {
+            return {
+                code: 0,
+                data: {
+                    "custom-clip-ai-tags": "自然语言处理,深度学习",
+                    "custom-clip-summary": "既有核心摘要",
+                },
+            };
+        }
+        if (route === "/api/attr/setBlockAttrs") {
+            written.push(body);
+            return { code: 0, data: null };
+        }
+        return { code: 0, data: null };
+    };
+
+    const fakePlugin = {
+        loadData: async () => ({ version: 1, updatedAt: new Date().toISOString(), clips: {}, candidates: {} }),
+        saveData: async () => {},
+    };
+    const markdown = `# 深度好文
+收录于合集 #前沿算法
+<div class="rich_media_meta_list"><a href="javascript:void(0);" id="js_name">机器之心</a></div>
+正文段落。`;
+
+    const detected = await scanAndFillWechatAuthor(fakePlugin, "20261025120000-wechat2", {
+        url: "https://mp.weixin.qq.com/s/sample456",
+        markdown,
+    });
+
+    assert.equal(detected, "机器之心");
+    assert.equal(written.length, 1);
+    assert.equal(written[0].attrs["custom-clip-author"], "机器之心");
+    assert.equal(written[0].attrs["custom-clip-summary"], undefined);
+    const savedAiTags = written[0].attrs["custom-clip-ai-tags"].split(",");
+    assert.deepEqual(savedAiTags, ["自然语言处理", "深度学习", "前沿算法"]);
+});
+
 test("batchRecognizeWechatAuthors：精准过滤已有作者或非微信文章，只针对未识别的微信文章进行批处理", async () => {
     const entries = [
         { id: "1", url: "https://mp.weixin.qq.com/s/1", author: "" },

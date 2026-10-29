@@ -205,7 +205,7 @@ export function recentlySurfaced(items: SurfaceItem[], now: Date = new Date()): 
             Number(item.lastSurfaced.slice(6, 8)),
             12
         ).getTime();
-        return todayMs - t < 7 * DAY_MS;
+        return todayMs - t > 0 && todayMs - t < 7 * DAY_MS;
     });
 }
 

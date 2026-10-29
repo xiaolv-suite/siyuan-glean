@@ -3,7 +3,7 @@
     import type { GleanFacade } from "../types";
     import { t } from "../libs/i18n";
     import { pickRoamingArticle, type RoamingPick, type RoamingTimeBudget } from "../domain/roaming";
-    import { loadIndex } from "../services/index-store";
+    import { loadIndex, type GleanIndex } from "../services/index-store";
     import { displayWechatAuthor, isWechatUrl } from "../domain/wechat";
     import { writeClip } from "../services/clip-store";
     import { formatCitation, type CitationFormat, type CitationItem } from "../domain/citation";
@@ -29,9 +29,17 @@
     let favoriteOnly = $state(false);
     let availableTags = $state<string[]>([]);
     let loading = $state(false);
+    let cachedIndex = $state<GleanIndex | null>(null);
+
+    async function getIndex(): Promise<GleanIndex> {
+        if (!cachedIndex) {
+            cachedIndex = await loadIndex(facade.pluginInstance);
+        }
+        return cachedIndex;
+    }
 
     $effect(() => {
-        void loadIndex(facade.pluginInstance).then((index) => {
+        void getIndex().then((index) => {
             const counts: Record<string, number> = {};
             for (const clip of Object.values(index.clips)) {
                 if (clip.status === "inbox" || clip.status === "later" || clip.status === "reading") {
@@ -61,10 +69,11 @@
 
     async function changeBudget(budget: RoamingTimeBudget): Promise<void> {
         if (timeBudget === budget || loading) return;
+        const prevBudget = timeBudget;
         timeBudget = budget;
         loading = true;
         try {
-            const index = await loadIndex(facade.pluginInstance);
+            const index = await getIndex();
             const candidates = Object.values(index.clips);
             const next = pickRoamingArticle(candidates, { timeBudget: budget, tag: selectedTag || undefined, favoriteOnly });
             if (next) {
@@ -74,9 +83,11 @@
                     try { navigator.vibrate?.(10); } catch { /* noop */ }
                 }
             } else {
+                timeBudget = prevBudget;
                 showMessage(t(i18n, "roaming.emptyBudgetPool"), 2500);
             }
         } catch (error) {
+            timeBudget = prevBudget;
             console.warn("[glean] 切换时间预算漫游异常:", error);
             showMessage(t(i18n, "msg.actionFailed"), 2500);
         } finally {
@@ -86,10 +97,11 @@
 
     async function changeTag(tagVal: string): Promise<void> {
         if (loading) return;
+        const prevTag = selectedTag;
         selectedTag = tagVal;
         loading = true;
         try {
-            const index = await loadIndex(facade.pluginInstance);
+            const index = await getIndex();
             const candidates = Object.values(index.clips);
             const next = pickRoamingArticle(candidates, { timeBudget, tag: selectedTag || undefined, favoriteOnly });
             if (next) {
@@ -99,9 +111,11 @@
                     try { navigator.vibrate?.(10); } catch { /* noop */ }
                 }
             } else {
+                selectedTag = prevTag;
                 showMessage(t(i18n, "roaming.emptyTopicPool"), 2500);
             }
         } catch (error) {
+            selectedTag = prevTag;
             console.warn("[glean] 切换主题漫游异常:", error);
             showMessage(t(i18n, "msg.actionFailed"), 2500);
         } finally {
@@ -111,12 +125,13 @@
 
     async function toggleFavoriteFilter(): Promise<void> {
         if (loading) return;
-        favoriteOnly = !favoriteOnly;
+        const nextFav = !favoriteOnly;
+        favoriteOnly = nextFav;
         loading = true;
         try {
-            const index = await loadIndex(facade.pluginInstance);
+            const index = await getIndex();
             const candidates = Object.values(index.clips);
-            const next = pickRoamingArticle(candidates, { timeBudget, tag: selectedTag || undefined, favoriteOnly });
+            const next = pickRoamingArticle(candidates, { timeBudget, tag: selectedTag || undefined, favoriteOnly: nextFav });
             if (next) {
                 history = [next];
                 historyIndex = 0;
@@ -124,9 +139,11 @@
                     try { navigator.vibrate?.(10); } catch { /* noop */ }
                 }
             } else {
+                favoriteOnly = !nextFav;
                 showMessage(t(i18n, "roaming.emptyPool"), 2500);
             }
         } catch (error) {
+            favoriteOnly = !nextFav;
             console.warn("[glean] 切换收藏过滤漫游异常:", error);
             showMessage(t(i18n, "msg.actionFailed"), 2500);
         } finally {
@@ -146,7 +163,7 @@
         loading = true;
         try {
             const excludedIds = new Set(currentList.map((h) => h.item.id));
-            const index = await loadIndex(facade.pluginInstance);
+            const index = await getIndex();
             const candidates = Object.values(index.clips);
             const next = pickRoamingArticle(candidates, { excludedIds, timeBudget, tag: selectedTag || undefined, favoriteOnly });
             if (next) {
@@ -174,6 +191,7 @@
             await writeClip(facade.pluginInstance, id, { status: "later" }, { force: true });
             showMessage(t(i18n, "msg.statusChanged"), 2000);
             facade.notifyDataChanged();
+            cachedIndex = null;
             await nextPick();
         } catch (error) {
             console.warn("[glean] 盲盒稍后读写入失败:", error);
@@ -191,6 +209,7 @@
             await writeClip(facade.pluginInstance, id, { status: "archived" }, { force: true });
             showMessage(t(i18n, "msg.statusChanged"), 2000);
             facade.notifyDataChanged();
+            cachedIndex = null;
             await nextPick();
         } catch (error) {
             console.warn("[glean] 盲盒归档写入失败:", error);
@@ -341,6 +360,9 @@
 </script>
 
 <svelte:window onkeydown={(e) => {
+    const target = e.target instanceof Element ? e.target : null;
+    if (target?.closest("input, textarea, select, [contenteditable]:not([contenteditable='false'])")) return;
+    if (e.isComposing || e.keyCode === 229) return;
     if (e.key === "Escape") {
         onClose?.();
     } else if (e.key === "ArrowLeft" && canPrev) {
@@ -494,11 +516,11 @@
             {#if (currentPick.item.minutes ?? 0) > 0}
                 <span class="glean-tier-badge">⏱️ 约 {currentPick.item.minutes} 分钟</span>
             {/if}
-            {#if (currentPick.item.priority ?? 0) >= 4}
-                <span class="glean-tier-badge">⭐ P{currentPick.item.priority}</span>
+            {#if (currentPick.item.priority ?? 0) > 0}
+                <span class="glean-tier-badge">⚡ P{currentPick.item.priority}</span>
             {/if}
             {#if (currentPick.item.rating ?? 0) > 0}
-                <span class="glean-tier-badge">💖 {currentPick.item.rating}★</span>
+                <span class="glean-tier-badge">⭐ {currentPick.item.rating}★</span>
             {/if}
             {#if currentPick.item.favorite}
                 <span class="glean-tier-badge glean-tier-badge--fav">❤️ 已收藏</span>

@@ -289,7 +289,7 @@ function handleWindowKeydown(event: KeyboardEvent): void {
 
     {#if !prefsLoaded}
         <div class="glean-onb-hero" role="region" aria-busy="true">
-            <div class="glean-panel__loading" role="status" style="min-height: 120px; display: flex; align-items: center; justify-content: center;">
+            <div class="glean-panel__loading glean-onb-loading" role="status">
                 {t(i18n, "panel.loading")}
             </div>
         </div>
@@ -441,3 +441,12 @@ function handleWindowKeydown(event: KeyboardEvent): void {
         </div>
     {/if}
 </div>
+
+<style>
+    .glean-onb-loading {
+        min-height: 120px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+</style>

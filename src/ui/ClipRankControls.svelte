@@ -22,13 +22,14 @@
         <select
             class="b3-select"
             aria-label={t(i18n, "action.priority")}
-            value={priority ?? 3}
+            value={priority ?? 0}
             disabled={disabled}
             onclick={(event) => event.stopPropagation()}
             onchange={(event) => { event.stopPropagation(); void onPriority(Number((event.currentTarget as HTMLSelectElement).value)); }}
         >
+            <option value={0}>—</option>
             {#each [1, 2, 3, 4, 5] as value}
-                <option value={value}>{value}</option>
+                <option value={value}>P{value}</option>
             {/each}
         </select>
     </label>

@@ -275,14 +275,14 @@ async function doExport(): Promise<void> {
                     </div>
                 </div>
             {:else}
-                <div class="glean-empty" style="padding:12px">
+                <div class="glean-empty glean-quotes-filter-empty">
                     <div class="glean-empty__hint">{t(i18n, "quotes.filterEmpty")}</div>
                     <button class="glean-btn glean-btn--ghost" onclick={clearFilter}>{t(i18n, "quotes.clearFilter")}</button>
                 </div>
             {/each}
         </div>
         <button class="glean-primary-btn" disabled={exporting || filtered.length === 0} onclick={() => void doExport()}>
-            📤 {exporting ? t(i18n, "quotes.exporting") : exportRetryMatches ? t(i18n, "quotes.exportCheck") : t(i18n, "quotes.export", { n: filtered.length })}
+            {exporting ? t(i18n, "quotes.exporting") : exportRetryMatches ? t(i18n, "quotes.exportCheck") : t(i18n, "quotes.export", { n: filtered.length })}
         </button>
         {#if exportError}
             <div class="glean-empty" role="alert">
@@ -296,3 +296,9 @@ async function doExport(): Promise<void> {
         {/if}
     {/if}
 </div>
+
+<style>
+    .glean-quotes-filter-empty {
+        padding: var(--glean-space-3);
+    }
+</style>

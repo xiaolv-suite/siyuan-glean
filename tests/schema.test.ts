@@ -190,9 +190,11 @@ test("displaySiteName：知名站点映射品牌名，未知域名优雅回退�
     assert.equal(displaySiteName("github.com"), "GitHub");
     assert.equal(displaySiteName("www.github.com"), "GitHub");
 
-    // 未知域名去 www 回退
+    // 未知域名去 www 回退（精确匹配 www.，不误伤 wwwe 或 www1）
     assert.equal(displaySiteName("blog.example.com"), "blog.example.com");
     assert.equal(displaySiteName("www.my-personal-site.org"), "my-personal-site.org");
+    assert.equal(displaySiteName("wwwe.example.com"), "wwwe.example.com");
+    assert.equal(displaySiteName("www1.example.org"), "www1.example.org");
 
     // 空边界安全
     assert.equal(displaySiteName(""), "");

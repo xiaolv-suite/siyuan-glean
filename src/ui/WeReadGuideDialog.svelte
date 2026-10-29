@@ -33,7 +33,7 @@
     }
 
     function openShelf(): void {
-        window.open("https://weread.qq.com/web/shelf", "_blank");
+        window.open("https://weread.qq.com/web/shelf", "_blank", "noopener,noreferrer");
     }
 
     function openLocalReader(): void {
@@ -53,6 +53,7 @@
             e.preventDefault();
             void copyLink();
         } else if (e.key === "Enter") {
+            if (target?.closest("button, a[href], summary, [role='button']")) return;
             e.preventDefault();
             openShelf();
         } else if ((e.key === "r" || e.key === "R" || e.key === "o" || e.key === "O") && !e.ctrlKey && !e.metaKey && !e.altKey) {
@@ -122,7 +123,7 @@
         </button>
     </div>
 
-    <div class="glean-kbdhint" style="margin-top: var(--glean-space-3); justify-content: center;">
+    <div class="glean-kbdhint glean-weread-guide__kbdhint">
         <span class="glean-kbdhint__keys" aria-hidden="true">
             <kbd>C</kbd> {t(i18n, "wechat.copyCleanLink")}
             <kbd>Enter</kbd> {t(i18n, "wechat.openWereadShelf")}
@@ -131,3 +132,10 @@
         </span>
     </div>
 </div>
+
+<style>
+    .glean-weread-guide__kbdhint {
+        margin-top: var(--glean-space-3);
+        justify-content: center;
+    }
+</style>

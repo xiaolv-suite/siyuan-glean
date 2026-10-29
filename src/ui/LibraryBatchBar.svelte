@@ -1,5 +1,6 @@
 <script lang="ts">
     import { tick } from "svelte";
+    import { showMessage } from "siyuan";
     import type { ClipStatus } from "../domain/schema";
     import type { I18nBundle } from "../libs/i18n";
     import { t } from "../libs/i18n";
@@ -86,6 +87,8 @@
             const num = parseInt(input.trim(), 10);
             if (!Number.isNaN(num) && num >= 0 && num <= 5 && onBatchPriority) {
                 void onBatchPriority(num);
+            } else {
+                showMessage(t(i18n, "library.batchRangeError"), 2500);
             }
         }
     }
@@ -96,6 +99,8 @@
             const num = parseInt(input.trim(), 10);
             if (!Number.isNaN(num) && num >= 0 && num <= 5 && onBatchRating) {
                 void onBatchRating(num);
+            } else {
+                showMessage(t(i18n, "library.batchRangeError"), 2500);
             }
         }
     }

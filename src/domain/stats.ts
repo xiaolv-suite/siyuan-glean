@@ -509,7 +509,7 @@ export function computeConversionFunnel(
     clips: Record<string, { status?: string; internal?: boolean }>,
     candidates: Record<string, unknown>
 ): ConversionFunnelStats {
-    const validClips = Object.values(clips || {}).filter((c) => !c.internal && Boolean(c.status));
+    const validClips = Object.values(clips || {}).filter((c) => Boolean(c) && !c.internal && Boolean(c.status));
     const candidateCount = Object.keys(candidates || {}).length;
     const capturedCount = validClips.length;
     const totalArticles = capturedCount + candidateCount;
@@ -560,14 +560,14 @@ export function filterCompletedItems<T extends { doneTime: string; title?: strin
     if (!cleanDate && !query) return [...items];
 
     return items.filter((item) => {
-        if (cleanDate && !item.doneTime.startsWith(cleanDate)) return false;
+        if (cleanDate && !String(item.doneTime ?? "").startsWith(cleanDate)) return false;
         if (!query) return true;
 
         if (item.title && item.title.toLowerCase().includes(query)) return true;
         if (item.author && item.author.toLowerCase().includes(query)) return true;
         if (item.site && item.site.toLowerCase().includes(query)) return true;
-        if (item.tags?.some((t) => t.toLowerCase().includes(query))) return true;
-        if (item.aiTags?.some((t) => t.toLowerCase().includes(query))) return true;
+        if (item.tags?.some((t) => Boolean(t) && t.toLowerCase().includes(query))) return true;
+        if (item.aiTags?.some((t) => Boolean(t) && t.toLowerCase().includes(query))) return true;
 
         return false;
     });

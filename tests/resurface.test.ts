@@ -127,11 +127,12 @@ test("pickDaily：includeDone 才把已读纳入池", () => {
     assert.equal(pickDaily(pool, [], { count: 3, includeDone: true, now: NOW }).length, 1);
 });
 
-test("recentlySurfaced：只算近 7 天且不含今天", () => {
+test("recentlySurfaced：只算近 7 天且不含今天与未来日期", () => {
     const items = [
         item({ id: "today", lastSurfaced: "20260929" }),
         item({ id: "3d", lastSurfaced: "20260926" }),
         item({ id: "8d", lastSurfaced: "20260921" }),
+        item({ id: "future", lastSurfaced: "20261005" }),
         item({ id: "bad", lastSurfaced: "xxx" }),
     ];
     const recent = recentlySurfaced(items, NOW);
@@ -275,4 +276,10 @@ test("ResurfaceView 接线：今日拾遗桌面端全键盘分拣流（T-3400）
     assert.match(view, /data-glean-surf-id=\{pick\.item\.id\}/);
     assert.match(view, /class:glean-surf-card--cursor=\{cursorId === pick\.item\.id\}/);
     assert.match(view, /class="glean-kbdhint"/);
+});
+
+test("ResurfaceView 接线：focusCard 必须精准匹配标题按钮类名保证键盘焦点与无障碍不中断", () => {
+    const view = readFileSync(new URL("../src/ui/ResurfaceView.svelte", import.meta.url), "utf8");
+    assert.match(view, /function focusCard\(id: string\): void \{/);
+    assert.match(view, /button\.glean-surf__title-action/);
 });

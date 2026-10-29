@@ -341,6 +341,8 @@
             title: entry.title,
             author: attrs?.author || (entry.kind === "clip" ? entry.author : ""),
             site: attrs?.site || (entry.kind === "clip" ? entry.site : ""),
+            url: attrs?.url || (entry.kind === "clip" ? entry.url : ""),
+            time: attrs?.time || (entry.kind === "clip" ? entry.time : ""),
             docId: entry.id,
             blockId: excerpt.blockId,
         });
@@ -379,6 +381,7 @@
         if (document.querySelector("dialog[open], .b3-menu")) return;
 
         const lower = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+        if (event.shiftKey && lower !== "c") return;
         if (lower === "b") {
             event.preventDefault();
             event.stopPropagation();
@@ -439,10 +442,10 @@
                 </button>
             {/if}
             <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void triggerRoaming()} title={t(i18n, "roaming.buttonHint")}>🎲 {t(i18n, "roaming.button")}</button>
-            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation("gbt")} title="复制 GB/T 7714 电子文献著录 (C)">{t(i18n, "citation.copyGBT")}</button>
-            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation("bibtex")} title="复制 BibTeX @article 条目 (Shift+C)">BibTeX</button>
-            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation("apa")} title={t(i18n, "citation.copyAPA")}>APA</button>
-            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation("mla")} title={t(i18n, "citation.copyMLA")}>MLA</button>
+            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation("gbt")} title="{t(i18n, 'citation.copyGBT')} (C)">📄 GB/T</button>
+            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation("bibtex")} title="{t(i18n, 'citation.copyBibTeX')} (Shift+C)">📚 BibTeX</button>
+            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation("apa")} title={t(i18n, "citation.copyAPA")}>🎓 APA</button>
+            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation("mla")} title={t(i18n, "citation.copyMLA")}>📖 MLA</button>
             <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyBlockRef()}>{t(i18n, "action.copyBlockRef")}</button>
             <button type="button" class="glean-btn glean-btn--ghost" onclick={() => facade.openReadingDocument(entry.id)}>{t(i18n, "preview.openDocument")}</button>
             {#if entry.kind === "clip"}<button type="button" class="glean-btn glean-btn--ghost" disabled={busy || exporting} onclick={() => void downloadMarkdown()}>{exporting ? t(i18n, "settings.exporting") : t(i18n, "export.markdown")}</button>{/if}
@@ -595,7 +598,7 @@
 
         &:hover {
             background: color-mix(in srgb, #07c160 18%, var(--b3-theme-surface));
-            color: color-mix(in srgb, #07c160 85%, #000);
+            color: color-mix(in srgb, #07c160 85%, var(--b3-theme-on-surface));
         }
     }
     .glean-preview__meta,

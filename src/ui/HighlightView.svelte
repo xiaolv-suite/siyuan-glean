@@ -323,6 +323,7 @@ function quoteCard(item: HighlightItem): void {
         quote: item.text,
         title: item.title || docTitle,
         site: item.site,
+        url: item.url,
         color: item.color,
         docId: item.rootId,
         blockId: item.id,
@@ -688,7 +689,20 @@ function focusHighlightRow(id: string): void {
         </div>
     </div>
     <div class="glean-highlights__filters" role="search" aria-label={t(i18n, "action.search")}>
-        <input bind:this={searchInputEl} type="search" bind:value={search} oninput={() => page = 1} onkeydown={(event) => { if (event.key === "Escape" && search) { event.stopPropagation(); search = ""; page = 1; } }} placeholder={t(i18n, "highlight.searchPlaceholder")} aria-label={t(i18n, "action.search")} />
+        <div class="glean-highlights__search-wrap">
+            <input bind:this={searchInputEl} type="search" bind:value={search} oninput={() => page = 1} onkeydown={(event) => { if (event.key === "Escape" && search) { event.stopPropagation(); search = ""; page = 1; } }} placeholder={t(i18n, "highlight.searchPlaceholder")} aria-label={t(i18n, "action.search")} />
+            {#if search}
+                <button
+                    type="button"
+                    class="glean-highlights__search-clear"
+                    onclick={() => { search = ""; page = 1; searchInputEl?.focus(); }}
+                    title={t(i18n, "library.clearFilters")}
+                    aria-label={t(i18n, "library.clearFilters")}
+                >
+                    ✕
+                </button>
+            {/if}
+        </div>
         <label>{t(i18n, "library.filterSite")}<select bind:value={site} onchange={() => page = 1}><option value="">{t(i18n, "action.filterAll")}</option>{#each facets.sites as value}<option value={value}>{value}</option>{/each}</select></label>
         <label>{t(i18n, "library.filterTag")}<select bind:value={tag} onchange={() => page = 1}><option value="">{t(i18n, "action.filterAll")}</option>{#each facets.tags as value}<option value={value}>{displayTagAlias(tagAliases, value)}</option>{/each}</select></label>
         <label>{t(i18n, "library.filterAiTag")}<select bind:value={aiTag} onchange={() => page = 1}><option value="">{t(i18n, "action.filterAll")}</option>{#each facets.aiTags as value}<option value={value}>{value}</option>{/each}</select></label>

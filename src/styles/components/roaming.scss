@@ -6,6 +6,9 @@
     gap: var(--glean-space-3);
     padding: var(--glean-space-3) var(--glean-space-4);
     box-sizing: border-box;
+    max-height: min(84vh, 640px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
 }
 
 .glean-roaming-banner {
@@ -28,11 +31,12 @@
 
 .glean-roaming-score {
     font-size: 13px;
-    font-weight: 700;
-    color: var(--lv-accent-wheat, #F59E0B);
-    background: color-mix(in srgb, var(--lv-accent-wheat, #F59E0B) 12%, var(--b3-theme-surface));
+    font-weight: var(--glean-weight-semibold);
+    color: var(--glean-color-data);
+    background: color-mix(in srgb, var(--glean-color-data) 12%, var(--b3-theme-surface));
     padding: 2px 8px;
     border-radius: var(--glean-radius-pill);
+    font-variant-numeric: tabular-nums;
 }
 
 .glean-roaming-budget-row {
@@ -85,9 +89,14 @@
     &.glean-roaming-budget-btn--active {
         background: var(--b3-theme-surface);
         color: var(--lv-brand);
-        font-weight: 650;
+        font-weight: var(--glean-weight-semibold);
         opacity: 1;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        box-shadow: var(--glean-shadow-control);
+
+        @media (forced-colors: active) {
+            border: 1px solid Highlight;
+            color: Highlight;
+        }
     }
 }
 
@@ -107,27 +116,27 @@
 }
 
 .glean-roaming-pos {
-    font-size: 11px;
-    font-weight: 500;
+    font-size: var(--glean-text-meta);
+    font-weight: var(--glean-weight-medium);
     opacity: 0.8;
     margin-right: 2px;
 }
 
 .glean-roaming-card {
-    background: var(--glean-section-surface, var(--b3-theme-surface));
-    border: 1px solid var(--glean-border-soft);
-    border-radius: var(--glean-radius-md);
+    background: var(--glean-card-surface);
+    border: 1px solid color-mix(in srgb, var(--b3-border-color) 40%, transparent);
+    border-radius: var(--glean-radius-lg);
     padding: var(--glean-space-3-5);
     display: flex;
     flex-direction: column;
     gap: var(--glean-space-2-5);
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--glean-shadow-card);
 }
 
 .glean-roaming-title {
     margin: 0;
     font-size: var(--glean-text-base);
-    font-weight: 650;
+    font-weight: var(--glean-weight-semibold);
     color: var(--b3-theme-on-background);
     line-height: 1.45;
 }
@@ -227,7 +236,7 @@
 
 .glean-roaming-read-btn {
     min-width: 140px;
-    box-shadow: 0 2px 8px color-mix(in srgb, var(--b3-theme-primary) 30%, transparent);
+    box-shadow: var(--glean-shadow-accent);
 }
 
 .glean-roaming-hint {

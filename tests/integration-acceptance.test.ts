@@ -67,3 +67,9 @@ test("联调文档明确外部失败不能破坏本地数据主权", () => {
     assert.match(guide, /不上传导出文件全文/);
     assert.match(guide, /不上传.*私人 token/);
 });
+
+test("智能体工具与 URL Scheme 具有完整数据广播与收录反馈闭环", () => {
+    const indexSource = readFileSync(resolve(root, "src/index.ts"), "utf8");
+    assert.match(indexSource, /archive_stale[\s\S]*?this\.notifyDataChanged\(\)/);
+    assert.match(indexSource, /action === "capture"[\s\S]*?this\.addCurrentDocToLibrary\(\)/);
+});

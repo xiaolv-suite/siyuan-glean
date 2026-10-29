@@ -18,7 +18,7 @@
 .glean-highlights__title {
     margin: var(--glean-space-0);
     font-size: var(--glean-text-xl);
-    font-weight: var(--glean-weight-760);
+    font-weight: var(--glean-weight-semibold);
     letter-spacing: var(--glean-tracking-neg-0-15);
     line-height: var(--glean-leading-compact);
 }
@@ -33,10 +33,10 @@
 .glean-highlights__tools--scope {
     flex: 0 0 auto;
     padding: var(--glean-space-tight);
-    border: 1px solid var(--glean-border-soft);
+    border: 1px solid color-mix(in srgb, var(--b3-border-color) 40%, transparent);
     border-radius: var(--glean-radius-pill);
-    background: var(--glean-status-surface);
-    box-shadow: var(--glean-shadow-card);
+    background: var(--glean-inset-surface);
+    box-shadow: none;
 }
 
 .glean-highlights__tools--scope button {
@@ -45,12 +45,16 @@
     border-radius: var(--glean-radius-pill);
     background: transparent;
     padding-inline: var(--glean-space-3);
+    font-size: var(--glean-text-xs);
+    cursor: pointer;
+    transition: background-color var(--glean-duration-fast) var(--glean-ease-enter), color var(--glean-duration-fast) var(--glean-ease-enter);
 }
 
 .glean-highlights__tools--scope button[aria-pressed="true"] {
     background: var(--b3-theme-surface);
-    color: var(--b3-theme-primary);
-    box-shadow: var(--glean-shadow-soft);
+    color: var(--glean-color-action);
+    font-weight: var(--glean-weight-semibold);
+    box-shadow: var(--glean-shadow-control);
 }
 
 .glean-highlights__tools--scope .glean-highlights__refresh {
@@ -166,6 +170,34 @@
     background: var(--b3-theme-background);
 }
 
+.glean-highlights__search-wrap {
+    display: inline-flex;
+    align-items: center;
+    position: relative;
+
+    input[type="search"] {
+        padding-right: 24px;
+    }
+
+    .glean-highlights__search-clear {
+        position: absolute;
+        right: 6px;
+        border: none;
+        background: transparent;
+        color: var(--b3-theme-on-surface);
+        opacity: 0.6;
+        cursor: pointer;
+        padding: 2px 4px;
+        font-size: 11px;
+        line-height: 1;
+
+        &:hover {
+            opacity: 1;
+            color: var(--lv-brand);
+        }
+    }
+}
+
 .glean-highlights__filters select {
     background: var(--b3-theme-background);
 }
@@ -257,31 +289,31 @@
     position: relative;
     overflow: hidden;
     padding: var(--glean-space-4);
-    border: 1px solid var(--glean-border-soft);
+    border: 1px solid color-mix(in srgb, var(--b3-border-color) 40%, transparent);
     border-radius: var(--glean-radius-lg);
     box-shadow: var(--glean-shadow-card);
 }
 
 .glean-highlights__item {
-    background: var(--glean-section-surface);
-    transition: border-color var(--glean-duration-fast) var(--glean-ease-out), box-shadow var(--glean-duration-fast) var(--glean-ease-out), transform var(--glean-duration-fast) var(--glean-ease-out);
-    border-left: 3px solid #EAB308;
+    background: var(--glean-card-surface);
+    transition: border-color var(--glean-duration-fast) var(--glean-ease-enter), box-shadow var(--glean-duration-fast) var(--glean-ease-enter), transform var(--glean-duration-fast) var(--glean-ease-enter);
+    border-left: 3px solid var(--glean-st-inbox);
 
-    &--color-yellow { border-left-color: #EAB308; }
-    &--color-red { border-left-color: #EF4444; }
-    &--color-blue { border-left-color: #3B82F6; }
-    &--color-green { border-left-color: #10B981; }
+    &--color-yellow { border-left-color: var(--glean-st-inbox); }
+    &--color-red { border-left-color: var(--b3-theme-error); }
+    &--color-blue { border-left-color: var(--glean-st-later); }
+    &--color-green { border-left-color: var(--glean-st-done); }
 }
 
 .glean-highlights__item:hover {
-    border-color: color-mix(in srgb, var(--glean-accent-b) 38%, var(--glean-border-soft));
-    box-shadow: var(--glean-shadow-float);
+    border-color: color-mix(in srgb, var(--glean-color-action) 35%, var(--glean-border-soft));
+    box-shadow: var(--glean-shadow-card-hover);
     transform: translateY(-1px);
 }
 
 .glean-highlights__item--cursor {
-    outline: 2px solid var(--glean-accent-b);
-    outline-offset: 2px;
+    outline: none;
+    box-shadow: var(--glean-shadow-card-hover), 0 0 0 2px color-mix(in srgb, var(--glean-color-action) 30%, transparent);
 }
 
 @media (forced-colors: active) {

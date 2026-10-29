@@ -1,7 +1,7 @@
 /* 微信公众号专属组件样式（WeChat Component Styles） */
 .glean-source-wechat {
-    color: #07c160;
-    font-weight: 500;
+    color: var(--glean-color-wechat);
+    font-weight: var(--glean-weight-medium);
     display: inline-flex;
     align-items: center;
 }
@@ -10,7 +10,7 @@
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: #07c160;
+    background: var(--glean-color-wechat);
     display: inline-block;
     margin-right: 4px;
     flex-shrink: 0;
@@ -21,8 +21,8 @@
     flex-direction: column;
     gap: var(--glean-space-1);
     padding: var(--glean-space-2) var(--glean-space-2-5);
-    background: color-mix(in srgb, #07c160 8%, var(--b3-theme-surface));
-    border: 1px solid color-mix(in srgb, #07c160 26%, var(--b3-border-color));
+    background: color-mix(in srgb, var(--glean-color-wechat) 8%, var(--b3-theme-surface));
+    border: 1px solid color-mix(in srgb, var(--glean-color-wechat) 26%, var(--b3-border-color));
     border-radius: var(--glean-radius);
     margin-bottom: var(--glean-space-1);
 }
@@ -39,7 +39,7 @@
     border-radius: 50%;
     object-fit: cover;
     flex-shrink: 0;
-    border: 1px solid color-mix(in srgb, #07c160 40%, transparent);
+    border: 1px solid color-mix(in srgb, var(--glean-color-wechat) 40%, transparent);
 }
 .glean-wechat-publisher__info {
     display: flex;
@@ -51,16 +51,16 @@
     display: inline-flex;
     align-items: center;
     gap: var(--glean-space-1);
-    font-size: 11px;
+    font-size: var(--glean-text-meta);
     font-weight: var(--glean-weight-semibold);
-    color: #07c160;
+    color: var(--glean-color-wechat);
 }
 
 .glean-wechat-publisher__dot {
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: #07c160;
+    background: var(--glean-color-wechat);
 }
 
 .glean-wechat-publisher__name-row {
@@ -114,7 +114,7 @@
 .glean-wechat-publisher__series {
     margin-top: var(--glean-space-1-5);
     padding-top: var(--glean-space-1-5);
-    border-top: 1px dashed color-mix(in srgb, #07c160 24%, var(--glean-border-soft));
+    border-top: 1px dashed color-mix(in srgb, var(--glean-color-wechat) 24%, var(--glean-border-soft));
     display: flex;
     flex-direction: column;
     gap: var(--glean-space-1);
@@ -142,27 +142,27 @@
     line-height: var(--glean-leading-compact);
     border-radius: var(--glean-radius-sm);
     color: var(--b3-theme-on-surface);
-    background: color-mix(in srgb, #07c160 6%, var(--b3-theme-surface));
-    border: 1px solid color-mix(in srgb, #07c160 18%, var(--b3-border-color));
+    background: color-mix(in srgb, var(--glean-color-wechat) 6%, var(--b3-theme-surface));
+    border: 1px solid color-mix(in srgb, var(--glean-color-wechat) 18%, var(--b3-border-color));
     cursor: pointer;
     transition: all var(--glean-duration-fast) ease;
 
     &:hover {
-        background: color-mix(in srgb, #07c160 14%, var(--b3-theme-surface));
-        border-color: #07c160;
+        background: color-mix(in srgb, var(--glean-color-wechat) 14%, var(--b3-theme-surface));
+        border-color: var(--glean-color-wechat);
         color: var(--b3-theme-on-background);
     }
 }
 
 .glean-mini-tag--series {
-    background: color-mix(in srgb, #07c160 12%, var(--b3-theme-surface));
-    color: color-mix(in srgb, #07c160 85%, var(--b3-theme-on-background));
-    border-color: color-mix(in srgb, #07c160 30%, transparent);
+    background: color-mix(in srgb, var(--glean-color-wechat) 12%, var(--b3-theme-surface));
+    color: color-mix(in srgb, var(--glean-color-wechat) 85%, var(--b3-theme-on-background));
+    border-color: color-mix(in srgb, var(--glean-color-wechat) 30%, transparent);
     font-weight: 600;
 
     &:hover {
-        background: color-mix(in srgb, #07c160 20%, var(--b3-theme-surface));
-        border-color: #07c160;
+        background: color-mix(in srgb, var(--glean-color-wechat) 20%, var(--b3-theme-surface));
+        border-color: var(--glean-color-wechat);
     }
 }
 
@@ -172,7 +172,7 @@
     border-radius: 50%;
     object-fit: cover;
     flex-shrink: 0;
-    border: 1px solid color-mix(in srgb, #07c160 40%, transparent);
+    border: 1px solid color-mix(in srgb, var(--glean-color-wechat) 40%, transparent);
 }
 
 /* 微信读书同步阅读向导弹窗样式（WeRead Guide Modal） */
@@ -289,7 +289,7 @@
 }
 
 .glean-weread-shelf-btn {
-    box-shadow: 0 2px 8px color-mix(in srgb, #07c160 25%, transparent);
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--glean-color-wechat) 25%, transparent);
 }
 
 .glean-weread-local-card {

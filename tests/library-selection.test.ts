@@ -208,6 +208,13 @@ test("实际批量状态：传输失败保留当前选择、解除忙态并允�
     await retry;
 });
 
+test("LibraryBatchBar 优先级与评分输入范围校验，DockPanel 批量更新后清空 selection 集合", () => {
+    assert.match(bar, /library\.batchRangeError/);
+    assert.match(bar, /showMessage\(t\(i18n, "library\.batchRangeError"\)/);
+    assert.match(dock, /async function batchSetPriority[\s\S]*?selection = new Set\(\)/);
+    assert.match(dock, /async function batchSetRating[\s\S]*?selection = new Set\(\)/);
+});
+
 test("实际批量状态：忙态与空选择阻止第二次提交", async () => {
     const current = batchHarness();
     const first = current.controls.batchApply("archived");

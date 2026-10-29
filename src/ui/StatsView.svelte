@@ -305,8 +305,11 @@ async function copyCompletedSummaryList(): Promise<void> {
         if (clip?.site) parts.push(`*来源: ${clip.site}*`);
         if (clip?.minutes) parts.push(`*⏱️ ${clip.minutes}m*`);
         if (clip?.tags?.length) parts.push(`#${clip.tags.join(" #")}`);
-        if (clip?.summary) parts.push(`\n  > ${clip.summary}`);
-        return parts.join(" · ");
+        let line = parts.join(" · ");
+        if (clip?.summary) {
+            line += `\n  > ${clip.summary.trim()}`;
+        }
+        return line;
     });
     try {
         await navigator.clipboard.writeText(lines.join("\n\n"));
@@ -610,14 +613,13 @@ function onWindowKeyDown(event: KeyboardEvent): void {
         <summary>{t(i18n, "review.completedList")}</summary>
         <section class="glean-stats__completed-section" aria-labelledby={idFor("completed-title")}>
             <h3 id={idFor("completed-title")} class="glean-sr-only">{t(i18n, "review.completedList")}</h3>
-            <div class="glean-stats__completed-header" style="display: flex; align-items: center; justify-content: space-between; gap: var(--glean-space-2); margin-bottom: var(--glean-space-2); flex-wrap: wrap;">
-                <div style="display: flex; align-items: center; gap: var(--glean-space-2); flex-wrap: wrap;">
-                    <div class="glean-stats__completed-search" style="display: inline-flex; align-items: center; position: relative;">
+            <div class="glean-stats__completed-header">
+                <div class="glean-stats__completed-header-search-wrap">
+                    <div class="glean-stats__completed-search">
                         <input
                             bind:this={searchInputEl}
                             type="search"
                             class="glean-stats__field"
-                            style="min-height: 32px; padding: 4px 8px; font-size: 12px; width: 220px; margin-top: 0;"
                             bind:value={completedSearch}
                             placeholder={t(i18n, "stats.searchCompletedPlaceholder")}
                             aria-label={t(i18n, "action.search")}
@@ -628,21 +630,32 @@ function onWindowKeyDown(event: KeyboardEvent): void {
                                 }
                             }}
                         />
+                        {#if completedSearch}
+                            <button
+                                type="button"
+                                class="glean-stats__search-clear"
+                                onclick={() => { completedSearch = ""; searchInputEl?.focus(); }}
+                                title={t(i18n, "library.clearFilters")}
+                                aria-label={t(i18n, "library.clearFilters")}
+                            >
+                                ✕
+                            </button>
+                        {/if}
                     </div>
                     {#if selectedDayDate}
-                        <div class="glean-stats__completed-filter-banner" role="status" style="margin-bottom: 0;">
+                        <div class="glean-stats__completed-filter-banner glean-stats__completed-filter-banner--tight" role="status">
                             <span>{t(i18n, "review.filterDay", { date: selectedDayDate })} ({visibleCompletedItems.length})</span>
                             <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm" onclick={() => selectedDayDate = ""}>{t(i18n, "review.clearDayFilter")}</button>
                         </div>
                     {/if}
                 </div>
                 {#if visibleCompletedItems.length > 0}
-                    <div style="display: inline-flex; align-items: center; gap: 4px; flex-wrap: wrap;">
+                    <div class="glean-stats__completed-header-actions">
                         <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm glean-stats__copy-completed-btn" onclick={() => void copyCompletedListMarkdown()} title="{t(i18n, 'stats.copyCompletedList')} (Y)">
-                            📋 {t(i18n, "stats.copyCompletedList")}
+                            {t(i18n, "stats.copyCompletedList")}
                         </button>
                         <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm glean-stats__copy-summary-btn" onclick={() => void copyCompletedSummaryList()} title="{t(i18n, 'stats.copyCompletedSummary')} (Shift+Y)">
-                            📝 {t(i18n, "stats.copyCompletedSummary")}
+                            {t(i18n, "stats.copyCompletedSummary")}
                         </button>
                         <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm glean-stats__copy-citations-btn" onclick={() => void copyCompletedListCitations("gbt")} title="{t(i18n, 'citation.copyGBT')} (C)">
                             📄 {t(i18n, "citation.copyGBT")}
@@ -667,7 +680,7 @@ function onWindowKeyDown(event: KeyboardEvent): void {
                     <li>
                         <button class="glean-stats__link" title={item.title || t(i18n, "review.untitled")} onclick={() => facade.openReadingDocument(item.id)}>{item.title || t(i18n, "review.untitled")}</button>
                         <span>{item.doneTime.slice(0, 4)}-{item.doneTime.slice(4, 6)}-{item.doneTime.slice(6, 8)}</span>
-                        <div class="glean-stats__completed-acts" style="display: inline-flex; align-items: center; gap: 4px; margin-left: 8px;">
+                        <div class="glean-stats__completed-acts">
                             <button type="button" class="glean-btn glean-btn--ghost glean-btn--xs" onclick={() => void copyCompletedBlockRef(item)} title={t(i18n, "action.copyBlockRef")}>
                                 🔗
                             </button>
@@ -718,6 +731,24 @@ function onWindowKeyDown(event: KeyboardEvent): void {
 </div>
 
 <style>
+    .glean-stats__completed-header-search-wrap {
+        display: flex;
+        align-items: center;
+        gap: var(--glean-space-2);
+        flex-wrap: wrap;
+    }
+
+    .glean-stats__completed-header-actions {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--glean-space-1);
+        flex-wrap: wrap;
+    }
+
+    .glean-stats__completed-filter-banner--tight {
+        margin-bottom: 0 !important;
+    }
+
     .glean-stats {
         min-height: 0;
         padding: 24px;

@@ -15,27 +15,28 @@
     align-items: center;
     gap: var(--glean-space-2, 8px);
     padding: var(--glean-space-2, 8px) var(--glean-space-2-5, 10px);
-    background: var(--glean-inset-surface, var(--b3-theme-surface));
-    border: 1px solid var(--glean-border-soft, var(--b3-border-color));
-    border-radius: var(--glean-radius-md, 8px);
+    background: var(--glean-card-surface, var(--b3-theme-surface));
+    border: 1px solid color-mix(in srgb, var(--b3-border-color) 40%, transparent);
+    border-radius: var(--glean-radius-md);
     cursor: pointer;
     text-align: left;
-    transition: all 150ms ease;
+    transition: transform var(--glean-duration-fast) var(--glean-ease-enter), border-color var(--glean-duration-fast) var(--glean-ease-enter), background-color var(--glean-duration-fast) var(--glean-ease-enter), box-shadow var(--glean-duration-fast) var(--glean-ease-enter);
     position: relative;
     color: inherit;
     font: inherit;
 }
 
 .glean-palette-card:hover {
-    border-color: var(--lv-brand);
-    background: color-mix(in srgb, var(--lv-brand) 6%, var(--b3-theme-surface));
+    border-color: var(--glean-color-action);
+    background: color-mix(in srgb, var(--glean-color-action) 6%, var(--b3-theme-surface));
     transform: translateY(-1px);
+    box-shadow: var(--glean-shadow-card);
 }
 
 .glean-palette-card--active {
-    border-color: var(--lv-brand);
-    background: color-mix(in srgb, var(--lv-brand) 12%, var(--b3-theme-surface));
-    box-shadow: 0 0 0 1px var(--lv-brand);
+    border-color: var(--glean-color-action);
+    background: color-mix(in srgb, var(--glean-color-action) 12%, var(--b3-theme-surface));
+    box-shadow: var(--glean-shadow-control), 0 0 0 2px color-mix(in srgb, var(--glean-color-action) 35%, transparent);
 }
 
 .glean-palette-preview {
@@ -48,7 +49,7 @@
     justify-content: flex-end;
     padding: 2px;
     box-sizing: border-box;
-    box-shadow: 0 1px 3px rgba(16, 24, 40, 0.25);
+    box-shadow: var(--glean-shadow-control);
 }
 
 .glean-palette-dot {
@@ -65,12 +66,12 @@
 
 .glean-palette-name {
     font-size: var(--glean-text-sm, 13px);
-    font-weight: 600;
+    font-weight: var(--glean-weight-semibold);
     color: var(--b3-theme-on-background);
 }
 
 .glean-palette-desc {
-    font-size: 11px;
+    font-size: var(--glean-text-meta);
     color: var(--b3-theme-on-surface);
     overflow: hidden;
     text-overflow: ellipsis;
@@ -78,9 +79,9 @@
 }
 
 .glean-palette-check {
-    font-weight: 700;
+    font-weight: var(--glean-weight-semibold);
     font-size: 12px;
-    color: var(--lv-brand);
+    color: var(--glean-color-action);
 }
 
 /* 阅读器与工作台快捷色盘微菜单 */
@@ -119,10 +120,10 @@
     right: 0;
     z-index: 100;
     background: var(--b3-theme-surface);
-    border: 1px solid var(--b3-border-color);
-    border-radius: var(--glean-radius-md, 8px);
+    border: 1px solid color-mix(in srgb, var(--b3-border-color) 45%, transparent);
+    border-radius: var(--glean-radius-md);
     padding: 4px;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
+    box-shadow: var(--glean-shadow-float);
     display: flex;
     flex-direction: column;
     gap: 2px;
@@ -137,25 +138,25 @@
     padding: 5px 8px;
     border: none;
     background: transparent;
-    border-radius: var(--glean-radius-sm, 4px);
+    border-radius: var(--glean-radius-sm);
     cursor: pointer;
     font-size: var(--glean-text-xs, 12px);
     color: var(--b3-theme-on-surface);
     text-align: left;
-    transition: all 120ms ease;
+    transition: background-color var(--glean-duration-fast) var(--glean-ease-enter), color var(--glean-duration-fast) var(--glean-ease-enter);
 }
 
 .glean-reader__palette-opt:hover,
 .glean-palette-quick-item:hover {
-    background: rgba(0, 0, 0, 0.06);
+    background: color-mix(in srgb, var(--b3-theme-on-surface) 8%, transparent);
     color: var(--b3-theme-on-background);
 }
 
 .glean-reader__palette-opt--active,
 .glean-palette-quick-item--active {
-    background: var(--glean-primary-soft, rgba(13, 148, 136, 0.12));
-    color: var(--lv-brand);
-    font-weight: 600;
+    background: var(--glean-primary-soft);
+    color: var(--glean-color-action);
+    font-weight: var(--glean-weight-semibold);
 }
 
 .glean-palette-dot-mini {

@@ -7,12 +7,12 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 4px 8px;
-    background: var(--b3-theme-surface, #fff);
-    border: 1px solid var(--b3-theme-surface-lighter, var(--b3-border-color));
-    border-radius: var(--b3-border-radius, 6px);
-    box-shadow: var(--b3-dialog-shadow, 0 4px 16px rgba(0, 0, 0, 0.15));
-    backdrop-filter: blur(8px);
+    padding: 4px 10px;
+    background: var(--glean-card-surface, #fff);
+    border: 1px solid color-mix(in srgb, var(--b3-border-color) 45%, transparent);
+    border-radius: var(--glean-radius-pill);
+    box-shadow: var(--glean-shadow-float);
+    backdrop-filter: blur(12px);
     font-size: var(--glean-text-xs, 12px);
 
     &__icon {
@@ -23,18 +23,23 @@
 
     &__input {
         width: 160px;
-        height: 24px;
+        height: 26px;
         padding: 0 6px;
         font-size: var(--glean-text-xs, 12px);
+        background: transparent;
+        border: none;
+        outline: none;
+        color: inherit;
     }
 
     &__count {
         min-width: 48px;
         text-align: center;
-        font-size: 11px;
+        font-size: var(--glean-text-meta);
         color: var(--b3-theme-on-surface);
         opacity: 0.8;
         user-select: none;
+        font-variant-numeric: tabular-nums;
 
         &--empty {
             color: var(--b3-theme-error, #e53935);
@@ -46,16 +51,31 @@
         width: 24px;
         height: 24px;
         padding: 0;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 11px;
+        display: inline-grid;
+        place-items: center;
+        font-size: var(--glean-text-meta);
         line-height: 1;
+        border-radius: var(--glean-radius-sm);
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        color: var(--b3-theme-on-surface);
+        transition: background-color var(--glean-duration-fast) var(--glean-ease-enter), color var(--glean-duration-fast) var(--glean-ease-enter), transform var(--glean-duration-fast) var(--glean-ease-enter);
+
+        &:hover {
+            background: color-mix(in srgb, var(--b3-theme-on-surface) 8%, transparent);
+            color: var(--b3-theme-on-background);
+            transform: scale(1.05);
+        }
+
+        &:active {
+            transform: scale(0.95);
+        }
 
         &--active {
-            color: var(--b3-theme-primary);
-            font-weight: bold;
-            background: var(--b3-theme-primary-lightest, rgba(0, 0, 0, 0.05));
+            color: var(--glean-color-action);
+            font-weight: var(--glean-weight-semibold);
+            background: var(--glean-primary-soft);
         }
 
         &--close {

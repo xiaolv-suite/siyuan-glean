@@ -164,6 +164,14 @@ async function onFileChosen(event: Event) {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file || busy) return;
+    const fileName = (file.name || "").toLowerCase();
+    const validExts = [".html", ".htm", ".csv", ".json", ".txt"];
+    const isSupported = validExts.some((ext) => fileName.endsWith(ext));
+    if (!isSupported) {
+        showMessage(t(i18n, "import.unsupportedExtension"), 3000);
+        input.value = "";
+        return;
+    }
     busy = true;
     preview = null;
     sourceFileName = file.name;
@@ -321,7 +329,7 @@ function handleWindowKeydown(event: KeyboardEvent): void {
 
 <div class="glean-migrate glean-import" class:glean-import--busy={busy} data-phase={phase} aria-labelledby={titleId} aria-describedby={descId} aria-busy={busy}>
     <!-- 保持同一文件控件：导入/完成/暂停切换不能遗留被卸载的绑定或失去下一次选择。 -->
-    <input bind:this={fileInput} type="file" accept=".html,.csv,.json,.txt" style="display:none" disabled={busy} onchange={(event) => void onFileChosen(event)} />
+    <input bind:this={fileInput} type="file" accept=".html,.htm,.csv,.json,.txt" class="glean-hidden-file-input" disabled={busy} onchange={(event) => void onFileChosen(event)} />
     <div class="glean-dlg-head glean-import__head">
         <div class="glean-brand__mark glean-dlg-head__mark">
             <svg aria-hidden="true"><use href="#iconGleanWheat" /></svg>
@@ -528,6 +536,9 @@ function handleWindowKeydown(event: KeyboardEvent): void {
 </div>
 
 <style>
+    .glean-hidden-file-input {
+        display: none;
+    }
     .glean-import-progress {
         display: grid;
         gap: var(--glean-space-2);

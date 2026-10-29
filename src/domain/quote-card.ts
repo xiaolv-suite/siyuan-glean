@@ -5,6 +5,7 @@ export interface QuoteCardSource {
     title?: string;
     author?: string;
     site?: string;
+    url?: string;
     color?: string;
     time?: string;
     docId?: string;

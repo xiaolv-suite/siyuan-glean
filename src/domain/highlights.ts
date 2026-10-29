@@ -62,10 +62,10 @@ export function filterHighlights(items: readonly HighlightItem[], filter: Highli
     const terms = (filter.search ?? "").trim().toLowerCase().split(/\s+/).filter(Boolean);
     const result = items.filter((item) => {
         if (filter.site && item.site !== filter.site) return false;
-        if (filter.tag && !item.tags.includes(filter.tag)) return false;
-        if (filter.aiTag && !item.aiTags.includes(filter.aiTag)) return false;
+        if (filter.tag && !(item.tags || []).includes(filter.tag)) return false;
+        if (filter.aiTag && !(item.aiTags || []).includes(filter.aiTag)) return false;
         if (filter.color && (item.color || "yellow") !== filter.color) return false;
-        const searchable = [item.text, item.title, item.site, item.url, ...item.tags, ...item.aiTags].join("\n").toLowerCase();
+        const searchable = [item.text, item.title, item.site, item.url, ...(item.tags || []), ...(item.aiTags || [])].join("\n").toLowerCase();
         return terms.every((term) => searchable.includes(term));
     });
     const field = filter.sort ?? "id";
@@ -77,8 +77,8 @@ export function highlightFacets(items: readonly HighlightItem[]): { sites: strin
     const unique = (values: string[]) => [...new Set(values.filter(Boolean))].sort(compareText);
     return {
         sites: unique(items.map((item) => item.site)),
-        tags: unique(items.flatMap((item) => item.tags)),
-        aiTags: unique(items.flatMap((item) => item.aiTags)),
+        tags: unique(items.flatMap((item) => item.tags || [])),
+        aiTags: unique(items.flatMap((item) => item.aiTags || [])),
     };
 }
 
@@ -139,7 +139,7 @@ export function safeHighlightCsvCell(value: string): string {
 
 export function renderHighlightsCsv(items: readonly HighlightItem[]): string {
     const headers = ["blockId", "rootId", "title", "text", "site", "userTags", "aiTags", "sourceUrl", "blockLink"];
-    const rows = items.map((item) => [item.id, item.rootId, item.title, item.text, item.site, item.tags.join(", "), item.aiTags.join(", "), item.url, highlightBlockLink(item.id)]);
+    const rows = items.map((item) => [item.id, item.rootId, item.title, item.text, item.site, (item.tags || []).join(", "), (item.aiTags || []).join(", "), item.url, highlightBlockLink(item.id)]);
     return [headers, ...rows].map((row) => row.map(safeHighlightCsvCell).join(",")).join("\r\n") + "\r\n";
 }
 

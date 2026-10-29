@@ -424,7 +424,7 @@ const WELL_KNOWN_SITE_NAMES: Record<string, string> = {
  * - 纯视图投影，不修改 custom-clip-site 文档属性。
  */
 export function displaySiteName(rawSite: string | undefined): string {
-    const site = String(rawSite ?? "").trim().toLowerCase().replace(/^www./, "");
+    const site = String(rawSite ?? "").trim().toLowerCase().replace(/^www\./, "");
     if (!site) return "";
     return WELL_KNOWN_SITE_NAMES[site] || site;
 }

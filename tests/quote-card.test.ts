@@ -57,9 +57,14 @@ test("QuoteCardDialog 键盘流与块引用支持契约（T-3511 / T-3525）", (
     assert.match(dialog, /e\.key === "4"/);
     assert.match(dialog, /copyCardImage\(\)/);
     assert.match(dialog, /saveCardImage\(\)/);
+    assert.match(dialog, /quoteCard\.savedImage/);
+    assert.match(dialog, /showMessage\(t\(i18n, "quoteCard\.savedImage"\)/);
     assert.match(dialog, /copyCardText\(\)/);
     assert.match(dialog, /copyCardBlockRef\(\)/);
-    assert.match(dialog, /copyCardCitation\(\)/);
+    assert.match(dialog, /copyCardCitation\("gbt"\)/);
+    assert.match(dialog, /copyCardCitation\("bibtex"\)/);
+    assert.match(dialog, /copyCardCitation\("apa"\)/);
+    assert.match(dialog, /copyCardCitation\("mla"\)/);
     assert.match(dialog, /activeFontSize/);
     assert.match(dialog, /showWatermark/);
     assert.match(dialog, /e\.key === "w"/);

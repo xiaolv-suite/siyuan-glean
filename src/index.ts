@@ -141,7 +141,9 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
 <symbol id="iconGleanCheck" viewBox="0 0 32 32"><path d="m5.5 16.7 2.2-2.2 5.3 5.3L24.3 8.5l2.2 2.2L13 24.2z"/></symbol>
 <symbol id="iconGleanAccordion" viewBox="0 0 32 32"><path d="M4 6h24v5H4V6zm0 7h24v4H4v-4zm0 6h24v4H4v-4zM7 8.5h3v0H7zm0 7h3v0H7zm0 6h3v0H7z"/></symbol>
 <symbol id="iconGleanCollapseAll" viewBox="0 0 32 32"><path d="m8 10 8 6 8-6-1.5-2L16 12.1 9.5 8zm0 14 8-6 8 6-1.5 2-6.5-4.9-6.5 4.9z"/></symbol>
-<symbol id="iconGleanExpandAll" viewBox="0 0 32 32"><path d="m8 14 8-6 8 6-1.5 2L16 11.1 9.5 16zm0 4 8 6 8-6-1.5-2-6.5 4.9-6.5-4.9z"/></symbol>`);
+<symbol id="iconGleanExpandAll" viewBox="0 0 32 32"><path d="m8 14 8-6 8 6-1.5 2L16 11.1 9.5 16zm0 4 8 6 8-6-1.5-2-6.5 4.9-6.5-4.9z"/></symbol>
+<symbol id="iconGleanCopy" viewBox="0 0 32 32"><path d="M9 4h14a2 2 0 0 1 2 2v3h-2.5V6.5H9.5v13H12V22H9a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><path d="M14 9h12a2 2 0 0 1 2 2v15a2 2 0 0 1-2 2H14a2 2 0 0 1-2-2V11a2 2 0 0 1 2-2zm0 2.5v14.5h12V11.5H14z"/></symbol>
+<symbol id="iconGleanDownload" viewBox="0 0 32 32"><path d="M16 4v14m-5-5 5 5 5-5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 22v3a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>`);
 
         // 设置只在此处加载一次；面板/弹窗都读这个缓存
         this.settings = await loadSettings(this);
@@ -864,8 +866,7 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
                 const id = parsed.searchParams.get("id");
                 if (id) this.openReadingDocument(id);
             } else if (action === "capture") {
-                const docId = this.currentDocId();
-                if (docId) void captureDocument(this, docId, { src: "manual" }).then(() => this.notifyDataChanged());
+                void this.addCurrentDocToLibrary();
             }
         } catch {
             // 忽略非标准 URL
@@ -1037,6 +1038,9 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
                     return captured < cutoff;
                 });
                 const result = await batchSetStatusDetailed(this, stale.map((clip) => clip.id), "archived");
+                if (result.ok > 0) {
+                    this.notifyDataChanged();
+                }
                 return {
                     structuredContent: { attempted: stale.length, archived: result.ok, failed: stale.length - result.ok, succeeded: result.succeeded },
                     result: "已归档 " + result.ok + " 篇超龄文章" + (result.ok < stale.length ? "，另有 " + (stale.length - result.ok) + " 篇失败" : ""),

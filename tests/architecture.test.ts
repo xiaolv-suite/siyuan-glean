@@ -41,3 +41,22 @@ test("UI 不直接出现 fetchPost/fetchSyncPost", () => {
         assert.ok(!/fetch(Sync)?Post/.test(source), `${file} 禁止直接 fetch 内核`);
     }
 });
+
+test("UI 消费的全部 #iconGlean* SVG 图标符号必须在 src/index.ts 中完整注册", () => {
+    const indexSource = readFileSync(resolve(root, "src/index.ts"), "utf8");
+    const registered = new Set<string>();
+    for (const match of indexSource.matchAll(/id="(iconGlean[^"]+)"/g)) {
+        registered.add(match[1]);
+    }
+    const uiFiles = [...walk(resolve(root, "src/ui"))].filter((file) => /\.(ts|svelte)$/.test(file));
+    const missing = new Set<string>();
+    for (const file of uiFiles) {
+        const source = readFileSync(file, "utf8");
+        for (const match of source.matchAll(/href="#(iconGlean[^"]+)"/g)) {
+            if (!registered.has(match[1])) {
+                missing.add(`${match[1]} (in ${file})`);
+            }
+        }
+    }
+    assert.equal(missing.size, 0, `发现未注册系统图标: ${[...missing].join(", ")}`);
+});

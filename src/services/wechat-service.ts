@@ -1,6 +1,7 @@
 import type { Plugin } from "siyuan";
 import { exportMdContent } from "../api/client";
 import { extractWechatAuthor, isWechatUrl, extractWechatDescription, extractWechatSeries, cleanWechatNoise, repairWechatContent } from "../domain/wechat";
+import { countWords, estimateMinutes } from "../domain/schema";
 import { readClip, writeClip } from "./clip-store";
 
 /**
@@ -30,17 +31,15 @@ export async function scanAndFillWechatAuthor(
     let existingSummary = "";
     let existingAiTags: string[] = [];
 
-    if (!targetUrl && !targetSite) {
-        try {
-            const clip = await readClip(docId);
-            if (clip.author?.trim()) return clip.author.trim();
-            targetUrl = clip.url;
-            targetSite = clip.site;
-            existingSummary = clip.summary || "";
-            existingAiTags = clip.aiTags || [];
-        } catch {
-            return null;
-        }
+    try {
+        const clip = await readClip(docId);
+        if (clip.author?.trim()) return clip.author.trim();
+        targetUrl = targetUrl || clip.url;
+        targetSite = targetSite || clip.site;
+        existingSummary = clip.summary || "";
+        existingAiTags = clip.aiTags || [];
+    } catch {
+        return null;
     }
 
     const isWechat = isWechatUrl(targetUrl) || isWechatUrl(targetSite);
@@ -196,9 +195,9 @@ export async function purifyWechatArticle(
             patch.aiTags = [...(clip.aiTags || []), detectedSeries];
         }
 
-        // 重新核算纯净字数与预估时间
-        const words = Math.max(0, cleaned.replace(/\s+/g, "").length);
-        const minutes = Math.max(1, Math.round(words / 400));
+        // 重新核算纯净字数与预估时间（使用标准领域函数）
+        const words = countWords(cleaned);
+        const minutes = estimateMinutes(words);
         patch.words = words;
         patch.minutes = minutes;
 

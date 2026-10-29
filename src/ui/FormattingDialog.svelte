@@ -155,7 +155,7 @@
             <button class="glean-btn glean-btn--ghost" disabled={busy} onclick={() => facade.openSettings()}>{t(i18n, "formatting.enable")}</button>
         {/if}
         {#if isWechat}
-            <span class="glean-wechat-publisher__badge" style="margin-left: auto;">
+            <span class="glean-wechat-publisher__badge glean-formatting__wechat-badge">
                 <span class="glean-wechat-publisher__dot"></span>
                 {t(i18n, "formatting.wechatRepaired")}
             </span>
@@ -208,6 +208,7 @@
 </div>
 
 <style>
+    .glean-formatting__wechat-badge { margin-left: auto; }
     .glean-formatting { width: 100%; min-width: 0; padding: var(--glean-space-4); box-sizing: border-box; overflow: auto; color: var(--b3-theme-on-background); }
     .glean-formatting__head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--glean-space-3); margin-bottom: var(--glean-space-3); padding: var(--glean-space-3) var(--glean-space-4); border: 1px solid var(--glean-border-soft); border-radius: var(--glean-radius-md); background: var(--glean-grad-soft); box-shadow: var(--glean-shadow-card); }
     .glean-formatting__head h3 { margin: 0; font-size: var(--glean-text-xl); line-height: 1.35; }

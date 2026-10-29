@@ -108,7 +108,7 @@
                 <option value="long">{t(i18n, "library.readingTimeLong")}</option>
             </select>
         </label>
-        <label class="glean-action-popover__field" style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;">
+        <label class="glean-action-popover__field glean-action-popover__checkbox-field">
             <input type="checkbox" bind:checked={favoriteOnly} />
             <span>❤️ {t(i18n, "roaming.favoriteOnly")}</span>
         </label>
@@ -120,3 +120,13 @@
     </ActionPopover>
     {#if hasFilters}<button type="button" class="glean-filter-clear" onclick={onClear}>{t(i18n, "library.clearFilters")}</button>{/if}
 </div>
+
+<style>
+    .glean-action-popover__checkbox-field {
+        display: flex;
+        align-items: center;
+        gap: var(--glean-space-2);
+        cursor: pointer;
+        user-select: none;
+    }
+</style>

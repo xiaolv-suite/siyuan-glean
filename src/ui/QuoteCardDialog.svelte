@@ -13,7 +13,7 @@
         type QuoteCardSource,
         type QuoteCardTheme,
     } from "../domain/quote-card";
-    import { formatCitation, type CitationItem } from "../domain/citation";
+    import { formatCitation, type CitationFormat, type CitationItem } from "../domain/citation";
 
     interface Props {
         facade: GleanFacade;
@@ -217,7 +217,11 @@
         try {
             const canvas = renderCardToCanvas();
             canvas.toBlob((blob) => {
-                if (!blob) return;
+                if (!blob) {
+                    showMessage(t(i18n, "msg.actionFailed"), 2500);
+                    downloading = false;
+                    return;
+                }
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement("a");
                 a.href = url;
@@ -226,10 +230,12 @@
                 a.click();
                 a.remove();
                 setTimeout(() => URL.revokeObjectURL(url), 1000);
+                showMessage(t(i18n, "quoteCard.savedImage"), 2500);
                 downloading = false;
             }, "image/png");
         } catch (error) {
             console.warn("[LvGlean] 保存金句卡片图片失败:", error);
+            showMessage(t(i18n, "msg.actionFailed"), 2500);
             downloading = false;
         }
     }
@@ -256,19 +262,20 @@
         }
     }
 
-    async function copyCardCitation(): Promise<void> {
+    async function copyCardCitation(format: CitationFormat = "gbt"): Promise<void> {
         const item: CitationItem = {
             id: source.docId || "",
             title: source.title || "",
             author: source.author,
             site: source.site,
-            url: "",
+            url: source.url || "",
             time: source.time,
         };
-        const text = formatCitation(item, "gbt");
+        const text = formatCitation(item, format);
+        const msgKey = format === "bibtex" ? "citation.bibtexCopied" : (format === "apa" ? "citation.apaCopied" : (format === "mla" ? "citation.mlaCopied" : "citation.gbtCopied"));
         try {
             await navigator.clipboard.writeText(text);
-            showMessage(t(i18n, "citation.gbtCopied"), 2000);
+            showMessage(t(i18n, msgKey), 2000);
         } catch {
             showMessage(t(i18n, "msg.actionFailed"), 2000);
         }
@@ -291,11 +298,15 @@
             e.preventDefault();
             activeThemeKey = "minimal";
         } else if ((e.key === "c" || e.key === "C") && (e.ctrlKey || e.metaKey)) {
+            if (typeof window !== "undefined" && window.getSelection()?.toString().trim()) {
+                return;
+            }
             e.preventDefault();
             void copyCardImage();
         } else if (e.altKey && (e.key === "c" || e.key === "C")) {
             e.preventDefault();
-            void copyCardCitation();
+            if (e.shiftKey) void copyCardCitation("bibtex");
+            else void copyCardCitation("gbt");
         } else if ((e.key === "c" || e.key === "C") && !e.altKey && !e.ctrlKey && !e.metaKey) {
             e.preventDefault();
             if (e.shiftKey) void copyCardText();
@@ -456,15 +467,39 @@
             <button
                 type="button"
                 class="glean-btn glean-btn--ghost glean-quote-card-btn"
-                onclick={() => void copyCardCitation()}
+                onclick={() => void copyCardCitation("gbt")}
                 title="{t(i18n, 'citation.copyGBT')} (Alt+C)"
             >
-                <span>📄 {t(i18n, "citation.copyGBT")}</span>
+                <span>📄 GB/T</span>
+            </button>
+            <button
+                type="button"
+                class="glean-btn glean-btn--ghost glean-quote-card-btn"
+                onclick={() => void copyCardCitation("bibtex")}
+                title="{t(i18n, 'citation.copyBibTeX')} (Alt+Shift+C)"
+            >
+                <span>📚 BibTeX</span>
+            </button>
+            <button
+                type="button"
+                class="glean-btn glean-btn--ghost glean-quote-card-btn"
+                onclick={() => void copyCardCitation("apa")}
+                title="{t(i18n, 'citation.copyAPA')}"
+            >
+                <span>🎓 APA</span>
+            </button>
+            <button
+                type="button"
+                class="glean-btn glean-btn--ghost glean-quote-card-btn"
+                onclick={() => void copyCardCitation("mla")}
+                title="{t(i18n, 'citation.copyMLA')}"
+            >
+                <span>📖 MLA</span>
             </button>
         {/if}
     </div>
 
-    <div class="glean-kbdhint" style="margin-top: 2px; justify-content: center;">
+    <div class="glean-kbdhint glean-quote-card-kbdhint">
         <span class="glean-kbdhint__keys" aria-hidden="true">
             <kbd>1-4</kbd> {t(i18n, "reader.appearanceTheme")}
             <kbd>[</kbd><kbd>]</kbd> {t(i18n, "quoteCard.fontSm")}/{t(i18n, "quoteCard.fontLg")}
@@ -473,12 +508,17 @@
             <kbd>Shift+C</kbd> {t(i18n, "quoteCard.copyText")}
             <kbd>S</kbd> {t(i18n, "quoteCard.saveImage")}
             {#if source.blockId || source.docId}<kbd>Y</kbd> {t(i18n, "action.copyBlockRef")}{/if}
-            {#if source.title}<kbd>Alt+C</kbd> {t(i18n, "citation.copyGBT")}{/if}
+            {#if source.title}<kbd>Alt+C</kbd> GB/T <kbd>Alt+Shift+C</kbd> BibTeX{/if}
         </span>
     </div>
 </div>
 
 <style>
+    .glean-quote-card-kbdhint {
+        margin-top: var(--glean-space-micro);
+        justify-content: center;
+    }
+
     .glean-quote-card-dialog {
         display: flex;
         flex-direction: column;
@@ -566,7 +606,8 @@
         background: color-mix(in srgb, var(--lv-brand) 12%, var(--b3-theme-surface));
         color: var(--lv-brand);
         font-weight: var(--glean-weight-semibold);
-        border-color: color-mix(in srgb, var(--lv-brand) 28%, transparent);
+        border-color: var(--lv-brand);
+        box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--lv-brand) 40%, transparent);
     }
 
     .glean-quote-card-theme-preview {

@@ -1484,10 +1484,10 @@ async function doMountBoard() {
 
     .glean-settings__section > .glean-set-group {
         min-width: 0;
-        border: 1px solid var(--glean-border-soft);
-        border-radius: 18px;
-        background: var(--b3-theme-background);
-        box-shadow: none;
+        border: 1px solid color-mix(in srgb, var(--b3-border-color) 40%, transparent);
+        border-radius: var(--glean-radius-lg);
+        background: var(--glean-card-surface);
+        box-shadow: var(--glean-shadow-card);
     }
 
     .glean-settings__section .glean-set-row {
@@ -1496,7 +1496,7 @@ async function doMountBoard() {
         padding: var(--glean-space-4) var(--glean-space-5);
         font-size: 14px;
         line-height: 1.65;
-        border-color: var(--glean-border-soft);
+        border-color: color-mix(in srgb, var(--b3-border-color) 30%, transparent);
         box-shadow: none;
     }
 
@@ -1519,10 +1519,18 @@ async function doMountBoard() {
 
     .glean-settings .glean-mini-input,
     .glean-settings .b3-select {
-        min-height: 40px;
-        border-radius: var(--glean-radius-md);
+        min-height: 38px;
+        border-radius: var(--glean-radius-sm);
         background: var(--b3-theme-background);
+        border: 1px solid color-mix(in srgb, var(--b3-border-color) 50%, transparent);
         font-size: 13px;
+        transition: border-color var(--glean-duration-fast) var(--glean-ease-enter), box-shadow var(--glean-duration-fast) var(--glean-ease-enter);
+    }
+
+    .glean-settings .glean-mini-input:focus,
+    .glean-settings .b3-select:focus {
+        border-color: var(--glean-color-action);
+        box-shadow: var(--glean-shadow-focus);
     }
 
     .glean-settings .glean-nb-wrap {
@@ -1533,11 +1541,20 @@ async function doMountBoard() {
     .glean-settings .glean-nb {
         min-height: 36px;
         max-width: 100%;
-        padding: 6px 12px;
-        border-radius: var(--glean-radius-md);
+        padding: 6px 14px;
+        border-radius: var(--glean-radius-sm);
         font-size: 13px;
         line-height: 1.5;
-        overflow-wrap: anywhere;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        mask-image: linear-gradient(to right, #000 88%, transparent 100%);
+        -webkit-mask-image: linear-gradient(to right, #000 88%, transparent 100%);
+        transition: transform var(--glean-duration-fast) var(--glean-ease-enter), background-color var(--glean-duration-fast) var(--glean-ease-enter), border-color var(--glean-duration-fast) var(--glean-ease-enter);
+
+        &:hover {
+            transform: translateY(-1px);
+        }
     }
 
     .glean-settings__extension-card {
@@ -1553,12 +1570,12 @@ async function doMountBoard() {
         height: 24px;
         margin: 0;
         flex: 0 0 auto;
-        border: 1px solid var(--glean-border-soft);
-        border-radius: 999px;
+        border: 1px solid color-mix(in srgb, var(--b3-border-color) 50%, transparent);
+        border-radius: var(--glean-radius-pill);
         background: var(--glean-inset-surface);
         box-shadow: none;
         cursor: pointer;
-        transition: background-color 160ms var(--glean-ease-out), border-color 160ms var(--glean-ease-out);
+        transition: background-color var(--glean-duration-fast) var(--glean-ease-enter), border-color var(--glean-duration-fast) var(--glean-ease-enter);
     }
 
     .glean-settings__ai-toggle input[type="checkbox"]::after {
@@ -1570,13 +1587,13 @@ async function doMountBoard() {
         height: 16px;
         border-radius: 50%;
         background: var(--b3-theme-on-surface);
-        box-shadow: none;
-        transition: transform 160ms var(--glean-ease-out), background-color 160ms var(--glean-ease-out);
+        box-shadow: var(--glean-shadow-control);
+        transition: transform var(--glean-duration-fast) var(--glean-ease-enter), background-color var(--glean-duration-fast) var(--glean-ease-enter);
     }
 
     .glean-settings__ai-toggle input[type="checkbox"]:checked {
-        border-color: color-mix(in srgb, var(--b3-theme-primary) 58%, var(--glean-border-soft));
-        background: var(--b3-theme-primary);
+        border-color: var(--glean-color-action);
+        background: var(--glean-color-action);
         box-shadow: none;
     }
 
@@ -1586,8 +1603,8 @@ async function doMountBoard() {
     }
 
     .glean-settings__ai-toggle input[type="checkbox"]:focus-visible {
-        outline: 2px solid var(--b3-theme-primary);
-        outline-offset: 2px;
+        outline: none;
+        box-shadow: var(--glean-shadow-focus);
     }
 
     .glean-settings__ai-toggle input[type="checkbox"]:disabled {
