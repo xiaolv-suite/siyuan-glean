@@ -67,6 +67,15 @@ This release implements floating margin notes in the reader editor for same-focu
 - **Floating Margin Notes (Margin Notes)**: Highlights and user thoughts float as sticky note bubbles along the right margin; clicking a note smoothly scrolls to the source block with pulse focus.
 - **Toggle Margin Notes (Alt+M)**: The reader toolbar offers a dedicated toggle action (Alt+M) to collapse or reveal margin notes at will.
 
+## v1.3.97 update (2026-10-29)
+
+This release implements direct global search navigation from Today's Resurface (/ and Ctrl+F), UI search button, and complete multi-panel search integration.
+
+**New features & improvements:**
+
+- **Today's Resurface Instant Search Access (T-3532)**: Pressing `/` or `Ctrl+F` / `Cmd+F` in Today's Resurface view immediately navigates to the library search bar with text pre-selected.
+- **Search Action Button & Shortcut Hints (T-3532)**: Adds a persistent "🔍 Search" action button to the streak banner and updates `glean-kbdhint` with `<kbd>/</kbd> Search`, finalizing a unified search workflow across all four primary panels.
+
 ## v1.3.96 update (2026-10-29)
 
 This release implements instant keyword search, keyboard focus (/ and Ctrl+F), and Escape clearing in completed reading review list.

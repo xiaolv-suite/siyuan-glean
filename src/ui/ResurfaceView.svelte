@@ -509,6 +509,16 @@ function reasonText(reason: SurfaceReason): string {
 
 function onWindowKeyDown(event: KeyboardEvent): void {
     if (event.defaultPrevented || event.isComposing || event.keyCode === 229 || event.repeat) return;
+    if ((event.ctrlKey || event.metaKey) && (event.key === "f" || event.key === "F")) {
+        const target = event.target instanceof Element ? event.target : null;
+        const textEntry = Boolean(target?.closest("input, textarea, select, [contenteditable]:not([contenteditable='false'])"));
+        if (!textEntry && onQuickSearch) {
+            event.preventDefault();
+            event.stopPropagation();
+            onQuickSearch();
+            return;
+        }
+    }
     if (event.key === "Escape") {
         if (undoNotice && undoingId !== undoNotice.id) {
             event.preventDefault();
@@ -583,6 +593,14 @@ function handleResurfaceShortcut(event: KeyboardEvent): void {
         }
     }
     if (!action) return;
+    if (action.type === "focusSearch") {
+        if (onQuickSearch) {
+            event.preventDefault();
+            event.stopPropagation();
+            onQuickSearch();
+            return;
+        }
+    }
     if (action.type === "move") {
         event.preventDefault();
         event.stopPropagation();
@@ -882,6 +900,11 @@ function focusCard(id: string): void {
                         🎲 {t(i18n, "roaming.button")}
                     </button>
                 {/if}
+                {#if onQuickSearch}
+                    <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm" title="{t(i18n, 'action.search')} (/)" onclick={onQuickSearch}>
+                        🔍 {t(i18n, "action.search")}
+                    </button>
+                {/if}
                 <div class="glean-surf-stepper" role="group" aria-label={t(i18n, "resurface.weeklyStepper")}>
                     {#each recent7Days as step (step.date)}
                         <div class="glean-surf-step" class:glean-surf-step--done={step.completed} class:glean-surf-step--today={step.isToday} title={`${step.date}: ${step.completed ? '已完成' : (step.isToday ? '今日待读' : '未读')}`}>
@@ -975,6 +998,7 @@ function focusCard(id: string): void {
                     <kbd>E</kbd> {t(i18n, "resurface.archive")}
                     <kbd>H</kbd> {t(i18n, "resurface.replace")}
                     <kbd>B</kbd> {t(i18n, "roaming.button")}
+                    <kbd>/</kbd> {t(i18n, "action.search")}
                     <kbd>F</kbd> {t(i18n, "roaming.favoriteAction")}
                     <kbd>T</kbd> {t(i18n, "resurface.shortcutPin")}
                     <kbd>Y</kbd> {t(i18n, "action.copyBlockRef")}

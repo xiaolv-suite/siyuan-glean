@@ -1,5 +1,17 @@
 # 更新日志（CHANGELOG）
 
+## v1.3.97（2026-10-29）
+
+### 今日拾遗首页全局检索直通（/ 与 Ctrl+F/Cmd+F）、检索按键与指引全表面大圆满
+
+- **今日拾遗全局检索快捷直通（T-3532）**：
+  - `src/ui/ResurfaceView.svelte` 键盘监听接入 `/` 键与 `Ctrl+F` / `Cmd+F` 快捷键，通过 `onQuickSearch` 秒级切换至读库检索工作台并自动全选文本；
+  - `src/ui/DockPanel.svelte` 增强 `openLibrarySearchFromHome`，在视图切换与重算后自动通过 `tick` 聚焦检索框；
+  - 今日拾遗打卡横幅（`glean-surf-banner`）增设常驻「🔍 检索」按钮，底部键位提示条同步呈现 `<kbd>/</kbd> 检索`；
+  - 至此，读库工作台（`DockPanel`）、摘录墙（`HighlightView`）、阅读统计（`StatsView`）与今日拾遗（`ResurfaceView`）四大核心面板实现全键盘 `/` 与 `Ctrl+F` 快速检索 100% 贯通；
+- **本地纯净交付保障**：
+  - 严格保持本地更新构建，不执行任何外部推送，待作者账号解封通知后统一处理。
+
 ## v1.3.96（2026-10-29）
 
 ### 阅读统计已完成清单关键词即时检索、全键盘聚焦（/ 与 Ctrl+F）与清空交互闭环

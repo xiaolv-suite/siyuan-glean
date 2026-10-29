@@ -2930,3 +2930,17 @@ T-3416 承接方向五（有依据的阅读 AI）与同类产品对标（Readwis
    - 底部常驻 `glean-kbdhint` 键位指引条，对齐读库工作台与摘录墙的操作直觉；
 3. 严格本地交付保障：
    - 严格在本地完成构建和测试，不执行任何外部推送与远程 API 调用。
+
+## D-0410（2026-10-29）今日拾遗首页全局检索直通（/ 与 Ctrl+F/Cmd+F）、检索按键与指引全表面大圆满（T-3532）
+
+实现全插件四大主视图全局检索流的彻底贯通与体验一致性：
+1. 今日拾遗全局检索按键直通（`src/ui/ResurfaceView.svelte`）：
+   - `onWindowKeyDown` 拦截 `Ctrl+F` / `Cmd+F`，`handleResurfaceShortcut` 响应 `action.type === "focusSearch"`（`/` 键）；
+   - 触发时通过 `onQuickSearch` 顺畅切回读库搜索面板并自动聚焦；
+2. 检索聚焦体验增强（`src/ui/DockPanel.svelte`）：
+   - `openLibrarySearchFromHome` 增加 `tick` 后的输入框获焦与文本全选，打通从首页到搜索框的无缝链路；
+3. UI 按钮与键位提示完善（`src/ui/ResurfaceView.svelte`）：
+   - 横幅区增设「🔍 检索」操作按钮，底部 `glean-kbdhint` 同步追加 `<kbd>/</kbd> 检索` 键位提示；
+   - 全插件读库工作台（`DockPanel`）、摘录墙（`HighlightView`）、阅读统计（`StatsView`）与今日拾遗（`ResurfaceView`）四大核心视图全键盘检索 100% 达成；
+4. 严格本地交付保障：
+   - 严格在本地完成构建和测试，不执行任何外部推送与远程 API 调用。

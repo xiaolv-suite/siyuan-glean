@@ -711,6 +711,10 @@ function openLibrarySearchFromHome(): void {
     clearFilters();
     authorTimeline = true;
     searchOpen = true;
+    void tick().then(() => {
+        searchInput?.focus();
+        searchInput?.select();
+    });
 }
 
 function clearFilters(): void {

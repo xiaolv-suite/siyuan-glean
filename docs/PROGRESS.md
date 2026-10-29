@@ -1,5 +1,13 @@
 # 进度（PROGRESS）
 
+## T-3532 今日拾遗首页全局检索直通（/ 与 Ctrl+F/Cmd+F）、检索按键与指引全表面大圆满（2026-10-29）
+
+- [x] 今日拾遗全局检索按键直通：`src/ui/ResurfaceView.svelte` 键盘监听接入 `/` 键与 `Ctrl+F` / `Cmd+F`，通过 `onQuickSearch` 秒级切换至读库检索工作台并自动全选文本；
+- [x] 检索聚焦体验增强：`src/ui/DockPanel.svelte` 增强 `openLibrarySearchFromHome`，在视图切换与重算后自动通过 `tick` 聚焦检索框并全选已有内容；
+- [x] UI 按钮与键位提示完善：今日拾遗横幅区增设「🔍 检索」操作按钮，底部 `glean-kbdhint` 同步追加 `<kbd>/</kbd> 检索` 键位提示，四大视图（工作台、摘录、统计、今日拾遗）全键盘检索 100% 达成；
+- [x] 遵照指令本地闭环交付：本地完成 v1.3.97 打包与构建，本轮严格不推送到 GitHub，不调用任何远程接口，等用户通知解封后再行统一推送与发布；
+- [x] 门禁全通：全套单测（1733/1733）、`pnpm check` 0 错误 0 警告，发布门禁与性能基线通过。
+
 ## T-3531 阅读统计已完成清单关键词即时检索、全键盘聚焦（/ 与 Ctrl+F）与清空交互闭环（2026-10-29）
 
 - [x] 已读文章多维检索纯函数：`src/domain/stats.ts` 导出 `filterCompletedItems` 纯函数，支持日期分桶（`dateStamp`）与模糊检索（`search`），覆盖标题、作者、站点域名、用户标签与 AI 标签全字段匹配；原 `filterCompletedItemsByDate` 保持委托调用；

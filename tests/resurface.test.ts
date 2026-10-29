@@ -262,6 +262,10 @@ test("ResurfaceView 接线：今日拾遗桌面端全键盘分拣流（T-3400）
     assert.match(view, /openOrTakePickSnapshot/);
     assert.match(view, /togglePickFavorite/);
     assert.match(view, /<kbd>F<\/kbd>/);
+    assert.match(view, /<kbd>\/<\/kbd>/);
+    assert.match(view, /action\.type === "focusSearch"/);
+    assert.match(view, /onQuickSearch\(\)/);
+    assert.match(view, /event\.key === "f" \|\| event\.key === "F"/);
     assert.match(view, /<kbd>C<\/kbd>/);
     assert.match(view, /<kbd>Shift\+C<\/kbd> BibTeX/);
     assert.match(view, /<kbd>S<\/kbd>/);
