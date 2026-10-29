@@ -14,7 +14,7 @@ import type { GleanIndex } from "../services/index-store";
 import { buildReadingReview, previewReadingReview, resolveUnknownReadingReview, saveReadingReviewReport, type ReadingReviewSession } from "../services/stats-service";
 import { exportSelectedClipsCsv } from "../services/library-export-service";
 import { buildReadingReviewMarkdown, computeConversionFunnel, computeReadingMilestones, filterCompletedItems, parseReviewDate, reviewDateInput, type ReadingReviewLabels, type ReviewPeriodKind } from "../domain/stats";
-import { formatBibTeX, formatGBT7714, formatCitation, type CitationFormat, type CitationItem } from "../domain/citation";
+import { formatBibTeX, formatGBT7714, formatCitation, citationSuccessKey, type CitationFormat, type CitationItem } from "../domain/citation";
 
 interface Props {
     facade: GleanFacade;
@@ -230,7 +230,7 @@ async function copyCompletedCitation(item: { id: string; title: string }, format
         time: clip?.time,
     };
     const citText = formatCitation(citItem, format);
-    const msgKey = format === "bibtex" ? "citation.bibtexCopied" : (format === "apa" ? "citation.apaCopied" : "citation.gbtCopied");
+    const msgKey = citationSuccessKey(format);
     try {
         await navigator.clipboard.writeText(citText);
         showMessage(t(i18n, msgKey), 2000);
@@ -256,12 +256,20 @@ async function copyCompletedListCitations(format: CitationFormat = "gbt"): Promi
             blocks.push(formatBibTeX(citItem));
         } else if (format === "apa") {
             blocks.push(`[${indexNum + 1}] ${formatCitation(citItem, "apa")}`);
+        } else if (format === "mla") {
+            blocks.push(`[${indexNum + 1}] ${formatCitation(citItem, "mla")}`);
         } else {
             blocks.push(`[${indexNum + 1}] ${formatGBT7714(citItem)}`);
         }
     });
     const sep = format === "bibtex" ? "\n\n" : "\n";
-    const msgKey = format === "bibtex" ? "library.batchBibtexCopied" : (format === "apa" ? "library.batchApaCopied" : "library.batchCitationsCopied");
+    const msgKey = format === "bibtex"
+        ? "library.batchBibtexCopied"
+        : (format === "apa"
+            ? "library.batchApaCopied"
+            : (format === "mla"
+                ? "library.batchMlaCopied"
+                : "library.batchCitationsCopied"));
     try {
         await navigator.clipboard.writeText(blocks.join(sep));
         showMessage(t(i18n, msgKey, { n: visibleCompletedItems.length }), 2500);

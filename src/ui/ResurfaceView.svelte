@@ -5,7 +5,7 @@ import { openTab, showMessage } from "siyuan";
 import { onDestroy, tick } from "svelte";
 import type { GleanFacade } from "../types";
 import { t } from "../libs/i18n";
-import { formatCitation, type CitationFormat, type CitationItem } from "../domain/citation";
+import { formatCitation, citationSuccessKey, type CitationFormat, type CitationItem } from "../domain/citation";
 import { snapshotClip } from "../services/snapshot-service";
 import { actOnSurface, computeDailyFromIndex, pickSurfaceReplacementFromIndex, setSurfacePinned, undoSurfaceAction, type SurfaceAction, type SurfaceUndoToken } from "../services/resurface-service";
 import type { GleanIndex } from "../services/index-store";
@@ -189,7 +189,7 @@ async function copyPickCitation(pick: SurfaceDisplayPick, format: CitationFormat
         time: raw?.time || pick.item.time,
     };
     const citText = formatCitation(citItem, format);
-    const msgKey = format === "bibtex" ? "citation.bibtexCopied" : (format === "apa" ? "citation.apaCopied" : "citation.gbtCopied");
+    const msgKey = citationSuccessKey(format);
     try {
         if (navigator?.clipboard?.writeText) {
             await navigator.clipboard.writeText(citText);

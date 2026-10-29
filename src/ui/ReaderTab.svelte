@@ -62,7 +62,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
     import { saveReadPoint } from "../services/clip-store";
     import { pickRoamingArticle } from "../domain/roaming";
     import { openRoamingDialog } from "./roaming-dialog";
-import { formatCitation, type CitationFormat } from "../domain/citation";
+import { formatCitation, citationSuccessKey, type CitationFormat } from "../domain/citation";
 import { formatHighlightShare, formatHighlightTime } from "../domain/highlights";
     import { estimateReadingPercentage } from "../domain/reading-position";
     import { findMatchingOutlineItemId, type OutlineItem } from "../domain/outline";
@@ -869,7 +869,7 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
             time: context.time,
         };
         const text = formatCitation(item, format);
-        const msgKey = format === "bibtex" ? "citation.bibtexCopied" : (format === "apa" ? "citation.apaCopied" : "citation.gbtCopied");
+        const msgKey = citationSuccessKey(format);
         try {
             await navigator.clipboard.writeText(text);
             showMessage(t(i18n, msgKey), 2500);

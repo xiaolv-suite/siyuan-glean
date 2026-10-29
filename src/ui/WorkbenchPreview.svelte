@@ -16,7 +16,7 @@
     import ProtyleHost from "./ProtyleHost.svelte";
     import AuthorEditor from "./AuthorEditor.svelte";
     import { exportArticleMarkdown } from "../services/library-export-service";
-    import { formatBibTeX, formatCitation, type CitationFormat } from "../domain/citation";
+    import { formatBibTeX, formatCitation, citationSuccessKey, type CitationFormat } from "../domain/citation";
     import { pickRoamingArticle } from "../domain/roaming";
     import { openRoamingDialog } from "./roaming-dialog";
     import { isWechatUrl, displayWechatAuthor } from "../domain/wechat";
@@ -246,7 +246,7 @@
             time: attrs?.time || (entry.kind === "clip" ? entry.time : ""),
         };
         const text = format === "bibtex" ? formatBibTeX(item) : formatCitation(item, format);
-        const msgKey = format === "bibtex" ? "citation.bibtexCopied" : (format === "apa" ? "citation.apaCopied" : "citation.gbtCopied");
+        const msgKey = citationSuccessKey(format);
         try {
             await navigator.clipboard.writeText(text);
             showMessage(t(i18n, msgKey), 2500);

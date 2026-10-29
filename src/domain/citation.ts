@@ -27,8 +27,9 @@ function extractYear(timeStr?: string): string {
     return m ? m[1] : String(new Date().getFullYear());
 }
 
-function extractFullDate(timeStr?: string): string {
-    if (!timeStr) return new Date().toISOString().slice(0, 10);
+function extractFullDate(timeStr?: string, fallbackNow = new Date()): string {
+    const validNow = fallbackNow instanceof Date && !Number.isNaN(fallbackNow.getTime()) ? fallbackNow : new Date();
+    if (!timeStr) return validNow.toISOString().slice(0, 10);
     const cleaned = timeStr.trim().replace(/[-/.]/g, "");
     if (cleaned.length >= 8) {
         return `${cleaned.slice(0, 4)}-${cleaned.slice(4, 6)}-${cleaned.slice(6, 8)}`;
@@ -68,8 +69,9 @@ export function formatGBT7714(item: CitationItem, now = new Date()): string {
     const author = item.author?.trim() || "佚名";
     const title = item.title?.trim() || "无标题";
     const site = item.site?.trim() || "网络资源";
-    const pubDate = extractFullDate(item.time);
-    const accessDate = now.toISOString().slice(0, 10);
+    const pubDate = extractFullDate(item.time, now);
+    const validNow = now instanceof Date && !Number.isNaN(now.getTime()) ? now : new Date();
+    const accessDate = validNow.toISOString().slice(0, 10);
     const url = item.url?.trim() || "";
 
     return `${author}. ${title}[EB/OL]. ${site}, ${pubDate}[${accessDate}].${url ? ` ${url}` : ""}`;
@@ -102,6 +104,23 @@ export function formatMLA(item: CitationItem): string {
 }
 
 export type CitationFormat = "gbt" | "bibtex" | "apa" | "mla";
+
+/**
+ * 根据著录格式解析成功提示的 i18n 键名
+ */
+export function citationSuccessKey(format: CitationFormat): string {
+    switch (format) {
+        case "bibtex":
+            return "citation.bibtexCopied";
+        case "apa":
+            return "citation.apaCopied";
+        case "mla":
+            return "citation.mlaCopied";
+        case "gbt":
+        default:
+            return "citation.gbtCopied";
+    }
+}
 
 /**
  * 统一引用格式化门面纯函数

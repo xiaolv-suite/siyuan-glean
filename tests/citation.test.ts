@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { formatBibTeX, formatGBT7714, formatAPA, formatMLA, formatCitation, type CitationItem } from "../src/domain/citation.ts";
+import { formatBibTeX, formatGBT7714, formatAPA, formatMLA, formatCitation, citationSuccessKey, type CitationItem } from "../src/domain/citation.ts";
 
 const sample: CitationItem = {
     id: "20261025120000-doc0001",
@@ -53,4 +53,19 @@ test("formatCitation：统一门面纯函数支持 gbt / bibtex / apa / mla 四�
     assert.equal(formatCitation(sample, "mla"), formatMLA(sample));
     // 默认回退为 gbt
     assert.equal(formatCitation(sample), formatGBT7714(sample));
+});
+
+test("citationSuccessKey：返回各学术著录格式对应的成功提示键名", () => {
+    assert.equal(citationSuccessKey("gbt"), "citation.gbtCopied");
+    assert.equal(citationSuccessKey("bibtex"), "citation.bibtexCopied");
+    assert.equal(citationSuccessKey("apa"), "citation.apaCopied");
+    assert.equal(citationSuccessKey("mla"), "citation.mlaCopied");
+});
+
+test("formatGBT7714：非法 Date 对象安全兜底，不抛出 RangeError 异常", () => {
+    const invalidDate = new Date(Number.NaN);
+    assert.doesNotThrow(() => {
+        const result = formatGBT7714(sample, invalidDate);
+        assert.ok(result.includes("机器之心"));
+    });
 });

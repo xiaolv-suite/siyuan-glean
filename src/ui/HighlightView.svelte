@@ -23,7 +23,7 @@ import { moveLibraryCursor, resolveLibraryShortcut } from "../domain/library-key
 import { loadIndex } from "../services/index-store";
 import { pickRoamingArticle } from "../domain/roaming";
 import { openRoamingDialog } from "./roaming-dialog";
-import { formatBibTeX, formatGBT7714, formatCitation, type CitationFormat, type CitationItem } from "../domain/citation";
+import { formatBibTeX, formatGBT7714, formatCitation, citationSuccessKey, type CitationFormat, type CitationItem } from "../domain/citation";
 
 interface Props { facade: GleanFacade }
 let { facade }: Props = $props();
@@ -393,7 +393,7 @@ async function copyQuoteCitation(item: HighlightItem, format: CitationFormat = "
         time: item.id.slice(0, 8),
     };
     const citText = formatCitation(citItem, format);
-    const msgKey = format === "bibtex" ? "citation.bibtexCopied" : (format === "apa" ? "citation.apaCopied" : "citation.gbtCopied");
+    const msgKey = citationSuccessKey(format);
     try {
         if (navigator?.clipboard?.writeText) {
             await navigator.clipboard.writeText(citText);
@@ -425,12 +425,20 @@ async function copySelectedHighlightCitations(format: CitationFormat = "gbt"): P
             lines.push(formatBibTeX(citItem));
         } else if (format === "apa") {
             lines.push(`[${lines.length + 1}] ${formatCitation(citItem, "apa")}`);
+        } else if (format === "mla") {
+            lines.push(`[${lines.length + 1}] ${formatCitation(citItem, "mla")}`);
         } else {
             lines.push(`[${lines.length + 1}] ${formatGBT7714(citItem)}`);
         }
     }
     const sep = format === "bibtex" ? "\n\n" : "\n";
-    const msgKey = format === "bibtex" ? "highlight.batchBibtexCopied" : (format === "apa" ? "highlight.batchApaCopied" : "highlight.batchCitationsCopied");
+    const msgKey = format === "bibtex"
+        ? "highlight.batchBibtexCopied"
+        : (format === "apa"
+            ? "highlight.batchApaCopied"
+            : (format === "mla"
+                ? "highlight.batchMlaCopied"
+                : "highlight.batchCitationsCopied"));
     try {
         if (navigator?.clipboard?.writeText) {
             await navigator.clipboard.writeText(lines.join(sep));
