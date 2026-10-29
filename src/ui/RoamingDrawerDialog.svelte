@@ -265,7 +265,7 @@
             time: currentPick.item.time,
         };
         const citText = formatCitation(citItem, format);
-        const msgKey = format === "bibtex" ? "citation.bibtexCopied" : (format === "apa" ? "citation.apaCopied" : "citation.gbtCopied");
+        const msgKey = format === "bibtex" ? "citation.bibtexCopied" : (format === "apa" ? "citation.apaCopied" : (format === "mla" ? "citation.mlaCopied" : "citation.gbtCopied"));
         try {
             if (navigator?.clipboard?.writeText) {
                 await navigator.clipboard.writeText(citText);
@@ -275,6 +275,38 @@
             }
         } catch {
             showMessage(t(i18n, "msg.actionFailed"), 2000);
+        }
+    }
+
+    async function cycleCurrentPriority(): Promise<void> {
+        if (loading) return;
+        const currentP = currentPick.item.priority ?? 0;
+        const nextP = (currentP % 5) + 1;
+        currentPick.item.priority = nextP;
+        try {
+            await writeClip(facade.pluginInstance, currentPick.item.id, { priority: nextP }, { force: true });
+            showMessage(t(i18n, "msg.rankSaved"), 2000);
+            facade.notifyDataChanged();
+        } catch (error) {
+            currentPick.item.priority = currentP;
+            console.warn("[glean] 盲盒优先级保存失败:", error);
+            showMessage(t(i18n, "msg.actionFailed"), 2500);
+        }
+    }
+
+    async function cycleCurrentRating(): Promise<void> {
+        if (loading) return;
+        const currentR = currentPick.item.rating ?? 0;
+        const nextR = (currentR % 5) + 1;
+        currentPick.item.rating = nextR;
+        try {
+            await writeClip(facade.pluginInstance, currentPick.item.id, { rating: nextR }, { force: true });
+            showMessage(t(i18n, "msg.rankSaved"), 2000);
+            facade.notifyDataChanged();
+        } catch (error) {
+            currentPick.item.rating = currentR;
+            console.warn("[glean] 盲盒评分保存失败:", error);
+            showMessage(t(i18n, "msg.actionFailed"), 2500);
         }
     }
 
@@ -336,6 +368,12 @@
     } else if ((e.key === "s" || e.key === "S") && !e.ctrlKey && !e.metaKey && !e.altKey) {
         e.preventDefault();
         void openOrTakeCurrentSnapshot();
+    } else if ((e.key === "p" || e.key === "P") && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        void cycleCurrentPriority();
+    } else if ((e.key === "m" || e.key === "M") && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        void cycleCurrentRating();
     } else if (e.key === "1" && !e.ctrlKey && !e.metaKey && !e.altKey) {
         e.preventDefault();
         void changeBudget("all");
@@ -537,6 +575,33 @@
                 title={t(i18n, "citation.copyAPA")}
             >
                 🎓 APA
+            </button>
+            <button
+                type="button"
+                class="glean-btn glean-btn--ghost glean-roaming-triage-btn"
+                disabled={loading}
+                onclick={() => void copyCurrentCitation("mla")}
+                title={t(i18n, "citation.copyMLA")}
+            >
+                📖 MLA
+            </button>
+            <button
+                type="button"
+                class="glean-btn glean-btn--ghost glean-roaming-triage-btn"
+                disabled={loading}
+                onclick={() => void cycleCurrentPriority()}
+                title="{t(i18n, 'library.keyboardPriority')} (P)"
+            >
+                ⚡ P{currentPick.item.priority || 0}
+            </button>
+            <button
+                type="button"
+                class="glean-btn glean-btn--ghost glean-roaming-triage-btn"
+                disabled={loading}
+                onclick={() => void cycleCurrentRating()}
+                title="{t(i18n, 'library.keyboardRating')} (M)"
+            >
+                ⭐ {currentPick.item.rating || 0}
             </button>
             <button
                 type="button"

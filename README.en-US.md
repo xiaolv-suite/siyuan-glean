@@ -67,6 +67,15 @@ This release implements floating margin notes in the reader editor for same-focu
 - **Floating Margin Notes (Margin Notes)**: Highlights and user thoughts float as sticky note bubbles along the right margin; clicking a note smoothly scrolls to the source block with pulse focus.
 - **Toggle Margin Notes (Alt+M)**: The reader toolbar offers a dedicated toggle action (Alt+M) to collapse or reveal margin notes at will.
 
+## v1.3.99 update (2026-10-29)
+
+This release implements MLA citation export, keyboard priority cycling (P), and rating cycling (M) in the roaming blind-box drawer.
+
+**New features & improvements:**
+
+- **Roaming Blind-Box MLA Citation Support (T-3534)**: Adds an "📖 MLA" citation button in the drawer dialog, rounding out the four citation formats across the app.
+- **Keyboard Priority & Rating Shortcuts (T-3534)**: Adds interactive badges and keyboard shortcuts `P` (cycle priority) and `M` (cycle rating) to update metadata immediately while roaming.
+
 ## v1.3.98 update (2026-10-29)
 
 This release implements batch priority/rating setting and smart dual-state star toggling in the library batch bar.

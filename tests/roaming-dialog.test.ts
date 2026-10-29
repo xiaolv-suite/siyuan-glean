@@ -32,6 +32,11 @@ test("RoamingDrawerDialog 契约守门：展示推荐理由、匹配得分、换
     assert.match(dialogSource, /copyCurrentCitation\("gbt"\)/);
     assert.match(dialogSource, /copyCurrentCitation\("bibtex"\)/);
     assert.match(dialogSource, /copyCurrentCitation\("apa"\)/);
+    assert.match(dialogSource, /copyCurrentCitation\("mla"\)/);
+    assert.match(dialogSource, /cycleCurrentPriority/);
+    assert.match(dialogSource, /cycleCurrentRating/);
+    assert.match(dialogSource, /e\.key === "p" \|\| e\.key === "P"/);
+    assert.match(dialogSource, /e\.key === "m" \|\| e\.key === "M"/);
     assert.match(dialogSource, /formatCitation/);
     assert.match(dialogSource, /copyCurrentBlockRef/);
     assert.match(dialogSource, /openOrTakeCurrentSnapshot/);
