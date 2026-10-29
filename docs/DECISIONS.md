@@ -2944,3 +2944,14 @@ T-3416 承接方向五（有依据的阅读 AI）与同类产品对标（Readwis
    - 全插件读库工作台（`DockPanel`）、摘录墙（`HighlightView`）、阅读统计（`StatsView`）与今日拾遗（`ResurfaceView`）四大核心视图全键盘检索 100% 达成；
 4. 严格本地交付保障：
    - 严格在本地完成构建和测试，不执行任何外部推送与远程 API 调用。
+
+## D-0411（2026-10-29）读库批量工具栏多选优先级设置、星级评分与智能星标切换闭环（T-3533）
+
+扩展批量处理条（`LibraryBatchBar`）在文章属性分拣上的广度：
+1. 批量设置优先级与评分（`src/ui/LibraryBatchBar.svelte` & `src/ui/DockPanel.svelte`）：
+   - 增设 `onBatchPriority` 与 `onBatchRating` 回调以及「⚡ 设优先级」和「⭐ 设评分」操作按钮，通过校验输入值（0-5）批量写入文档属性并重载；
+   - 键盘监听接入：当读者勾选了文章并在选中行上按 `P` / `1-5` 或 `M` 时，自动批量设置选集优先级或评分；
+2. 智能双态星标收藏（`src/ui/LibraryBatchBar.svelte` & `src/ui/DockPanel.svelte`）：
+   - 引入 `allSelectedAreFavorite` 派生，当勾选文章全为星标时按钮智能呈现「🤍 取消收藏」，否则呈现「❤️ 星标收藏」；
+3. 严格本地交付保障：
+   - 严格在本地完成构建和测试，不执行任何外部推送与远程 API 调用。

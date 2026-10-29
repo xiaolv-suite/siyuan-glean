@@ -67,6 +67,15 @@ This release implements floating margin notes in the reader editor for same-focu
 - **Floating Margin Notes (Margin Notes)**: Highlights and user thoughts float as sticky note bubbles along the right margin; clicking a note smoothly scrolls to the source block with pulse focus.
 - **Toggle Margin Notes (Alt+M)**: The reader toolbar offers a dedicated toggle action (Alt+M) to collapse or reveal margin notes at will.
 
+## v1.3.98 update (2026-10-29)
+
+This release implements batch priority/rating setting and smart dual-state star toggling in the library batch bar.
+
+**New features & improvements:**
+
+- **Batch Priority & Rating Operations (T-3533)**: The library batch bar adds "⚡ Set Priority" and "⭐ Set Rating" actions; pressing `P`, `1-5`, or `M` with selection active automatically applies changes across all selected articles.
+- **Smart Star Favorite Toggling (T-3533)**: `LibraryBatchBar` dynamically switches between "🤍 Remove Favorite" (if all selected are favorites) and "❤️ Star Favorite" to flip favorite status in one click.
+
 ## v1.3.97 update (2026-10-29)
 
 This release implements direct global search navigation from Today's Resurface (/ and Ctrl+F), UI search button, and complete multi-panel search integration.

@@ -179,6 +179,13 @@ type MobileFilterBackgroundState = {
 };
 let mobileFilterBackgroundState: MobileFilterBackgroundState | null = null;
 let selection = $state<ReadonlySet<string>>(new Set());
+const allSelectedAreFavorite = $derived.by(() => {
+    if (selection.size === 0) return false;
+    for (const id of selection) {
+        if (!index.clips[id]?.favorite) return false;
+    }
+    return true;
+});
 /** 读库键盘光标（T-3392）：仅桌面端、仅当前画布可见条目；不写属性与偏好。 */
 let keyboardCursorId = $state("");
 /** IDs added again while a batch write is in flight remain selected after the result lands. */
@@ -1160,6 +1167,52 @@ async function batchFavorite(nextFav: boolean): Promise<void> {
         showMessage(t(i18n, nextFav ? "library.batchFavoriteAdded" : "library.batchFavoriteRemoved", { n: count }), 2500);
     } catch (err) {
         console.warn("[LvGlean] 批量收藏失败:", err);
+        showMessage(t(i18n, "msg.actionFailed"), 3000);
+    } finally {
+        batchBusy = false;
+    }
+}
+
+async function batchSetPriority(priority: number): Promise<void> {
+    if (batchBusy || selection.size === 0) return;
+    batchBusy = true;
+    const ids = Array.from(selection);
+    try {
+        let count = 0;
+        for (const id of ids) {
+            const clip = index.clips[id];
+            if (!clip || clip.priority === priority) continue;
+            await writeClip(facade.pluginInstance, id, { priority }, { force: true });
+            count += 1;
+        }
+        facade.notifyDataChanged();
+        await reload();
+        showMessage(t(i18n, "library.batchPrioritySet", { n: count, p: priority }), 2500);
+    } catch (err) {
+        console.warn("[LvGlean] 批量设置优先级失败:", err);
+        showMessage(t(i18n, "msg.actionFailed"), 3000);
+    } finally {
+        batchBusy = false;
+    }
+}
+
+async function batchSetRating(rating: number): Promise<void> {
+    if (batchBusy || selection.size === 0) return;
+    batchBusy = true;
+    const ids = Array.from(selection);
+    try {
+        let count = 0;
+        for (const id of ids) {
+            const clip = index.clips[id];
+            if (!clip || clip.rating === rating) continue;
+            await writeClip(facade.pluginInstance, id, { rating }, { force: true });
+            count += 1;
+        }
+        facade.notifyDataChanged();
+        await reload();
+        showMessage(t(i18n, "library.batchRatingSet", { n: count, r: rating }), 2500);
+    } catch (err) {
+        console.warn("[LvGlean] 批量设置评分失败:", err);
         showMessage(t(i18n, "msg.actionFailed"), 3000);
     } finally {
         batchBusy = false;
@@ -2460,17 +2513,31 @@ async function runKeyboardAction(action: LibraryKeyboardAction): Promise<void> {
             toggleSelection(entry.id);
             break;
         case "cyclePriority": {
-            const nextVal = cyclePriorityValue(entry.priority);
-            await setPriority(entry, nextVal);
+            if (selection.size > 0 && selection.has(entry.id)) {
+                const nextVal = cyclePriorityValue(entry.priority);
+                await batchSetPriority(nextVal);
+            } else {
+                const nextVal = cyclePriorityValue(entry.priority);
+                await setPriority(entry, nextVal);
+            }
             break;
         }
         case "setPriority": {
-            await setPriority(entry, action.value);
+            if (selection.size > 0 && selection.has(entry.id)) {
+                await batchSetPriority(action.value);
+            } else {
+                await setPriority(entry, action.value);
+            }
             break;
         }
         case "cycleRating": {
-            const nextVal = cycleRatingValue(entry.rating);
-            await setRating(entry, nextVal);
+            if (selection.size > 0 && selection.has(entry.id)) {
+                const nextVal = cycleRatingValue(entry.rating);
+                await batchSetRating(nextVal);
+            } else {
+                const nextVal = cycleRatingValue(entry.rating);
+                await setRating(entry, nextVal);
+            }
             break;
         }
         case "toggleFavorite": {
@@ -3906,6 +3973,9 @@ function metaLine(entry: Row): string {
             onCopySummaryList={batchCopySummaryList}
             onExportCsv={batchExportCsv}
             onBatchFavorite={batchFavorite}
+            onBatchPriority={batchSetPriority}
+            onBatchRating={batchSetRating}
+            {allSelectedAreFavorite}
         />
     {:else if view === "resurface"}
         <ResurfaceView

@@ -312,3 +312,22 @@ test("LibraryBatchBar 批量块引用、批量著录与批量收藏操作按钮�
     assert.match(dock, /batchCopyCitations/);
     assert.match(dock, /batchFavorite/);
 });
+
+test("LibraryBatchBar 批量优先级、评分与智能星标切换支持（T-3533）", () => {
+    const rawBar = readFileSync(new URL("../src/ui/LibraryBatchBar.svelte", import.meta.url), "utf8");
+    const rawDock = readFileSync(new URL("../src/ui/DockPanel.svelte", import.meta.url), "utf8");
+    assert.match(rawBar, /onBatchPriority/);
+    assert.match(rawBar, /onBatchRating/);
+    assert.match(rawBar, /allSelectedAreFavorite/);
+    assert.match(rawBar, /glean-bb--priority/);
+    assert.match(rawBar, /glean-bb--rating/);
+    assert.match(rawBar, /glean-bb--unfav/);
+    assert.match(rawBar, /triggerSetPriority/);
+    assert.match(rawBar, /triggerSetRating/);
+    assert.match(rawDock, /onBatchPriority=\{batchSetPriority\}/);
+    assert.match(rawDock, /onBatchRating=\{batchSetRating\}/);
+    assert.match(rawDock, /\{allSelectedAreFavorite\}/);
+    assert.match(rawDock, /batchSetPriority/);
+    assert.match(rawDock, /batchSetRating/);
+    assert.match(rawDock, /allSelectedAreFavorite = \$derived\.by/);
+});

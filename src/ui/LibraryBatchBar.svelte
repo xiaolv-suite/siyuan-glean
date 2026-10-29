@@ -27,13 +27,17 @@
         onCopySummaryList?: () => void | Promise<void>;
         onExportCsv?: () => void | Promise<void>;
         onBatchFavorite?: (fav: boolean) => void | Promise<void>;
+        onBatchPriority?: (priority: number) => void | Promise<void>;
+        onBatchRating?: (rating: number) => void | Promise<void>;
+        allSelectedAreFavorite?: boolean;
         hasWechatSelected?: boolean;
     }
 
     let {
         i18n, selectedCount, hiddenCount, displayedCount, displayedSelectedCount, busy = false,
         onApply, onOpenAi, onClear, onSelectDisplayed, onKeepFiltered, onAddTag, onSetAuthor,
-        onPurifyWechat, onCopyBlockRefs, onCopyCitations, onCopyBibTeX, onCopyAPA, onCopyMLA, onCopySummaryList, onExportCsv, onBatchFavorite, hasWechatSelected = false,
+        onPurifyWechat, onCopyBlockRefs, onCopyCitations, onCopyBibTeX, onCopyAPA, onCopyMLA, onCopySummaryList, onExportCsv, onBatchFavorite,
+        onBatchPriority, onBatchRating, allSelectedAreFavorite = false, hasWechatSelected = false,
     }: Props = $props();
     const filteredSelectedCount = $derived(Math.max(0, selectedCount - hiddenCount));
     let summaryEl = $state<HTMLElement | null>(null);
@@ -75,6 +79,26 @@
             void onSetAuthor(author.trim());
         }
     }
+
+    function triggerSetPriority(): void {
+        const input = window.prompt(t(i18n, "library.batchPriorityPrompt"));
+        if (input !== null) {
+            const num = parseInt(input.trim(), 10);
+            if (!Number.isNaN(num) && num >= 0 && num <= 5 && onBatchPriority) {
+                void onBatchPriority(num);
+            }
+        }
+    }
+
+    function triggerSetRating(): void {
+        const input = window.prompt(t(i18n, "library.batchRatingPrompt"));
+        if (input !== null) {
+            const num = parseInt(input.trim(), 10);
+            if (!Number.isNaN(num) && num >= 0 && num <= 5 && onBatchRating) {
+                void onBatchRating(num);
+            }
+        }
+    }
 </script>
 
 <svelte:window onkeydown={handleWindowKeydown} />
@@ -104,6 +128,12 @@
             {#if onSetAuthor}
                 <button type="button" class="glean-bb" disabled={busy} onclick={triggerSetAuthor}>👤 {t(i18n, "library.batchSetAuthor")}</button>
             {/if}
+            {#if onBatchPriority}
+                <button type="button" class="glean-bb glean-bb--priority" disabled={busy} onclick={triggerSetPriority} title={t(i18n, "library.batchSetPriority")}>⚡ {t(i18n, "library.batchSetPriority")}</button>
+            {/if}
+            {#if onBatchRating}
+                <button type="button" class="glean-bb glean-bb--rating" disabled={busy} onclick={triggerSetRating} title={t(i18n, "library.batchSetRating")}>⭐ {t(i18n, "library.batchSetRating")}</button>
+            {/if}
             {#if onPurifyWechat && hasWechatSelected}
                 <button type="button" class="glean-bb" disabled={busy} onclick={() => void onPurifyWechat?.()}>✨ {t(i18n, "wechat.batchPurify")}</button>
             {/if}
@@ -129,7 +159,11 @@
                 <button type="button" class="glean-bb glean-bb--csv" disabled={busy} onclick={() => void onExportCsv?.()} title="{t(i18n, 'library.batchExportCsv')}">📊 {t(i18n, "library.batchExportCsv")}</button>
             {/if}
             {#if onBatchFavorite}
-                <button type="button" class="glean-bb glean-bb--fav" disabled={busy} onclick={() => void onBatchFavorite?.(true)} title="{t(i18n, 'roaming.favoriteAction')}">❤️ {t(i18n, "roaming.favoriteAction")}</button>
+                {#if allSelectedAreFavorite}
+                    <button type="button" class="glean-bb glean-bb--unfav" disabled={busy} onclick={() => void onBatchFavorite?.(false)} title="{t(i18n, 'library.batchUnfavorite')}">🤍 {t(i18n, "library.batchUnfavorite")}</button>
+                {:else}
+                    <button type="button" class="glean-bb glean-bb--fav" disabled={busy} onclick={() => void onBatchFavorite?.(true)} title="{t(i18n, 'library.batchFavorite')}">❤️ {t(i18n, "library.batchFavorite")}</button>
+                {/if}
             {/if}
             <button type="button" class="glean-bb glean-bb--ai" disabled={busy} onclick={onOpenAi}>{t(i18n, "aiBatch.title")}</button>
         </div>
