@@ -2547,6 +2547,7 @@ async function runKeyboardAction(action: LibraryKeyboardAction): Promise<void> {
                 await writeClip(facade.pluginInstance, entry.id, { favorite: nextFav }, { force: true });
                 showMessage(t(i18n, nextFav ? "roaming.favoriteAdded" : "roaming.favoriteRemoved"), 2000);
                 facade.notifyDataChanged();
+                await reload();
             } catch {
                 showMessage(t(i18n, "msg.actionFailed"), 2000);
             }

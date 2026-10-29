@@ -217,7 +217,7 @@ test("DockPanel 接线：键盘光标样式、提示条与动作路由存在", (
     assert.match(dock, /case "cyclePriority":[\s\S]*?cyclePriorityValue\(entry\.priority\)/);
     assert.match(dock, /case "setPriority":[\s\S]*?await setPriority\(entry, action\.value\)/);
     assert.match(dock, /case "cycleRating":[\s\S]*?cycleRatingValue\(entry\.rating\)/);
-    assert.match(dock, /case "toggleFavorite":/);
+    assert.match(dock, /case "toggleFavorite":[\s\S]*?await reload\(\);/);
     assert.match(dock, /if \(action\.type === "roaming"\) \{[\s\S]*?triggerRoamingRead\(\);/);
     assert.match(dock, /<kbd>B<\/kbd> \{t\(i18n, "roaming\.button"\)\}/);
     assert.match(dock, /<kbd>P<\/kbd><kbd>1-5<\/kbd> \{t\(i18n, "library\.keyboardPriority"\)\}/);
