@@ -508,5 +508,23 @@ test("列表行尾操作与看板选择框平滑微交互契约：默认低透�
     // 19. 读库分面侧栏项胶囊化与松青背景块激活态
     assert.match(styles, /\.glean-rail__item\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
     assert.match(styles, /\.glean-rail__item\.glean-rail__item--on\s*\{[\s\S]*border-color:\s*color-mix\(in srgb, var\(--glean-color-action\)/);
+
+    // 20. 迁移统计卡柔和外壳与悬浮微交互
+    assert.match(dialogsScss, /\.glean-mstat\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-lg,\s*16px\);/);
+    assert.match(dialogsScss, /\.glean-mstat\s*\{[\s\S]*&:hover\s*\{[\s\S]*border-color:\s*color-mix\(in srgb, var\(--glean-color-action\)/);
+
+    // 21. 标签别名管理弹窗 16px 圆角外壳、微卡片与全圆角胶囊输入框
+    assert.match(styles, /\.glean-tag-alias-dialog\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-lg,\s*16px\);/);
+    assert.match(styles, /\.glean-tag-alias-item\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-md,\s*12px\);/);
+    assert.match(styles, /\.glean-tag-alias-form input,[\s\S]*\.glean-tag-alias-form select\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
+
+    // 22. 首启引导笔记本 Chip 胶囊全圆角与松青激活背景块
+    assert.match(styles, /\.glean-onboarding \.glean-nb\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
+    assert.match(styles, /\.glean-onboarding \.glean-nb--on\s*\{[\s\S]*color:\s*var\(--glean-color-action\);/);
+
+    // 23. 紧凑分面活动态与过滤 Chip 松青色彩统一
+    assert.match(styles, /\.glean-filter-chip\s*\{[\s\S]*border-color:\s*color-mix\(in srgb, var\(--glean-color-action\)/);
+    assert.match(styles, /\.glean-filters--compact \.glean-filter--active\s*\{[\s\S]*border-color:\s*color-mix\(in srgb, var\(--glean-color-action\)/);
+    assert.match(styles, /\.glean-filters--compact \.glean-filter-dir--active\s*\{[\s\S]*color:\s*var\(--glean-color-action\);/);
 });
 

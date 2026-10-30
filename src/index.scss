@@ -1752,7 +1752,7 @@ body.b3-theme-dark {
     overflow: auto;
     padding: var(--glean-space-5);
     border: 1px solid var(--glean-border-soft);
-    border-radius: var(--glean-radius-md);
+    border-radius: var(--glean-radius-lg, 16px);
     background: var(--b3-theme-surface);
     color: var(--b3-theme-on-surface);
     box-shadow: var(--b3-dialog-shadow, 0 16px 48px rgba(0, 0, 0, .22));
@@ -1778,14 +1778,42 @@ body.b3-theme-dark {
 .glean-tag-alias-dialog__help,
 .glean-tag-alias-dialog__empty { margin: 0; color: var(--b3-theme-on-surface-light); }
 .glean-tag-alias-list { display: grid; gap: var(--glean-space-2); }
-.glean-tag-alias-item { justify-content: space-between; flex-wrap: wrap; padding: var(--glean-space-2) 0; border-bottom: 1px solid var(--glean-border-soft); }
+.glean-tag-alias-item {
+    justify-content: space-between;
+    flex-wrap: wrap;
+    padding: var(--glean-space-2) var(--glean-space-3);
+    border: 1px solid var(--glean-border-soft);
+    border-radius: var(--glean-radius-md, 12px);
+    background: var(--glean-inset-surface);
+    transition: border-color var(--glean-duration-fast) ease;
+
+    &:hover {
+        border-color: color-mix(in srgb, var(--glean-color-action) 35%, var(--glean-border-soft));
+    }
+}
 .glean-tag-alias-item > div:first-child { display: grid; min-width: 0; overflow-wrap: anywhere; }
 .glean-tag-alias-item small { color: var(--b3-theme-error); }
 .glean-tag-alias-item__actions { flex-wrap: wrap; }
 .glean-tag-alias-form { display: grid; gap: var(--glean-space-3); padding-top: var(--glean-space-2); }
 .glean-tag-alias-form label { display: grid; gap: var(--glean-space-1); min-width: 0; }
 .glean-tag-alias-form input,
-.glean-tag-alias-form select { width: 100%; min-width: 0; min-height: 44px; }
+.glean-tag-alias-form select {
+    width: 100%;
+    min-width: 0;
+    min-height: 38px;
+    border-radius: var(--glean-radius-pill);
+    border: 1px solid var(--glean-border-soft);
+    padding: var(--glean-space-1-5) var(--glean-space-3);
+    background: var(--b3-theme-surface);
+    color: var(--b3-theme-on-surface);
+    transition: border-color var(--glean-duration-fast) ease, box-shadow var(--glean-duration-fast) ease;
+
+    &:focus {
+        border-color: var(--glean-color-action);
+        box-shadow: var(--glean-shadow-focus);
+        outline: none;
+    }
+}
 .glean-tag-alias-form__actions,
 .glean-tag-alias-dialog__foot { justify-content: flex-end; flex-wrap: wrap; }
 
@@ -7997,9 +8025,9 @@ mark.glean-search-highlight {
 }
 
 .glean-onboarding .glean-nb-wrap { gap: var(--glean-space-2); }
-.glean-onboarding .glean-nb { border-color: var(--glean-border-soft); background: var(--glean-inset-surface); transition: transform 160ms var(--glean-ease-out), border-color 160ms var(--glean-ease-out), background-color 160ms var(--glean-ease-out); }
-.glean-onboarding .glean-nb:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--b3-theme-primary) 42%, var(--glean-border-soft)); }
-.glean-onboarding .glean-nb--on { border-color: color-mix(in srgb, var(--glean-accent-b) 48%, var(--glean-border-soft)); background: var(--glean-primary-soft); color: var(--b3-theme-on-background); box-shadow: var(--glean-shadow-card); }
+.glean-onboarding .glean-nb { border-color: var(--glean-border-soft); border-radius: var(--glean-radius-pill); background: var(--glean-inset-surface); transition: transform 160ms var(--glean-ease-out), border-color 160ms var(--glean-ease-out), background-color 160ms var(--glean-ease-out); }
+.glean-onboarding .glean-nb:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--glean-color-action) 35%, var(--glean-border-soft)); }
+.glean-onboarding .glean-nb--on { border-color: color-mix(in srgb, var(--glean-color-action) 35%, transparent); background: color-mix(in srgb, var(--glean-color-action) 12%, var(--b3-theme-surface)); color: var(--glean-color-action); font-weight: var(--glean-weight-semibold); box-shadow: none; }
 .glean-onboarding .glean-mstats { margin-top: var(--glean-space-2); }
 .glean-onboarding .glean-mstat,
 .glean-import .glean-mstat { min-height: 64px; }
@@ -10817,15 +10845,15 @@ body.b3-theme-dark .glean-panel--mobile,
 
 .glean-filter-chip {
     min-height: 28px;
-    border-color: color-mix(in srgb, var(--glean-accent-b) 20%, var(--glean-border-soft));
-    background: color-mix(in srgb, var(--glean-accent-b) 7%, var(--b3-theme-surface));
+    border-color: color-mix(in srgb, var(--glean-color-action) 22%, var(--glean-border-soft));
+    background: color-mix(in srgb, var(--glean-color-action) 8%, var(--b3-theme-surface));
     color: var(--b3-theme-on-surface);
     transition: background-color var(--glean-duration-fast) var(--glean-ease-out), border-color var(--glean-duration-fast) var(--glean-ease-out), transform var(--glean-duration-fast) var(--glean-ease-out);
 }
 
 .glean-filter-chip:hover {
-    border-color: color-mix(in srgb, var(--glean-accent-b) 42%, var(--glean-border-soft));
-    background: color-mix(in srgb, var(--glean-accent-b) 12%, var(--b3-theme-surface));
+    border-color: color-mix(in srgb, var(--glean-color-action) 42%, var(--glean-border-soft));
+    background: color-mix(in srgb, var(--glean-color-action) 14%, var(--b3-theme-surface));
     transform: translateY(-1px);
 }
 
@@ -11055,15 +11083,15 @@ body.b3-theme-dark .glean-panel--mobile,
 }
 
 .glean-filters--compact .glean-filter--active {
-    border-color: color-mix(in srgb, var(--glean-accent-b) 46%, var(--glean-border-soft));
-    background: color-mix(in srgb, var(--glean-accent-b) 10%, var(--b3-theme-surface));
+    border-color: color-mix(in srgb, var(--glean-color-action) 46%, var(--glean-border-soft));
+    background: color-mix(in srgb, var(--glean-color-action) 10%, var(--b3-theme-surface));
     color: var(--b3-theme-on-background);
 }
 
 .glean-filters--compact .glean-filter-dir--active {
-    border-color: color-mix(in srgb, var(--glean-accent-b) 42%, var(--glean-border-soft));
-    color: var(--glean-accent-b);
-    background: var(--glean-primary-soft);
+    border-color: color-mix(in srgb, var(--glean-color-action) 42%, var(--glean-border-soft));
+    color: var(--glean-color-action);
+    background: color-mix(in srgb, var(--glean-color-action) 12%, var(--b3-theme-surface));
 }
 
 .glean-inbox__item[aria-busy="true"] {
