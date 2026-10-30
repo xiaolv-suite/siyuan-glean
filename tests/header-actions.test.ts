@@ -607,5 +607,19 @@ test("列表行尾操作与看板选择框平滑微交互契约：默认低透�
     assert.match(styles, /\.glean-status-actions__btn\s*\{[\s\S]*border-color:\s*color-mix\(in srgb, var\(--glean-color-action\)/);
     assert.match(styles, /\.glean-status-actions__btn\s*\{[\s\S]*outline:\s*2px solid var\(--glean-color-action\);/);
     assert.match(styles, /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{[\s\S]*\.glean-reading-context__source-btn,[\s\S]*\.glean-status-actions__btn/);
+
+    // 39. 长文切片圆环进度条松青强调色、药丸高对比度与移动端触控热区
+    assert.match(slicingScss, /&__bar\s*\{[\s\S]*stroke:\s*var\(--glean-color-action\);/);
+    assert.match(slicingScss, /\.glean-slicing-pill--active\s*\{[\s\S]*@media\s*\(forced-colors:\s*active\)[\s\S]*border:\s*1px solid Highlight;/);
+    assert.match(slicingScss, /\.glean-star-btn\s*\{[\s\S]*&:focus-visible\s*\{[\s\S]*outline:\s*2px solid var\(--glean-color-action\);/);
+    assert.match(slicingScss, /@media\s*\(max-width:\s*560px\)\s*\{[\s\S]*\.glean-slicing-create-btn\s*\{[\s\S]*min-height:\s*44px;/);
+    assert.match(slicingScss, /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{[\s\S]*\.glean-slicing-create-btn\s*\{[\s\S]*transition:\s*var\(--glean-motion-none\)\s*!important;/);
+
+    // 40. 微信读书向导松青色彩统一、聚焦光圈与移动端触控响应式折行
+    assert.match(wechatScss, /\.glean-weread-local-card\s*\{[\s\S]*background:\s*color-mix\(in srgb, var\(--glean-color-action\)/);
+    assert.match(wechatScss, /\.glean-weread-local-btn\s*\{[\s\S]*border-color:\s*var\(--glean-color-action\);/);
+    assert.match(wechatScss, /\.glean-weread-shelf-btn\s*\{[\s\S]*outline:\s*2px solid var\(--glean-color-wechat\);/);
+    assert.match(wechatScss, /@media\s*\(max-width:\s*560px\)\s*\{[\s\S]*\.glean-weread-shelf-btn\s*\{[\s\S]*min-height:\s*44px;/);
+    assert.match(wechatScss, /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{[\s\S]*\.glean-weread-shelf-btn,\s*\.glean-weread-local-btn\s*\{[\s\S]*transition:\s*var\(--glean-motion-none\)\s*!important;/);
 });
 

@@ -53,7 +53,10 @@
        * 系统减弱动效（`prefers-reduced-motion: reduce`）全量覆盖核心指标条、搜索框、手风琴开关与分布标签，彻底消除闪烁与强制位移；
        * 原生阅读胶囊栏（`ReadingContext.svelte` / `index.scss`）升级为外壳柔和底色，状态徽标（`.glean-reading-context__status`）胶囊化，主操作按钮（`__source-btn`、`__back`）统一松青交互底色、2px 松青获焦光圈与减弱动效，补齐超窄视口（`< 360px`）自适应内边距与字号微调；
        * 金句制卡舞台（`QuoteCardDialog.svelte`）按钮与预览补齐 2px 松青聚焦光圈、高对比度模式（`forced-colors: active`）自适应、颜色与底部水印等宽排版（`font-variant-numeric: tabular-nums`），并在移动端（`max-width: 560px`）保障 44px 触控热区与超窄视口（`max-width: 360px`）双列网格自适应；
-  3. **门禁全通**：全套测试通过（**1750 / 1750 PASS**，`tests/header-actions.test.ts` 补充守门断言 28–38，`tests/quote-card.test.ts` 补充 UI-UX-PRO-MAX 契约测试）；`pnpm check` 0 错 0 警告；`pnpm build` 1.55s 干净构建；`pnpm check:release` 14 项全绿通过。
+       * 长文切片（`slicing.scss`）圆环进度条统一收敛至松青操作色（`--glean-color-action`），切片时长药丸对齐高对比度模式（`forced-colors: active`）高亮边框，五星评分微控补齐 2px 松青光圈，并在移动端（`max-width: 560px`）保障切片大按钮 44px 舒适触控高度与减弱动效抑制；
+       * 悬浮边注（`margin-notes.scss`）便签备忘徽标统一对齐松青操作色（`--glean-color-action`），卡片与微操作按钮补齐 2px 松青聚焦光圈与减弱动效抑制；
+       * 微信公众号与微信读书向导（`wechat.scss`）本地阅读卡与按钮统一对齐松青操作色（`--glean-color-action`），专栏合集与向导跳转按钮补齐聚焦光圈，移动端（`max-width: 560px`）保障 44px 触控热区与 360px 视口单列流水折行；
+  3. **门禁全通**：全套测试通过（**1750 / 1750 PASS**，`tests/header-actions.test.ts` 补充守门断言 28–40，`tests/quote-card.test.ts` 与 `tests/margin-notes.test.ts` 补充 UI-UX-PRO-MAX 契约测试）；`pnpm check` 0 错 0 警告；`pnpm build` 5.48s 干净构建；`pnpm check:release` 14 项全绿通过。
 - 下一步：按当前执行板顺序推进下一个任务（如 T-3367 批量选择范围与底部操作在更多场景的走查，或按作者点单继续）。版本保持 1.4.0，等待解封通知后统一处理。
 
 ## 历史交接（2026-10-29 本地发版轮：v1.4.0 次版本发布、五处版本同步、双语 README 全面重构、全门禁验证与本地打包）

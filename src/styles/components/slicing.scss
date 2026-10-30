@@ -70,17 +70,28 @@
     color: var(--b3-theme-on-surface);
     cursor: pointer;
     transition: all 140ms ease;
+
+    &:focus-visible {
+        outline: 2px solid var(--glean-color-action);
+        outline-offset: 2px;
+    }
 }
 
 .glean-slicing-pill--active {
     background: var(--glean-color-action);
     color: var(--b3-theme-on-primary);
     font-weight: 600;
+
+    @media (forced-colors: active) {
+        border: 1px solid Highlight;
+        color: Highlight;
+    }
 }
 
 .glean-slicing-summary {
     font-size: var(--glean-text-xs, 12px);
     color: var(--b3-theme-on-surface);
+    font-variant-numeric: tabular-nums;
 }
 
 .glean-slicing-hint-empty {
@@ -149,6 +160,7 @@
 .glean-slicing-card__time {
     font-size: var(--glean-text-xs, 12px);
     color: var(--b3-theme-on-surface);
+    font-variant-numeric: tabular-nums;
 }
 
 .glean-slicing-card__sections {
@@ -245,7 +257,8 @@
     }
 
     &:focus-visible {
-        outline: none;
+        outline: 2px solid var(--glean-color-action);
+        outline-offset: 2px;
         box-shadow: var(--glean-shadow-focus);
         border-radius: var(--glean-radius-pill);
     }
@@ -275,9 +288,69 @@
 
     &__bar {
         fill: none;
-        stroke: var(--lv-brand);
+        stroke: var(--glean-color-action);
         stroke-width: 2.2;
         stroke-linecap: round;
         transition: stroke-dashoffset 200ms ease;
+    }
+}
+
+@media (max-width: 560px) {
+    .glean-slicing-dialog {
+        padding: var(--glean-space-3, 12px);
+    }
+
+    .glean-slicing-head {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--glean-space-2, 8px);
+    }
+
+    .glean-slicing-durations {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .glean-slicing-pills {
+        flex: 1 1 auto;
+    }
+
+    .glean-slicing-pill {
+        flex: 1 1 0;
+        min-height: 36px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .glean-slicing-create-btn {
+        width: 100%;
+        min-height: 44px;
+    }
+
+    .glean-star-btn {
+        min-width: 28px;
+        min-height: 28px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 360px) {
+    .glean-slicing-durations {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .glean-reader__slice-btn,
+    .glean-slicing-card,
+    .glean-star-btn,
+    .glean-slicing-pill,
+    .glean-slicing-create-btn {
+        transition: var(--glean-motion-none) !important;
+        transform: none !important;
     }
 }

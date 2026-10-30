@@ -46,6 +46,11 @@
         border-color: var(--glean-color-action);
     }
 
+    &:focus-visible {
+        outline: 2px solid var(--glean-color-action);
+        outline-offset: 2px;
+    }
+
     &__head {
         display: flex;
         align-items: center;
@@ -73,8 +78,8 @@
     &__memo {
         font-size: 11px;
         line-height: 1.4;
-        color: var(--lv-brand);
-        background: color-mix(in srgb, var(--lv-brand) 8%, var(--b3-theme-surface));
+        color: var(--glean-color-action);
+        background: color-mix(in srgb, var(--glean-color-action) 8%, var(--b3-theme-surface));
         border-radius: var(--glean-radius-pill, 999px);
         padding: 2px 8px;
         display: -webkit-box;
@@ -110,7 +115,13 @@
 
         &:hover {
             opacity: 1;
-            background: color-mix(in srgb, var(--b3-theme-on-surface) 10%, transparent);
+            background: color-mix(in srgb, var(--glean-color-action) 10%, var(--b3-theme-surface));
+            color: var(--glean-color-action);
+        }
+
+        &:focus-visible {
+            outline: 2px solid var(--glean-color-action);
+            outline-offset: 1px;
         }
     }
 }
@@ -118,5 +129,12 @@
 @media (max-width: 900px) {
     .glean-margin-notes {
         display: none !important;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .glean-margin-note-card {
+        transition: var(--glean-motion-none) !important;
+        transform: none !important;
     }
 }

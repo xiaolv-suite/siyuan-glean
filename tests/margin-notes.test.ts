@@ -13,6 +13,9 @@ test("Margin Notes 样式契约守门：严格包含便签卡片四色指示条�
     assert.match(scss, /__memo/);
     assert.match(scss, /__actions/);
     assert.match(scss, /__btn/);
+    assert.match(scss, /color:\s*var\(--glean-color-action\);/);
+    assert.match(scss, /outline:\s*2px solid var\(--glean-color-action\);/);
+    assert.match(scss, /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{[\s\S]*\.glean-margin-note-card\s*\{[\s\S]*transition:\s*var\(--glean-motion-none\)\s*!important;/);
 });
 
 test("ReaderTab 边距注记接线契约：接入 marginNotesOpen、Alt+M 快捷键与平滑滚动", () => {

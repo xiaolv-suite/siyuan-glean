@@ -152,6 +152,11 @@
         border-color: var(--glean-color-wechat);
         color: var(--b3-theme-on-background);
     }
+
+    &:focus-visible {
+        outline: 2px solid var(--glean-color-wechat);
+        outline-offset: 2px;
+    }
 }
 
 .glean-mini-tag--series {
@@ -291,6 +296,11 @@
 .glean-weread-shelf-btn {
     border-radius: var(--glean-radius-pill);
     box-shadow: 0 2px 8px color-mix(in srgb, var(--glean-color-wechat) 25%, transparent);
+
+    &:focus-visible {
+        outline: 2px solid var(--glean-color-wechat);
+        outline-offset: 2px;
+    }
 }
 
 .glean-weread-local-card {
@@ -300,8 +310,8 @@
     gap: var(--glean-space-3);
     padding: var(--glean-space-2-5) var(--glean-space-3);
     border-radius: var(--glean-radius-lg, 16px);
-    background: color-mix(in srgb, var(--lv-brand) 8%, var(--b3-theme-surface));
-    border: 1px solid color-mix(in srgb, var(--lv-brand) 24%, transparent);
+    background: color-mix(in srgb, var(--glean-color-action) 8%, var(--b3-theme-surface));
+    border: 1px solid color-mix(in srgb, var(--glean-color-action) 24%, var(--glean-border-soft));
 
     &__head {
         display: flex;
@@ -340,10 +350,75 @@
 
 .glean-weread-local-btn {
     flex-shrink: 0;
-    border-color: var(--lv-brand);
-    color: var(--lv-brand);
+    border-color: var(--glean-color-action);
+    color: var(--glean-color-action);
 
     &:hover {
-        background: color-mix(in srgb, var(--lv-brand) 14%, var(--b3-theme-surface));
+        background: color-mix(in srgb, var(--glean-color-action) 14%, var(--b3-theme-surface));
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--glean-color-action);
+        outline-offset: 2px;
+    }
+}
+
+@media (max-width: 560px) {
+    .glean-weread-guide {
+        padding: var(--glean-space-3);
+        gap: var(--glean-space-2-5);
+    }
+
+    .glean-weread-step {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--glean-space-2);
+        padding: var(--glean-space-2);
+    }
+
+    .glean-weread-step__actions {
+        width: 100%;
+    }
+
+    .glean-weread-shelf-btn {
+        width: 100%;
+        min-height: 44px;
+        justify-content: center;
+    }
+
+    .glean-weread-local-card {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--glean-space-2-5);
+        padding: var(--glean-space-2);
+    }
+
+    .glean-weread-local-btn {
+        width: 100%;
+        min-height: 44px;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 360px) {
+    .glean-weread-url-box {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--glean-space-1);
+    }
+
+    .glean-weread-url-box .glean-btn {
+        width: 100%;
+        min-height: 36px;
+        justify-content: center;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .glean-wechat-publisher__series-chip,
+    .glean-weread-shelf-btn,
+    .glean-weread-local-btn {
+        transition: var(--glean-motion-none) !important;
+        transform: none !important;
     }
 }
