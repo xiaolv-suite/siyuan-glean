@@ -441,11 +441,11 @@
                     {attrs.favorite ? "❤️" : "🤍"}
                 </button>
             {/if}
-            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void triggerRoaming()} title={t(i18n, "roaming.buttonHint")}>🎲 {t(i18n, "roaming.button")}</button>
-            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation("gbt")} title="{t(i18n, 'citation.copyGBT')} (C)">📄 GB/T</button>
-            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation("bibtex")} title="{t(i18n, 'citation.copyBibTeX')} (Shift+C)">📚 BibTeX</button>
-            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation("apa")} title={t(i18n, "citation.copyAPA")}>🎓 APA</button>
-            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation("mla")} title={t(i18n, "citation.copyMLA")}>📖 MLA</button>
+            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void triggerRoaming()} title={t(i18n, "roaming.buttonHint")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanRefresh" /></svg> <span>{t(i18n, "roaming.button")}</span></button>
+            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation("gbt")} title="{t(i18n, 'citation.copyGBT')} (C)"><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg> <span>GB/T</span></button>
+            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation("bibtex")} title="{t(i18n, 'citation.copyBibTeX')} (Shift+C)"><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArchive" /></svg> <span>BibTeX</span></button>
+            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation("apa")} title={t(i18n, "citation.copyAPA")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanLocal" /></svg> <span>APA</span></button>
+            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation("mla")} title={t(i18n, "citation.copyMLA")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg> <span>MLA</span></button>
             <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyBlockRef()}>{t(i18n, "action.copyBlockRef")}</button>
             <button type="button" class="glean-btn glean-btn--ghost" onclick={() => facade.openReadingDocument(entry.id)}>{t(i18n, "preview.openDocument")}</button>
             {#if entry.kind === "clip"}<button type="button" class="glean-btn glean-btn--ghost" disabled={busy || exporting} onclick={() => void downloadMarkdown()}>{exporting ? t(i18n, "settings.exporting") : t(i18n, "export.markdown")}</button>{/if}
@@ -456,14 +456,14 @@
                     title={attrs?.snapshot ? t(i18n, "snapshot.open") : t(i18n, "snapshot.take") + " (S)"}
                     onclick={() => void openOrTakeSnapshot()}
                 >
-                    💾 {attrs?.snapshot ? t(i18n, "snapshot.open") : t(i18n, "snapshot.take")}
+                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCamera" /></svg> <span>{attrs?.snapshot ? t(i18n, "snapshot.open") : t(i18n, "snapshot.take")}</span>
                 </button>
             {/if}
             <button type="button" class="glean-btn glean-btn--ghost" onclick={onClose}>{t(i18n, "preview.close")}</button>
         </div>
     </div>
     <div id={metaId} class="glean-preview__meta">
-        <span class="glean-preview__readonly-tag">📖 {t(i18n, "preview.readonly")}</span>
+        <span class="glean-preview__readonly-tag"><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg> <span>{t(i18n, "preview.readonly")}</span></span>
         {#if normalizeUrl(sourceUrl)}
             <a href={sourceUrl} target="_blank" rel="noopener noreferrer" class="glean-preview__source-link" title={sourceUrl}>
                 {#if wechatAvatar}
@@ -480,7 +480,7 @@
                     title={t(i18n, "reading.openInReader")}
                     onclick={() => facade.openReadingDocument(entry.id)}
                 >
-                    📖 {t(i18n, "reading.openInReader")}
+                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg> <span>{t(i18n, "reading.openInReader")}</span>
                 </button>
                 <button
                     type="button"
@@ -488,7 +488,7 @@
                     title={t(i18n, "wechat.wereadGuide")}
                     onclick={handleOpenWeread}
                 >
-                    📚 {t(i18n, "wechat.openInWeread")}
+                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanExternal" /></svg> <span>{t(i18n, "wechat.openInWeread")}</span>
                 </button>
             {/if}
         {:else if sourceUrl}
@@ -551,7 +551,7 @@
             <span title={excerpt.text}>{excerpt.text.slice(0, 100)}</span>
             <button type="button" class="glean-btn" disabled={busy || !confirmed || !excerpt.blockId} title={excerpt.blockId ? "" : t(i18n, "reader.excerptNoBlock")} onclick={quote}>{t(i18n, "reader.excerptQuote")}</button>
             <button type="button" class="glean-btn glean-btn--ghost" disabled={!excerpt.blockId} onclick={() => void copySelectedBlockRef()} title="复制选中段落块引用 (Y)">{t(i18n, "action.copyBlockRef")}</button>
-            <button type="button" class="glean-btn glean-btn--ghost glean-preview__excerpt-quote-btn" onclick={makeExcerptQuoteCard} title={t(i18n, "quoteCard.action")}>🖼️ {t(i18n, "quoteCard.action")}</button>
+            <button type="button" class="glean-btn glean-btn--ghost glean-preview__excerpt-quote-btn" onclick={makeExcerptQuoteCard} title={t(i18n, "quoteCard.action")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg> <span>{t(i18n, "quoteCard.action")}</span></button>
             <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyExcerpt()}>{t(i18n, "reader.copy")}</button>
         </div>
     {/if}

@@ -272,10 +272,12 @@
         </div>
         <div class="glean-reading-context__actions">
             <button type="button" class="glean-reading-context__source-btn" title={t(i18n, "action.copyBlockRef")} onclick={() => void copyDocBlockRef()}>
-                🔗 {t(i18n, "action.copyBlockRef")}
+                <svg class="glean-icon" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
+                <span>{t(i18n, "action.copyBlockRef")}</span>
             </button>
             <button type="button" class="glean-reading-context__source-btn" title={t(i18n, "reading.openInReader")} onclick={() => { if (context) facade.openReadingDocument(context.id); }}>
-                📖 {t(i18n, "reading.openInReader")}
+                <svg class="glean-icon" aria-hidden="true"><use href="#iconGleanNews" /></svg>
+                <span>{t(i18n, "reading.openInReader")}</span>
             </button>
             {#if hasSourceAction(context.contentType, context.url)}
                 <button type="button" class="glean-reading-context__source-btn glean-reading-context__source-btn--primary" title={t(i18n, "reading.sourceHint")} onclick={openSource}>

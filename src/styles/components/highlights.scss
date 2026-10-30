@@ -220,9 +220,10 @@
     padding: var(--glean-space-1-25) var(--glean-space-2);
     border-radius: var(--glean-radius-pill);
     background: var(--glean-primary-soft);
-    color: var(--b3-theme-primary);
+    color: var(--glean-color-action);
     font-size: var(--glean-text-sm);
     font-weight: var(--glean-weight-650);
+    font-variant-numeric: tabular-nums;
 }
 
 .glean-highlights__filters label {

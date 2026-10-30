@@ -729,5 +729,25 @@ test("列表行尾操作与看板选择框平滑微交互契约：默认低透�
     assert.match(libraryBatchBarSvelte, /use href="#iconGleanNews"/);
     assert.match(libraryBatchBarSvelte, /use href="#iconGleanArchive"/);
     assert.match(libraryBatchBarSvelte, /use href="#iconGleanDownload"/);
+
+    // 51. 摘录墙/工作台预览/统计回顾/阅读上下文全套采用 SVG 矢量图标替代 Emoji，等宽数字排版与无障碍契约守门
+    const highlightViewSvelte = read("src/ui/HighlightView.svelte");
+    const workbenchPreviewSvelte = read("src/ui/WorkbenchPreview.svelte");
+    const statsViewSvelte = read("src/ui/StatsView.svelte");
+    const readingContextSvelte = read("src/ui/ReadingContext.svelte");
+    assert.match(highlightViewSvelte, /use href="#iconGleanRefresh"/);
+    assert.match(highlightViewSvelte, /use href="#iconGleanClose"/);
+    assert.match(highlightViewSvelte, /use href="#iconGleanNews"/);
+    assert.match(highlightViewSvelte, /use href="#iconGleanArchive"/);
+    assert.match(highlightViewSvelte, /use href="#iconGleanLocal"/);
+    assert.match(highlightViewSvelte, /use href="#iconGleanCard"/);
+    assert.match(highlightScss, /\.glean-highlights__selection-count\s*\{[\s\S]*font-variant-numeric:\s*tabular-nums;/);
+    assert.match(workbenchPreviewSvelte, /use href="#iconGleanCamera"/);
+    assert.match(workbenchPreviewSvelte, /use href="#iconGleanNews"/);
+    assert.match(statsViewSvelte, /use href="#iconGleanCopy"/);
+    assert.match(statsViewSvelte, /use href="#iconGleanClose"/);
+    assert.match(statsViewSvelte, /use href="#iconGleanDownload"/);
+    assert.match(readingContextSvelte, /use href="#iconGleanCopy"/);
+    assert.match(readingContextSvelte, /use href="#iconGleanNews"/);
 });
 

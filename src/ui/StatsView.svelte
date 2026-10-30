@@ -465,10 +465,10 @@ function onWindowKeyDown(event: KeyboardEvent): void {
         <div class="glean-stats__toolbar glean-stats__toolbar--actions">
             {#if !session}
                 <button class="glean-btn glean-btn--pri" disabled={busy || !reference} onclick={() => void preview()} title="{t(i18n, 'review.preview')} (P)">{t(i18n, "review.preview")}</button>
-                <button type="button" class="glean-btn glean-btn--ghost" disabled={busy} onclick={() => void copyReportMarkdown()} title="{t(i18n, 'stats.copyReport')} (M)">📋 {t(i18n, "stats.copyReport")}</button>
+                <button type="button" class="glean-btn glean-btn--ghost" disabled={busy} onclick={() => void copyReportMarkdown()} title="{t(i18n, 'stats.copyReport')} (M)"><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg> <span>{t(i18n, "stats.copyReport")}</span></button>
             {:else}
                 <button class="glean-btn glean-btn--ghost" disabled={busy} onclick={downloadCsv}>{t(i18n, "review.csv")}</button>
-                <button type="button" class="glean-btn glean-btn--ghost" disabled={busy} onclick={() => void copyReportMarkdown()} title="{t(i18n, 'stats.copyReport')} (M)">📋 {t(i18n, "stats.copyReport")}</button>
+                <button type="button" class="glean-btn glean-btn--ghost" disabled={busy} onclick={() => void copyReportMarkdown()} title="{t(i18n, 'stats.copyReport')} (M)"><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg> <span>{t(i18n, "stats.copyReport")}</span></button>
                 {#if saveState === "ready" || saveState === "created"}
                     <button class="glean-btn glean-btn--pri" disabled={busy} onclick={() => void save()}>{t(i18n, saveState === "created" ? "review.retryMark" : "review.confirm")}</button>
                 {/if}
@@ -645,7 +645,7 @@ function onWindowKeyDown(event: KeyboardEvent): void {
                                 title={t(i18n, "library.clearFilters")}
                                 aria-label={t(i18n, "library.clearFilters")}
                             >
-                                ✕
+                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanClose" /></svg>
                             </button>
                         {/if}
                     </div>
@@ -665,19 +665,19 @@ function onWindowKeyDown(event: KeyboardEvent): void {
                             {t(i18n, "stats.copyCompletedSummary")}
                         </button>
                         <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm glean-stats__copy-citations-btn" onclick={() => void copyCompletedListCitations("gbt")} title="{t(i18n, 'citation.copyGBT')} (C)">
-                            📄 {t(i18n, "citation.copyGBT")}
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg> <span>{t(i18n, "citation.copyGBT")}</span>
                         </button>
                         <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm glean-stats__copy-bibtex-btn" onclick={() => void copyCompletedListCitations("bibtex")} title="{t(i18n, 'citation.copyBibTeX')} (Shift+C)">
-                            📚 BibTeX
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArchive" /></svg> <span>BibTeX</span>
                         </button>
                         <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm glean-stats__copy-apa-btn" onclick={() => void copyCompletedListCitations("apa")} title={t(i18n, "citation.copyAPA")}>
-                            🎓 APA
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanLocal" /></svg> <span>APA</span>
                         </button>
                         <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm glean-stats__copy-mla-btn" onclick={() => void copyCompletedListCitations("mla")} title={t(i18n, "citation.copyMLA")}>
-                            📖 MLA
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg> <span>MLA</span>
                         </button>
                         <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm glean-stats__export-csv-btn" onclick={() => void exportCompletedCsv()} title={t(i18n, "library.batchExportCsv")}>
-                            📊 {t(i18n, "library.batchExportCsv")}
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanDownload" /></svg> <span>{t(i18n, "library.batchExportCsv")}</span>
                         </button>
                     </div>
                 {/if}
@@ -689,19 +689,19 @@ function onWindowKeyDown(event: KeyboardEvent): void {
                         <span>{item.doneTime.slice(0, 4)}-{item.doneTime.slice(4, 6)}-{item.doneTime.slice(6, 8)}</span>
                         <div class="glean-stats__completed-acts">
                             <button type="button" class="glean-btn glean-btn--ghost glean-btn--xs" onclick={() => void copyCompletedBlockRef(item)} title={t(i18n, "action.copyBlockRef")}>
-                                🔗
+                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
                             </button>
                             <button type="button" class="glean-btn glean-btn--ghost glean-btn--xs" onclick={() => void copyCompletedCitation(item, "gbt")} title={t(i18n, "citation.copyGBT")}>
-                                📄
+                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg>
                             </button>
                             <button type="button" class="glean-btn glean-btn--ghost glean-btn--xs" onclick={() => void copyCompletedCitation(item, "bibtex")} title={t(i18n, "citation.copyBibTeX")}>
-                                📚
+                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArchive" /></svg>
                             </button>
                             <button type="button" class="glean-btn glean-btn--ghost glean-btn--xs" onclick={() => void copyCompletedCitation(item, "apa")} title={t(i18n, "citation.copyAPA")}>
-                                🎓
+                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanLocal" /></svg>
                             </button>
                             <button type="button" class="glean-btn glean-btn--ghost glean-btn--xs" onclick={() => void copyCompletedCitation(item, "mla")} title={t(i18n, "citation.copyMLA")}>
-                                📖
+                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg>
                             </button>
                         </div>
                     </li>

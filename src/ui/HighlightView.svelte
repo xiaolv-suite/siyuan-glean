@@ -692,7 +692,10 @@ function focusHighlightRow(id: string): void {
                 </button>
             {/if}
             <button class="glean-highlights__refresh" disabled={loading || exportBusy} onclick={refresh}>{t(i18n, "action.refresh")}</button>
-            <button type="button" class="glean-highlights__roam" title={t(i18n, "roaming.buttonHint")} onclick={() => void triggerRoaming()}>🎲 {t(i18n, "roaming.button")}</button>
+            <button type="button" class="glean-highlights__roam" title={t(i18n, "roaming.buttonHint")} onclick={() => void triggerRoaming()}>
+                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanRefresh" /></svg>
+                <span>{t(i18n, "roaming.button")}</span>
+            </button>
         </div>
     </div>
 
@@ -724,7 +727,7 @@ function focusHighlightRow(id: string): void {
                     title={t(i18n, "library.clearFilters")}
                     aria-label={t(i18n, "library.clearFilters")}
                 >
-                    ✕
+                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanClose" /></svg>
                 </button>
             {/if}
         </div>
@@ -758,11 +761,11 @@ function focusHighlightRow(id: string): void {
         </div>
         <div class="glean-highlights__export-actions" role="group" aria-label={t(i18n, "highlight.exportTitle")}>
             <button disabled={loading || exportBusy || !selected.length} onclick={() => void runExport("copy")}>{t(i18n, "highlight.copy")}</button>
-            <button disabled={loading || exportBusy || !selected.length} onclick={() => void copySelectedHighlightBlockRefs()} title={t(i18n, "action.copyBlockRef")}>🔗 {t(i18n, "action.copyBlockRef")}</button>
-            <button disabled={loading || exportBusy || !selected.length} onclick={() => void copySelectedHighlightCitations("gbt")} title={t(i18n, "citation.copyGBT")}>📄 {t(i18n, "citation.copyGBT")}</button>
-            <button disabled={loading || exportBusy || !selected.length} onclick={() => void copySelectedHighlightCitations("bibtex")} title={t(i18n, "citation.copyBibTeX")}>📚 BibTeX</button>
-            <button disabled={loading || exportBusy || !selected.length} onclick={() => void copySelectedHighlightCitations("apa")} title={t(i18n, "citation.copyAPA")}>🎓 APA</button>
-            <button disabled={loading || exportBusy || !selected.length} onclick={() => void copySelectedHighlightCitations("mla")} title={t(i18n, "citation.copyMLA")}>📖 MLA</button>
+            <button disabled={loading || exportBusy || !selected.length} onclick={() => void copySelectedHighlightBlockRefs()} title={t(i18n, "action.copyBlockRef")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg> <span>{t(i18n, "action.copyBlockRef")}</span></button>
+            <button disabled={loading || exportBusy || !selected.length} onclick={() => void copySelectedHighlightCitations("gbt")} title={t(i18n, "citation.copyGBT")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg> <span>{t(i18n, "citation.copyGBT")}</span></button>
+            <button disabled={loading || exportBusy || !selected.length} onclick={() => void copySelectedHighlightCitations("bibtex")} title={t(i18n, "citation.copyBibTeX")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArchive" /></svg> <span>BibTeX</span></button>
+            <button disabled={loading || exportBusy || !selected.length} onclick={() => void copySelectedHighlightCitations("apa")} title={t(i18n, "citation.copyAPA")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanLocal" /></svg> <span>APA</span></button>
+            <button disabled={loading || exportBusy || !selected.length} onclick={() => void copySelectedHighlightCitations("mla")} title={t(i18n, "citation.copyMLA")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg> <span>MLA</span></button>
             <button disabled={loading || exportBusy || !selected.length} onclick={() => void runExport("csv")}>{t(i18n, "highlight.csv")}</button>
             <button disabled={loading || exportBusy || !selected.length} onclick={() => void runExport("markdown")}>{t(i18n, "highlight.markdown")}</button>
             <button class="glean-highlights__preview-action" disabled={loading || exportBusy || !selected.length || !!session} onclick={() => void runExport("preview")}>{t(i18n, "highlight.preview")}</button>
@@ -822,23 +825,28 @@ function focusHighlightRow(id: string): void {
                                 {t(i18n, "highlight.copyShare")}
                             </button>
                             <button type="button" onclick={() => void copyQuoteBlockRef(item)} title={t(i18n, "action.copyBlockRef")} aria-label={t(i18n, "action.copyBlockRef")}>
-                                🔗 {t(i18n, "action.copyBlockRef")}
+                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
+                                <span>{t(i18n, "action.copyBlockRef")}</span>
                             </button>
                             <button type="button" onclick={() => void copyQuoteCitation(item, "gbt")} title={t(i18n, "citation.copyGBT")} aria-label={t(i18n, "citation.copyGBT")}>
-                                📄 {t(i18n, "citation.copyGBT")}
+                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg>
+                                <span>{t(i18n, "citation.copyGBT")}</span>
                             </button>
                             <button type="button" onclick={() => void copyQuoteCitation(item, "bibtex")} title={t(i18n, "citation.copyBibTeX")} aria-label={t(i18n, "citation.copyBibTeX")}>
-                                📚 BibTeX
+                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArchive" /></svg>
+                                <span>BibTeX</span>
                             </button>
                             <button type="button" onclick={() => void copyQuoteCitation(item, "apa")} title={t(i18n, "citation.copyAPA")} aria-label={t(i18n, "citation.copyAPA")}>
-                                🎓 APA
+                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanLocal" /></svg>
+                                <span>APA</span>
                             </button>
                             <button type="button" onclick={() => void copyQuoteCitation(item, "mla")} title={t(i18n, "citation.copyMLA")} aria-label={t(i18n, "citation.copyMLA")}>
-                                📖 MLA
+                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg>
+                                <span>MLA</span>
                             </button>
-                            <button type="button" onclick={() => quoteCard(item)} title={t(i18n, "quoteCard.action")} aria-label={t(i18n, "quoteCard.action")}>🖼️ {t(i18n, "quoteCard.action")}</button>
-                            <button type="button" class:glean-ghost-btn={!hasCardsInstalled} aria-busy={cardingKey === item.id} disabled={Boolean(cardingKey)} onclick={() => void card(item)} title={t(i18n, "flashcard.make")} aria-label={hasCardsInstalled ? t(i18n, "flashcard.make") : t(i18n, "reader.cardGhostHint")}><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanCard" /></svg>{t(i18n, "flashcard.make")}</button>
-                            <button type="button" class="glean-btn glean-btn--ghost" class:glean-ghost-btn={!hasExamInstalled} disabled={exportBusy} onclick={() => void exam(item)} title={hasExamInstalled ? t(i18n, "reader.examMake") : t(i18n, "reader.examGhostHint")} aria-label={t(i18n, "reader.examMake")}>📝 {t(i18n, "reader.examMake")}</button>
+                            <button type="button" onclick={() => quoteCard(item)} title={t(i18n, "quoteCard.action")} aria-label={t(i18n, "quoteCard.action")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg> <span>{t(i18n, "quoteCard.action")}</span></button>
+                            <button type="button" class:glean-ghost-btn={!hasCardsInstalled} aria-busy={cardingKey === item.id} disabled={Boolean(cardingKey)} onclick={() => void card(item)} title={t(i18n, "flashcard.make")} aria-label={hasCardsInstalled ? t(i18n, "flashcard.make") : t(i18n, "reader.cardGhostHint")}><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanCard" /></svg><span>{t(i18n, "flashcard.make")}</span></button>
+                            <button type="button" class="glean-btn glean-btn--ghost" class:glean-ghost-btn={!hasExamInstalled} disabled={exportBusy} onclick={() => void exam(item)} title={hasExamInstalled ? t(i18n, "reader.examMake") : t(i18n, "reader.examGhostHint")} aria-label={t(i18n, "reader.examMake")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanEdit" /></svg> <span>{t(i18n, "reader.examMake")}</span></button>
                         </div>
                     </article>
                 {/each}
@@ -894,23 +902,28 @@ function focusHighlightRow(id: string): void {
                                             {t(i18n, "highlight.copyShare")}
                                         </button>
                                         <button type="button" onclick={() => void copyQuoteBlockRef(item)} title={t(i18n, "action.copyBlockRef")} aria-label={t(i18n, "action.copyBlockRef")}>
-                                            🔗 {t(i18n, "action.copyBlockRef")}
+                                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
+                                            <span>{t(i18n, "action.copyBlockRef")}</span>
                                         </button>
                                         <button type="button" onclick={() => void copyQuoteCitation(item, "gbt")} title={t(i18n, "citation.copyGBT")} aria-label={t(i18n, "citation.copyGBT")}>
-                                            📄 {t(i18n, "citation.copyGBT")}
+                                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg>
+                                            <span>{t(i18n, "citation.copyGBT")}</span>
                                         </button>
                                         <button type="button" onclick={() => void copyQuoteCitation(item, "bibtex")} title={t(i18n, "citation.copyBibTeX")} aria-label={t(i18n, "citation.copyBibTeX")}>
-                                            📚 BibTeX
+                                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArchive" /></svg>
+                                            <span>BibTeX</span>
                                         </button>
                                         <button type="button" onclick={() => void copyQuoteCitation(item, "apa")} title={t(i18n, "citation.copyAPA")} aria-label={t(i18n, "citation.copyAPA")}>
-                                            🎓 APA
+                                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanLocal" /></svg>
+                                            <span>APA</span>
                                         </button>
                                         <button type="button" onclick={() => void copyQuoteCitation(item, "mla")} title={t(i18n, "citation.copyMLA")} aria-label={t(i18n, "citation.copyMLA")}>
-                                            📖 MLA
+                                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg>
+                                            <span>MLA</span>
                                         </button>
-                                        <button type="button" onclick={() => quoteCard(item)} title={t(i18n, "quoteCard.action")} aria-label={t(i18n, "quoteCard.action")}>🖼️ {t(i18n, "quoteCard.action")}</button>
-                                        <button type="button" class:glean-ghost-btn={!hasCardsInstalled} aria-busy={cardingKey === item.id} disabled={Boolean(cardingKey)} onclick={() => void card(item)} title={t(i18n, "flashcard.make")} aria-label={hasCardsInstalled ? t(i18n, "flashcard.make") : t(i18n, "reader.cardGhostHint")}><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanCard" /></svg>{t(i18n, "flashcard.make")}</button>
-                            <button type="button" class="glean-btn glean-btn--ghost" class:glean-ghost-btn={!hasExamInstalled} disabled={exportBusy} onclick={() => void exam(item)} title={hasExamInstalled ? t(i18n, "reader.examMake") : t(i18n, "reader.examGhostHint")} aria-label={t(i18n, "reader.examMake")}>📝 {t(i18n, "reader.examMake")}</button>
+                                        <button type="button" onclick={() => quoteCard(item)} title={t(i18n, "quoteCard.action")} aria-label={t(i18n, "quoteCard.action")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg> <span>{t(i18n, "quoteCard.action")}</span></button>
+                                        <button type="button" class:glean-ghost-btn={!hasCardsInstalled} aria-busy={cardingKey === item.id} disabled={Boolean(cardingKey)} onclick={() => void card(item)} title={t(i18n, "flashcard.make")} aria-label={hasCardsInstalled ? t(i18n, "flashcard.make") : t(i18n, "reader.cardGhostHint")}><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanCard" /></svg><span>{t(i18n, "flashcard.make")}</span></button>
+                            <button type="button" class="glean-btn glean-btn--ghost" class:glean-ghost-btn={!hasExamInstalled} disabled={exportBusy} onclick={() => void exam(item)} title={hasExamInstalled ? t(i18n, "reader.examMake") : t(i18n, "reader.examGhostHint")} aria-label={t(i18n, "reader.examMake")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanEdit" /></svg> <span>{t(i18n, "reader.examMake")}</span></button>
                                     </div>
                                 </article>
                             {/each}
