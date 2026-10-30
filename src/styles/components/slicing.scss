@@ -9,8 +9,8 @@
 .glean-reader__slice-btn {
     margin-left: auto;
     font-size: var(--glean-text-meta);
-    padding: 2px 8px;
-    border-radius: var(--glean-radius-sm);
+    padding: 2px 10px;
+    border-radius: var(--glean-radius-pill);
     color: var(--glean-color-action);
     background: var(--glean-primary-soft);
     border: 1px solid color-mix(in srgb, var(--glean-color-action) 30%, transparent);
@@ -73,7 +73,7 @@
 }
 
 .glean-slicing-pill--active {
-    background: var(--b3-theme-primary);
+    background: var(--glean-color-action);
     color: var(--b3-theme-on-primary);
     font-weight: 600;
 }
@@ -102,9 +102,9 @@
 
 .glean-slicing-card {
     background: var(--glean-card-surface, var(--b3-theme-surface));
-    border: 1px solid color-mix(in srgb, var(--b3-border-color) 40%, transparent);
-    border-radius: var(--glean-radius-md);
-    padding: var(--glean-space-3, 12px);
+    border: 1px solid var(--glean-border-soft);
+    border-radius: var(--glean-radius-lg, 16px);
+    padding: var(--glean-space-3-5, 14px);
     display: flex;
     flex-direction: column;
     gap: var(--glean-space-2, 8px);
@@ -160,9 +160,9 @@
 .glean-slicing-card__sec-chip {
     font-size: 11px;
     background: var(--glean-inset-surface, var(--b3-theme-surface));
-    border: 1px solid var(--glean-border-soft, var(--b3-border-color));
-    padding: 1px 6px;
-    border-radius: var(--glean-radius-sm, 4px);
+    border: 1px solid var(--glean-border-soft);
+    padding: 1px 8px;
+    border-radius: var(--glean-radius-pill);
     color: var(--b3-theme-on-surface);
 }
 
@@ -174,6 +174,7 @@
 
 .glean-slicing-create-btn {
     min-width: 160px;
+    border-radius: var(--glean-radius-pill);
     box-shadow: var(--glean-shadow-accent);
 }
 
@@ -189,9 +190,9 @@
     font-weight: 600;
     padding: 1px 8px;
     border-radius: var(--glean-radius-pill);
-    background: var(--glean-primary-soft, rgba(13, 148, 136, 0.12));
-    color: var(--lv-brand);
-    border: 1px dashed color-mix(in srgb, var(--lv-brand) 40%, transparent);
+    background: var(--glean-primary-soft);
+    color: var(--glean-color-action);
+    border: 1px dashed color-mix(in srgb, var(--glean-color-action) 40%, transparent);
     letter-spacing: 0.02em;
 }
 
@@ -201,13 +202,13 @@
     gap: 2px;
     font-size: 10.5px;
     font-weight: 600;
-    padding: 0 6px;
-    height: 18px;
-    line-height: 18px;
+    padding: 0 8px;
+    height: 20px;
+    line-height: 20px;
     border-radius: var(--glean-radius-pill);
-    background: color-mix(in srgb, var(--lv-brand) 12%, var(--b3-theme-surface));
-    color: var(--lv-brand);
-    border: 1px solid color-mix(in srgb, var(--lv-brand) 28%, transparent);
+    background: color-mix(in srgb, var(--glean-color-action) 12%, var(--b3-theme-surface));
+    color: var(--glean-color-action);
+    border: 1px solid color-mix(in srgb, var(--glean-color-action) 28%, transparent);
 }
 
 /* 交互式五星评分微组件（Interactive 5-Star Picker） */

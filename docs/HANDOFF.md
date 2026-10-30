@@ -26,7 +26,8 @@
      - **摘录墙全圆角胶囊化与柔和外壳**：`HighlightView` 搜索输入、分面下拉框与多选批量操作条（`.glean-highlights__tools--selection`）全量采用全圆角胶囊，折叠开关（`.glean-highlights__fold-toggle`）升级为胶囊微控，卡片（`.glean-highlights__item`）消除 1px 生硬黑框升级为柔和底板边界；
      - **漫游盲盒抽屉柔和外壳与胶囊流**：`RoamingDrawerDialog` 盲盒卡片（`.glean-roaming-card`）升级为 `16px` 大圆角卡片，主题标签选择下拉框（`.glean-roaming-tag-select`）、星标筛选按钮（`.glean-roaming-fav-filter-btn`）、文章标签胶囊（`.glean-roaming-tag`）与底部快捷分拣按钮（`.glean-roaming-triage-btn`）统一升级为全圆角胶囊；
      - **金句卡片舞台外壳与操作胶囊流**：`QuoteCardDialog` 展示舞台（`.glean-quote-card-stage`）接入微色相底色托底与 `16px` 柔和边框，卡片预览（`.glean-quote-card-preview`）采用 `20px` 现代大圆角与弥散阴影，主题切换药丸（`.glean-quote-card-theme-btn`）对齐松青操作色光圈，字号档位组与底部一键复制/保存图片按钮（`.glean-quote-card-btn`）全量采用全圆角胶囊；
-  3. **门禁全通**：全套测试通过（**1749 / 1749 PASS**，新增微交互与胶囊契约守护测试）；`pnpm check` 0 错 0 警告；`pnpm build` 1.38s 干净构建；`pnpm check:release` 14 项全绿通过。
+     - **长文切片卡片柔和外壳与胶囊流**：`SlicingControls` 切片卡片（`.glean-slicing-card`）升级为 `16px` 柔和外壳，切片时长档位药丸、章节胶囊（`.glean-slicing-card__sec-chip`）、切片生成大按钮（`.glean-slicing-create-btn`）及阅读书签标记（`.glean-read-point-badge`）全量采用全圆角胶囊；
+  3. **门禁全通**：全套测试通过（**1749 / 1749 PASS**，新增微交互与胶囊契约守护测试）；`pnpm check` 0 错 0 警告；`pnpm build` 1.48s 干净构建；`pnpm check:release` 14 项全绿通过。
 - 下一步：按当前执行板顺序推进下一个任务（如 T-3367 批量选择范围与底部操作在更多场景的走查，或按作者点单继续）。版本保持 1.4.0，等待解封通知后统一处理。
 
 ## 历史交接（2026-10-29 本地发版轮：v1.4.0 次版本发布、五处版本同步、双语 README 全面重构、全门禁验证与本地打包）

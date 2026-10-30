@@ -437,5 +437,11 @@ test("列表行尾操作与看板选择框平滑微交互契约：默认低透�
     assert.match(quoteCardDialog, /\.glean-quote-card-stage\s*\{[\s\S]*border:\s*1px solid var\(--glean-border-soft\);/);
     assert.match(quoteCardDialog, /\.glean-quote-card-btn\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
     assert.match(quoteCardDialog, /\.glean-quote-card-theme-btn--active\s*\{[\s\S]*background:\s*color-mix\(in srgb, var\(--glean-color-action\)/);
+
+    // 9. 长文切片卡片柔和外壳与胶囊流
+    const slicingScss = read("src/styles/components/slicing.scss");
+    assert.match(slicingScss, /\.glean-slicing-card\s*\{[\s\S]*border:\s*1px solid var\(--glean-border-soft\);/);
+    assert.match(slicingScss, /\.glean-slicing-card__sec-chip\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
+    assert.match(slicingScss, /\.glean-read-point-badge\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
 });
 
