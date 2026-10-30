@@ -183,9 +183,10 @@
         gap: 10px;
         padding: 16px;
         border: 1px solid var(--glean-border-soft);
-        border-radius: 6px;
+        border-radius: var(--glean-radius-lg, 16px);
         background: var(--b3-theme-surface);
         color: var(--b3-theme-on-surface);
+        box-shadow: var(--glean-shadow-card);
     }
 
     .glean-confirm h3,
@@ -217,6 +218,11 @@
         flex-wrap: wrap;
         justify-content: flex-end;
         gap: 8px;
+    }
+
+    .glean-confirm__actions .glean-btn {
+        border-radius: var(--glean-radius-pill);
+        padding: var(--glean-space-1-5) var(--glean-space-3-5);
     }
 
     .glean-btn--danger {

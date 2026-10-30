@@ -475,5 +475,11 @@ test("列表行尾操作与看板选择框平滑微交互契约：默认低透�
     assert.match(contextPanel, /\.glean-context-selection__item\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-lg,\s*16px\);/);
     assert.match(contextPanel, /\.glean-context-selection__field select\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
     assert.match(contextPanel, /\.glean-context-selection__open\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
+
+    // 14. 归档与恢复对话框选项卡片柔和外壳与胶囊流
+    const dialogsScss = read("src/styles/components/dialogs.scss");
+    assert.match(dialogsScss, /\.glean-archive-dlg__opt\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-lg,\s*16px\);/);
+    assert.match(dialogsScss, /\.glean-archive-dlg__icon\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
+    assert.match(dialogsScss, /\.glean-archive-dlg__purge\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
 });
 
