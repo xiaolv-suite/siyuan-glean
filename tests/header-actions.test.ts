@@ -749,5 +749,13 @@ test("列表行尾操作与看板选择框平滑微交互契约：默认低透�
     assert.match(statsViewSvelte, /use href="#iconGleanDownload"/);
     assert.match(readingContextSvelte, /use href="#iconGleanCopy"/);
     assert.match(readingContextSvelte, /use href="#iconGleanNews"/);
+
+    // 52. 读库主工作台（DockPanel）更多操作、视图分段与漫游盲盒全套采用 SVG 矢量图标替代 Emoji，分段切换聚焦光圈契约守门
+    const dockPanelSvelte = read("src/ui/DockPanel.svelte");
+    assert.match(dockPanelSvelte, /glean-mobile-more__item[\s\S]*use href="#iconGleanRefresh"/);
+    assert.match(dockPanelSvelte, /glean-views__btn--roam[\s\S]*use href="#iconGleanRefresh"/);
+    assert.match(dockPanelSvelte, /use href="#iconGleanNews"[\s\S]*view\.modeList/);
+    assert.match(dockPanelSvelte, /use href="#iconGleanCard"[\s\S]*view\.modeKanban/);
+    assert.match(styles, /\.glean-seg__btn\s*\{[\s\S]*&:focus-visible\s*\{[\s\S]*outline:\s*2px solid var\(--glean-color-action\);/);
 });
 

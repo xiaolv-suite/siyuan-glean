@@ -2875,7 +2875,7 @@ function metaLine(entry: Row): string {
                                 {t(i18n, "panel.popup")}
                             </button>
                             <button type="button" class="glean-mobile-more__item" role="menuitem" onclick={() => { closeMobileMore(); triggerRoamingRead(); }}>
-                                <span class="glean-mobile-more__icon glean-mobile-more__icon--emoji" aria-hidden="true">🎲</span>
+                                <svg class="glean-mobile-more__icon" aria-hidden="true"><use href="#iconGleanRefresh" /></svg>
                                 {t(i18n, "roaming.button")}
                             </button>
                             <button type="button" class="glean-mobile-more__item" role="menuitem" aria-current={view === "stats" ? "page" : undefined} onclick={() => { closeMobileMore(true); selectMobileView("stats"); }}>
@@ -2985,7 +2985,7 @@ function metaLine(entry: Row): string {
                     class="glean-views__btn glean-views__btn--roam"
                     title={t(i18n, "roaming.buttonHint")}
                     onclick={triggerRoamingRead}
-                >🎲 {t(i18n, "roaming.button")}</button>
+                ><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanRefresh" /></svg> <span>{t(i18n, "roaming.button")}</span></button>
             </div>
         {/if}
 
@@ -3172,13 +3172,13 @@ function metaLine(entry: Row): string {
                         class:glean-seg__btn--on={layoutMode === "list"}
                         aria-pressed={layoutMode === "list"}
                         onclick={() => { markPrefsInteraction(); layoutMode = "list"; }}
-                    >☰ {t(i18n, "view.modeList")}</button>
+                    ><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg> <span>{t(i18n, "view.modeList")}</span></button>
                     <button
                         class="glean-seg__btn"
                         class:glean-seg__btn--on={layoutMode === "kanban"}
                         aria-pressed={layoutMode === "kanban"}
                         onclick={() => { markPrefsInteraction(); layoutMode = "kanban"; }}
-                    >⇆ {t(i18n, "view.modeKanban")}</button>
+                    ><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg> <span>{t(i18n, "view.modeKanban")}</span></button>
                 </div>
                 <div class="glean-libbar__spacer"></div>
                 <button
@@ -3756,11 +3756,11 @@ function metaLine(entry: Row): string {
                                             {/if}
                                             <ActionPopover label={t(i18n, "library.moreActions")} compact>
                                                 <AuthorEditor {facade} docId={entry.id} onSaved={reload} />
-                                                <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryBlockRef(entry)}>🔗 {t(i18n, "action.copyBlockRef")}</button>
-                                                <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "gbt")}>📄 {t(i18n, "citation.copyGBT")}</button>
-                                                <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "bibtex")}>📚 {t(i18n, "citation.copyBibTeX")}</button>
-                                                <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "apa")}>🎓 {t(i18n, "citation.copyAPA")}</button>
-                                                <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "mla")}>📖 {t(i18n, "citation.copyMLA")}</button>
+                                                <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryBlockRef(entry)}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg> <span>{t(i18n, "action.copyBlockRef")}</span></button>
+                                                <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "gbt")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg> <span>{t(i18n, "citation.copyGBT")}</span></button>
+                                                <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "bibtex")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArchive" /></svg> <span>{t(i18n, "citation.copyBibTeX")}</span></button>
+                                                <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "apa")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanLocal" /></svg> <span>{t(i18n, "citation.copyAPA")}</span></button>
+                                                <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "mla")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg> <span>{t(i18n, "citation.copyMLA")}</span></button>
                                                 {#if entry.status !== "archived"}
                                                     <button class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId) || entry.status === "later"} onclick={() => void setStatus(entry, "later")}>{t(i18n, "action.moveToLater")}</button>
                                                     <button class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId)} onclick={() => facade.openArchiveDialog(entry.id)}>{t(i18n, "action.archive")}</button>
@@ -3974,11 +3974,11 @@ function metaLine(entry: Row): string {
                                 <div class="glean-card__ops">
                                     <ActionPopover label={t(i18n, "library.moreActions")} compact>
                                         <AuthorEditor {facade} docId={entry.id} onSaved={reload} />
-                                        <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryBlockRef(entry)}>🔗 {t(i18n, "action.copyBlockRef")}</button>
-                                        <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "gbt")}>📄 {t(i18n, "citation.copyGBT")}</button>
-                                        <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "bibtex")}>📚 {t(i18n, "citation.copyBibTeX")}</button>
-                                        <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "apa")}>🎓 {t(i18n, "citation.copyAPA")}</button>
-                                        <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "mla")}>📖 {t(i18n, "citation.copyMLA")}</button>
+                                        <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryBlockRef(entry)}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg> <span>{t(i18n, "action.copyBlockRef")}</span></button>
+                                        <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "gbt")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg> <span>{t(i18n, "citation.copyGBT")}</span></button>
+                                        <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "bibtex")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArchive" /></svg> <span>{t(i18n, "citation.copyBibTeX")}</span></button>
+                                        <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "apa")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanLocal" /></svg> <span>{t(i18n, "citation.copyAPA")}</span></button>
+                                        <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "mla")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg> <span>{t(i18n, "citation.copyMLA")}</span></button>
                                     </ActionPopover>
                                     <button
                                         class="glean-op-btn"

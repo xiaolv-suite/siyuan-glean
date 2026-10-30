@@ -6051,8 +6051,16 @@ mark.glean-search-highlight {
     }
 
     &:focus-visible {
-        outline: none;
+        outline: 2px solid var(--glean-color-action);
+        outline-offset: 2px;
         box-shadow: var(--glean-shadow-focus);
+    }
+
+    &:has(.glean-icon) {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--glean-space-1);
+        justify-content: center;
     }
 
     &.glean-seg__btn--on,
