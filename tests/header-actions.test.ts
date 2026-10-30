@@ -544,5 +544,39 @@ test("列表行尾操作与看板选择框平滑微交互契约：默认低透�
     assert.match(styles, /\.glean-saved-views\s*\{[\s\S]*border-bottom:\s*1px solid var\(--glean-border-soft\);/);
     assert.match(styles, /\.glean-saved-views :where\(\.b3-select, \.b3-text-field, \.glean-btn\)\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
     assert.match(styles, /\.glean-saved-views \.glean-btn:first-of-type:not\(:disabled\)\s*\{[\s\S]*color:\s*var\(--glean-color-action\);/);
+
+    // 28. 移动端筛选抽屉柔和外壳、胶囊化关闭、选择框与松青激活状态
+    assert.match(styles, /\.glean-mobile-filter-sheet\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-20,\s*20px\)[\s\S]*border:\s*1px solid var\(--glean-border-soft\);/);
+    assert.match(styles, /\.glean-mobile-filter-sheet__close\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
+    assert.match(styles, /\.glean-mobile-filter-trigger\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
+    assert.match(styles, /\.glean-mobile-filter-trigger--active\s*\{[\s\S]*color:\s*var\(--glean-color-action\);/);
+    assert.match(styles, /\.glean-mobile-filter-badge\s*\{[\s\S]*color:\s*var\(--glean-color-action\);/);
+    assert.match(styles, /\.glean-mobile-filter-field\s*\{[\s\S]*\.b3-select\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
+    assert.match(styles, /\.glean-mobile-filter-direction\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
+
+    // 29. 侧栏手风琴开关、微操作按钮、搜索框与更多展开全圆角胶囊化及松青操作色
+    assert.match(styles, /\.glean-icon-btn--sm\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
+    assert.match(styles, /\.glean-icon-btn--sm\s*\{[\s\S]*&.glean-icon-btn--active\s*\{[\s\S]*color:\s*var\(--glean-color-action\);/);
+    assert.match(styles, /\.glean-rail__toggle\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
+    assert.match(styles, /\.glean-rail__search\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
+    assert.match(styles, /\.glean-rail__more\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);[\s\S]*color:\s*var\(--glean-color-action\);/);
+    assert.match(styles, /\.glean-rail__item--on \.glean-rail__n\s*\{[\s\S]*color:\s*var\(--glean-color-action\);/);
+
+    // 30. 关键指标条全胶囊圆角、松青点击激活态与自适应断点
+    assert.match(styles, /\.glean-stat-strip__item\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
+    assert.match(styles, /\.glean-stat-strip__item\s*\{[\s\S]*&.glean-stat-strip__item--active\s*\{[\s\S]*color:\s*var\(--glean-color-action\);/);
+    assert.match(styles, /@media\s*\(max-width:\s*480px\)\s*\{[\s\S]*\.glean-stat-strip__val\s*\{[\s\S]*font-size:\s*20px;/);
+    assert.match(styles, /@media\s*\(max-width:\s*360px\)\s*\{[\s\S]*\.glean-stat-strip__val\s*\{[\s\S]*font-size:\s*17px;/);
+
+    // 31. 漫游阅读盲盒松青色彩统一、预算分段激活态与移动端断点
+    assert.match(roamingScss, /\.glean-roaming-badge\s*\{[\s\S]*color:\s*var\(--glean-color-action\);/);
+    assert.match(roamingScss, /\.glean-roaming-budget-btn--active\s*\{[\s\S]*color:\s*var\(--glean-color-action\);/);
+    assert.match(roamingScss, /\.glean-roaming-title-btn\s*\{[\s\S]*&:hover\s*\{[\s\S]*color:\s*var\(--glean-color-action\);/);
+    assert.match(roamingScss, /@media\s*\(max-width:\s*560px\)\s*\{[\s\S]*\.glean-roaming-budget-btn\s*\{[\s\S]*min-height:\s*32px;/);
+    assert.match(roamingScss, /@media\s*\(max-width:\s*360px\)\s*\{[\s\S]*\.glean-roaming-triage\s*\{[\s\S]*grid-template-columns:\s*repeat\(2,\s*1fr\);/);
+
+    // 32. 超窄视口（< 360px）紧凑筛选框、行条、看板卡片与保存视图弹性自适应
+    assert.match(styles, /@media\s*\(max-width:\s*360px\)\s*\{[\s\S]*\.glean-filters--compact \.glean-filter\s*\{[\s\S]*flex:\s*1 1 calc\(50% - var\(--glean-space-1\)\);/);
+    assert.match(styles, /@media\s*\(max-width:\s*360px\)\s*\{[\s\S]*\.glean-saved-views\s*\{[\s\S]*flex-direction:\s*column;/);
 });
 

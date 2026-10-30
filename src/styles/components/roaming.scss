@@ -26,7 +26,7 @@
     gap: 6px;
     font-size: var(--glean-text-xs-plus);
     font-weight: 600;
-    color: var(--lv-brand);
+    color: var(--glean-color-action);
 }
 
 .glean-roaming-score {
@@ -87,8 +87,8 @@
     }
 
     &.glean-roaming-budget-btn--active {
-        background: var(--b3-theme-surface);
-        color: var(--lv-brand);
+        background: color-mix(in srgb, var(--glean-color-action) 12%, var(--b3-theme-surface));
+        color: var(--glean-color-action);
         font-weight: var(--glean-weight-semibold);
         opacity: 1;
         box-shadow: var(--glean-shadow-control);
@@ -155,7 +155,7 @@
     transition: color var(--glean-duration-fast) ease;
 
     &:hover {
-        color: var(--lv-brand);
+        color: var(--glean-color-action);
         text-decoration: underline;
     }
 }
@@ -249,3 +249,79 @@
     text-align: center;
     padding-top: var(--glean-space-1);
 }
+
+@media (max-width: 560px) {
+    .glean-roaming-dialog {
+        padding: var(--glean-space-3);
+    }
+
+    .glean-roaming-budget-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--glean-space-2);
+    }
+
+    .glean-roaming-budget {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .glean-roaming-budget-btn {
+        flex: 1 1 0;
+        text-align: center;
+        min-height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .glean-roaming-tag-select {
+        max-width: none;
+        width: 100%;
+        min-height: 36px;
+    }
+
+    .glean-roaming-actions {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--glean-space-2-5);
+    }
+
+    .glean-roaming-triage {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .glean-roaming-triage-btn {
+        flex: 1 1 0;
+        min-height: 36px;
+        text-align: center;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .glean-roaming-nav {
+        width: 100%;
+        display: flex;
+        gap: var(--glean-space-2);
+    }
+
+    .glean-roaming-read-btn {
+        flex: 1 1 auto;
+        min-height: 44px;
+    }
+}
+
+@media (max-width: 360px) {
+    .glean-roaming-badge {
+        font-size: var(--glean-text-xs);
+    }
+
+    .glean-roaming-triage {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--glean-space-1-5);
+    }
+}
+
