@@ -507,8 +507,15 @@ function reasonText(reason: SurfaceReason): string {
     }
 }
 
+function hasBlockingOverlay(): boolean {
+    if (typeof document === "undefined") return false;
+    const overlays = document.querySelectorAll<HTMLElement>(".b3-menu, .b3-dialog, dialog[open], [role='dialog'][aria-modal='true'], .glean-dialog");
+    return Array.from(overlays).some((element) => element.getClientRects().length > 0);
+}
+
 function onWindowKeyDown(event: KeyboardEvent): void {
     if (event.defaultPrevented || event.isComposing || event.keyCode === 229 || event.repeat) return;
+    if (hasBlockingOverlay()) return;
     if ((event.ctrlKey || event.metaKey) && (event.key === "f" || event.key === "F")) {
         const target = event.target instanceof Element ? event.target : null;
         const textEntry = Boolean(target?.closest("input, textarea, select, [contenteditable]:not([contenteditable='false'])"));
@@ -557,7 +564,7 @@ function handleResurfaceShortcut(event: KeyboardEvent): void {
     const action = resolveLibraryShortcut(event, {
         textEntry,
         nativeAction,
-        overlay: Boolean(document.querySelector("dialog[open], .b3-menu")),
+        overlay: hasBlockingOverlay(),
         cursorActive: Boolean(cursorId),
     });
     // H 换一篇作为今日拾遗特色快捷键，仅在光标激活且未在输入控件中时接管

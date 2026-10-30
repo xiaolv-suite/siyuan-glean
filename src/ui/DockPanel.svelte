@@ -1171,6 +1171,7 @@ async function batchFavorite(nextFav: boolean): Promise<void> {
         showMessage(t(i18n, "msg.actionFailed"), 3000);
     } finally {
         if (count > 0) {
+            selection = new Set();
             facade.notifyDataChanged();
             await reload();
         }
@@ -2555,6 +2556,11 @@ async function runKeyboardAction(action: LibraryKeyboardAction): Promise<void> {
             break;
         }
         case "toggleFavorite": {
+            if (statusActionId) {
+                showMessage(t(i18n, "msg.statusBusy"), 2500);
+                break;
+            }
+            statusActionId = entry.id;
             const currentClip = index.clips[entry.id];
             const nextFav = !(currentClip?.favorite ?? entry.favorite);
             try {
@@ -2564,6 +2570,8 @@ async function runKeyboardAction(action: LibraryKeyboardAction): Promise<void> {
                 await reload();
             } catch {
                 showMessage(t(i18n, "msg.actionFailed"), 2000);
+            } finally {
+                statusActionId = "";
             }
             break;
         }
@@ -2580,8 +2588,11 @@ $effect(() => {
     const root = rootEl;
     if (!root || facade.isMobile || view !== "library") return;
     const onKeyDown = (event: KeyboardEvent) => {
-        if (event.defaultPrevented) return;
+        if (event.defaultPrevented || event.isComposing || event.keyCode === 229) return;
+        const ctx = keyboardContext(event);
+        if (ctx.overlay) return;
         if (event.altKey && (event.key === "f" || event.key === "F")) {
+            if (event.repeat || ctx.textEntry) return;
             event.preventDefault();
             event.stopPropagation();
             markPrefsInteraction();
@@ -2589,6 +2600,7 @@ $effect(() => {
             return;
         }
         if ((event.ctrlKey || event.metaKey) && (event.key === "f" || event.key === "F")) {
+            if (event.repeat || ctx.textEntry) return;
             event.preventDefault();
             event.stopPropagation();
             if (!searchOpen) searchOpen = true;
@@ -2598,7 +2610,7 @@ $effect(() => {
             });
             return;
         }
-        const action = resolveLibraryShortcut(event, keyboardContext(event));
+        const action = resolveLibraryShortcut(event, ctx);
         if (!action) return;
         // J/K 在行内按钮上也要生效；其余动作由原生控件优先（见 keyboardContext）。
         event.preventDefault();
@@ -3049,6 +3061,28 @@ function metaLine(entry: Row): string {
     {/if}
 
     {#if view === "library"}
+        <div class="glean-stat-strip" role="region" aria-label={t(i18n, "stats.total")}>
+            <button type="button" class="glean-stat-strip__item" onclick={() => selectQueue("inbox")}>
+                <span class="glean-stat-strip__val">{totalClips}</span>
+                <span class="glean-stat-strip__lbl">{t(i18n, "stats.total")}</span>
+            </button>
+            <div class="glean-stat-strip__divider" aria-hidden="true"></div>
+            <button type="button" class="glean-stat-strip__item" class:glean-stat-strip__item--active={activeQueue === "inbox"} onclick={() => selectQueue("inbox")}>
+                <span class="glean-stat-strip__val">{queueStats.counts.inbox}</span>
+                <span class="glean-stat-strip__lbl">{t(i18n, "status.inbox")}</span>
+            </button>
+            <div class="glean-stat-strip__divider" aria-hidden="true"></div>
+            <button type="button" class="glean-stat-strip__item" class:glean-stat-strip__item--active={activeQueue === "reading"} onclick={() => selectQueue("reading")}>
+                <span class="glean-stat-strip__val">{queueStats.counts.reading}</span>
+                <span class="glean-stat-strip__lbl">{t(i18n, "status.reading")}</span>
+            </button>
+            <div class="glean-stat-strip__divider" aria-hidden="true"></div>
+            <button type="button" class="glean-stat-strip__item glean-stat-strip__item--done" class:glean-stat-strip__item--active={activeQueue === "done"} onclick={() => selectQueue("done")}>
+                <span class="glean-stat-strip__val">{queueStats.counts.done}</span>
+                <span class="glean-stat-strip__lbl">{t(i18n, "status.done")}</span>
+            </button>
+        </div>
+
         <InboxSection {facade} onMutated={() => void reload()} />
         <AiBatchPanel {facade} bind:open={aiBatchOpen} docIds={aiBatchIds} />
     {/if}

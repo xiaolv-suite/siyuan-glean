@@ -292,7 +292,7 @@
     --glean-btn-height-sm: 30px;
     --glean-btn-height-md: 34px;
     --glean-btn-height-lg: 44px;
-    --glean-btn-radius: var(--glean-radius-control);
+    --glean-btn-radius: var(--glean-radius-pill);
     --glean-btn-gap: var(--glean-space-2);
     --glean-input-height: 36px;
     --glean-input-radius: var(--glean-radius-control);
@@ -3195,28 +3195,36 @@ mark.glean-search-highlight {
 @container glean-shell (min-width: 760px) {
     .glean-panel--shell:not(.glean-panel--mobile) {
         display: grid;
-        grid-template-columns: 184px minmax(0, 1fr);
+        grid-template-columns: 64px minmax(0, 1fr);
         grid-template-rows: minmax(0, 1fr);
         align-items: stretch;
+        background: var(--glean-card-surface, #ffffff);
+        border-radius: var(--glean-radius-xl, 20px);
+        margin: var(--glean-space-2) var(--glean-space-3) var(--glean-space-3);
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 16px 32px -8px rgba(15, 23, 42, 0.06);
+        overflow: hidden;
+        border: none;
     }
 
     .glean-panel--shell:not(.glean-panel--mobile) .glean-workbench-rail {
         display: flex;
         flex-direction: column;
+        align-items: center;
         min-width: 0;
         min-height: 0;
-        gap: var(--glean-space-3);
-        padding: var(--glean-space-5-5) var(--glean-space-3-5) var(--glean-space-4-5);
-        border-right: 1px solid color-mix(in srgb, var(--b3-border-color) 40%, transparent);
-        background: var(--glean-app-background);
+        width: 64px;
+        gap: var(--glean-space-2);
+        padding: var(--glean-space-4) var(--glean-space-1);
+        border-right: 1px solid color-mix(in srgb, var(--b3-border-color) 25%, transparent);
+        background: color-mix(in srgb, var(--glean-app-background) 70%, var(--b3-theme-surface));
     }
 
     .glean-workbench-rail__brand {
         display: flex;
         align-items: center;
-        gap: var(--glean-space-2-5);
-        min-width: 0;
-        padding: var(--glean-space-0) var(--glean-space-2) var(--glean-space-2-5);
+        justify-content: center;
+        width: 100%;
+        padding: 0 0 var(--glean-space-1);
     }
 
     .glean-workbench-rail__mark {
@@ -3225,63 +3233,137 @@ mark.glean-search-highlight {
         height: 36px;
         flex: 0 0 36px;
         place-items: center;
-        border-radius: var(--glean-radius-md);
+        border-radius: var(--glean-radius-pill, 999px);
         background: color-mix(in srgb, var(--lv-brand) 12%, var(--b3-theme-surface));
         color: var(--lv-brand);
         box-shadow: 0 2px 8px -2px color-mix(in srgb, var(--lv-brand) 20%, transparent);
     }
 
-    .glean-workbench-rail__mark svg { width: 20px; height: 20px; fill: currentColor; }
-    .glean-workbench-rail__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: var(--glean-text-lg); font-weight: var(--glean-weight-semibold); letter-spacing: -0.01em; }
+    .glean-workbench-rail__mark svg { width: 19px; height: 19px; fill: currentColor; }
+    .glean-workbench-rail__name { display: none; }
     .glean-workbench-rail__capture {
-        min-height: 42px;
-        justify-content: center;
-        gap: var(--glean-space-2);
-        font-weight: var(--glean-weight-semibold);
-        letter-spacing: var(--glean-tracking-0-2);
-        border-radius: var(--glean-radius-md);
-        box-shadow: 0 4px 14px -3px color-mix(in srgb, var(--lv-brand) 38%, transparent);
+        width: 38px;
+        height: 38px;
+        min-height: 38px;
+        padding: 0;
+        border-radius: var(--glean-radius-pill, 999px);
+        box-shadow: 0 4px 12px -3px color-mix(in srgb, var(--lv-brand) 38%, transparent);
         transition: all var(--glean-duration-fast) var(--glean-ease-spring);
+        display: inline-grid;
+        place-items: center;
+
+        span { display: none; }
 
         &:hover:not(:disabled) {
             transform: translateY(-1px);
-            box-shadow: 0 6px 18px -4px color-mix(in srgb, var(--lv-brand) 46%, transparent);
+            box-shadow: 0 6px 16px -4px color-mix(in srgb, var(--lv-brand) 46%, transparent);
         }
     }
-    .glean-workbench-rail__capture svg { width: 16px; height: 16px; fill: currentColor; }
-    .glean-workbench-rail__nav { display: flex; flex-direction: column; gap: var(--glean-space-1); margin-top: var(--glean-space-2); }
+    .glean-workbench-rail__capture svg { width: 17px; height: 17px; fill: currentColor; }
+    .glean-workbench-rail__nav {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--glean-space-1-5);
+        margin-top: var(--glean-space-1);
+        width: 100%;
+    }
     .glean-workbench-rail__item {
         display: flex;
+        flex-direction: column;
         align-items: center;
-        gap: var(--glean-space-2-5);
+        justify-content: center;
+        gap: 2px;
         min-width: 0;
-        min-height: 40px;
-        width: 100%;
-        padding: var(--glean-space-2) var(--glean-space-3);
-        border: 1px solid transparent;
-        border-radius: var(--glean-radius-sm);
+        min-height: 48px;
+        width: 52px;
+        padding: 6px 2px;
+        border: none;
+        border-radius: var(--glean-radius-md, 12px);
         background: transparent;
         color: var(--b3-theme-on-surface);
-        font-size: var(--glean-text-md);
-        text-align: start;
+        text-align: center;
         cursor: pointer;
         transition: background var(--glean-duration-fast) ease, color var(--glean-duration-fast) ease;
     }
-    .glean-workbench-rail__item svg { width: 17px; height: 17px; flex: 0 0 17px; fill: currentColor; }
+    .glean-workbench-rail__item svg { width: 18px; height: 18px; flex: 0 0 18px; fill: currentColor; }
+    .glean-workbench-rail__item span {
+        font-size: 10px;
+        line-height: 1.1;
+        font-weight: var(--glean-weight-medium);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 48px;
+    }
     .glean-workbench-rail__item:hover {
         background: color-mix(in srgb, var(--lv-brand) 8%, var(--b3-theme-surface));
         color: var(--b3-theme-on-background);
     }
     .glean-workbench-rail__item--on {
-        background: color-mix(in srgb, var(--lv-brand) 12%, var(--b3-theme-surface));
+        background: color-mix(in srgb, var(--lv-brand) 14%, var(--b3-theme-surface));
         color: var(--lv-brand);
         font-weight: var(--glean-weight-bold);
-        border-color: color-mix(in srgb, var(--lv-brand) 22%, transparent);
-        box-shadow: 0 2px 8px -2px color-mix(in srgb, var(--lv-brand) 16%, transparent);
+        border-radius: var(--glean-radius-md, 12px);
+        box-shadow: none;
     }
     .glean-workbench-rail__item:focus-visible { outline: none; box-shadow: var(--glean-shadow-focus); }
     .glean-workbench-rail__spacer { flex: 1 1 auto; min-height: 12px; }
-    .glean-workbench-rail__hint { padding: var(--glean-space-2-5); border-top: 1px solid var(--glean-border-soft); color: var(--b3-theme-on-surface); font-size: var(--glean-text-meta); line-height: 1.6; }
+    .glean-workbench-rail__hint { display: none; }
+
+    .glean-stat-strip {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: var(--glean-space-3);
+        padding: var(--glean-space-2-5) var(--glean-space-5);
+        margin: 0;
+        border-bottom: 1px solid color-mix(in srgb, var(--b3-border-color) 25%, transparent);
+        background: var(--b3-theme-surface);
+    }
+
+    .glean-stat-strip__item {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        padding: var(--glean-space-1) var(--glean-space-2);
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        border-radius: var(--glean-radius-sm);
+        transition: background var(--glean-duration-fast) ease;
+
+        &:hover {
+            background: color-mix(in srgb, var(--glean-color-action) 8%, transparent);
+        }
+    }
+
+    .glean-stat-strip__val {
+        font-size: 24px;
+        font-weight: var(--glean-weight-bold);
+        line-height: 1.1;
+        color: var(--b3-theme-on-background);
+        font-variant-numeric: tabular-nums;
+    }
+
+    .glean-stat-strip__item--done .glean-stat-strip__val {
+        color: var(--glean-color-data);
+    }
+
+    .glean-stat-strip__lbl {
+        font-size: 11px;
+        color: var(--b3-theme-on-surface);
+        opacity: 0.75;
+        margin-top: 2px;
+        font-weight: var(--glean-weight-medium);
+    }
+
+    .glean-stat-strip__divider {
+        width: 1px;
+        height: 24px;
+        flex: 0 0 1px;
+        background: color-mix(in srgb, var(--b3-border-color) 35%, transparent);
+    }
 }
 
 @container glean-shell (max-width: 759px) {

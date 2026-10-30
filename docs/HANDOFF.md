@@ -1,6 +1,25 @@
 # HANDOFF — 续跑交接（每轮开发结束更新本页）
 
-## 当前有效交接（2026-10-29 本地发版轮：v1.4.0 次版本发布、五处版本同步、双语 README 全面重构、全门禁验证与本地打包）
+## 当前有效交接（2026-10-30 并发与交互态排查修复、三段式布局与统计优先结构升级）
+
+- **T-3541/D-0419：并发与交互态排查修复、三段式与外壳分层 UI 结构重构**：
+  1. **并发与交互态 Bug 线深度清障（P0/P1 全部就地修复）**：
+     - 修复 `RoamingDrawerDialog.svelte` 并发写竞态与乐观回滚错位：`cycleCurrentPriority`、`cycleCurrentRating`、`toggleCurrentFavorite` 补齐 `loading = true` 与 `finally { loading = false; }` 锁；`nextPick()` 顶部补齐 `if (loading) return;` 阻断双击连点重复抽卡与历史游标错位；
+     - 修复 `RoamingDrawerDialog.svelte` 键盘监听过滤 `event.repeat`，长按按键防高频轰炸；`Escape` 增加 `preventDefault()` 与 `stopPropagation()` 阻断事件冒泡击穿；
+     - 修复 `DockPanel.svelte` 单卡收藏 `toggleFavorite` 缺失 busy 互斥锁问题，复用 `statusActionId` 防双击引发相反布尔并发写入；
+     - 修复 `DockPanel.svelte` 批量收藏 `batchFavorite` 成功后遗漏清空 `selection` 集合的问题，对齐其它批量分拣逻辑；
+     - 修复 `DockPanel.svelte` 全局 `Alt+F` 与 `Ctrl+F` 在弹窗打开或在输入框打字时穿透拦截的问题，接入 `keyboardContext` 与 `hasBlockingOverlay` 屏蔽；
+     - 修复 `ResurfaceView.svelte` 全局 `onWindowKeyDown` 劫持上层弹窗 Escape 退出与 `H`/`B`/`S` 字母按键的问题，升级 `hasBlockingOverlay` 完整检测 `.b3-dialog`、`[aria-modal="true"]` 与 `.glean-dialog` 并提前短路释放；
+  2. **UI 结构升级（现代三段式、外壳分层、统计优先、全圆角胶囊体系）**：
+     - **外壳分层**：底色采用微色相浅色背景托底（`--glean-app-background`），内部浮起近白大圆角外壳容器（`border-radius: 20px`，复合软阴影），区域间依靠底色差区分，消除繁复黑描边；
+     - **三段式布局**：左侧常驻 64px 极窄图标导航栏（常驻图标 + 紧凑小标签，活跃项采用主题色背景填充块而非仅文字变色）；中间为主内容工作台；右侧为随选中条目联动的抽屉式上下文详情面板（预览/大纲/文献著录）；
+     - **统计优先**：读库工作台顶部固定置入无包边、细竖线分隔的关键核心指标条（`.glean-stat-strip`，总收录/待分拣/阅读中/已读毕），24px 大数字（`tabular-nums`）配紧凑小标签，可直接点击下钻筛选；
+     - **数据柔和表达与胶囊体系**：热力图单元格消除生硬描边（`border: none; border-radius: 3px;`），主按钮与分段切换统一收敛为全圆角胶囊（`--glean-btn-radius: var(--glean-radius-pill)`）；
+     - **列表密度与行尾操作**：行高维持中等舒适度，标题与元数据清晰双行层级，行尾图标操作按钮采用默认低透、悬停/获焦平滑浮现（`opacity: 0.35 -> 1`）；
+  3. **门禁全通**：全套测试通过（**1748 / 1748 PASS**，新增键盘隔离与并发互斥守护测试）；`pnpm check` 0 错 0 警告；`pnpm build` 1.88s 干净构建；`pnpm check:release` 14 项全绿通过。
+- 下一步：按当前执行板顺序推进下一个任务（如 T-3367 批量选择范围与底部操作在更多场景的走查，或按作者点单继续）。版本保持 1.4.0，等待解封通知后统一处理。
+
+## 历史交接（2026-10-29 本地发版轮：v1.4.0 次版本发布、五处版本同步、双语 README 全面重构、全门禁验证与本地打包）
 
 - **T-3540/D-0418：本地发版轮与 v1.4.0 里程碑完整落地**：
   1. **版本号统一递增至 1.4.0**：
@@ -18,7 +37,7 @@
   4. **严格本地闭环承诺**：
      - 全程无任何远程操作：不执行 `git push`、不创建远程 tag、不调用任何 GitHub 接口、不改动远程仓库配置；
      - 本地完成 git commit 与本地 tag `v1.4.0` 锚定。
-- **下一步**：等待作者账号解封通知后统一进行 GitHub 远程推送与 Release 物料发布。
+- 下一步：按当前执行板顺序推进下一个任务（如 T-3367 批量选择范围与底部操作在更多场景的走查，或按作者点单继续）。版本保持 1.4.0，等待解封通知后统一处理。
 
 ## 历史交接（2026-10-29 视觉与感知层现代质感改造落地与令牌基线统一）
 

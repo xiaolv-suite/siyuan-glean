@@ -152,6 +152,7 @@
     }
 
     async function nextPick(): Promise<void> {
+        if (loading) return;
         const currentList = history.length > 0 ? history : [initialPick];
         if (historyIndex < currentList.length - 1) {
             historyIndex += 1;
@@ -224,6 +225,7 @@
         const currentFav = Boolean(currentPick.item.favorite);
         const nextFav = !currentFav;
         currentPick.item.favorite = nextFav;
+        loading = true;
         try {
             await writeClip(facade.pluginInstance, currentPick.item.id, { favorite: nextFav }, { force: true });
             showMessage(t(i18n, nextFav ? "roaming.favoriteAdded" : "roaming.favoriteRemoved"), 2000);
@@ -232,6 +234,8 @@
             currentPick.item.favorite = currentFav;
             console.warn("[glean] 盲盒收藏切换失败:", error);
             showMessage(t(i18n, "msg.actionFailed"), 2500);
+        } finally {
+            loading = false;
         }
     }
 
@@ -302,6 +306,7 @@
         const currentP = currentPick.item.priority ?? 0;
         const nextP = (currentP % 5) + 1;
         currentPick.item.priority = nextP;
+        loading = true;
         try {
             await writeClip(facade.pluginInstance, currentPick.item.id, { priority: nextP }, { force: true });
             showMessage(t(i18n, "msg.rankSaved"), 2000);
@@ -310,6 +315,8 @@
             currentPick.item.priority = currentP;
             console.warn("[glean] 盲盒优先级保存失败:", error);
             showMessage(t(i18n, "msg.actionFailed"), 2500);
+        } finally {
+            loading = false;
         }
     }
 
@@ -318,6 +325,7 @@
         const currentR = currentPick.item.rating ?? 0;
         const nextR = (currentR % 5) + 1;
         currentPick.item.rating = nextR;
+        loading = true;
         try {
             await writeClip(facade.pluginInstance, currentPick.item.id, { rating: nextR }, { force: true });
             showMessage(t(i18n, "msg.rankSaved"), 2000);
@@ -326,6 +334,8 @@
             currentPick.item.rating = currentR;
             console.warn("[glean] 盲盒评分保存失败:", error);
             showMessage(t(i18n, "msg.actionFailed"), 2500);
+        } finally {
+            loading = false;
         }
     }
 
@@ -360,10 +370,13 @@
 </script>
 
 <svelte:window onkeydown={(e) => {
+    if (e.repeat) return;
     const target = e.target instanceof Element ? e.target : null;
     if (target?.closest("input, textarea, select, [contenteditable]:not([contenteditable='false'])")) return;
     if (e.isComposing || e.keyCode === 229) return;
     if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
         onClose?.();
     } else if (e.key === "ArrowLeft" && canPrev) {
         e.preventDefault();

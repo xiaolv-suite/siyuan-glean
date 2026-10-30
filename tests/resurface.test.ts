@@ -283,3 +283,11 @@ test("ResurfaceView 接线：focusCard 必须精准匹配标题按钮类名保�
     assert.match(view, /function focusCard\(id: string\): void \{/);
     assert.match(view, /button\.glean-surf__title-action/);
 });
+
+test("ResurfaceView 键盘隔离：弹窗打开时必须抑制全局按键拦截，防止劫持 Escape 与字母快捷键", () => {
+    const view = readFileSync(new URL("../src/ui/ResurfaceView.svelte", import.meta.url), "utf8");
+    assert.match(view, /function hasBlockingOverlay\(\): boolean/);
+    assert.match(view, /\.b3-dialog/);
+    assert.match(view, /if \(hasBlockingOverlay\(\)\) return;/);
+    assert.match(view, /overlay: hasBlockingOverlay\(\)/);
+});
