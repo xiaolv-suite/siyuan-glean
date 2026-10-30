@@ -128,10 +128,10 @@
             <button type="button" class="glean-bb" disabled={busy} onclick={() => void onApply("done")}>{t(i18n, "status.done")}</button>
             <button type="button" class="glean-bb glean-bb--pri" disabled={busy} onclick={() => void onApply("archived")}>{t(i18n, "action.batchArchive")}</button>
             {#if onAddTag}
-                <button type="button" class="glean-bb" disabled={busy} onclick={triggerAddTag}>＋ {t(i18n, "library.batchAddTag")}</button>
+                <button type="button" class="glean-bb" disabled={busy} onclick={triggerAddTag}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanPlus" /></svg> <span>{t(i18n, "library.batchAddTag")}</span></button>
             {/if}
             {#if onSetAuthor}
-                <button type="button" class="glean-bb" disabled={busy} onclick={triggerSetAuthor}>👤 {t(i18n, "library.batchSetAuthor")}</button>
+                <button type="button" class="glean-bb" disabled={busy} onclick={triggerSetAuthor}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanEdit" /></svg> <span>{t(i18n, "library.batchSetAuthor")}</span></button>
             {/if}
             {#if onBatchPriority}
                 <button type="button" class="glean-bb glean-bb--priority" disabled={busy} onclick={triggerSetPriority} title={t(i18n, "library.batchSetPriority")}>⚡ {t(i18n, "library.batchSetPriority")}</button>
@@ -140,37 +140,37 @@
                 <button type="button" class="glean-bb glean-bb--rating" disabled={busy} onclick={triggerSetRating} title={t(i18n, "library.batchSetRating")}>⭐ {t(i18n, "library.batchSetRating")}</button>
             {/if}
             {#if onPurifyWechat && hasWechatSelected}
-                <button type="button" class="glean-bb" disabled={busy} onclick={() => void onPurifyWechat?.()}>✨ {t(i18n, "wechat.batchPurify")}</button>
+                <button type="button" class="glean-bb" disabled={busy} onclick={() => void onPurifyWechat?.()}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg> <span>{t(i18n, "wechat.batchPurify")}</span></button>
             {/if}
             {#if onCopyBlockRefs}
-                <button type="button" class="glean-bb glean-bb--copy-refs" disabled={busy} onclick={() => void onCopyBlockRefs?.()} title="{t(i18n, 'action.copyBlockRef')}">🔗 {t(i18n, "action.copyBlockRef")}</button>
+                <button type="button" class="glean-bb glean-bb--copy-refs" disabled={busy} onclick={() => void onCopyBlockRefs?.()} title="{t(i18n, 'action.copyBlockRef')}"><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg> <span>{t(i18n, "action.copyBlockRef")}</span></button>
             {/if}
             {#if onCopyCitations}
-                <button type="button" class="glean-bb glean-bb--copy-citations" disabled={busy} onclick={() => void onCopyCitations?.()} title="{t(i18n, 'citation.copyGBT')}">📄 {t(i18n, "citation.copyGBT")}</button>
+                <button type="button" class="glean-bb glean-bb--copy-citations" disabled={busy} onclick={() => void onCopyCitations?.()} title="{t(i18n, 'citation.copyGBT')}"><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg> <span>{t(i18n, "citation.copyGBT")}</span></button>
             {/if}
             {#if onCopyBibTeX}
-                <button type="button" class="glean-bb glean-bb--copy-bibtex" disabled={busy} onclick={() => void onCopyBibTeX?.()} title="{t(i18n, 'citation.copyBibTeX')}">📚 {t(i18n, "citation.copyBibTeX")}</button>
+                <button type="button" class="glean-bb glean-bb--copy-bibtex" disabled={busy} onclick={() => void onCopyBibTeX?.()} title="{t(i18n, 'citation.copyBibTeX')}"><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArchive" /></svg> <span>{t(i18n, "citation.copyBibTeX")}</span></button>
             {/if}
             {#if onCopyAPA}
-                <button type="button" class="glean-bb glean-bb--copy-apa" disabled={busy} onclick={() => void onCopyAPA?.()} title="{t(i18n, 'citation.copyAPA')}">🎓 {t(i18n, "citation.copyAPA")}</button>
+                <button type="button" class="glean-bb glean-bb--copy-apa" disabled={busy} onclick={() => void onCopyAPA?.()} title="{t(i18n, 'citation.copyAPA')}"><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanLocal" /></svg> <span>{t(i18n, "citation.copyAPA")}</span></button>
             {/if}
             {#if onCopyMLA}
-                <button type="button" class="glean-bb glean-bb--copy-mla" disabled={busy} onclick={() => void onCopyMLA?.()} title="{t(i18n, 'citation.copyMLA')}">📖 {t(i18n, "citation.copyMLA")}</button>
+                <button type="button" class="glean-bb glean-bb--copy-mla" disabled={busy} onclick={() => void onCopyMLA?.()} title="{t(i18n, 'citation.copyMLA')}"><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg> <span>{t(i18n, "citation.copyMLA")}</span></button>
             {/if}
             {#if onCopySummaryList}
-                <button type="button" class="glean-bb glean-bb--copy-summary" disabled={busy} onclick={() => void onCopySummaryList?.()} title="{t(i18n, 'library.batchCopySummary')}">📋 {t(i18n, "library.batchCopySummary")}</button>
+                <button type="button" class="glean-bb glean-bb--copy-summary" disabled={busy} onclick={() => void onCopySummaryList?.()} title="{t(i18n, 'library.batchCopySummary')}"><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg> <span>{t(i18n, "library.batchCopySummary")}</span></button>
             {/if}
             {#if onExportCsv}
-                <button type="button" class="glean-bb glean-bb--csv" disabled={busy} onclick={() => void onExportCsv?.()} title="{t(i18n, 'library.batchExportCsv')}">📊 {t(i18n, "library.batchExportCsv")}</button>
+                <button type="button" class="glean-bb glean-bb--csv" disabled={busy} onclick={() => void onExportCsv?.()} title="{t(i18n, 'library.batchExportCsv')}"><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanDownload" /></svg> <span>{t(i18n, "library.batchExportCsv")}</span></button>
             {/if}
             {#if onBatchFavorite}
                 {#if allSelectedAreFavorite}
-                    <button type="button" class="glean-bb glean-bb--unfav" disabled={busy} onclick={() => void onBatchFavorite?.(false)} title="{t(i18n, 'library.batchUnfavorite')}">🤍 {t(i18n, "library.batchUnfavorite")}</button>
+                    <button type="button" class="glean-bb glean-bb--unfav" disabled={busy} onclick={() => void onBatchFavorite?.(false)} title="{t(i18n, 'library.batchUnfavorite')}">{t(i18n, "library.batchUnfavorite")}</button>
                 {:else}
-                    <button type="button" class="glean-bb glean-bb--fav" disabled={busy} onclick={() => void onBatchFavorite?.(true)} title="{t(i18n, 'library.batchFavorite')}">❤️ {t(i18n, "library.batchFavorite")}</button>
+                    <button type="button" class="glean-bb glean-bb--fav" disabled={busy} onclick={() => void onBatchFavorite?.(true)} title="{t(i18n, 'library.batchFavorite')}">{t(i18n, "library.batchFavorite")}</button>
                 {/if}
             {/if}
-            <button type="button" class="glean-bb glean-bb--ai" disabled={busy} onclick={onOpenAi}>{t(i18n, "aiBatch.title")}</button>
+            <button type="button" class="glean-bb glean-bb--ai" disabled={busy} onclick={onOpenAi}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg> <span>{t(i18n, "aiBatch.title")}</span></button>
         </div>
     </footer>
 {/if}

@@ -716,5 +716,18 @@ test("列表行尾操作与看板选择框平滑微交互契约：默认低透�
     assert.match(wereadGuideSvelte, /use href="#iconGleanLocal"/);
     assert.match(wechatScss, /\.glean-weread-local-card\s*\{[\s\S]*&__icon\s*\{[\s\S]*\.glean-icon\s*\{[\s\S]*width:\s*16px;[\s\S]*height:\s*16px;/);
     assert.match(wechatScss, /\.glean-weread-shelf-btn\s*\{[\s\S]*display:\s*inline-flex;[\s\S]*gap:\s*var\(--glean-space-1-5,\s*6px\);/);
+
+    // 50. 金句卡片与读库批量操作条（QuoteCardDialog 与 LibraryBatchBar）SVG 矢量图标、全圆角胶囊与无障碍契约守门
+    const quoteCardSvelte = read("src/ui/QuoteCardDialog.svelte");
+    const libraryBatchBarSvelte = read("src/ui/LibraryBatchBar.svelte");
+    assert.match(quoteCardSvelte, /use href="#iconGleanDownload"/);
+    assert.match(quoteCardSvelte, /use href="#iconGleanEdit"/);
+    assert.match(quoteCardSvelte, /\.glean-quote-card-wm-btn\s*\{[\s\S]*display:\s*inline-flex;/);
+    assert.match(libraryBatchBarSvelte, /use href="#iconGleanPlus"/);
+    assert.match(libraryBatchBarSvelte, /use href="#iconGleanEdit"/);
+    assert.match(libraryBatchBarSvelte, /use href="#iconGleanCopy"/);
+    assert.match(libraryBatchBarSvelte, /use href="#iconGleanNews"/);
+    assert.match(libraryBatchBarSvelte, /use href="#iconGleanArchive"/);
+    assert.match(libraryBatchBarSvelte, /use href="#iconGleanDownload"/);
 });
 

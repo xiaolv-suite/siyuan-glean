@@ -388,7 +388,8 @@
                 onclick={() => showWatermark = !showWatermark}
                 title="{t(i18n, 'quoteCard.toggleWatermark')} (W)"
             >
-                💧 {showWatermark ? t(i18n, "quoteCard.watermarkOn") : t(i18n, "quoteCard.watermarkOff")}
+                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg>
+                <span>{showWatermark ? t(i18n, "quoteCard.watermarkOn") : t(i18n, "quoteCard.watermarkOff")}</span>
             </button>
         </div>
     </div>
@@ -444,7 +445,8 @@
             onclick={saveCardImage}
             title="{t(i18n, 'quoteCard.saveImage')} (S)"
         >
-            <span>💾 {downloading ? t(i18n, "panel.loading") : t(i18n, "quoteCard.saveImage")}</span>
+            <svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanDownload" /></svg>
+            <span>{downloading ? t(i18n, "panel.loading") : t(i18n, "quoteCard.saveImage")}</span>
         </button>
         <button
             type="button"
@@ -452,7 +454,8 @@
             onclick={() => void copyCardText()}
             title="{t(i18n, 'quoteCard.copyText')} (Shift+C)"
         >
-            <span>📝 {t(i18n, "quoteCard.copyText")}</span>
+            <svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanEdit" /></svg>
+            <span>{t(i18n, "quoteCard.copyText")}</span>
         </button>
         {#if source.blockId || source.docId}
             <button
@@ -461,7 +464,8 @@
                 onclick={() => void copyCardBlockRef()}
                 title="{t(i18n, 'action.copyBlockRef')} (Y)"
             >
-                <span>🔗 {t(i18n, "action.copyBlockRef")}</span>
+                <svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
+                <span>{t(i18n, "action.copyBlockRef")}</span>
             </button>
         {/if}
         {#if source.title}
@@ -471,7 +475,8 @@
                 onclick={() => void copyCardCitation("gbt")}
                 title="{t(i18n, 'citation.copyGBT')} (Alt+C)"
             >
-                <span>📄 GB/T</span>
+                <svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanNews" /></svg>
+                <span>GB/T</span>
             </button>
             <button
                 type="button"
@@ -479,7 +484,8 @@
                 onclick={() => void copyCardCitation("bibtex")}
                 title="{t(i18n, 'citation.copyBibTeX')} (Alt+Shift+C)"
             >
-                <span>📚 BibTeX</span>
+                <svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanArchive" /></svg>
+                <span>BibTeX</span>
             </button>
             <button
                 type="button"
@@ -487,7 +493,8 @@
                 onclick={() => void copyCardCitation("apa")}
                 title="{t(i18n, 'citation.copyAPA')}"
             >
-                <span>🎓 APA</span>
+                <svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanLocal" /></svg>
+                <span>APA</span>
             </button>
             <button
                 type="button"
@@ -495,7 +502,8 @@
                 onclick={() => void copyCardCitation("mla")}
                 title="{t(i18n, 'citation.copyMLA')}"
             >
-                <span>📖 MLA</span>
+                <svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanCard" /></svg>
+                <span>MLA</span>
             </button>
         {/if}
     </div>
@@ -746,10 +754,21 @@
         flex-wrap: wrap;
     }
 
+    .glean-quote-card-wm-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        border-radius: var(--glean-radius-pill);
+    }
+
     .glean-quote-card-btn {
         min-height: 36px;
         padding: 0 var(--glean-space-3-5);
         border-radius: var(--glean-radius-pill);
+        display: inline-flex;
+        align-items: center;
+        gap: var(--glean-space-1-5, 6px);
+        justify-content: center;
         transition: all var(--glean-duration-fast) var(--glean-ease-out);
     }
 
