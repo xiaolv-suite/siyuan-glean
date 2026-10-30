@@ -5961,10 +5961,10 @@ mark.glean-search-highlight {
 }
 
 .glean-kcol {
-    background: var(--glean-inset-surface);
+    background: color-mix(in srgb, var(--glean-app-background) 65%, var(--b3-theme-surface));
     border-radius: var(--glean-radius-lg);
     padding: var(--glean-space-2);
-    border: 1px solid var(--glean-border-soft);
+    border: none;
     display: flex;
     flex-direction: column;
     gap: var(--glean-space-2);
@@ -6143,15 +6143,15 @@ mark.glean-search-highlight {
 .glean-lib--preview { container-type: inline-size; }
 .glean-lib--preview .glean-lib__main { min-width: 0; }
 .glean-preview-pane { --glean-preview-rail-width: 216px; flex-basis: calc((100% - var(--glean-preview-rail-width)) * var(--glean-preview-ratio)); flex-grow: 0; flex-shrink: 0; min-width: 240px; min-height: 0; display: flex; }
-.glean-preview-pane { border-left: 1px solid var(--glean-border-soft); background: var(--glean-inset-surface); }
-.glean-preview-separator { appearance: none; margin: 0; padding: 0; width: 8px; flex: 0 0 8px; cursor: col-resize; touch-action: none; background: var(--glean-inset-surface); border-inline: 1px solid var(--glean-border-soft); }
+.glean-preview-pane { border-left: 1px solid color-mix(in srgb, var(--b3-border-color) 25%, transparent); background: color-mix(in srgb, var(--glean-app-background) 45%, var(--b3-theme-surface)); }
+.glean-preview-separator { appearance: none; margin: 0; padding: 0; width: 8px; flex: 0 0 8px; cursor: col-resize; touch-action: none; background: color-mix(in srgb, var(--glean-app-background) 55%, var(--b3-theme-surface)); border-inline: 1px solid color-mix(in srgb, var(--b3-border-color) 25%, transparent); }
 .glean-preview-separator::-webkit-slider-thumb { appearance: none; width: 8px; height: 36px; background: var(--b3-theme-primary); }
 .glean-preview-separator::-moz-range-thumb { width: 6px; height: 36px; border: 0; border-radius: 0; background: var(--b3-theme-primary); }
 .glean-preview-separator:hover { background: var(--glean-primary-soft); border-inline-color: color-mix(in srgb, var(--b3-theme-primary) 40%, var(--glean-border-soft)); }
 .glean-preview-separator:focus-visible { background: var(--glean-primary-soft); border-inline-color: var(--b3-theme-primary); box-shadow: inset 0 0 0 1px var(--b3-theme-primary); outline: none; }
 /* 预览行统一"左侧主色指示条 + 轻选中背景"语义（工作台容器内再叠加卡片阴影），不再用全包围描边 */
 .glean-drow--preview { outline: none; box-shadow: inset 3px 0 0 var(--b3-theme-primary); background: var(--glean-selection-surface); }
-.glean-preview { display: flex; flex: 1; min-width: 0; min-height: 0; flex-direction: column; background: var(--b3-theme-background); color: var(--b3-theme-on-background); }
+.glean-preview { display: flex; flex: 1; min-width: 0; min-height: 0; flex-direction: column; background: transparent; color: var(--b3-theme-on-background); }
 .glean-preview__header, .glean-preview__actions, .glean-preview__url, .glean-preview__excerpt { display: flex; flex-wrap: wrap; align-items: center; gap: var(--glean-space-1-5); padding: var(--glean-space-2); border-bottom: 1px solid var(--glean-border-soft); }
 .glean-preview__header { position: sticky; top: 0; z-index: var(--glean-z-sticky); padding: 10px 12px; background: color-mix(in srgb, var(--b3-theme-surface) 90%, transparent); backdrop-filter: blur(12px); }
 .glean-preview__header strong { flex: 1 1 160px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; line-height: 1.35; }
