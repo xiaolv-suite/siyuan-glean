@@ -2028,7 +2028,8 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                     aria-label={t(i18n, "reader.marginNotesToggle")}
                     onclick={() => { marginNotesOpen = !marginNotesOpen; }}
                 >
-                    📑 <span class="glean-margin-notes__badge">{docHighlights.length}</span>
+                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg>
+                    <span class="glean-margin-notes__badge">{docHighlights.length}</span>
                 </button>
             {/if}
             <button class="glean-btn glean-btn--ghost glean-reader__toolbar-appearance" aria-expanded={appearanceOpen} aria-controls={appearancePanelId} title={t(i18n, "reader.appearanceTitle")} onclick={toggleAppearance}>{t(i18n, "reader.appearanceTitle")}</button>
@@ -2086,7 +2087,7 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                     class="glean-btn glean-btn--ghost glean-reader__toolbar-roam"
                     title={t(i18n, "roaming.nextArticleHint")}
                     onclick={() => void roamNext()}
-                >🎲 {t(i18n, "roaming.nextArticle")}</button>
+                ><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanRefresh" /></svg> <span>{t(i18n, "roaming.nextArticle")}</span></button>
                 <button
                     type="button"
                     class="glean-btn glean-btn--ghost glean-reader__toolbar-fav"
@@ -2167,7 +2168,8 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                     </div>
                     {#if !memoInputOpen}
                         <button type="button" class="glean-btn glean-btn--ghost glean-reader__selection-btn" disabled={excerptBusy} onclick={() => { memoInputOpen = true; memoDraft = ""; }} title={t(i18n, "reader.memoAction")}>
-                            💬 {t(i18n, "reader.memoAction")}
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanEdit" /></svg>
+                            <span>{t(i18n, "reader.memoAction")}</span>
                         </button>
                     {:else}
                         <div class="glean-reader__selection-memo">
@@ -2177,8 +2179,8 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                                 placeholder={t(i18n, "reader.memoPlaceholder")}
                                 onkeydown={handleMemoKeyDown}
                             />
-                            <button type="button" class="glean-btn glean-btn--pri glean-reader__selection-btn" disabled={excerptBusy || !memoDraft.trim()} onclick={() => void submitMemo()}>
-                                ✓
+                            <button type="button" class="glean-btn glean-btn--pri glean-reader__selection-btn" disabled={excerptBusy || !memoDraft.trim()} title={t(i18n, "action.save")} aria-label={t(i18n, "action.save")} onclick={() => void submitMemo()}>
+                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCheck" /></svg>
                             </button>
                         </div>
                     {/if}
@@ -2190,7 +2192,7 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                         title={hasCardsInstalled ? t(i18n, "reader.extractToCardsHint") : t(i18n, "reader.cardGhostHint")}
                     >
                         <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg>
-                        {t(i18n, "reader.extractToCards")}
+                        <span>{t(i18n, "reader.extractToCards")}</span>
                     </button>
                     <button
                         type="button"
@@ -2198,7 +2200,8 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                         onclick={() => void extractToHorizonTask()}
                         title={t(i18n, "reader.extractToTaskHint")}
                     >
-                        ✅ {t(i18n, "reader.extractToTask")}
+                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCheck" /></svg>
+                        <span>{t(i18n, "reader.extractToTask")}</span>
                     </button>
                     <button
                         type="button"
@@ -2206,7 +2209,8 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                         onclick={() => void quoteCardFromExcerpt()}
                         title="{t(i18n, 'quoteCard.action')} (Alt+Q)"
                     >
-                        🖼️ {t(i18n, "quoteCard.action")}
+                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg>
+                        <span>{t(i18n, "quoteCard.action")}</span>
                     </button>
                     <button
                         type="button"
@@ -2215,16 +2219,19 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                         onclick={() => void examFromExcerpt()}
                         title={hasExamInstalled ? t(i18n, "reader.examMake") : t(i18n, "reader.examGhostHint")}
                     >
-                        📝 {t(i18n, "reader.examMake")}
+                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanEdit" /></svg>
+                        <span>{t(i18n, "reader.examMake")}</span>
                     </button>
                     {#if speechSupported}
                         <button type="button" class="glean-btn glean-btn--ghost glean-reader__selection-btn" onclick={() => startSpeech("selection")} title={t(i18n, "reader.speechSelection")}>
-                            🔊 {t(i18n, "reader.speechSelection")}
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg>
+                            <span>{t(i18n, "reader.speechSelection")}</span>
                         </button>
                     {/if}
                     {#if aiReady}
                         <button type="button" class="glean-btn glean-btn--ghost glean-reader__selection-btn" disabled={Boolean(aiBusy)} onclick={() => void runTranslate()} title={t(i18n, "reader.aiTranslate")}>
-                            🌐 {t(i18n, "reader.aiTranslate")}
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanExternal" /></svg>
+                            <span>{t(i18n, "reader.aiTranslate")}</span>
                         </button>
                     {/if}
                     <button type="button" class="glean-btn glean-btn--ghost glean-reader__selection-btn glean-reader__selection-btn--close" onclick={() => { excerpt = null; memoInputOpen = false; }} title={t(i18n, "action.close")} aria-label={t(i18n, "action.close")}>
@@ -2296,7 +2303,7 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                             </div>
                             <div class="glean-margin-note-card__text">{hl.text}</div>
                             {#if hl.memo}
-                                <div class="glean-margin-note-card__memo">💬 {hl.memo}</div>
+                                <div class="glean-margin-note-card__memo"><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanEdit" /></svg> <span>{hl.memo}</span></div>
                             {/if}
                             <div class="glean-margin-note-card__actions" role="group" aria-label={t(i18n, "library.batchActions")}>
                                 <button
@@ -2305,7 +2312,7 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                                     title={t(i18n, "action.copyBlockRef")}
                                     onclick={(e) => { e.stopPropagation(); void copyHighlightBlockRef(hl); }}
                                 >
-                                    🔗
+                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
                                 </button>
                                 <button
                                     type="button"
@@ -2313,7 +2320,7 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                                     title={t(i18n, "quoteCard.action")}
                                     onclick={(e) => { e.stopPropagation(); quoteCardFromHighlight(hl); }}
                                 >
-                                    🖼️
+                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg>
                                 </button>
                                 <button
                                     type="button"
@@ -2407,29 +2414,36 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                             {t(i18n, "reader.openWeread")}
                         </button>
                         <button type="button" class="glean-btn glean-btn--ghost glean-wechat-publisher__btn" disabled={purifying} onclick={() => void runPurifyWechat()} title={t(i18n, "wechat.purifyTitle")}>
-                            ✨ {purifying ? t(i18n, "wechat.purifying") : t(i18n, "wechat.purifyAction")}
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg>
+                            <span>{purifying ? t(i18n, "wechat.purifying") : t(i18n, "wechat.purifyAction")}</span>
                         </button>
                         <button type="button" class="glean-btn glean-btn--ghost glean-wechat-publisher__btn" onclick={() => void copyCleanUrl()} title={t(i18n, "reader.copyCleanUrl")}>
                             <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
-                            {t(i18n, "reader.copyCleanUrl")}
+                            <span>{t(i18n, "reader.copyCleanUrl")}</span>
                         </button>
                         <button type="button" class="glean-btn glean-btn--ghost glean-wechat-publisher__btn" disabled={copyingCleanBody} onclick={() => void copyCleanMarkdown()} title={t(i18n, "reader.copyCleanMarkdownHint")}>
-                            📋 {copyingCleanBody ? t(i18n, "reader.copying") : t(i18n, "reader.copyCleanMarkdown")}
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
+                            <span>{copyingCleanBody ? t(i18n, "reader.copying") : t(i18n, "reader.copyCleanMarkdown")}</span>
                         </button>
                         <button type="button" class="glean-btn glean-btn--ghost glean-wechat-publisher__btn" onclick={() => void copyCitation("gbt")} title={t(i18n, "citation.copyGBT")}>
-                            📜 {t(i18n, "citation.copyGBT")}
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg>
+                            <span>{t(i18n, "citation.copyGBT")}</span>
                         </button>
                         <button type="button" class="glean-btn glean-btn--ghost glean-wechat-publisher__btn" onclick={() => void copyCitation("bibtex")} title={t(i18n, "citation.copyBibTeX")}>
-                            📚 BibTeX
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArchive" /></svg>
+                            <span>BibTeX</span>
                         </button>
                         <button type="button" class="glean-btn glean-btn--ghost glean-wechat-publisher__btn" onclick={() => void copyCitation("apa")} title={t(i18n, "citation.copyAPA")}>
-                            🎓 APA
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanLocal" /></svg>
+                            <span>APA</span>
                         </button>
                         <button type="button" class="glean-btn glean-btn--ghost glean-wechat-publisher__btn" onclick={() => void copyCitation("mla")} title={t(i18n, "citation.copyMLA")}>
-                            📖 MLA
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg>
+                            <span>MLA</span>
                         </button>
                         <button type="button" class="glean-btn glean-btn--ghost glean-wechat-publisher__btn" onclick={() => void copyArticleBlockRef()} title={t(i18n, "action.copyBlockRef")}>
-                            🔗 {t(i18n, "action.copyBlockRef")}
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
+                            <span>{t(i18n, "action.copyBlockRef")}</span>
                         </button>
                         <button type="button" class="glean-btn glean-btn--ghost glean-wechat-publisher__btn" onclick={backToLibrary} title={t(i18n, "reading.backToLibrary")}>
                             <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArrowLeft" /></svg>
@@ -2581,7 +2595,7 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
             {#if (companionTab === "all" || companionTab === "outline") && (outline.length > 0 || outlineLoading)}
                 <details id={outlineTitleId} class="glean-reader__section glean-reader__section--card glean-reader__fold" aria-labelledby={outlineTitleId} open>
                     <summary id={outlineTitleId} class="glean-reader__section-title">
-                        <span>📑 {t(i18n, "reader.outlineTitle")} ({outline.length})</span>
+                        <span><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg> {t(i18n, "reader.outlineTitle")} ({outline.length})</span>
                         {#if outline.length > 0}
                             <div class="glean-reader__outline-head-ops">
                                 <button
@@ -2590,7 +2604,8 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                                     title={t(i18n, "reader.copyOutlineHint")}
                                     onclick={(e) => { e.stopPropagation(); void copyOutlineMarkdown(); }}
                                 >
-                                    📋 {t(i18n, "reader.copyOutline")}
+                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
+                                    <span>{t(i18n, "reader.copyOutline")}</span>
                                 </button>
                                 <button
                                     type="button"
@@ -2598,7 +2613,8 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                                     title={t(i18n, "reader.createMindmapHint")}
                                     onclick={(e) => { e.stopPropagation(); void createMindmapDoc(); }}
                                 >
-                                    🧠 {t(i18n, "reader.createMindmap")}
+                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg>
+                                    <span>{t(i18n, "reader.createMindmap")}</span>
                                 </button>
                                 <button
                                     type="button"
@@ -2621,7 +2637,9 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                                 onkeydown={(e) => { if (e.key === "Escape" && outlineFilter) { e.stopPropagation(); outlineFilter = ""; } }}
                             />
                             {#if outlineFilter}
-                                <button type="button" class="glean-reader__outline-filter-clear" onclick={() => { outlineFilter = ""; }}>✕</button>
+                                <button type="button" class="glean-reader__outline-filter-clear" title={t(i18n, "library.clearFilters")} aria-label={t(i18n, "library.clearFilters")} onclick={() => { outlineFilter = ""; }}>
+                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanClose" /></svg>
+                                </button>
                             {/if}
                         </div>
                     {/if}
@@ -2640,7 +2658,8 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                                     {#if slice}
                                         <div class="glean-reader__outline-slice-marker" role="separator">
                                             <span class="glean-reader__outline-slice-pill">
-                                                ✂️ {slice.title} · 约 {slice.estimatedMinutes}m
+                                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg>
+                                                <span>{slice.title} · 约 {slice.estimatedMinutes}m</span>
                                             </span>
                                         </div>
                                     {/if}
@@ -2657,7 +2676,9 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                                         <span class="glean-reader__outline-tag">H{item.level}</span>
                                         <span class="glean-reader__outline-text">{item.title}</span>
                                         {#if activeOutlineId === item.id}
-                                            <span class="glean-reader__outline-bookmark" title={t(i18n, "reading.position.title")} aria-label={t(i18n, "reading.position.title")}>🔖</span>
+                                            <span class="glean-reader__outline-bookmark" title={t(i18n, "reading.position.title")} aria-label={t(i18n, "reading.position.title")}>
+                                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanPin" /></svg>
+                                            </span>
                                         {/if}
                                     </button>
                                     <button
@@ -2667,7 +2688,7 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                                         aria-label={t(i18n, "action.copyBlockRef")}
                                         onclick={() => void copyOutlineBlockRef(item)}
                                     >
-                                        🔗
+                                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
                                     </button>
                                 </div>
                             {/each}
@@ -2679,7 +2700,7 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
             {#if companionTab === "all" || companionTab === "notes"}
                 <details id={highlightsTitleId} class="glean-reader__section glean-reader__section--card glean-reader__fold" aria-labelledby={highlightsTitleId} bind:open={highlightsOpen}>
                     <summary id={highlightsTitleId} class="glean-reader__section-title">
-                        <span>💡 {t(i18n, "reader.highlightsTitle")} ({docHighlights.length})</span>
+                        <span><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg> {t(i18n, "reader.highlightsTitle")} ({docHighlights.length})</span>
                         {#if docHighlights.length > 0}
                             <div class="glean-reader__highlights-actions">
                                 <button
@@ -2721,7 +2742,9 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                                     aria-label={t(i18n, "reader.highlightFilterPlaceholder")}
                                 />
                                 {#if highlightFilter}
-                                    <button type="button" class="glean-reader__outline-filter-clear" onclick={() => { highlightFilter = ""; }}>✕</button>
+                                    <button type="button" class="glean-reader__outline-filter-clear" title={t(i18n, "library.clearFilters")} aria-label={t(i18n, "library.clearFilters")} onclick={() => { highlightFilter = ""; }}>
+                                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanClose" /></svg>
+                                    </button>
                                 {/if}
                             </div>
                         {/if}
@@ -2768,16 +2791,16 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                                             <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
                                         </button>
                                         <button class="glean-op-btn" type="button" title={t(i18n, "action.copyBlockRef")} aria-label={t(i18n, "action.copyBlockRef")} onclick={(e) => { e.stopPropagation(); void copyHighlightBlockRef(hl); }}>
-                                            🔗
+                                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
                                         </button>
                                         <button class="glean-op-btn" type="button" title={t(i18n, "quoteCard.action")} aria-label={t(i18n, "quoteCard.action")} onclick={(e) => { e.stopPropagation(); quoteCardFromHighlight(hl); }}>
-                                            🖼️
+                                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg>
                                         </button>
                                         <button class="glean-op-btn" type="button" class:glean-ghost-btn={!hasCardsInstalled} title={hasCardsInstalled ? t(i18n, "flashcard.make") : t(i18n, "reader.cardGhostHint")} aria-label={t(i18n, "flashcard.make")} onclick={(e) => { e.stopPropagation(); void cardFromHighlight(hl); }}>
                                             <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg>
                                         </button>
                                         <button class="glean-op-btn" type="button" class:glean-ghost-btn={!hasExamInstalled} title={hasExamInstalled ? t(i18n, "reader.examMake") : t(i18n, "reader.examGhostHint")} aria-label={t(i18n, "reader.examMake")} onclick={(e) => { e.stopPropagation(); void examFromHighlight(hl); }}>
-                                            📝
+                                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanEdit" /></svg>
                                         </button>
                                         <button class="glean-linkish" type="button" onclick={(e) => { e.stopPropagation(); scrollToHighlight(hl.id); }}>{t(i18n, "reader.jumpToBlock")}</button>
                                     </div>
@@ -2829,11 +2852,13 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                                 <div class="glean-reader__ops">
                                     {#if excerpt?.text}
                                         <button class="glean-btn glean-btn--ghost" disabled={speechState === "playing" || speechState === "paused"} onclick={() => startSpeech("selection")}>
-                                            🔊 {t(i18n, "reader.speechSelection")}
+                                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg>
+                                            <span>{t(i18n, "reader.speechSelection")}</span>
                                         </button>
                                     {/if}
                                     <button class="glean-btn glean-btn--ghost" disabled={speechState === "playing" || speechState === "paused"} onclick={() => startSpeech("full")}>
-                                        🔊 {t(i18n, "reader.speechFull")}
+                                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg>
+                                        <span>{t(i18n, "reader.speechFull")}</span>
                                     </button>
                                     {#if speechState === "playing" || speechState === "paused"}
                                         <button class="glean-btn glean-btn--ghost" onclick={toggleSpeechPause}>
@@ -2940,7 +2965,8 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                                     >{t(i18n, "reader.aiTranslate")}</button>
                                     {#if relatedOn}
                                         <button class="glean-btn glean-btn--ghost" aria-busy={Boolean(aiBusy)} disabled={Boolean(aiBusy)} onclick={() => void runRelated()}>
-                                            🔗 {t(i18n, "reader.aiRelated")}
+                                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
+                                            <span>{t(i18n, "reader.aiRelated")}</span>
                                         </button>
                                     {/if}
                                     {#if articleQuestionOn}
@@ -2948,13 +2974,16 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                                             <input class="glean-mini-input" disabled={!aiReady} maxlength="1000" placeholder={t(i18n, "reader.articleQuestion.placeholder")} aria-label={t(i18n, "reader.articleQuestion.action")} bind:value={question} onkeydown={(event) => { if (event.key === "Enter") void runArticleQuestion(); else if (event.key === "Escape" && question) { event.stopPropagation(); question = ""; } }} />
                                             <div class="glean-reader__preset-prompts" role="group" aria-label={t(i18n, "reader.articleQuestion.action")}>
                                                 <button type="button" class="glean-reader__preset-chip" disabled={!aiReady || Boolean(aiBusy)} onclick={() => triggerQuickQuestion(t(i18n, "reader.quickPromptPoints"))}>
-                                                    💡 {t(i18n, "reader.quickPromptPoints")}
+                                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg>
+                                                    <span>{t(i18n, "reader.quickPromptPoints")}</span>
                                                 </button>
                                                 <button type="button" class="glean-reader__preset-chip" disabled={!aiReady || Boolean(aiBusy)} onclick={() => triggerQuickQuestion(t(i18n, "reader.quickPromptActionable"))}>
-                                                    📝 {t(i18n, "reader.quickPromptActionable")}
+                                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanEdit" /></svg>
+                                                    <span>{t(i18n, "reader.quickPromptActionable")}</span>
                                                 </button>
                                                 <button type="button" class="glean-reader__preset-chip" disabled={!aiReady || Boolean(aiBusy)} onclick={() => triggerQuickQuestion(t(i18n, "reader.quickPromptSummary"))}>
-                                                    🎯 {t(i18n, "reader.quickPromptSummary")}
+                                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg>
+                                                    <span>{t(i18n, "reader.quickPromptSummary")}</span>
                                                 </button>
                                             </div>
                                             <div class="glean-reader__ops">

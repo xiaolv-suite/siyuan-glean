@@ -777,5 +777,20 @@ test("列表行尾操作与看板选择框平滑微交互契约：默认低透�
     assert.match(roamingDrawerSvelte, /use href="#iconGleanCamera"/);
     assert.match(roamingDrawerSvelte, /use href="#iconGleanInbox"/);
     assert.match(roamingScssStyles, /\.glean-roaming-tag--ai\s*\{[\s\S]*color:\s*var\(--glean-color-action\);/);
+
+    // 54. 独立阅读页签（ReaderTab）伴生栏大纲/批注/划选快捷操作/微信导引/朗读全套采用 SVG 矢量图标替代 Emoji 契约守门
+    const readerTabSvelte = read("src/ui/ReaderTab.svelte");
+    assert.match(readerTabSvelte, /glean-reader__toolbar-margin-notes[\s\S]*use href="#iconGleanNews"/);
+    assert.match(readerTabSvelte, /glean-reader__toolbar-roam[\s\S]*use href="#iconGleanRefresh"/);
+    assert.match(readerTabSvelte, /glean-reader__selection-btn[\s\S]*use href="#iconGleanEdit"/);
+    assert.match(readerTabSvelte, /glean-margin-note-card__memo[\s\S]*use href="#iconGleanEdit"/);
+    assert.match(readerTabSvelte, /glean-wechat-publisher__btn[\s\S]*use href="#iconGleanNews"/);
+    assert.match(readerTabSvelte, /glean-wechat-publisher__btn[\s\S]*use href="#iconGleanArchive"/);
+    assert.match(readerTabSvelte, /glean-reader__outline-filter-clear[\s\S]*use href="#iconGleanClose"/);
+    assert.match(readerTabSvelte, /glean-reader__outline-bookmark[\s\S]*use href="#iconGleanPin"/);
+    assert.match(readerTabSvelte, /glean-reader__outline-copy-ref[\s\S]*use href="#iconGleanCopy"/);
+    assert.match(readerTabSvelte, /glean-reader__preset-chip[\s\S]*use href="#iconGleanSpark"/);
+    assert.match(readerTabSvelte, /glean-reader__preset-chip[\s\S]*use href="#iconGleanEdit"/);
+    assert.match(readerTabSvelte, /glean-reader__preset-chip[\s\S]*use href="#iconGleanNews"/);
 });
 
