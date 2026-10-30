@@ -95,6 +95,35 @@
     cursor: pointer;
     background: color-mix(in srgb, var(--b3-theme-surface) 75%, var(--glean-app-background));
     transition: transform var(--glean-duration-micro) ease, outline var(--glean-duration-micro) ease;
+    position: relative;
+
+    &::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: calc(100% + 5px);
+        left: 50%;
+        transform: translateX(-50%) translateY(4px);
+        background: #18181B;
+        color: #FFFFFF;
+        font-size: 11px;
+        font-weight: 500;
+        line-height: 1;
+        padding: 4px 8px;
+        border-radius: var(--glean-radius-pill, 999px);
+        white-space: nowrap;
+        pointer-events: none;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity var(--glean-duration-fast) var(--glean-ease-out), transform var(--glean-duration-fast) var(--glean-ease-out);
+        z-index: 10;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    }
+
+    &:hover::after {
+        opacity: 1;
+        visibility: visible;
+        transform: translateX(-50%) translateY(0);
+    }
 
     &:hover {
         transform: scale(1.35);
@@ -318,6 +347,35 @@
     opacity: .92;
     transform-origin: bottom;
     transition: transform var(--glean-duration-fast) var(--glean-ease-enter), opacity var(--glean-duration-fast) var(--glean-ease-enter);
+    position: relative;
+
+    &::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: calc(100% + 6px);
+        left: 50%;
+        transform: translateX(-50%) translateY(4px);
+        background: #18181B;
+        color: #FFFFFF;
+        font-size: 11px;
+        font-weight: 500;
+        line-height: 1;
+        padding: 4px 8px;
+        border-radius: var(--glean-radius-pill, 999px);
+        white-space: nowrap;
+        pointer-events: none;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity var(--glean-duration-fast) var(--glean-ease-out), transform var(--glean-duration-fast) var(--glean-ease-out);
+        z-index: 10;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    }
+
+    &:hover::after {
+        opacity: 1;
+        visibility: visible;
+        transform: translateX(-50%) translateY(0);
+    }
 }
 
 .glean-stats__trend-bar:hover {
@@ -548,14 +606,14 @@
     align-items: center;
     position: relative;
 
-    .glean-stats__field {
-        min-height: 32px;
-        padding: 4px 24px 4px 8px;
-        font-size: var(--glean-text-xs);
-        width: 220px;
-        margin-top: 0;
-        border-radius: var(--glean-radius-sm);
-    }
+        .glean-stats__field {
+            min-height: 32px;
+            padding: 4px 24px 4px 12px;
+            font-size: var(--glean-text-xs);
+            width: 220px;
+            margin-top: 0;
+            border-radius: var(--glean-radius-pill);
+        }
 
     .glean-stats__search-clear {
         position: absolute;

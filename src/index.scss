@@ -6281,7 +6281,7 @@ mark.glean-search-highlight {
         margin-left: auto;
     }
 }
-.glean-action-popover__body { display: none; position: fixed; inset: auto; margin: 0; width: min(280px, calc(100vw - 16px)); max-height: min(450px, calc(100dvh - 16px)); overflow-y: auto; box-sizing: border-box; padding: var(--glean-space-2-5); border: 1px solid var(--glean-border-soft); border-radius: var(--glean-radius-md); background: var(--b3-theme-surface); color: var(--b3-theme-on-background); box-shadow: var(--glean-shadow-float); }
+.glean-action-popover__body { display: none; position: fixed; inset: auto; margin: 0; width: min(280px, calc(100vw - 16px)); max-height: min(450px, calc(100dvh - 16px)); overflow-y: auto; box-sizing: border-box; padding: var(--glean-space-3); border: 1px solid var(--glean-border-soft); border-radius: var(--glean-radius-lg, 16px); background: var(--b3-theme-surface); color: var(--b3-theme-on-background); box-shadow: var(--glean-shadow-float); }
 .glean-action-popover__body:popover-open { display: flex; flex-direction: column; gap: var(--glean-space-2); }
 .glean-action-popover__body label { display: flex; flex-direction: column; gap: var(--glean-space-1); }
 .glean-action-popover__body label.glean-row-select { flex-direction: row; align-items: center; }
@@ -10236,11 +10236,25 @@ body.b3-theme-dark .glean-panel--mobile,
     line-height: var(--glean-leading-compact);
 }
 
-.glean-action-popover__body .glean-action-popover__field :where(.b3-select, input, textarea) {
+.glean-action-popover__body .glean-action-popover__field :where(.b3-select, input) {
     width: 100%;
     min-height: 34px;
     box-sizing: border-box;
-    border-color: var(--glean-border-soft);
+    border: 1px solid var(--glean-border-soft);
+    border-radius: var(--glean-radius-pill);
+    padding-inline: var(--glean-space-3);
+    background: var(--glean-inset-surface);
+    color: var(--b3-theme-on-background);
+    font: inherit;
+    font-weight: var(--glean-weight-regular);
+}
+
+.glean-action-popover__body .glean-action-popover__field textarea {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid var(--glean-border-soft);
+    border-radius: var(--glean-radius-md);
+    padding: var(--glean-space-2) var(--glean-space-3);
     background: var(--glean-inset-surface);
     color: var(--b3-theme-on-background);
     font: inherit;

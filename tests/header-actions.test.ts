@@ -410,5 +410,14 @@ test("列表行尾操作与看板选择框平滑微交互契约：默认低透�
     assert.match(styles, /\.glean-reader__outline-item\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
     assert.match(marginNotes, /&__memo\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill/);
     assert.match(marginNotes, /&__btn\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill/);
+
+    // 5. 趋势图与热力图深色胶囊工具提示、操作浮层大圆角与输入胶囊化
+    const statsView = read("src/ui/StatsView.svelte");
+    const statsScss = read("src/styles/components/stats.scss");
+    assert.match(statsView, /class="glean-stats__trend-bar"[\s\S]*data-tooltip=/);
+    assert.match(statsView, /class="glean-stats__day"[\s\S]*data-tooltip=/);
+    assert.match(statsScss, /\.glean-stats__trend-bar[\s\S]*&::after\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill/);
+    assert.match(styles, /\.glean-action-popover__body\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-lg/);
+    assert.match(styles, /\.glean-action-popover__body \.glean-action-popover__field :where\(\.b3-select, input\)\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
 });
 

@@ -550,7 +550,7 @@ function onWindowKeyDown(event: KeyboardEvent): void {
         <h3 id={idFor("activity-title")}>{t(i18n, "review.recentTrend")}</h3>
         <div class="glean-stats__trend" role="group" aria-label={t(i18n, "review.recentTrend")}>
             {#each recentDays as day (day.date)}
-                <span class="glean-stats__trend-bar" class:glean-stats__trend-bar--empty={day.count === 0} role="img" aria-label={t(i18n, "review.heatmapDay", { date: day.date, n: day.count })} title={`${day.date}: ${day.count}`} style={`--glean-trend-height:${day.count ? Math.max(12, Math.round(112 * day.count / maxRecent)) : 3}px`}></span>
+                <span class="glean-stats__trend-bar" class:glean-stats__trend-bar--empty={day.count === 0} role="img" aria-label={t(i18n, "review.heatmapDay", { date: day.date, n: day.count })} data-tooltip={`${day.date}: ${day.count}`} title={`${day.date}: ${day.count}`} style={`--glean-trend-height:${day.count ? Math.max(12, Math.round(112 * day.count / maxRecent)) : 3}px`}></span>
             {/each}
         </div>
         <div class="glean-stats__trend-meta" aria-hidden="true">
@@ -565,7 +565,7 @@ function onWindowKeyDown(event: KeyboardEvent): void {
                     {#each stats.heatmap as day (day.date)}
                         <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
                         <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-                        <span class="glean-stats__day" role="img" aria-label={t(i18n, "review.heatmapDay", { date: day.date, n: day.count })} class:glean-stats__day--selected={selectedDayDate === day.date} tabindex="0" onclick={() => selectedDayDate = selectedDayDate === day.date ? "" : day.date} onkeydown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); selectedDayDate = selectedDayDate === day.date ? "" : day.date; } }} title={`${day.date}: ${day.count}`} style={`background:${day.count ? "var(--b3-theme-primary)" : "var(--b3-theme-surface)"};opacity:${day.count ? 0.25 + 0.75 * day.count / maxHeat : 1}`}></span>
+                        <span class="glean-stats__day" role="img" aria-label={t(i18n, "review.heatmapDay", { date: day.date, n: day.count })} class:glean-stats__day--selected={selectedDayDate === day.date} tabindex="0" onclick={() => selectedDayDate = selectedDayDate === day.date ? "" : day.date} onkeydown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); selectedDayDate = selectedDayDate === day.date ? "" : day.date; } }} data-tooltip={`${day.date}: ${day.count}`} title={`${day.date}: ${day.count}`} style={`background:${day.count ? "var(--b3-theme-primary)" : "var(--b3-theme-surface)"};opacity:${day.count ? 0.25 + 0.75 * day.count / maxHeat : 1}`}></span>
                     {/each}
                 </div>
                 <div class="glean-stats__heatmap-legend" aria-hidden="true">
