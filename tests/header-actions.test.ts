@@ -443,5 +443,12 @@ test("列表行尾操作与看板选择框平滑微交互契约：默认低透�
     assert.match(slicingScss, /\.glean-slicing-card\s*\{[\s\S]*border:\s*1px solid var\(--glean-border-soft\);/);
     assert.match(slicingScss, /\.glean-slicing-card__sec-chip\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
     assert.match(slicingScss, /\.glean-read-point-badge\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
+
+    // 10. 微信公众号作者卡片与微信读书向导柔和外壳及胶囊流
+    const wechatScss = read("src/styles/components/wechat.scss");
+    assert.match(wechatScss, /\.glean-wechat-publisher\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-lg,\s*16px\);/);
+    assert.match(wechatScss, /\.glean-wechat-publisher__series-chip\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
+    assert.match(wechatScss, /\.glean-weread-step\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-lg,\s*16px\);/);
+    assert.match(wechatScss, /\.glean-weread-url-box\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
 });
 
