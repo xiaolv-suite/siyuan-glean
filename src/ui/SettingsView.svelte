@@ -188,7 +188,7 @@ function handleConfirmKeydown(event: KeyboardEvent): void {
 }
 
 function handleWindowKeydown(event: KeyboardEvent): void {
-    if (event.defaultPrevented || event.isComposing || event.keyCode === 229) return;
+    if (event.defaultPrevented || event.isComposing || event.keyCode === 229 || event.repeat) return;
 
     if (confirmDiscardOpen) {
         if (event.key === "Escape") {

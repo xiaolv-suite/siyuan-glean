@@ -308,7 +308,7 @@ function openProgressDocument(id: string): void {
 }
 
 function handleWindowKeydown(event: KeyboardEvent): void {
-    if (event.isComposing || event.keyCode === 229) return;
+    if (event.repeat || event.isComposing || event.keyCode === 229) return;
     if (event.key === "Escape") {
         if (phase === "importing" || busy || stopping || progressLoading) return;
         event.preventDefault();

@@ -123,7 +123,10 @@
     }
 
     function handleKeydown(event: KeyboardEvent): void {
+        if (event.repeat) return;
         if (event.key === "Escape" && !busy) {
+            event.preventDefault();
+            event.stopPropagation();
             onClose?.();
         } else if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
             if (session && saveState !== "saved" && saveState !== "unknown" && !busy && preview.trim()) {

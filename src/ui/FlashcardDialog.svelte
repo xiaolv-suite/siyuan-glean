@@ -90,7 +90,14 @@
     }
 </script>
 
-<svelte:window onkeydown={(e) => { if (e.key === "Escape" && !busy) onClose?.(); }} />
+<svelte:window onkeydown={(e) => {
+    if (e.repeat) return;
+    if (e.key === "Escape" && !busy) {
+        e.preventDefault();
+        e.stopPropagation();
+        onClose?.();
+    }
+}} />
 
 <div class="glean-flashcard" aria-labelledby="glean-flashcard-title" aria-describedby="glean-flashcard-desc" aria-busy={busy}>
     <header class="glean-flashcard__head">

@@ -251,7 +251,7 @@ function continueLater(): void {
 }
 
 function handleWindowKeydown(event: KeyboardEvent): void {
-    if (event.isComposing || event.keyCode === 229) return;
+    if (event.repeat || event.isComposing || event.keyCode === 229) return;
     if (event.key === "Escape") {
         if (actionBusy || scanning) return;
         event.preventDefault();
