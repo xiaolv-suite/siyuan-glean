@@ -80,3 +80,16 @@ test("QuoteCardDialog 键盘流与块引用支持契约（T-3511 / T-3525）", (
     assert.match(dialog, /<kbd>Y<\/kbd>/);
     assert.match(dialog, /<kbd>Alt\+C<\/kbd>/);
 });
+
+test("QuoteCardDialog 符合 UI-UX-PRO-MAX 触控热区、高对比度与减弱动效契约", () => {
+    const dialog = fs.readFileSync(new URL("../src/ui/QuoteCardDialog.svelte", import.meta.url), "utf8");
+    assert.match(dialog, /\.glean-quote-card-font-btn:focus-visible[\s\S]*outline:\s*2px solid var\(--glean-color-action\);/);
+    assert.match(dialog, /\.glean-quote-card-theme-btn:focus-visible[\s\S]*outline:\s*2px solid var\(--glean-color-action\);/);
+    assert.match(dialog, /\.glean-quote-card-btn:focus-visible[\s\S]*outline:\s*2px solid var\(--glean-color-action\);/);
+    assert.match(dialog, /@media\s*\(forced-colors:\s*active\)[\s\S]*border:\s*1px solid Highlight;/);
+    assert.match(dialog, /\.glean-quote-card-color-badge[\s\S]*font-variant-numeric:\s*tabular-nums;/);
+    assert.match(dialog, /\.glean-quote-card-footer[\s\S]*font-variant-numeric:\s*tabular-nums;/);
+    assert.match(dialog, /@media\s*\(max-width:\s*560px\)[\s\S]*\.glean-quote-card-btn[\s\S]*min-height:\s*44px;/);
+    assert.match(dialog, /@media\s*\(max-width:\s*360px\)[\s\S]*\.glean-quote-card-themes[\s\S]*grid-template-columns:\s*repeat\(2,\s*1fr\);/);
+    assert.match(dialog, /@media\s*\(prefers-reduced-motion:\s*reduce\)[\s\S]*transition:\s*var\(--glean-motion-none\)\s*!important;/);
+});

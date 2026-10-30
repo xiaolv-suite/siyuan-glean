@@ -595,5 +595,17 @@ test("列表行尾操作与看板选择框平滑微交互契约：默认低透�
 
     // 36. 减弱动效响应覆盖核心指标条、搜索框、手风琴开关与分布标签
     assert.match(styles, /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{[\s\S]*\.glean-stat-strip__item,[\s\S]*\.glean-search,[\s\S]*\.glean-rail__toggle/);
+
+    // 37. 原生阅读胶囊栏松青操作色、胶囊状态徽标、聚焦光圈与超窄自适应
+    assert.match(styles, /\.glean-reading-context\s*\{[\s\S]*border-bottom:\s*1px solid var\(--glean-border-soft\);/);
+    assert.match(styles, /\.glean-reading-context__status\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
+    assert.match(styles, /\.glean-reading-context__source-btn[\s\S]*?&:focus-visible\s*\{[\s\S]*?outline:\s*2px solid var\(--glean-color-action\);/);
+    assert.match(styles, /\.glean-reading-context__source-btn--primary\s*\{[\s\S]*color:\s*var\(--glean-color-action\);/);
+    assert.match(styles, /@media\s*\(max-width:\s*360px\)\s*\{[\s\S]*\.glean-reading-context\s*\{[\s\S]*padding:\s*var\(--glean-space-1-5\)\s*var\(--glean-space-2\);/);
+
+    // 38. 原生状态动作按钮与阅读上下文微控制条减弱动效与松青悬停
+    assert.match(styles, /\.glean-status-actions__btn\s*\{[\s\S]*border-color:\s*color-mix\(in srgb, var\(--glean-color-action\)/);
+    assert.match(styles, /\.glean-status-actions__btn\s*\{[\s\S]*outline:\s*2px solid var\(--glean-color-action\);/);
+    assert.match(styles, /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{[\s\S]*\.glean-reading-context__source-btn,[\s\S]*\.glean-status-actions__btn/);
 });
 

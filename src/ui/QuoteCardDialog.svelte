@@ -567,6 +567,11 @@
         background: color-mix(in srgb, var(--b3-theme-on-surface) 6%, transparent);
     }
 
+    .glean-quote-card-font-btn:focus-visible {
+        outline: 2px solid var(--glean-color-action);
+        outline-offset: 2px;
+    }
+
     .glean-quote-card-font-btn--active {
         background: color-mix(in srgb, var(--glean-color-action) 12%, var(--b3-theme-surface));
         color: var(--glean-color-action);
@@ -603,12 +608,24 @@
         background: color-mix(in srgb, var(--b3-theme-on-surface) 6%, transparent);
     }
 
+    .glean-quote-card-theme-btn:focus-visible {
+        outline: 2px solid var(--glean-color-action);
+        outline-offset: 2px;
+    }
+
     .glean-quote-card-theme-btn--active {
         background: color-mix(in srgb, var(--glean-color-action) 12%, var(--b3-theme-surface));
         color: var(--glean-color-action);
         font-weight: var(--glean-weight-semibold);
         border-color: var(--glean-color-action);
         box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--glean-color-action) 40%, transparent);
+    }
+
+    @media (forced-colors: active) {
+        .glean-quote-card-theme-btn--active {
+            border: 1px solid Highlight;
+            color: Highlight;
+        }
     }
 
     .glean-quote-card-theme-preview {
@@ -670,6 +687,7 @@
         padding: 2px 8px;
         border-radius: var(--glean-radius-pill);
         background: color-mix(in srgb, currentColor 8%, transparent);
+        font-variant-numeric: tabular-nums;
     }
 
     .glean-quote-card-dot {
@@ -717,6 +735,7 @@
         font-size: 10.5px;
         padding-top: var(--glean-space-2);
         border-top: 1px dashed color-mix(in srgb, currentColor 20%, transparent);
+        font-variant-numeric: tabular-nums;
     }
 
     .glean-quote-card-actions {
@@ -731,5 +750,100 @@
         min-height: 36px;
         padding: 0 var(--glean-space-3-5);
         border-radius: var(--glean-radius-pill);
+        transition: all var(--glean-duration-fast) var(--glean-ease-out);
+    }
+
+    .glean-quote-card-btn:focus-visible {
+        outline: 2px solid var(--glean-color-action);
+        outline-offset: 2px;
+    }
+
+    @media (max-width: 560px) {
+        .glean-quote-card-header-bar {
+            flex-direction: column;
+            align-items: stretch;
+            gap: var(--glean-space-2);
+        }
+
+        .glean-quote-card-themes {
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        .glean-quote-card-theme-btn {
+            flex: 1 1 0;
+            min-height: 38px;
+            justify-content: center;
+        }
+
+        .glean-quote-card-opts {
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        .glean-quote-card-font-group {
+            flex: 1 1 auto;
+        }
+
+        .glean-quote-card-font-btn {
+            flex: 1 1 0;
+            min-height: 38px;
+            text-align: center;
+            justify-content: center;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .glean-quote-card-wm-btn {
+            min-height: 38px;
+        }
+
+        .glean-quote-card-actions {
+            justify-content: stretch;
+            gap: var(--glean-space-1-5);
+        }
+
+        .glean-quote-card-btn {
+            flex: 1 1 calc(50% - var(--glean-space-1));
+            min-height: 44px;
+            justify-content: center;
+        }
+
+        .glean-quote-card-stage {
+            padding: var(--glean-space-2);
+            min-height: 220px;
+        }
+
+        .glean-quote-card-preview {
+            padding: 20px 16px;
+            border-radius: 16px;
+        }
+    }
+
+    @media (max-width: 360px) {
+        .glean-quote-card-themes {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--glean-space-1);
+        }
+
+        .glean-quote-card-actions {
+            display: grid;
+            grid-template-columns: 1fr;
+        }
+
+        .glean-quote-card-kbdhint {
+            display: none;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .glean-quote-card-font-btn,
+        .glean-quote-card-theme-btn,
+        .glean-quote-card-preview,
+        .glean-quote-card-btn {
+            transition: var(--glean-motion-none) !important;
+            transform: none !important;
+        }
     }
 </style>
