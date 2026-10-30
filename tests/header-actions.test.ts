@@ -493,5 +493,11 @@ test("列表行尾操作与看板选择框平滑微交互契约：默认低透�
     assert.match(readingPos, /\.glean-reading-position__actions :global\(button\)\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
     assert.match(authorEditor, /\.glean-author-editor__form input\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
     assert.match(authorEditor, /\.glean-author-editor__actions \.glean-btn\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
+
+    // 17. 阅读器正文搜索浮动工具条胶囊化
+    const readerSearchScss = read("src/styles/components/reader-search.scss");
+    const readerSearchSvelte = read("src/ui/ReaderSearch.svelte");
+    assert.match(readerSearchScss, /\.glean-reader-search\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
+    assert.match(readerSearchSvelte, /\.glean-reader-search__input\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
 });
 

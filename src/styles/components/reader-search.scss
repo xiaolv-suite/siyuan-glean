@@ -9,7 +9,7 @@
     gap: 6px;
     padding: 4px 10px;
     background: var(--glean-card-surface, #fff);
-    border: 1px solid color-mix(in srgb, var(--b3-border-color) 45%, transparent);
+    border: 1px solid var(--glean-border-soft);
     border-radius: var(--glean-radius-pill);
     box-shadow: var(--glean-shadow-float);
     backdrop-filter: blur(12px);
@@ -24,7 +24,7 @@
     &__input {
         width: 160px;
         height: 26px;
-        padding: 0 6px;
+        padding: 0 8px;
         font-size: var(--glean-text-xs, 12px);
         background: transparent;
         border: none;
@@ -55,7 +55,7 @@
         place-items: center;
         font-size: var(--glean-text-meta);
         line-height: 1;
-        border-radius: var(--glean-radius-sm);
+        border-radius: var(--glean-radius-pill);
         border: none;
         background: transparent;
         cursor: pointer;
@@ -75,7 +75,7 @@
         &--active {
             color: var(--glean-color-action);
             font-weight: var(--glean-weight-semibold);
-            background: var(--glean-primary-soft);
+            background: color-mix(in srgb, var(--glean-color-action) 14%, var(--b3-theme-surface));
         }
 
         &--close {

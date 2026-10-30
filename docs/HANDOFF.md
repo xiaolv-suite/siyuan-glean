@@ -34,7 +34,8 @@
      - **归档与恢复对话框选项外壳与胶囊流**：`ArchiveDialog` 与 `RestoreDialog` 选项卡片（`.glean-archive-dlg__opt`）升级为 `16px` 大圆角卡片，图标（`.glean-archive-dlg__icon`）与常驻徽章升级为全圆角胶囊药丸，彻底删除触发按钮（`.glean-archive-dlg__purge`）升级为悬浮危险胶囊，二次确认面板升级为 `16px` 柔和外壳及全圆角胶囊操作按钮；
      - **云端收集箱迁入动作与消除按钮胶囊化**：`InboxSection`（收集箱）条目迁入按钮（`.glean-inbox__ops .glean-cap-btn`）升级为全圆角胶囊与松青微混底色，消除按钮（`.glean-inbox__dismiss`）升级为全圆角药丸胶囊；
      - **阅读位置控制与作者编辑面板胶囊流**：`ReadingPositionControls`（阅读进度）升级为 `16px` 大圆角卡片，内部记忆/恢复/重载按钮全量胶囊化；`AuthorEditor`（作者编辑）升级为 `16px` 大圆角卡片，作者输入框升级为全圆角胶囊药丸，建议横幅对齐松青操作色光圈与胶囊按钮流；
-  3. **门禁全通**：全套测试通过（**1749 / 1749 PASS**，新增微交互与胶囊契约守护测试）；`pnpm check` 0 错 0 警告；`pnpm build` 1.43s 干净构建；`pnpm check:release` 14 项全绿通过。
+     - **阅读器正文搜索浮条全胶囊化**：`ReaderSearch`（正文搜索）外壳规范为全圆角胶囊浮动药丸槽（`.glean-reader-search`，`border-radius: var(--glean-radius-pill); backdrop-filter: blur(12px)`），关键词输入框与导航微控按钮全量胶囊化，激活态对齐松青操作色光圈；
+  3. **门禁全通**：全套测试通过（**1749 / 1749 PASS**，新增微交互与胶囊契约守护测试）；`pnpm check` 0 错 0 警告；`pnpm build` 1.42s 干净构建；`pnpm check:release` 14 项全绿通过。
 - 下一步：按当前执行板顺序推进下一个任务（如 T-3367 批量选择范围与底部操作在更多场景的走查，或按作者点单继续）。版本保持 1.4.0，等待解封通知后统一处理。
 
 ## 历史交接（2026-10-29 本地发版轮：v1.4.0 次版本发布、五处版本同步、双语 README 全面重构、全门禁验证与本地打包）
