@@ -47,10 +47,16 @@
 }
 
 .glean-author-timeline {
-    padding: var(--glean-space-2) var(--glean-space-3);
-    margin: var(--glean-space-0);
-    color: var(--b3-theme-on-surface);
-    background: var(--b3-theme-surface);
+    padding: var(--glean-space-1-5) var(--glean-space-3);
+    margin: var(--glean-space-1) var(--glean-space-3) var(--glean-space-2);
+    color: var(--glean-color-action);
+    background: color-mix(in srgb, var(--glean-color-action) 10%, var(--b3-theme-surface));
+    border-radius: var(--glean-radius-pill);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--glean-space-1-5);
+    font-size: var(--glean-text-xs);
+    font-weight: var(--glean-weight-medium);
 }
 
 /* ============ 设计令牌 ============ */
@@ -1351,11 +1357,11 @@ body.b3-theme-dark {
 .glean-governance-summary {
     margin: var(--glean-space-0) var(--glean-space-3) var(--glean-space-2);
     padding: var(--glean-space-2-25) var(--glean-space-3);
-    border-radius: var(--glean-radius-14);
+    border-radius: var(--glean-radius-lg);
     display: flex;
     align-items: center;
     gap: var(--glean-space-2);
-    border: 1px solid var(--b3-border-color);
+    border: 1px solid var(--glean-border-soft);
     background: var(--b3-theme-surface);
     color: var(--b3-theme-on-surface);
     font-size: var(--glean-text-xs-plus);
