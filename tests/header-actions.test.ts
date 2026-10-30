@@ -504,5 +504,9 @@ test("列表行尾操作与看板选择框平滑微交互契约：默认低透�
     const distList = read("src/ui/DistributionList.svelte");
     assert.match(styles, /\.glean-rank-controls__field\s*\{[\s\S]*\.b3-select\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
     assert.match(distList, /\.glean-distribution__item\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
+
+    // 19. 读库分面侧栏项胶囊化与松青背景块激活态
+    assert.match(styles, /\.glean-rail__item\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
+    assert.match(styles, /\.glean-rail__item\.glean-rail__item--on\s*\{[\s\S]*border-color:\s*color-mix\(in srgb, var\(--glean-color-action\)/);
 });
 

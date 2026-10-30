@@ -6408,10 +6408,10 @@ mark.glean-search-highlight {
     }
 
     &.glean-rail__item--on {
-        background: color-mix(in srgb, var(--lv-brand) 10%, var(--b3-theme-surface));
-        color: var(--lv-brand);
+        background: color-mix(in srgb, var(--glean-color-action) 12%, var(--b3-theme-surface));
+        color: var(--glean-color-action);
         font-weight: var(--glean-weight-semibold);
-        border: 1px solid color-mix(in srgb, var(--lv-brand) 22%, transparent);
+        border: 1px solid color-mix(in srgb, var(--glean-color-action) 22%, transparent);
     }
 
     .glean-rail__n {
@@ -6423,8 +6423,8 @@ mark.glean-search-highlight {
     }
 
     &.glean-rail__item--on .glean-rail__n {
-        background: color-mix(in srgb, var(--lv-brand) 16%, transparent);
-        color: var(--lv-brand);
+        background: color-mix(in srgb, var(--glean-color-action) 16%, transparent);
+        color: var(--glean-color-action);
     }
 }
 
@@ -10866,9 +10866,9 @@ body.b3-theme-dark .glean-panel--mobile,
 
 .glean-rail__item {
     min-height: 32px;
-    padding: var(--glean-space-1-5) var(--glean-space-2-25);
+    padding: var(--glean-space-1-5) var(--glean-space-2-5);
     border: 1px solid transparent;
-    border-radius: var(--glean-radius-sm);
+    border-radius: var(--glean-radius-pill);
 }
 
 .glean-rail__item:hover {
@@ -10876,8 +10876,8 @@ body.b3-theme-dark .glean-panel--mobile,
 }
 
 .glean-rail__item.glean-rail__item--on {
-    border-color: color-mix(in srgb, var(--glean-accent-b) 22%, var(--glean-border-soft));
-    box-shadow: inset 2px 0 0 var(--glean-accent-b), var(--glean-shadow-control);
+    border-color: color-mix(in srgb, var(--glean-color-action) 22%, var(--glean-border-soft));
+    box-shadow: none;
 }
 
 .glean-rail__n {
