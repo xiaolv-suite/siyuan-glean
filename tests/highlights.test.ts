@@ -149,6 +149,9 @@ test("HighlightView 接线：全库制卡贯通与导出预览 Escape 退出交�
 test("HighlightView 行级键盘导航复用读库仲裁层（T-3399 / T-3509）", () => {
     const view = readFileSync(new URL("../src/ui/HighlightView.svelte", import.meta.url), "utf8");
     assert.match(view, /import \{ moveLibraryCursor, resolveLibraryShortcut \} from "\.\.\/domain\/library-keyboard"/);
+    assert.match(view, /function hasBlockingOverlay\(\): boolean/);
+    assert.match(view, /if \(hasBlockingOverlay\(\)\) return;/);
+    assert.match(view, /overlay: hasBlockingOverlay\(\)/);
     assert.match(view, /const visibleIds = \$derived\(/);
     assert.match(view, /if \(cursorId && !visibleIds\.includes\(cursorId\)\) cursorId = ""/);
     assert.match(view, /setCursor\(moveLibraryCursor\(visibleIds, cursorId, action\.delta\)\)/);

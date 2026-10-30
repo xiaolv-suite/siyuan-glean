@@ -342,8 +342,15 @@ async function exportCompletedCsv(): Promise<void> {
     }
 }
 
+function hasBlockingOverlay(): boolean {
+    if (typeof document === "undefined") return false;
+    const overlays = document.querySelectorAll<HTMLElement>(".b3-menu, .b3-dialog, dialog[open], [role='dialog'][aria-modal='true'], .glean-dialog");
+    return Array.from(overlays).some((element) => element.getClientRects().length > 0);
+}
+
 function onWindowKeyDown(event: KeyboardEvent): void {
     if (event.defaultPrevented || event.isComposing || event.keyCode === 229 || event.repeat) return;
+    if (hasBlockingOverlay()) return;
     const target = event.target instanceof Element ? event.target : null;
     const textEntry = Boolean(target?.closest("input, textarea, select, [contenteditable]:not([contenteditable='false'])"));
     if ((event.ctrlKey || event.metaKey) && (event.key === "f" || event.key === "F")) {
@@ -828,11 +835,12 @@ function onWindowKeyDown(event: KeyboardEvent): void {
 
     .glean-stats__metric,
     .glean-stats__metric:hover {
-        min-height: 120px;
-        padding: 18px 20px;
-        border: 1px solid var(--glean-border-soft);
-        border-radius: 16px;
-        background: var(--b3-theme-surface);
+        min-height: 96px;
+        padding: 14px 18px;
+        border: none;
+        border-right: 1px solid color-mix(in srgb, var(--b3-border-color) 25%, transparent);
+        border-radius: 0;
+        background: transparent;
         box-shadow: none;
         transform: none;
         transition: none;
@@ -963,11 +971,20 @@ function onWindowKeyDown(event: KeyboardEvent): void {
 
     .glean-stats__overview > .glean-stats__metrics {
         grid-template-columns: repeat(3, minmax(0, 1fr));
+        background: var(--b3-theme-surface);
+        border-radius: var(--glean-radius-lg);
+        padding: var(--glean-space-2) var(--glean-space-3);
+        border: 1px solid color-mix(in srgb, var(--b3-border-color) 20%, transparent);
     }
 
     .glean-stats__overview > .glean-stats__metrics > .glean-stats__metric {
-        background: var(--b3-theme-surface);
-        border-color: var(--glean-border-soft);
+        background: transparent;
+        border: none;
+        border-right: 1px solid color-mix(in srgb, var(--b3-border-color) 25%, transparent);
+    }
+
+    .glean-stats__overview > .glean-stats__metrics > .glean-stats__metric:last-child {
+        border-right: none;
     }
 
     .glean-stats__supplement > summary {

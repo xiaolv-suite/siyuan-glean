@@ -461,6 +461,7 @@ test("filterCompletedItems：已读文章按日期与关键词（标题/作者/�
 test("StatsView 接线：回顾预览与日期过滤支持 Escape 快捷退出（T-3395 / T-3512 / T-3521）", () => {
     const view = readFileSync(new URL("../src/ui/StatsView.svelte", import.meta.url), "utf8");
     assert.match(view, /<svelte:window onkeydown=\{onWindowKeyDown\} \/>/);
+    assert.match(view, /if \(hasBlockingOverlay\(\)\) return;/);
     assert.match(view, /if \(event\.key === "Escape"\)/);
     assert.match(view, /if \(session && !busy && \(saveState === "ready" \|\| saveState === "saved"\)\) \{[\s\S]*?discard\(\);/);
     assert.match(view, /if \(selectedDayDate\) \{[\s\S]*?selectedDayDate = "";/);
