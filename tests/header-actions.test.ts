@@ -621,5 +621,19 @@ test("列表行尾操作与看板选择框平滑微交互契约：默认低透�
     assert.match(wechatScss, /\.glean-weread-shelf-btn\s*\{[\s\S]*outline:\s*2px solid var\(--glean-color-wechat\);/);
     assert.match(wechatScss, /@media\s*\(max-width:\s*560px\)\s*\{[\s\S]*\.glean-weread-shelf-btn\s*\{[\s\S]*min-height:\s*44px;/);
     assert.match(wechatScss, /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{[\s\S]*\.glean-weread-shelf-btn,\s*\.glean-weread-local-btn\s*\{[\s\S]*transition:\s*var\(--glean-motion-none\)\s*!important;/);
+
+    // 41. 弹窗通用组件样式松青勾选框、彻底删除聚焦光圈与移动端断点
+    assert.match(dialogsScss, /\.glean-import-confirm__check input\s*\{[\s\S]*accent-color:\s*var\(--glean-color-action\);/);
+    assert.match(dialogsScss, /\.glean-archive-dlg__purge\s*\{[\s\S]*&:focus-visible\s*\{[\s\S]*outline:\s*2px solid var\(--b3-theme-error\);/);
+    assert.match(dialogsScss, /@media\s*\(max-width:\s*560px\)\s*\{[\s\S]*\.glean-mstats \.glean-mstat\s*\{[\s\S]*min-height:\s*48px;/);
+    assert.match(dialogsScss, /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{[\s\S]*\.glean-archive-dlg__opt,\s*\.glean-archive-dlg__purge\s*\{[\s\S]*transition:\s*var\(--glean-motion-none\)\s*!important;/);
+
+    // 42. Bento 统计卡 16px 柔和外壳、松青标签悬停与移动端单列排版
+    const bentoScss = read("src/styles/components/bento.scss");
+    assert.match(bentoScss, /\.glean-tile\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-lg,\s*16px\);/);
+    assert.match(bentoScss, /\.glean-tile\s*\{[\s\S]*box-shadow:\s*var\(--glean-shadow-card\);/);
+    assert.match(bentoScss, /\.glean-tag\s*\{[\s\S]*border-color:\s*var\(--glean-color-action\);[\s\S]*color:\s*var\(--glean-color-action\);/);
+    assert.match(bentoScss, /@media\s*\(max-width:\s*560px\)\s*\{[\s\S]*\.glean-bento\s*\{[\s\S]*grid-template-columns:\s*1fr;/);
+    assert.match(bentoScss, /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{[\s\S]*\.glean-tile,[\s\S]*\.glean-tag[\s\S]*transition:\s*var\(--glean-motion-none\)\s*!important;/);
 });
 
