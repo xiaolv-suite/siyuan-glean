@@ -526,5 +526,23 @@ test("列表行尾操作与看板选择框平滑微交互契约：默认低透�
     assert.match(styles, /\.glean-filter-chip\s*\{[\s\S]*border-color:\s*color-mix\(in srgb, var\(--glean-color-action\)/);
     assert.match(styles, /\.glean-filters--compact \.glean-filter--active\s*\{[\s\S]*border-color:\s*color-mix\(in srgb, var\(--glean-color-action\)/);
     assert.match(styles, /\.glean-filters--compact \.glean-filter-dir--active\s*\{[\s\S]*color:\s*var\(--glean-color-action\);/);
+
+    // 24. 全局搜索框胶囊化与松青获焦光圈
+    assert.match(styles, /\.glean-search\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
+    assert.match(styles, /\.glean-search\s*\{[\s\S]*&:focus-within\s*\{[\s\S]*border-color:\s*color-mix\(in srgb, var\(--glean-color-action\)/);
+
+    // 25. 顶栏分段视图与阅读模式切换器激活态背景块与松青操作色
+    assert.match(styles, /\.glean-views__btn\.glean-views__btn--on\s*\{[\s\S]*color:\s*var\(--glean-color-action\);/);
+    assert.match(styles, /\.glean-reader__mode\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
+    assert.match(styles, /\.glean-reader__mode \.glean-seg__btn--on\s*\{[\s\S]*color:\s*var\(--glean-color-action\);/);
+
+    // 26. 状态队列胶囊松青激活背景块与数字徽章
+    assert.match(styles, /\.glean-q--on\s*\{[\s\S]*color:\s*var\(--glean-color-action\);/);
+    assert.match(styles, /\.glean-q--on \.glean-q__n\s*\{[\s\S]*color:\s*var\(--glean-color-action\);/);
+
+    // 27. 保存视图工具栏控件全圆角胶囊化与松青操作色
+    assert.match(styles, /\.glean-saved-views\s*\{[\s\S]*border-bottom:\s*1px solid var\(--glean-border-soft\);/);
+    assert.match(styles, /\.glean-saved-views :where\(\.b3-select, \.b3-text-field, \.glean-btn\)\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
+    assert.match(styles, /\.glean-saved-views \.glean-btn:first-of-type:not\(:disabled\)\s*\{[\s\S]*color:\s*var\(--glean-color-action\);/);
 });
 

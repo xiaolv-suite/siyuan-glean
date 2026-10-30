@@ -1022,9 +1022,10 @@ body.b3-theme-dark {
     transition: all var(--glean-duration-normal) var(--glean-ease-out);
 
     &.glean-views__btn--on {
-        background: var(--b3-theme-surface);
-        color: var(--b3-theme-on-background);
-        box-shadow: var(--glean-shadow-control);
+        background: color-mix(in srgb, var(--glean-color-action) 12%, var(--b3-theme-surface));
+        color: var(--glean-color-action);
+        font-weight: var(--glean-weight-semibold);
+        box-shadow: none;
     }
 }
 
@@ -1160,17 +1161,17 @@ body.b3-theme-dark {
     display: flex;
     align-items: center;
     gap: var(--glean-space-2);
-    padding: var(--glean-space-2) var(--glean-space-3);
-    border-radius: var(--glean-radius-md);
+    padding: var(--glean-space-1-5) var(--glean-space-3);
+    border-radius: var(--glean-radius-pill);
     background: var(--glean-glass);
-    border: 1px solid var(--glean-glass-border);
+    border: 1px solid var(--glean-border-soft);
     backdrop-filter: blur(16px) saturate(1.4);
     -webkit-backdrop-filter: blur(16px) saturate(1.4);
     transition: box-shadow var(--glean-duration-normal), border-color var(--glean-duration-normal);
 
     &:focus-within {
-        border-color: color-mix(in srgb, var(--glean-accent-b) 40%, transparent);
-        box-shadow: 0 0 0 3px color-mix(in srgb, var(--glean-accent-b) 12%, transparent);
+        border-color: color-mix(in srgb, var(--glean-color-action) 45%, transparent);
+        box-shadow: var(--glean-shadow-focus);
     }
 
     .glean-search__icon {
@@ -1245,15 +1246,15 @@ body.b3-theme-dark {
     transition: all var(--glean-duration-normal) var(--glean-ease-out);
 
     &.glean-q--on {
-        color: var(--lv-brand);
-        background: color-mix(in srgb, var(--lv-brand) 10%, var(--b3-theme-surface));
+        color: var(--glean-color-action);
+        background: color-mix(in srgb, var(--glean-color-action) 12%, var(--b3-theme-surface));
         font-weight: var(--glean-weight-semibold);
-        border-color: color-mix(in srgb, var(--lv-brand) 28%, transparent);
-        box-shadow: var(--glean-shadow-control);
+        border-color: color-mix(in srgb, var(--glean-color-action) 28%, transparent);
+        box-shadow: none;
     }
 
     &:not(.glean-q--on):hover {
-        border-color: var(--b3-border-color);
+        border-color: var(--glean-border-soft);
         background: var(--b3-theme-surface);
     }
 }
@@ -1271,8 +1272,8 @@ body.b3-theme-dark {
 }
 
 .glean-q--on .glean-q__n {
-    background: color-mix(in srgb, var(--lv-brand) 16%, transparent);
-    color: var(--lv-brand);
+    background: color-mix(in srgb, var(--glean-color-action) 16%, transparent);
+    color: var(--glean-color-action);
 }
 
 /* 读库键盘操作提示（T-3392）：桌面端行内快捷键，光标激活时加深。 */
@@ -2991,7 +2992,7 @@ mark.glean-search-highlight {
     flex-wrap: wrap;
     gap: var(--glean-space-1-5);
     padding: var(--glean-space-1-25) var(--glean-space-2-5);
-    border-bottom: 1px solid var(--b3-border-color);
+    border-bottom: 1px solid var(--glean-border-soft);
 }
 
 .glean-saved-views .b3-select { min-width: 130px; }
@@ -3023,19 +3024,23 @@ mark.glean-search-highlight {
     gap: var(--glean-space-1);
     padding: var(--glean-space-micro);
     border: 1px solid var(--glean-border-soft);
-    border-radius: var(--glean-radius-sm);
+    border-radius: var(--glean-radius-pill);
     background: var(--glean-inset-surface);
 }
 
 .glean-reader__mode .glean-seg__btn {
     min-height: 30px;
     border-color: transparent;
-    border-radius: var(--glean-radius-6);
+    border-radius: var(--glean-radius-pill);
     transition: color var(--glean-duration-fast) var(--glean-ease-out), background var(--glean-duration-fast) var(--glean-ease-out), box-shadow var(--glean-duration-fast) var(--glean-ease-out), transform var(--glean-duration-press-short) var(--glean-ease-out);
 }
 
 .glean-reader__mode .glean-seg__btn--on {
-    box-shadow: var(--glean-shadow-control);
+    background: color-mix(in srgb, var(--glean-color-action) 12%, var(--b3-theme-surface));
+    color: var(--glean-color-action);
+    font-weight: var(--glean-weight-semibold);
+    border: 1px solid color-mix(in srgb, var(--glean-color-action) 22%, transparent);
+    box-shadow: none;
 }
 
 .glean-reader__mode .glean-seg__btn:focus-visible {
@@ -5976,10 +5981,11 @@ mark.glean-search-highlight {
 
     &.glean-seg__btn--on,
     &[aria-pressed="true"] {
-        background: var(--b3-theme-surface);
-        color: var(--b3-theme-primary);
-        font-weight: var(--glean-weight-bold);
-        box-shadow: var(--glean-shadow-control);
+        background: color-mix(in srgb, var(--glean-color-action) 12%, var(--b3-theme-surface));
+        color: var(--glean-color-action);
+        font-weight: var(--glean-weight-semibold);
+        border: 1px solid color-mix(in srgb, var(--glean-color-action) 22%, transparent);
+        box-shadow: none;
     }
 
     &:disabled {
@@ -9086,7 +9092,7 @@ mark.glean-search-highlight {
     gap: var(--glean-space-micro);
     padding: var(--glean-space-tight);
     background: var(--b3-theme-background-light);
-    border: 1px solid color-mix(in srgb, var(--b3-border-color) 70%, transparent);
+    border: 1px solid var(--glean-border-soft);
 }
 
 .glean-views__btn {
@@ -9097,15 +9103,16 @@ mark.glean-search-highlight {
 }
 
 .glean-views__btn.glean-views__btn--on {
-    background: var(--glean-grad-soft);
-    color: var(--glean-accent-b);
-    font-weight: var(--glean-weight-650);
-    box-shadow: var(--glean-shadow-card);
+    background: color-mix(in srgb, var(--glean-color-action) 12%, var(--b3-theme-surface));
+    color: var(--glean-color-action);
+    font-weight: var(--glean-weight-semibold);
+    border: 1px solid color-mix(in srgb, var(--glean-color-action) 22%, transparent);
+    box-shadow: none;
 }
 
 .glean-search {
-    padding: var(--glean-space-2) var(--glean-space-3);
-    border-radius: var(--glean-radius-md);
+    padding: var(--glean-space-1-5) var(--glean-space-3);
+    border-radius: var(--glean-radius-pill);
     background: color-mix(in srgb, var(--b3-theme-surface) 88%, transparent);
     border-color: var(--glean-border-soft);
     backdrop-filter: blur(12px) saturate(1.15);
@@ -10368,13 +10375,21 @@ body.b3-theme-dark .glean-panel--mobile,
 
 .glean-saved-views :where(.b3-select, .b3-text-field, .glean-btn) {
     min-height: 30px;
-    border-radius: var(--glean-radius-sm);
+    border-radius: var(--glean-radius-pill);
     font-size: var(--glean-text-xs);
 }
 
 .glean-saved-views :where(.b3-select, .b3-text-field) {
     border-color: var(--glean-border-soft);
     background: var(--b3-theme-surface);
+    padding: var(--glean-space-1) var(--glean-space-2-5);
+    transition: border-color var(--glean-duration-fast) ease, box-shadow var(--glean-duration-fast) ease;
+
+    &:focus {
+        border-color: var(--glean-color-action);
+        box-shadow: var(--glean-shadow-focus);
+        outline: none;
+    }
 }
 
 .glean-saved-views .glean-btn:not(:disabled) {
@@ -10384,9 +10399,9 @@ body.b3-theme-dark .glean-panel--mobile,
 }
 
 .glean-saved-views .glean-btn:first-of-type:not(:disabled) {
-    border-color: color-mix(in srgb, var(--b3-theme-primary) 34%, var(--glean-border-soft));
-    color: var(--b3-theme-primary);
-    background: var(--glean-primary-soft);
+    border-color: color-mix(in srgb, var(--glean-color-action) 35%, transparent);
+    color: var(--glean-color-action);
+    background: color-mix(in srgb, var(--glean-color-action) 12%, var(--b3-theme-surface));
 }
 
 .glean-batchbar {
