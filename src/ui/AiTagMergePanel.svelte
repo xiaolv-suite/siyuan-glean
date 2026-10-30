@@ -157,11 +157,12 @@
     .glean-ai-tag-merge__head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--glean-space-3); }
     .glean-ai-tag-merge__head p { margin-top: var(--glean-space-1); }
     .glean-ai-tag-merge__list { display: grid; gap: var(--glean-space-2); }
-    .glean-ai-tag-merge__row { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(150px, 190px) auto; align-items: center; gap: var(--glean-space-2); padding: var(--glean-space-3); border: 1px solid var(--glean-border-soft); border-radius: var(--glean-radius-md); background: var(--glean-status-surface); }
+    .glean-ai-tag-merge__row { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(150px, 190px) auto; align-items: center; gap: var(--glean-space-2); padding: var(--glean-space-3); border: 1px solid var(--glean-border-soft); border-radius: var(--glean-radius-lg, 16px); background: var(--glean-status-surface); }
     .glean-ai-tag-merge__variants { display: flex; flex-wrap: wrap; gap: var(--glean-space-1); min-width: 0; }
     .glean-ai-tag-merge__affected { color: var(--b3-theme-on-surface); font-size: var(--glean-text-xs); white-space: nowrap; }
     .glean-ai-tag-merge__keep { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: var(--glean-space-2); min-width: 0; color: var(--b3-theme-on-surface); font-size: var(--glean-text-xs); }
-    .glean-ai-tag-merge__keep select { min-width: 0; max-width: 100%; }
+    .glean-ai-tag-merge__keep select { min-width: 0; max-width: 100%; border-radius: var(--glean-radius-pill); padding-inline: var(--glean-space-2-5); }
+    .glean-ai-tag-merge .glean-btn { border-radius: var(--glean-radius-pill); }
     .glean-ai-tag-merge__hint, .glean-ai-tag-merge__empty { padding: var(--glean-space-2) 0; }
     .glean-ai-tag-merge__status { color: var(--glean-st-done-text) !important; }
     .glean-ai-tag-merge__status--error { color: var(--b3-theme-error) !important; }

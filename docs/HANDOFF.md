@@ -29,7 +29,8 @@
      - **长文切片卡片柔和外壳与胶囊流**：`SlicingControls` 切片卡片（`.glean-slicing-card`）升级为 `16px` 柔和外壳，切片时长档位药丸、章节胶囊（`.glean-slicing-card__sec-chip`）、切片生成大按钮（`.glean-slicing-create-btn`）及阅读书签标记（`.glean-read-point-badge`）全量采用全圆角胶囊；
      - **微信公众号卡片与微信读书向导柔和外壳**：微信公众号作者发布卡（`.glean-wechat-publisher`）升级为 `16px` 大圆角卡片，专栏合集标签（`.glean-wechat-publisher__series-chip`）胶囊化；微信读书向导步骤卡（`.glean-weread-step`）与本地阅读卡升级为 `16px` 柔和外壳，纯净短链复制条（`.glean-weread-url-box`）升级为全圆角胶囊；
      - **闪卡制作弹窗柔和外壳与胶囊流**：`FlashcardDialog` 头部横幅（`.glean-flashcard__head`）、来源文档卡与原句引用区升级为 `16px` 大圆角柔和外壳，卡片模式标签（`.glean-flashcard__mode`）、状态提示条与底部确认/AI制卡按钮全量升级为全圆角胶囊；
-  3. **门禁全通**：全套测试通过（**1749 / 1749 PASS**，新增微交互与胶囊契约守护测试）；`pnpm check` 0 错 0 警告；`pnpm build` 1.45s 干净构建；`pnpm check:release` 14 项全绿通过。
+     - **弹窗与维护面板柔和外壳与胶囊体系贯通**：`FormattingDialog`（排版整理）、`BackupPanel`（备份恢复）、`AiBatchPanel`（AI批处理）、`SnapshotGovernance`（快照治理）、`AiTagMergePanel`（AI标签合并）与 `MigrateDialog`（存量迁移）完成全量升级：头部横幅、候选组与数据行统一升级为 `16px` 大圆角柔和外壳，状态徽章、输入选择框、筛选下拉与操作按钮全量升级为全圆角胶囊；
+  3. **门禁全通**：全套测试通过（**1749 / 1749 PASS**，新增微交互与胶囊契约守护测试）；`pnpm check` 0 错 0 警告；`pnpm build` 1.46s 干净构建；`pnpm check:release` 14 项全绿通过。
 - 下一步：按当前执行板顺序推进下一个任务（如 T-3367 批量选择范围与底部操作在更多场景的走查，或按作者点单继续）。版本保持 1.4.0，等待解封通知后统一处理。
 
 ## 历史交接（2026-10-29 本地发版轮：v1.4.0 次版本发布、五处版本同步、双语 README 全面重构、全门禁验证与本地打包）

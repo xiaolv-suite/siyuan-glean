@@ -455,5 +455,18 @@ test("列表行尾操作与看板选择框平滑微交互契约：默认低透�
     const flashcardDialog = read("src/ui/FlashcardDialog.svelte");
     assert.match(flashcardDialog, /\.glean-flashcard__head\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-lg,\s*16px\);/);
     assert.match(flashcardDialog, /\.glean-flashcard__actions \.glean-btn\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
+
+    // 12. 排版、备份、AI批处理、快照治理与存量迁移外壳与胶囊流
+    const formattingDialog = read("src/ui/FormattingDialog.svelte");
+    const backupPanel = read("src/ui/BackupPanel.svelte");
+    const aiBatchPanel = read("src/ui/AiBatchPanel.svelte");
+    const snapshotGov = read("src/ui/SnapshotGovernance.svelte");
+    assert.match(formattingDialog, /\.glean-formatting__head\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-lg,\s*16px\);/);
+    assert.match(formattingDialog, /\.glean-formatting__toolbar \.glean-btn\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
+    assert.match(backupPanel, /\.glean-backup__head\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-lg,\s*16px\);/);
+    assert.match(backupPanel, /\.glean-backup__file\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
+    assert.match(aiBatchPanel, /\.glean-ai-batch__row\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-lg,\s*16px\);/);
+    assert.match(snapshotGov, /\.glean-snapshot-governance\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-lg,\s*16px\);/);
+    assert.match(styles, /\.glean-migrate__filter,[\s\S]*\.glean-migrate__batch-input\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
 });
 

@@ -307,23 +307,23 @@
         display: grid;
         gap: var(--glean-space-2, 8px);
         padding: var(--glean-space-3, 12px);
-        border: 1px solid var(--glean-border-soft, var(--b3-border-color));
-        border-radius: var(--glean-radius-md, 12px);
-        background: var(--glean-inset-surface, var(--b3-theme-background));
+        border: 1px solid var(--glean-border-soft);
+        border-radius: var(--glean-radius-lg, 16px);
+        background: var(--glean-inset-surface);
         transition: border-color 160ms var(--glean-ease-out, ease), box-shadow 160ms var(--glean-ease-out, ease), transform 160ms var(--glean-ease-out, ease);
     }
-    .glean-ai-batch__row:hover { border-color: color-mix(in srgb, var(--b3-theme-primary) 24%, var(--glean-border-soft, transparent)); box-shadow: var(--glean-shadow-card, none); }
+    .glean-ai-batch__row:hover { border-color: color-mix(in srgb, var(--glean-color-action) 28%, var(--glean-border-soft)); box-shadow: var(--glean-shadow-card, none); }
     .glean-ai-batch__stage { display: inline-flex; align-items: center; gap: 5px; color: var(--b3-theme-on-surface); font-size: var(--glean-text-xs, 11px); }
     .glean-ai-batch__stage i,
-    .glean-ai-batch__count i { width: 6px; height: 6px; flex: 0 0 auto; border-radius: 999px; background: currentColor; opacity: .78; }
+    .glean-ai-batch__count i { width: 6px; height: 6px; flex: 0 0 auto; border-radius: var(--glean-radius-pill); background: currentColor; opacity: .78; }
     .glean-ai-batch__count {
         display: inline-flex;
         align-items: center;
         min-height: 24px;
         margin-inline-end: var(--glean-space-2, 8px);
-        padding: 2px 8px;
-        border: 1px solid var(--glean-border-soft, var(--b3-border-color));
-        border-radius: 999px;
+        padding: 2px 10px;
+        border: 1px solid var(--glean-border-soft);
+        border-radius: var(--glean-radius-pill);
         background: var(--glean-primary-soft, transparent);
         color: var(--b3-theme-on-background);
         font-size: var(--glean-text-xs, 11px);
@@ -336,10 +336,11 @@
     .glean-ai-batch__row--done .glean-ai-batch__stage { color: var(--glean-st-done, var(--b3-theme-primary)); }
     .glean-ai-batch__count--unknown,
     .glean-ai-batch__row--unknown .glean-ai-batch__stage { color: var(--b3-theme-on-surface); }
-    .glean-ai-batch__counts { margin-block: 2px; padding: 6px 8px; border: 1px solid var(--glean-border-soft, var(--b3-border-color)); border-radius: var(--glean-radius-sm, 8px); background: var(--glean-status-surface, var(--b3-theme-surface)); }
+    .glean-ai-batch__counts { margin-block: 2px; padding: 6px 10px; border: 1px solid var(--glean-border-soft); border-radius: var(--glean-radius-pill); background: var(--glean-status-surface); }
+    .glean-ai-batch button, .glean-ai-batch .glean-btn { border-radius: var(--glean-radius-pill); }
     .glean-ai-batch__primary-actions { padding-top: 2px; }
     .glean-ai-batch__resume-actions { padding-block: 2px; }
-    .glean-ai-batch--busy { box-shadow: var(--glean-shadow-card, none), 0 0 0 1px color-mix(in srgb, var(--b3-theme-primary) 8%, transparent); }
+    .glean-ai-batch--busy { box-shadow: var(--glean-shadow-card, none), 0 0 0 1px color-mix(in srgb, var(--glean-color-action) 12%, transparent); }
     .glean-ai-batch label { display: flex; align-items: center; gap: 8px; overflow-wrap: anywhere; min-height: 44px; }
     .glean-ai-batch input[type="checkbox"] { flex: 0 0 auto; }
     .glean-ai-batch pre {
@@ -353,14 +354,14 @@
         background: var(--glean-status-surface, var(--b3-theme-surface));
         scrollbar-gutter: stable;
     }
-    .glean-ai-batch details summary { cursor: pointer; color: var(--b3-theme-primary); }
-    .glean-ai-batch__preview { display: grid; gap: var(--glean-space-3, 12px); padding: var(--glean-space-3, 12px); border: 1px solid color-mix(in srgb, var(--b3-theme-primary) 24%, var(--glean-border-soft, var(--b3-border-color))); border-radius: var(--glean-radius-md, 12px); background: var(--glean-grad-soft, var(--glean-section-surface, var(--b3-theme-surface))); box-shadow: var(--glean-shadow-card, none); }
-    .glean-ai-batch__preview-meta { display: grid; gap: 4px; padding-bottom: var(--glean-space-2, 8px); border-bottom: 1px solid color-mix(in srgb, var(--glean-border-soft, var(--b3-border-color)) 72%, transparent); }
+    .glean-ai-batch details summary { cursor: pointer; color: var(--glean-color-action); }
+    .glean-ai-batch__preview { display: grid; gap: var(--glean-space-3, 12px); padding: var(--glean-space-3, 12px); border: 1px solid var(--glean-border-soft); border-radius: var(--glean-radius-lg, 16px); background: var(--glean-grad-soft); box-shadow: var(--glean-shadow-card, none); }
+    .glean-ai-batch__preview-meta { display: grid; gap: 4px; padding-bottom: var(--glean-space-2, 8px); border-bottom: 1px solid color-mix(in srgb, var(--glean-border-soft) 72%, transparent); }
     .glean-ai-batch__preview-meta p:first-child { color: var(--b3-theme-on-background); font-weight: 650; }
     .glean-ai-batch__preview-disabled { color: var(--b3-theme-error) !important; font-weight: 650; }
     .glean-ai-batch__preview-list { display: grid; gap: var(--glean-space-2, 8px); max-height: 38vh; overflow: auto; padding-inline-end: 2px; scrollbar-gutter: stable; }
     .glean-ai-batch__preview-title { font-weight: 650; color: var(--b3-theme-on-background); }
-    .glean-ai-batch__confirm { display: grid; gap: var(--glean-space-2, 8px); padding-top: var(--glean-space-2, 8px); border-top: 1px solid color-mix(in srgb, var(--glean-border-soft, var(--b3-border-color)) 72%, transparent); }
+    .glean-ai-batch__confirm { display: grid; gap: var(--glean-space-2, 8px); padding-top: var(--glean-space-2, 8px); border-top: 1px solid color-mix(in srgb, var(--glean-border-soft) 72%, transparent); }
     .glean-ai-batch__confirm .glean-btn { justify-self: end; min-width: 132px; }
     .glean-ai-batch__pager { justify-content: center; padding-top: 2px; }
     .glean-ai-batch__pager > span { min-width: 90px; color: var(--b3-theme-on-surface); font-size: var(--glean-text-xs, 11px); text-align: center; font-variant-numeric: tabular-nums; }

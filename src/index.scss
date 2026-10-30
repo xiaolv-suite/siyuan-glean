@@ -8254,6 +8254,9 @@ mark.glean-search-highlight {
 .glean-migrate__filter,
 .glean-migrate__batch-input {
     min-height: 34px;
+    border-radius: var(--glean-radius-pill);
+    border: 1px solid var(--glean-border-soft);
+    padding-inline: var(--glean-space-2-5);
 }
 
 .glean-migrate__filter {
@@ -8262,6 +8265,7 @@ mark.glean-search-highlight {
 
 .glean-migrate__batch-input {
     width: 64px;
+    text-align: center;
 }
 
 .glean-import-progress__actions {
