@@ -17,7 +17,7 @@
      - **外壳分层**：底色采用微色相浅色背景托底（`--glean-app-background`），内部浮起近白大圆角外壳容器（`border-radius: 20px`，复合软阴影），区域间依靠底色差区分，消除繁复黑描边；
      - **三段式布局**：左侧常驻 64px 极窄图标导航栏（常驻图标 + 紧凑小标签，活跃项采用主题色背景填充块而非仅文字变色）；中间为主内容工作台；右侧为随选中条目联动的抽屉式上下文详情面板（预览/大纲/文献著录）；
      - **统计优先**：读库工作台与全局摘录墙顶部固定置入无包边、细竖线分隔的关键核心指标条（`.glean-stat-strip`），统计页主指标移除封闭卡片粗边框并对齐细竖线结构，24px 大数字（`tabular-nums`）配紧凑小标签；
-     - **数据柔和表达与胶囊体系**：看板列与抽屉边框柔和混色去硬边，热力图单元格消除生硬描边（`border: none; border-radius: 3px;`），30 天趋势图容器去边框改用柔和渐变圆头柱（`border-radius: var(--glean-radius-pill)`），筛选下拉框（`.glean-filter`）、排序切换按钮（`.glean-filter-dir`）与弹出触发器（`.glean-action-popover__trigger`）全量统一为全圆角胶囊；
+     - **数据柔和表达与胶囊体系**：看板列与抽屉边框柔和混色去硬边，热力图单元格消除生硬描边（`border: none; border-radius: 3px;`），30 天趋势图容器去边框改用柔和渐变圆头柱（`border-radius: var(--glean-radius-pill)`），筛选下拉框（`.glean-filter`）、排序切换按钮（`.glean-filter-dir`）、弹出触发器（`.glean-action-popover__trigger`）、今日拾遗卡片操作按钮（`.glean-surf-act`）以及思源原生阅读胶囊栏动作（`.glean-reading-context__source-btn`、`.glean-reading-context__back`）全量统一为全圆角胶囊；
      - **列表密度与行尾操作**：行高维持中等舒适度，标题与元数据清晰双行层级，行尾图标操作按钮采用默认低透、悬停/获焦平滑浮现（`opacity: 0.35 -> 1`）；
   3. **门禁全通**：全套测试通过（**1748 / 1748 PASS**，新增键盘隔离与并发互斥守护测试）；`pnpm check` 0 错 0 警告；`pnpm build` 1.44s 干净构建；`pnpm check:release` 14 项全绿通过。
 - 下一步：按当前执行板顺序推进下一个任务（如 T-3367 批量选择范围与底部操作在更多场景的走查，或按作者点单继续）。版本保持 1.4.0，等待解封通知后统一处理。
