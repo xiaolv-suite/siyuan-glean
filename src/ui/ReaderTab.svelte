@@ -62,8 +62,11 @@ import { aiFailureKey } from "../libs/ai-feedback";
     import { saveReadPoint } from "../services/clip-store";
     import { pickRoamingArticle } from "../domain/roaming";
     import { openRoamingDialog } from "./roaming-dialog";
-import { formatCitation, citationSuccessKey, type CitationFormat } from "../domain/citation";
-import { formatHighlightShare, formatHighlightTime } from "../domain/highlights";
+    import { formatCitation, citationSuccessKey, type CitationFormat } from "../domain/citation";
+    import { formatHighlightShare, formatHighlightTime } from "../domain/highlights";
+    import FoldedReaderView from "./FoldedReaderView.svelte";
+    import { loadDocumentFoldNodes } from "../services/folded-reader-service";
+    import { applyGlobalFoldLevel, toggleNodeFold, type FoldLevel, type FoldNode } from "../domain/folded-reader";
     import { estimateReadingPercentage } from "../domain/reading-position";
     import { findMatchingOutlineItemId, type OutlineItem } from "../domain/outline";
     import { findActiveOutlineItemInHost } from "../libs/reading-position";
@@ -154,7 +157,34 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
     let currentBookmarkBlockId = $state<string | null>(null);
     let pendingScrollBlockId = $state<string | null>(null);
     const showBackToTop = $derived((readingPercentage ?? 0) > 12);
-    let companionTab = $state<"all" | "outline" | "notes" | "ai">("all");
+    let companionTab = $state<"all" | "outline" | "notes" | "ai" | "fold">("all");
+    let foldNodes = $state<FoldNode[]>([]);
+    let foldLoading = $state(false);
+    let foldGlobalLevel = $state<FoldLevel>(2);
+
+    async function refreshFoldNodes(): Promise<void> {
+        if (!docId || foldLoading) return;
+        foldLoading = true;
+        try {
+            foldNodes = await loadDocumentFoldNodes(docId, foldGlobalLevel);
+        } catch (err) {
+            console.warn("[glean] loadDocumentFoldNodes failed:", err);
+            foldNodes = [];
+        } finally {
+            foldLoading = false;
+        }
+    }
+
+    function toggleFoldReader(): void {
+        if (sidebarCollapsed || immersive) {
+            sidebarCollapsed = false;
+            immersive = false;
+        }
+        companionTab = companionTab === "fold" ? "all" : "fold";
+        if (companionTab === "fold" && foldNodes.length === 0) {
+            void refreshFoldNodes();
+        }
+    }
     let highlightColorFilter = $state<string>("");
     let highlightFilter = $state<string>("");
     let authorArticles = $state<Array<{ id: string; title: string }>>([]);
@@ -1039,6 +1069,12 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
             void takeSnapshot();
             return;
         }
+        if (event.altKey && (event.key === "z" || event.key === "Z")) {
+            event.preventDefault();
+            event.stopPropagation();
+            toggleFoldReader();
+            return;
+        }
         const root = readerRoot;
         const target = event.target instanceof Element ? event.target : null;
         const active = document.activeElement;
@@ -1213,6 +1249,8 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
         docHighlights = [];
         readingPercentage = null;
         companionTab = "all";
+        foldNodes = [];
+        foldLoading = false;
         outlineFilter = "";
         highlightColorFilter = "";
         void untrack(() => loadContext(id));
@@ -2019,6 +2057,17 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
             </div>
             <button class="glean-btn glean-btn--ghost glean-reader__toolbar-sidebar" aria-busy={sidebarBusy} disabled={sidebarBusy} aria-expanded={!sidebarCollapsed && !immersive} aria-controls={sidebarId} title={t(i18n, sidebarCollapsed || immersive ? "reader.sidebarShow" : "reader.sidebarHide")} onclick={toggleCompanion}>{t(i18n, sidebarCollapsed || immersive ? "reader.sidebarShow" : "reader.sidebarHide")}</button>
             <button class="glean-btn glean-btn--ghost glean-reader__toolbar-search" aria-expanded={searchOpen} title={t(i18n, "reader.searchTitle")} aria-label={t(i18n, "reader.searchTitle")} onclick={() => { searchOpen = !searchOpen; }}><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanSearch" /></svg></button>
+            <button
+                type="button"
+                class="glean-btn glean-btn--ghost glean-reader__toolbar-fold"
+                class:glean-btn--active={companionTab === "fold"}
+                title="{t(i18n, 'foldReader.toggleAction')} (Alt+Z)"
+                aria-label={t(i18n, "foldReader.toggleAction")}
+                onclick={toggleFoldReader}
+            >
+                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg>
+                <span>{t(i18n, "foldReader.navTitle")}</span>
+            </button>
             {#if docHighlights.length > 0 && !facade.isMobile}
                 <button
                     type="button"
@@ -2124,6 +2173,7 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                     <div><dt><kbd>Alt+Shift+C</kbd></dt><dd>{t(i18n, "citation.copyBibTeX")}</dd></div>
                     <div><dt><kbd>Alt+Q</kbd></dt><dd>{t(i18n, "quoteCard.action")}</dd></div>
                     <div><dt><kbd>Alt+S</kbd></dt><dd>{t(i18n, context?.snapshot ? "snapshot.open" : "snapshot.take")}</dd></div>
+                    <div><dt><kbd>Alt+Z</kbd></dt><dd>{t(i18n, "foldReader.toggleAction")}</dd></div>
                     <div><dt><kbd>h</kbd></dt><dd>{t(i18n, "reader.shortcutNextHighlight")}</dd></div>
                     <div><dt><kbd>Shift+h</kbd></dt><dd>{t(i18n, "reader.shortcutPrevHighlight")}</dd></div>
                     <div><dt><kbd>Shift+F</kbd></dt><dd>{t(i18n, "reader.shortcutImmersive")}</dd></div>
@@ -2371,6 +2421,15 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                         onclick={() => companionTab = "notes"}
                     >{t(i18n, "reader.companionNavNotes")} ({docHighlights.length})</button>
                 {/if}
+                <button
+                    type="button"
+                    class="glean-reader__side-nav-btn"
+                    class:glean-reader__side-nav-btn--active={companionTab === "fold"}
+                    onclick={() => {
+                        companionTab = "fold";
+                        if (foldNodes.length === 0) void refreshFoldNodes();
+                    }}
+                >{t(i18n, "foldReader.navTitle")}</button>
                 {#if aiOn}
                     <button
                         type="button"
@@ -2590,6 +2649,27 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                         disabled={statusBusy}
                         onPriority={(value) => void setPriority(value)}
                         onRating={(value) => void setRating(value)}
+                    />
+                </div>
+            {/if}
+
+            {#if companionTab === "fold"}
+                <div class="glean-reader__section glean-reader__section--card glean-reader__fold-section">
+                    <FoldedReaderView
+                        nodes={foldNodes}
+                        globalLevel={foldGlobalLevel}
+                        {i18n}
+                        loading={foldLoading}
+                        onLevelChange={(lvl) => {
+                            foldGlobalLevel = lvl;
+                            foldNodes = applyGlobalFoldLevel(foldNodes, lvl);
+                        }}
+                        onJumpToBlock={(blockId) => {
+                            scrollAndPulseReadPoint(protyleHost, blockId);
+                        }}
+                        onToggleNode={(nodeId) => {
+                            foldNodes = foldNodes.map((n) => n.id === nodeId ? toggleNodeFold(n) : n);
+                        }}
                     />
                 </div>
             {/if}

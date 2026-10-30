@@ -1,6 +1,27 @@
 # HANDOFF — 续跑交接（每轮开发结束更新本页）
 
-## 当前有效交接（2026-10-31 UI-UX-PRO-MAX 金句卡片与渐进切片 WAI-ARIA/高对比度/方向键焦点流转与超窄视口弹性排版加固）
+## 当前有效交接（2026-10-31 借鉴 textfold 构建 5 阶语义保真折叠阅读器）
+
+- **T-3543/D-0421：借鉴 GitHub 标杆 textfold 构建 5 阶语义折叠交互阅读器 (Folded Reader)**：
+  1. **数据契约（领域层纯函数）**：
+     - `src/domain/folded-reader.ts` 严守分层单向依赖架构（禁引入 svelte/siyuan/api/services/ui），定义 `FoldLevel (1|2|3|4|5)` 与 `FoldNode` 数据模型；
+     - 坚持“保真优先，拒绝虚构重写 (Fidelity over AI Rewriting)”哲学，实现 `isVerbatimSubstring` 字符级纯净保真检验与 `extractVerbatimBrief`，Level 2 `brief` 强制通过 Verbatim Guard 强校验（若有幻觉虚构改写自动强制回退为 100% 原文逐字子串）；
+     - 实现 `extractFoldPoints`、`extractGist`、`extractConcept`、`createFoldNode`、`parseBlocksToFoldNodes`、`applyGlobalFoldLevel` 与 `toggleNodeFold`；
+  2. **服务与内核段落拉取**：
+     - `src/services/folded-reader-service.ts`：通过 `listChildBlocks` 获取思源段落块结构，自动清洗 HTML/块引用/内联链接，剔除代码块与表格噪音，优雅降级备用 `exportMdContent`；
+  3. **交互与 UI 体验升级（UI-UX-PRO-MAX）**：
+     - `src/ui/FoldedReaderView.svelte` 与 `src/styles/components/folded-reader.scss`：
+       * 顶栏集成 WAI-ARIA `role="radiogroup"` 与 `role="radio"` 5 阶连续缩放层级选择药丸（5 概念 -> 4 要旨 -> 3 论点 -> 2 逐字 -> 1 全文），支持方向键焦点流转；
+       * 全局按键监听：非输入态下按数字键 `1`~`5` 即可瞬间全局缩放文章阅读粒度；
+       * 单段卡片点击独立展开/折叠，平滑过渡微动效；
+       * 双栏联动：点击卡片或定位按钮即可通过 `scrollAndPulseReadPoint` 平滑滚动并高亮联动思源原生 Protyle 原文段落块；
+       * 对齐 UI-UX-PRO-MAX 现代外壳分层、移动端触控（`min-height: 44px;`）、超窄视口（`<=360px`）网格自适应、等宽数字排版与高对比度模式（`forced-colors: active`）；
+  4. **宿主集成**：
+     - `src/ui/ReaderTab.svelte` 顶栏增加折叠阅读快捷入口按钮（`.glean-reader__toolbar-fold`），绑定 `Alt+Z` 专属快捷键与帮助说明，伴生栏提供专属 `fold` 页签；
+  5. **门禁与测试闭环**：
+     - `tests/folded-reader.test.ts` 新增 9 项专项单元测试；`tests/header-actions.test.ts` 新增第 60 项守门断言；
+     - 全仓测试 **1,760 / 1,760 PASS**（100% 通过），`pnpm check` 0 errors / 0 warnings，`pnpm build` 1.75s 产出，发布门禁 14/14 全绿；
+     - `.tasks/TASK-20261030-textfold-reading-core.md` 标记为 `completed`。
 
 - **T-3542/D-0420：金句卡片生成器与渐进切片 WAI-ARIA、对比度与移动端超窄视口深度加固**：
   1. **WAI-ARIA Radio Group 与 Radio 状态无障碍加固**：

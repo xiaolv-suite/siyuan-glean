@@ -911,5 +911,29 @@ test("列表行尾操作与看板选择框平滑微交互契约：默认低透�
     assert.match(freshSlicingScss, /@media\s*\(max-width:\s*560px\)[\s\S]*\.glean-slicing-pill\s*\{[\s\S]*min-height:\s*44px;/);
     assert.match(freshSlicingScss, /@media\s*\(max-width:\s*360px\)[\s\S]*\.glean-slicing-card__head\s*\{[\s\S]*flex-wrap:\s*wrap;/);
     assert.match(freshSlicingScss, /@media\s*\(forced-colors:\s*active\)[\s\S]*border:\s*1px solid CanvasText;/);
+
+    // 60. 5 阶语义折叠交互阅读器 (Folded Reader) WAI-ARIA、1-5 数字键缩放、双栏滚动联动与保真契约守门
+    const freshFoldedReader = read("src/ui/FoldedReaderView.svelte");
+    const freshReaderTab = read("src/ui/ReaderTab.svelte");
+    const freshFoldedScss = read("src/styles/components/folded-reader.scss");
+
+    assert.match(freshFoldedReader, /<div\s+class="glean-fold-reader__levels"\s+role="radiogroup"/);
+    assert.match(freshFoldedReader, /role="radio"[\s\S]*aria-checked=\{currentLevel === cfg\.level\}/);
+    assert.match(freshFoldedReader, /handlePillKeyDown/);
+    assert.match(freshFoldedReader, /handleWindowKeyDown/);
+    assert.match(freshFoldedReader, /e\.key === "1"/);
+    assert.match(freshFoldedReader, /e\.key === "5"/);
+    assert.match(freshFoldedReader, /onJumpToBlock\?\.?\(node\.blockId\)/);
+
+    assert.match(freshReaderTab, /FoldedReaderView/);
+    assert.match(freshReaderTab, /glean-reader__toolbar-fold/);
+    assert.match(freshReaderTab, /companionTab === "fold"/);
+    assert.match(freshReaderTab, /toggleFoldReader/);
+    assert.match(freshReaderTab, /scrollAndPulseReadPoint\(protyleHost,\s*blockId\)/);
+
+    assert.match(freshFoldedScss, /\.glean-fold-reader\s*\{/);
+    assert.match(freshFoldedScss, /\.glean-fold-card\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-lg,\s*16px\);/);
+    assert.match(freshFoldedScss, /@media\s*\(max-width:\s*560px\)[\s\S]*\.glean-fold-reader__pill\s*\{[\s\S]*min-height:\s*44px;/);
+    assert.match(freshFoldedScss, /@media\s*\(forced-colors:\s*active\)[\s\S]*\.glean-fold-card\s*\{[\s\S]*border:\s*1px solid CanvasText;/);
 });
 
