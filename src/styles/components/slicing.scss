@@ -166,6 +166,11 @@
     color: var(--b3-theme-on-surface);
 }
 
+.glean-slicing-card__ops .glean-btn {
+    border-radius: var(--glean-radius-pill);
+    padding: var(--glean-space-1) var(--glean-space-2-5);
+}
+
 .glean-slicing-footer {
     padding-top: var(--glean-space-2, 8px);
     display: flex;
@@ -242,7 +247,7 @@
     &:focus-visible {
         outline: none;
         box-shadow: var(--glean-shadow-focus);
-        border-radius: var(--glean-radius-sm);
+        border-radius: var(--glean-radius-pill);
     }
 
     &:disabled {

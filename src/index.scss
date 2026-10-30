@@ -4439,9 +4439,10 @@ mark.glean-search-highlight {
     .b3-select {
         min-height: 24px;
         height: 24px;
-        padding: var(--glean-space-0-25) var(--glean-space-4-5) var(--glean-space-0-25) var(--glean-space-1-25);
+        padding: var(--glean-space-0-25) var(--glean-space-4-5) var(--glean-space-0-25) var(--glean-space-2);
         font-size: var(--glean-text-caption);
-        border-radius: var(--glean-radius-7);
+        border: 1px solid var(--glean-border-soft);
+        border-radius: var(--glean-radius-pill);
     }
 }
 
@@ -4450,7 +4451,7 @@ mark.glean-search-highlight {
 }
 
 .glean-rank-controls :where(.b3-select):focus-visible {
-    outline: 2px solid var(--b3-theme-primary);
+    outline: 2px solid var(--glean-color-action);
     outline-offset: 2px;
 }
 

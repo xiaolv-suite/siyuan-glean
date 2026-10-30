@@ -31,10 +31,10 @@
 <style>
     .glean-distribution { min-width: 0; }
     .glean-distribution__items { display: flex; flex-wrap: wrap; align-items: start; gap: 8px; padding: 0; list-style: none; }
-    .glean-distribution__item { min-width: 0; max-width: 100%; min-height: 32px; box-sizing: border-box; padding: 7px 9px; border: 1px solid var(--glean-border-soft); border-radius: var(--glean-radius-md); background: var(--glean-inset-surface); overflow-wrap: anywhere; transition: transform 160ms var(--glean-ease-out), border-color 160ms var(--glean-ease-out), background-color 160ms ease; }
-    .glean-distribution__item:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--b3-theme-primary) 26%, var(--glean-border-soft)); background: var(--glean-primary-soft); }
+    .glean-distribution__item { min-width: 0; max-width: 100%; min-height: 32px; box-sizing: border-box; padding: 5px 12px; border: 1px solid var(--glean-border-soft); border-radius: var(--glean-radius-pill); background: var(--glean-inset-surface); overflow-wrap: anywhere; transition: transform 160ms var(--glean-ease-out), border-color 160ms var(--glean-ease-out), background-color 160ms ease; }
+    .glean-distribution__item:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--glean-color-action) 35%, var(--glean-border-soft)); background: color-mix(in srgb, var(--glean-color-action) 10%, var(--b3-theme-surface)); }
     .glean-distribution__count { display: flex; justify-content: space-between; gap: 8px; }
-    .glean-distribution__count strong { font-variant-numeric: tabular-nums; color: var(--b3-theme-on-background); }
+    .glean-distribution__count strong { font-variant-numeric: tabular-nums; color: var(--glean-color-action); }
     .glean-distribution__other summary { cursor: pointer; padding: 6px 0; color: var(--b3-theme-on-surface); }
-    .glean-distribution__other summary:focus-visible { outline: 2px solid var(--b3-theme-primary); outline-offset: 2px; }
+    .glean-distribution__other summary:focus-visible { outline: 2px solid var(--glean-color-action); outline-offset: 2px; }
 </style>
