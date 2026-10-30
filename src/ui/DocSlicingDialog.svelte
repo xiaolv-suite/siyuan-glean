@@ -55,6 +55,27 @@
             creating = false;
         }
     }
+
+    function handlePillKeyDown(e: KeyboardEvent, currentMinutes: number): void {
+        const durations = [5, 8, 12, 15];
+        const idx = durations.indexOf(currentMinutes);
+        if (idx === -1) return;
+        if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+            e.preventDefault();
+            const next = durations[(idx + 1) % durations.length];
+            targetMinutes = next;
+            const container = (e.currentTarget as HTMLElement).parentElement;
+            const nextBtn = container?.children[(idx + 1) % durations.length] as HTMLElement | undefined;
+            nextBtn?.focus();
+        } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+            e.preventDefault();
+            const prev = durations[(idx - 1 + durations.length) % durations.length];
+            targetMinutes = prev;
+            const container = (e.currentTarget as HTMLElement).parentElement;
+            const prevBtn = container?.children[(idx - 1 + durations.length) % durations.length] as HTMLElement | undefined;
+            prevBtn?.focus();
+        }
+    }
 </script>
 
 <div class="lv-glean glean-slicing-dialog">
@@ -67,7 +88,11 @@
                         type="button"
                         class="glean-slicing-pill"
                         class:glean-slicing-pill--active={targetMinutes === m}
+                        role="radio"
+                        aria-checked={targetMinutes === m}
+                        tabindex={targetMinutes === m ? 0 : -1}
                         onclick={() => { targetMinutes = m; }}
+                        onkeydown={(e) => handlePillKeyDown(e, m)}
                     >
                         {m}m
                     </button>

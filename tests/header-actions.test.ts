@@ -880,5 +880,36 @@ test("列表行尾操作与看板选择框平滑微交互契约：默认低透�
     assert.match(styles, /\.glean-icon--clock\s*\{\s*color:\s*var\(--b3-theme-on-surface\);/);
     assert.match(styles, /\.glean-tier-badge\s*\{[\s\S]*font-variant-numeric:\s*tabular-nums;/);
     assert.match(slicingScss, /\.glean-star-btn\s*\{[\s\S]*\.glean-icon\s*\{[\s\S]*width:\s*13px;/);
+
+    // 59. 金句卡片与渐进长文切片 WAI-ARIA Radio Group、方向键焦点流转、高对比度与超窄视口弹性排版守门
+    const freshQuoteCard = read("src/ui/QuoteCardDialog.svelte");
+    const freshDocSlicing = read("src/ui/DocSlicingDialog.svelte");
+    const freshSlicingScss = read("src/styles/components/slicing.scss");
+
+    // WAI-ARIA Radio Group 与 Radio 状态绑定
+    assert.match(freshQuoteCard, /<div class="glean-quote-card-themes" role="radiogroup"/);
+    assert.match(freshQuoteCard, /<div class="glean-quote-card-font-group" role="radiogroup"/);
+    assert.match(freshQuoteCard, /role="radio"[\s\S]*aria-checked=\{activeThemeKey === theme\.key\}/);
+    assert.match(freshQuoteCard, /role="radio"[\s\S]*aria-checked=\{activeFontSize === "sm"\}/);
+    assert.match(freshQuoteCard, /aria-pressed=\{showWatermark\}/);
+
+    assert.match(freshDocSlicing, /<div class="glean-slicing-pills" role="radiogroup"/);
+    assert.match(freshDocSlicing, /role="radio"[\s\S]*aria-checked=\{targetMinutes === m\}/);
+
+    // 键盘流转与方向键切换
+    assert.match(freshQuoteCard, /handleThemeRadioKeyDown/);
+    assert.match(freshQuoteCard, /handleFontRadioKeyDown/);
+    assert.match(freshDocSlicing, /handlePillKeyDown/);
+
+    // 高对比度与移动端触控热区 (>=44px)
+    assert.match(freshQuoteCard, /@media\s*\(forced-colors:\s*active\)[\s\S]*\.glean-quote-card-preview[\s\S]*border:\s*2px solid CanvasText;/);
+    assert.match(freshQuoteCard, /@media\s*\(max-width:\s*560px\)[\s\S]*\.glean-quote-card-theme-btn[\s\S]*min-height:\s*44px;/);
+    assert.match(freshQuoteCard, /@media\s*\(max-width:\s*560px\)[\s\S]*\.glean-quote-card-font-btn[\s\S]*min-height:\s*44px;/);
+    assert.match(freshQuoteCard, /@media\s*\(max-width:\s*560px\)[\s\S]*\.glean-quote-card-wm-btn[\s\S]*min-height:\s*44px;/);
+
+    assert.match(freshSlicingScss, /\.glean-slicing-pill\s*\{[\s\S]*font-variant-numeric:\s*tabular-nums;/);
+    assert.match(freshSlicingScss, /@media\s*\(max-width:\s*560px\)[\s\S]*\.glean-slicing-pill\s*\{[\s\S]*min-height:\s*44px;/);
+    assert.match(freshSlicingScss, /@media\s*\(max-width:\s*360px\)[\s\S]*\.glean-slicing-card__head\s*\{[\s\S]*flex-wrap:\s*wrap;/);
+    assert.match(freshSlicingScss, /@media\s*\(forced-colors:\s*active\)[\s\S]*border:\s*1px solid CanvasText;/);
 });
 

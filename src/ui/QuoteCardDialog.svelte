@@ -331,19 +331,65 @@
             }
         }
     }
+
+    function handleThemeRadioKeyDown(e: KeyboardEvent, currentKey: QuoteCardTheme): void {
+        const themeKeys: QuoteCardTheme[] = ["teal", "paper", "obsidian", "minimal"];
+        const idx = themeKeys.indexOf(currentKey);
+        if (idx === -1) return;
+        if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+            e.preventDefault();
+            const next = themeKeys[(idx + 1) % themeKeys.length];
+            activeThemeKey = next;
+            const container = (e.currentTarget as HTMLElement).parentElement;
+            const nextBtn = container?.children[(idx + 1) % themeKeys.length] as HTMLElement | undefined;
+            nextBtn?.focus();
+        } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+            e.preventDefault();
+            const prev = themeKeys[(idx - 1 + themeKeys.length) % themeKeys.length];
+            activeThemeKey = prev;
+            const container = (e.currentTarget as HTMLElement).parentElement;
+            const prevBtn = container?.children[(idx - 1 + themeKeys.length) % themeKeys.length] as HTMLElement | undefined;
+            prevBtn?.focus();
+        }
+    }
+
+    function handleFontRadioKeyDown(e: KeyboardEvent, currentSize: QuoteCardFontSize): void {
+        const fontKeys: QuoteCardFontSize[] = ["sm", "md", "lg"];
+        const idx = fontKeys.indexOf(currentSize);
+        if (idx === -1) return;
+        if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+            e.preventDefault();
+            const next = fontKeys[(idx + 1) % fontKeys.length];
+            activeFontSize = next;
+            const container = (e.currentTarget as HTMLElement).parentElement;
+            const nextBtn = container?.children[(idx + 1) % fontKeys.length] as HTMLElement | undefined;
+            nextBtn?.focus();
+        } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+            e.preventDefault();
+            const prev = fontKeys[(idx - 1 + fontKeys.length) % fontKeys.length];
+            activeFontSize = prev;
+            const container = (e.currentTarget as HTMLElement).parentElement;
+            const prevBtn = container?.children[(idx - 1 + fontKeys.length) % fontKeys.length] as HTMLElement | undefined;
+            prevBtn?.focus();
+        }
+    }
 </script>
 
 <svelte:window onkeydown={onKeyDown} />
 
 <div class="glean-quote-card-dialog">
     <div class="glean-quote-card-header-bar">
-        <div class="glean-quote-card-themes" role="group" aria-label={t(i18n, "reader.appearanceTheme")}>
+        <div class="glean-quote-card-themes" role="radiogroup" aria-label={t(i18n, "reader.appearanceTheme")}>
             {#each QUOTE_CARD_THEMES as theme, idx}
                 <button
                     type="button"
                     class="glean-quote-card-theme-btn"
                     class:glean-quote-card-theme-btn--active={activeThemeKey === theme.key}
+                    role="radio"
+                    aria-checked={activeThemeKey === theme.key}
+                    tabindex={activeThemeKey === theme.key ? 0 : -1}
                     onclick={() => activeThemeKey = theme.key}
+                    onkeydown={(e) => handleThemeRadioKeyDown(e, theme.key)}
                     title={`${t(i18n, theme.nameKey)} (${idx + 1})`}
                 >
                     <span class="glean-quote-card-theme-preview glean-quote-card-theme-preview--{theme.key}"></span>
@@ -352,12 +398,16 @@
             {/each}
         </div>
         <div class="glean-quote-card-opts">
-            <div class="glean-quote-card-font-group" role="group" aria-label={t(i18n, "quoteCard.fontMd")}>
+            <div class="glean-quote-card-font-group" role="radiogroup" aria-label={t(i18n, "quoteCard.fontMd")}>
                 <button
                     type="button"
                     class="glean-quote-card-font-btn"
                     class:glean-quote-card-font-btn--active={activeFontSize === "sm"}
+                    role="radio"
+                    aria-checked={activeFontSize === "sm"}
+                    tabindex={activeFontSize === "sm" ? 0 : -1}
                     onclick={() => activeFontSize = "sm"}
+                    onkeydown={(e) => handleFontRadioKeyDown(e, "sm")}
                     title="{t(i18n, 'quoteCard.fontSm')} ([)"
                 >
                     {t(i18n, "quoteCard.fontSm")}
@@ -366,7 +416,11 @@
                     type="button"
                     class="glean-quote-card-font-btn"
                     class:glean-quote-card-font-btn--active={activeFontSize === "md"}
+                    role="radio"
+                    aria-checked={activeFontSize === "md"}
+                    tabindex={activeFontSize === "md" ? 0 : -1}
                     onclick={() => activeFontSize = "md"}
+                    onkeydown={(e) => handleFontRadioKeyDown(e, "md")}
                     title={t(i18n, "quoteCard.fontMd")}
                 >
                     {t(i18n, "quoteCard.fontMd")}
@@ -375,7 +429,11 @@
                     type="button"
                     class="glean-quote-card-font-btn"
                     class:glean-quote-card-font-btn--active={activeFontSize === "lg"}
+                    role="radio"
+                    aria-checked={activeFontSize === "lg"}
+                    tabindex={activeFontSize === "lg" ? 0 : -1}
                     onclick={() => activeFontSize = "lg"}
+                    onkeydown={(e) => handleFontRadioKeyDown(e, "lg")}
                     title="{t(i18n, 'quoteCard.fontLg')} (])"
                 >
                     {t(i18n, "quoteCard.fontLg")}
@@ -385,6 +443,7 @@
                 type="button"
                 class="glean-btn glean-btn--ghost glean-btn--xs glean-quote-card-wm-btn"
                 class:glean-btn--active={showWatermark}
+                aria-pressed={showWatermark}
                 onclick={() => showWatermark = !showWatermark}
                 title="{t(i18n, 'quoteCard.toggleWatermark')} (W)"
             >
@@ -630,9 +689,23 @@
     }
 
     @media (forced-colors: active) {
-        .glean-quote-card-theme-btn--active {
+        .glean-quote-card-theme-btn--active,
+        .glean-quote-card-font-btn--active,
+        .glean-quote-card-wm-btn.glean-btn--active {
             border: 1px solid Highlight;
             color: Highlight;
+        }
+
+        .glean-quote-card-preview {
+            border: 2px solid CanvasText;
+        }
+
+        .glean-quote-card-color-badge {
+            border: 1px solid CanvasText;
+        }
+
+        .glean-quote-card-btn {
+            border: 1px solid ButtonBorder;
         }
     }
 
@@ -791,7 +864,7 @@
 
         .glean-quote-card-theme-btn {
             flex: 1 1 0;
-            min-height: 38px;
+            min-height: 44px;
             justify-content: center;
         }
 
@@ -806,7 +879,7 @@
 
         .glean-quote-card-font-btn {
             flex: 1 1 0;
-            min-height: 38px;
+            min-height: 44px;
             text-align: center;
             justify-content: center;
             display: inline-flex;
@@ -814,7 +887,7 @@
         }
 
         .glean-quote-card-wm-btn {
-            min-height: 38px;
+            min-height: 44px;
         }
 
         .glean-quote-card-actions {
@@ -844,6 +917,26 @@
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: var(--glean-space-1);
+        }
+
+        .glean-quote-card-opts {
+            flex-direction: column;
+            align-items: stretch;
+            gap: var(--glean-space-1-5);
+        }
+
+        .glean-quote-card-font-group {
+            width: 100%;
+        }
+
+        .glean-quote-card-wm-btn {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .glean-quote-card-preview {
+            padding: 16px 12px;
+            border-radius: 12px;
         }
 
         .glean-quote-card-actions {

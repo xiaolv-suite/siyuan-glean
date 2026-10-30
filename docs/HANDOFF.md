@@ -1,6 +1,25 @@
 # HANDOFF — 续跑交接（每轮开发结束更新本页）
 
-## 当前有效交接（2026-10-30 并发与交互态排查修复、三段式布局与统计优先结构升级）
+## 当前有效交接（2026-10-31 UI-UX-PRO-MAX 金句卡片与渐进切片 WAI-ARIA/高对比度/方向键焦点流转与超窄视口弹性排版加固）
+
+- **T-3542/D-0420：金句卡片生成器与渐进切片 WAI-ARIA、对比度与移动端超窄视口深度加固**：
+  1. **WAI-ARIA Radio Group 与 Radio 状态无障碍加固**：
+     - `QuoteCardDialog.svelte` 主题选择器（`.glean-quote-card-themes`）与字号选择器（`.glean-quote-card-font-group`）升级为标准 `role="radiogroup"` 容器；子选项按钮升级为 `role="radio"` 并严格绑定 `aria-checked` 与 `tabindex`（活跃项为 0，非活跃项为 -1）；水印开关按钮补充 `aria-pressed={showWatermark}` 语义；
+     - `DocSlicingDialog.svelte` 切片目标时长选择器（`.glean-slicing-pills`）子选项药丸升级为标准 `role="radio"`，严格绑定 `aria-checked={targetMinutes === m}` 与 `tabindex={targetMinutes === m ? 0 : -1}`；
+  2. **键盘流转与方向键切换**：
+     - `QuoteCardDialog.svelte` 主题与字号选择器接入 ArrowRight/ArrowDown（切至下一项并聚焦）与 ArrowLeft/ArrowUp（切至上一项并聚焦），对齐 WAI-ARIA 键盘交互模式规范；
+     - `DocSlicingDialog.svelte` 切片时长药丸组接入 ArrowRight/ArrowDown 与 ArrowLeft/ArrowUp 方向键选项焦点自动流转（5m <-> 8m <-> 12m <-> 15m）；
+  3. **色彩对比度与高对比度模式（WCAG 2.2 AA）**：
+     - `src/domain/quote-card.ts` 暗色曜石模式（`obsidian`）二级次要文本对比度从 `#64748B`（4.09:1）加固为 `#94A3B8`（7.42:1），极简模式（`minimal`）二级文本从 `#64748B`（4.58:1）加固为 `#475569`（7.00:1），彻底杜绝弱对比度阅读疲劳；
+     - `QuoteCardDialog.svelte` 高对比度模式（`forced-colors: active`）扩展覆盖活跃字号药丸、活跃水印开关、卡片预览外框（`border: 2px solid CanvasText;`）、色彩徽章与操作按钮；
+     - `src/styles/components/slicing.scss` 高对比度模式（`forced-colors: active`）扩展覆盖切片卡片（`border: 1px solid CanvasText;`）、序号徽章（`border: 1px solid Highlight; color: Highlight;`）与章节药丸（`border: 1px solid ButtonBorder;`）；
+  4. **移动端触控热区（>=44px）与超窄视口（<=360px）弹性排版**：
+     - `QuoteCardDialog.svelte` 移动端（`@media (max-width: 560px)`）主题药丸、字号药丸与水印按钮全量升级为 `min-height: 44px;`，对齐 Apple HIG 与 Material Design 移动端触控标准；在超窄视口（`@media (max-width: 360px)`）下配置选项栏自动垂直流式排版（`flex-direction: column; align-items: stretch;`），卡片预览内边距弹性收缩，杜绝任何水平溢出或元素挤压；
+     - `src/styles/components/slicing.scss` 移动端（`@media (max-width: 560px)`）切片时长药丸与小节预览按钮全量升级为 `min-height: 44px;`；超窄视口（`@media (max-width: 360px)`）卡片头部弹性换行（`flex-wrap: wrap;`），长章节标签增加 `max-width: 100%; text-overflow: ellipsis;` 文本防截断弹性溢出保护；切片药丸与统计数值全量应用等宽数字排版（`font-variant-numeric: tabular-nums;`）；
+  5. **门禁与测试守门**：
+     - `tests/quote-card.test.ts` 新增对 WAI-ARIA radiogroup/radio、方向键流转、高对比度模式以及主题色对比度阈值的测试断言；
+     - `tests/header-actions.test.ts` 新增第 59 项断言守门，严格守护两组件的 radiogroup 语义、触控热区与超窄视口弹性规则；
+     - 全量测试 **1,751 / 1,751 PASS**，类型检查 0 errors / 0 warnings，构建打包 5.03s，发布门禁 14/14 PASS。
 
 - **T-3541/D-0419：并发与交互态排查修复、三段式与外壳分层 UI 结构重构**：
   1. **并发与交互态 Bug 线深度清障（P0/P1 全部就地修复）**：

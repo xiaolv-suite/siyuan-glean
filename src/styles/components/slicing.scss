@@ -69,6 +69,7 @@
     border-radius: var(--glean-radius-pill);
     color: var(--b3-theme-on-surface);
     cursor: pointer;
+    font-variant-numeric: tabular-nums;
     transition: all 140ms ease;
 
     &:focus-visible {
@@ -91,6 +92,7 @@
 .glean-slicing-summary {
     font-size: var(--glean-text-xs, 12px);
     color: var(--b3-theme-on-surface);
+    opacity: 0.88;
     font-variant-numeric: tabular-nums;
 }
 
@@ -129,6 +131,10 @@
         transform: translateY(-1px);
         box-shadow: var(--glean-shadow-card-hover);
     }
+
+    @media (forced-colors: active) {
+        border: 1px solid CanvasText;
+    }
 }
 
 .glean-slicing-card__head {
@@ -149,6 +155,12 @@
     align-items: center;
     justify-content: center;
     border-radius: 50%;
+    border: 1px solid color-mix(in srgb, var(--glean-color-action) 30%, transparent);
+
+    @media (forced-colors: active) {
+        border: 1px solid Highlight;
+        color: Highlight;
+    }
 }
 
 .glean-slicing-card__title {
@@ -163,6 +175,7 @@
 .glean-slicing-card__time {
     font-size: var(--glean-text-xs, 12px);
     color: var(--b3-theme-on-surface);
+    opacity: 0.88;
     font-variant-numeric: tabular-nums;
 }
 
@@ -179,6 +192,14 @@
     padding: 1px 8px;
     border-radius: var(--glean-radius-pill);
     color: var(--b3-theme-on-surface);
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    @media (forced-colors: active) {
+        border: 1px solid ButtonBorder;
+    }
 }
 
 .glean-slicing-card__ops .glean-btn {
@@ -332,9 +353,15 @@
 
     .glean-slicing-pill {
         flex: 1 1 0;
-        min-height: 36px;
+        min-height: 44px;
         display: inline-flex;
         align-items: center;
+        justify-content: center;
+    }
+
+    .glean-slicing-card__ops .glean-btn {
+        min-height: 44px;
+        width: 100%;
         justify-content: center;
     }
 
@@ -356,6 +383,24 @@
     .glean-slicing-durations {
         flex-direction: column;
         align-items: stretch;
+    }
+
+    .glean-slicing-card__head {
+        flex-wrap: wrap;
+    }
+
+    .glean-slicing-card__title {
+        width: 100%;
+        order: 2;
+    }
+
+    .glean-slicing-card__time {
+        order: 3;
+        font-size: 11px;
+    }
+
+    .glean-slicing-pills {
+        width: 100%;
     }
 }
 
