@@ -143,7 +143,14 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
 <symbol id="iconGleanCollapseAll" viewBox="0 0 32 32"><path d="m8 10 8 6 8-6-1.5-2L16 12.1 9.5 8zm0 14 8-6 8 6-1.5 2-6.5-4.9-6.5 4.9z"/></symbol>
 <symbol id="iconGleanExpandAll" viewBox="0 0 32 32"><path d="m8 14 8-6 8 6-1.5 2L16 11.1 9.5 16zm0 4 8 6 8-6-1.5-2-6.5 4.9-6.5-4.9z"/></symbol>
 <symbol id="iconGleanCopy" viewBox="0 0 32 32"><path d="M9 4h14a2 2 0 0 1 2 2v3h-2.5V6.5H9.5v13H12V22H9a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><path d="M14 9h12a2 2 0 0 1 2 2v15a2 2 0 0 1-2 2H14a2 2 0 0 1-2-2V11a2 2 0 0 1 2-2zm0 2.5v14.5h12V11.5H14z"/></symbol>
-<symbol id="iconGleanDownload" viewBox="0 0 32 32"><path d="M16 4v14m-5-5 5 5 5-5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 22v3a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>`);
+<symbol id="iconGleanDownload" viewBox="0 0 32 32"><path d="M16 4v14m-5-5 5 5 5-5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 22v3a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="iconGleanHeart" viewBox="0 0 32 32"><path d="M16 28s-11-6.8-13.4-11.7C.2 11.5 1.8 6.5 6 4.8c4.2-1.7 7.7.8 10 3.3 2.3-2.5 5.8-5 10-3.3 4.2 1.7 5.8 6.7 3.4 11.5C27 21.2 16 28 16 28z"/></symbol>
+<symbol id="iconGleanHeartOutline" viewBox="0 0 32 32"><path d="M16 26.5s-10-6.2-12.2-10.7C1.7 11.2 3.1 6.8 6.9 5.3c3.8-1.5 7 .7 9.1 3 2.1-2.3 5.3-4.5 9.1-3 3.8 1.5 5.2 5.9 3.1 10.5C26 20.3 16 26.5 16 26.5z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/></symbol>
+<symbol id="iconGleanBookmark" viewBox="0 0 32 32"><path d="M7 5h18a1 1 0 0 1 1 1v22l-10-6-10 6V6a1 1 0 0 1 1-1z"/></symbol>
+<symbol id="iconGleanFlame" viewBox="0 0 32 32"><path d="M16 3c-1 3.5-3.5 6-6 8.5-2.2 2.2-4 5.2-4 8.5 0 5.5 4.5 9 10 9s10-3.5 10-9c0-4.5-2.5-8-6-10.5-1-1-2-2.5-2.5-4-.5 2-2 3.5-3.5 4-1-3.5.5-6.5 2-8z"/></symbol>
+<symbol id="iconGleanPlay" viewBox="0 0 32 32"><path d="M10 7l15 9-15 9z"/></symbol>
+<symbol id="iconGleanPause" viewBox="0 0 32 32"><path d="M9 7h4v18H9zm10 0h4v18h-4z"/></symbol>
+<symbol id="iconGleanStop" viewBox="0 0 32 32"><path d="M8 8h16v16H8z"/></symbol>`);
 
         // 设置只在此处加载一次；面板/弹窗都读这个缓存
         this.settings = await loadSettings(this);

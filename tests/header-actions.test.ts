@@ -824,5 +824,27 @@ test("列表行尾操作与看板选择框平滑微交互契约：默认低透�
     assert.match(migrateDialogSvelte, /glean-step__ball[\s\S]*use href="#iconGleanCheck"/);
     assert.match(dialogsScss, /@media \(forced-colors: active\)\s*\{[\s\S]*\.glean-step__ball/);
     assert.match(dialogsScss, /@media \(prefers-reduced-motion: reduce\)\s*\{[\s\S]*\.glean-step__ball/);
+
+    // 56. 漫游红心收藏、打卡火苗、书签、朗读控制与滑动微交互 SVG 矢量图标标准化守门
+    assert.match(resurfaceViewSvelte, /use href="#iconGleanFlame"/);
+    assert.match(resurfaceViewSvelte, /use href=\{clip\?\.favorite \? "#iconGleanHeart" : "#iconGleanHeartOutline"\}/);
+    assert.match(resurfaceViewSvelte, /glean-surf-swipe__action--archive[\s\S]*use href="#iconGleanArrowLeft"/);
+    assert.match(resurfaceViewSvelte, /glean-surf-swipe__action--later[\s\S]*use href="#iconGleanArrowRight"/);
+
+    assert.match(readerTabSvelte, /use href=\{context\.favorite \? "#iconGleanHeart" : "#iconGleanHeartOutline"\}/);
+    assert.match(readerTabSvelte, /use href=\{speechState === "playing" \? "#iconGleanPause" : "#iconGleanPlay"\}/);
+    assert.match(readerTabSvelte, /use href="#iconGleanStop"/);
+
+    assert.match(workbenchPreviewSvelte, /use href=\{attrs\.favorite \? "#iconGleanHeart" : "#iconGleanHeartOutline"\}/);
+
+    assert.match(roamingDrawerSvelte, /use href=\{favoriteOnly \? "#iconGleanHeart" : "#iconGleanHeartOutline"\}/);
+    assert.match(roamingDrawerSvelte, /use href="#iconGleanBookmark"/);
+
+    assert.match(dockPanelSvelte, /use href=\{selectedFavoriteOnly \? "#iconGleanHeart" : "#iconGleanHeartOutline"\}/);
+    assert.match(dockPanelSvelte, /use href="#iconGleanBookmark"/);
+
+    assert.match(styles, /\.glean-icon--fav\s*\{\s*color:\s*#EF4444;/);
+    assert.match(styles, /\.glean-icon--flame\s*\{\s*color:\s*#F97316;/);
+    assert.match(styles, /\.glean-icon--bookmark\s*\{\s*color:\s*var\(--glean-color-action\);/);
 });
 

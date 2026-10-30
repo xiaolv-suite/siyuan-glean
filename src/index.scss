@@ -7060,6 +7060,7 @@ mark.glean-search-highlight {
     inset: 0;
     display: flex;
     align-items: center;
+    gap: var(--glean-space-1);
     padding: var(--glean-space-0) var(--glean-space-4-5);
     pointer-events: none;
     background: var(--b3-theme-background-light);
@@ -7076,6 +7077,20 @@ mark.glean-search-highlight {
 .glean-surf-swipe__action--archive {
     justify-content: flex-end;
     color: var(--glean-st-arch);
+}
+
+.glean-libbar__fav-btn,
+.glean-preview__fav-btn,
+.glean-reader__toolbar-fav {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--glean-space-1);
+
+    &--active {
+        color: #EF4444 !important;
+        background: color-mix(in srgb, #EF4444 10%, var(--b3-theme-surface)) !important;
+        border-color: color-mix(in srgb, #EF4444 38%, var(--glean-border-soft)) !important;
+    }
 }
 
 .glean-surf-card {
@@ -7890,7 +7905,10 @@ mark.glean-search-highlight {
 @media (max-width: 560px) {
     .glean-reading-context__source-btn,
     .glean-reading-context__back,
-    .glean-reading-context__maintenance > summary {
+    .glean-reading-context__maintenance > summary,
+    .glean-libbar__fav-btn,
+    .glean-preview__fav-btn,
+    .glean-reader__toolbar-fav {
         min-height: 44px;
         padding: var(--glean-space-2) var(--glean-space-2-5);
     }
@@ -9593,6 +9611,9 @@ mark.glean-search-highlight {
 
 .glean-icon--sm { width: 16px; height: 16px; }
 .glean-icon--xs { width: 12px; height: 12px; }
+.glean-icon--fav { color: #EF4444; }
+.glean-icon--flame { color: #F97316; }
+.glean-icon--bookmark { color: var(--glean-color-action); }
 
 .glean-meta-icon {
     display: inline-flex;

@@ -110,7 +110,7 @@
         </label>
         <label class="glean-action-popover__field glean-action-popover__checkbox-field">
             <input type="checkbox" bind:checked={favoriteOnly} />
-            <span>❤️ {t(i18n, "roaming.favoriteOnly")}</span>
+            <span><svg class="glean-icon glean-icon--xs glean-icon--fav" aria-hidden="true"><use href="#iconGleanHeart" /></svg> {t(i18n, "roaming.favoriteOnly")}</span>
         </label>
         {#if secondaryActiveCount > 0}
             <button type="button" class="glean-btn glean-btn--ghost" onclick={clearSecondaryFilters}>

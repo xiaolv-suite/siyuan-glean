@@ -503,7 +503,8 @@
             onclick={() => void toggleFavoriteFilter()}
             title={t(i18n, "roaming.favoriteOnlyHint")}
         >
-            ❤️ {t(i18n, "roaming.favoriteOnly")}
+            <svg class="glean-icon glean-icon--xs" class:glean-icon--fav={favoriteOnly} aria-hidden="true"><use href={favoriteOnly ? "#iconGleanHeart" : "#iconGleanHeartOutline"} /></svg>
+            <span>{t(i18n, "roaming.favoriteOnly")}</span>
         </button>
     </div>
 
@@ -536,7 +537,7 @@
                 <span class="glean-tier-badge">⭐ {currentPick.item.rating}★</span>
             {/if}
             {#if currentPick.item.favorite}
-                <span class="glean-tier-badge glean-tier-badge--fav">❤️ 已收藏</span>
+                <span class="glean-tier-badge glean-tier-badge--fav"><svg class="glean-icon glean-icon--xs glean-icon--fav" aria-hidden="true"><use href="#iconGleanHeart" /></svg> <span>{t(i18n, "roaming.favoriteAction")}</span></span>
             {/if}
             {#if (currentPick.item.words ?? 0) > 0}
                 <span class="glean-tier-badge">📝 {t(i18n, "panel.words", { n: currentPick.item.words ?? 0 })}</span>
@@ -545,7 +546,7 @@
                 <span class="glean-tier-badge" title="已保存离线网页单文件快照">💾 已快照</span>
             {/if}
             {#if currentPick.item.readPoint}
-                <span class="glean-tier-badge glean-tier-badge--bookmark" title={t(i18n, "roaming.hasReadPoint")}>🔖 {t(i18n, "roaming.hasReadPoint")}</span>
+                <span class="glean-tier-badge glean-tier-badge--bookmark" title={t(i18n, "roaming.hasReadPoint")}><svg class="glean-icon glean-icon--xs glean-icon--bookmark" aria-hidden="true"><use href="#iconGleanBookmark" /></svg> <span>{t(i18n, "roaming.hasReadPoint")}</span></span>
             {/if}
         </div>
         {#if currentPick.item.summary}
@@ -573,7 +574,7 @@
                 onclick={() => void toggleCurrentFavorite()}
                 title={t(i18n, "roaming.favoriteAction") + " (F)"}
             >
-                {currentPick.item.favorite ? "❤️" : "🤍"} {t(i18n, "roaming.favoriteAction")}
+                <svg class="glean-icon glean-icon--xs" class:glean-icon--fav={currentPick.item.favorite} aria-hidden="true"><use href={currentPick.item.favorite ? "#iconGleanHeart" : "#iconGleanHeartOutline"} /></svg> <span>{t(i18n, "roaming.favoriteAction")}</span>
             </button>
             <button
                 type="button"

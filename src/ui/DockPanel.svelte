@@ -3189,7 +3189,7 @@ function metaLine(entry: Row): string {
                     onclick={() => { markPrefsInteraction(); selectedFavoriteOnly = !selectedFavoriteOnly; }}
                     title="{t(i18n, 'roaming.favoriteOnlyHint')} (Alt+F)"
                 >
-                    {selectedFavoriteOnly ? "❤️" : "🤍"} {t(i18n, "roaming.favoriteOnly")}
+                    <svg class="glean-icon glean-icon--xs" class:glean-icon--fav={selectedFavoriteOnly} aria-hidden="true"><use href={selectedFavoriteOnly ? "#iconGleanHeart" : "#iconGleanHeartOutline"} /></svg> <span>{t(i18n, "roaming.favoriteOnly")}</span>
                 </button>
                 <button class="glean-btn glean-btn--ghost" aria-pressed={previewEnabled} onclick={togglePreview}>{t(i18n, "preview.enabled")}</button>
                 <LibraryFilters {i18n} {facets} {tagAliases} onManageTagAliases={openTagAliasManager} bind:site={selectedSite} bind:author={selectedAuthor} bind:tag={selectedTag} bind:aiTag={selectedAiTag} bind:source={selectedSource} bind:timeSource={selectedTimeSource} bind:contentType={selectedContentType} bind:readingTimeTier={selectedReadingTimeTier} bind:favoriteOnly={selectedFavoriteOnly} bind:sortBy bind:direction={sortDirection} {hasFilters} onClear={clearUserFilters} {sourceLabel} {facetLabel} />
@@ -3301,7 +3301,7 @@ function metaLine(entry: Row): string {
                         </label>
                         <label class="glean-mobile-filter-field glean-mobile-filter-field--checkbox">
                             <input type="checkbox" bind:checked={mobileFilterDraft.favoriteOnly} />
-                            <span>❤️ {t(i18n, "roaming.favoriteOnly")}</span>
+                            <span><svg class="glean-icon glean-icon--xs glean-icon--fav" aria-hidden="true"><use href="#iconGleanHeart" /></svg> {t(i18n, "roaming.favoriteOnly")}</span>
                         </label>
                         <div class="glean-mobile-filter-sort">
                             <label class="glean-mobile-filter-field">
@@ -3516,9 +3516,9 @@ function metaLine(entry: Row): string {
                                         <span class="glean-tier-badge" title={t(i18n, "library.keyboardRating")}>⭐ {entry.rating}★</span>
                                     {/if}
                                     {#if entry.favorite}
-                                        <span class="glean-tier-badge glean-tier-badge--fav" title={t(i18n, "roaming.favoriteOnly")}>❤️</span>
+                                        <span class="glean-tier-badge glean-tier-badge--fav" title={t(i18n, "roaming.favoriteOnly")}><svg class="glean-icon glean-icon--xs glean-icon--fav" aria-hidden="true"><use href="#iconGleanHeart" /></svg></span>
                                     {/if}
-                                    {#if entry.readPoint && (entry.status === "reading" || entry.status === "later")}<span class="glean-read-point-badge" title={t(i18n, "reading.resumePoint")}>🔖 {t(i18n, "reading.resumePointShort")}</span>{/if}
+                                    {#if entry.readPoint && (entry.status === "reading" || entry.status === "later")}<span class="glean-read-point-badge" title={t(i18n, "reading.resumePoint")}><svg class="glean-icon glean-icon--xs glean-icon--bookmark" aria-hidden="true"><use href="#iconGleanBookmark" /></svg> <span>{t(i18n, "reading.resumePointShort")}</span></span>{/if}
                                     {#if (entry.status === "inbox" || entry.status === "later") && staleText(entry.time) !== null}
                                         <span class="glean-stale">{staleText(entry.time)}</span>
                                     {/if}
@@ -3724,9 +3724,9 @@ function metaLine(entry: Row): string {
                                                     <span class="glean-tier-badge" title={t(i18n, "library.keyboardRating")}>⭐ {entry.rating}★</span>
                                                 {/if}
                                                 {#if entry.favorite}
-                                                    <span class="glean-tier-badge glean-tier-badge--fav" title={t(i18n, "roaming.favoriteOnly")}>❤️</span>
+                                                    <span class="glean-tier-badge glean-tier-badge--fav" title={t(i18n, "roaming.favoriteOnly")}><svg class="glean-icon glean-icon--xs glean-icon--fav" aria-hidden="true"><use href="#iconGleanHeart" /></svg></span>
                                                 {/if}
-                                                {#if entry.readPoint && (entry.status === "reading" || entry.status === "later")}<span class="glean-read-point-badge" title={t(i18n, "reading.resumePoint")}>🔖 {t(i18n, "reading.resumePointShort")}</span>{/if}
+                                                {#if entry.readPoint && (entry.status === "reading" || entry.status === "later")}<span class="glean-read-point-badge" title={t(i18n, "reading.resumePoint")}><svg class="glean-icon glean-icon--xs glean-icon--bookmark" aria-hidden="true"><use href="#iconGleanBookmark" /></svg> <span>{t(i18n, "reading.resumePointShort")}</span></span>{/if}
                                                 <span class="glean-drow__st">
                                                     <span class="glean-st-badge glean-st-badge--{entry.status}">{queueLabel(entry.status)}</span>
                                                 </span>
@@ -3918,7 +3918,7 @@ function metaLine(entry: Row): string {
                                     {#if metaLine(entry)}
                                         <span class="glean-tier-badge glean-tier-badge--{entry.kind === 'clip' ? resolveReadingTimeTier(entry.minutes) : 'unknown'}">· {metaLine(entry)}</span>
                                     {/if}
-                                    {#if entry.kind === "clip" && entry.readPoint && (entry.status === "reading" || entry.status === "later")}<span class="glean-read-point-badge" title={t(i18n, "reading.resumePoint")}>🔖 {t(i18n, "reading.resumePointShort")}</span>{/if}
+                                    {#if entry.kind === "clip" && entry.readPoint && (entry.status === "reading" || entry.status === "later")}<span class="glean-read-point-badge" title={t(i18n, "reading.resumePoint")}><svg class="glean-icon glean-icon--xs glean-icon--bookmark" aria-hidden="true"><use href="#iconGleanBookmark" /></svg> <span>{t(i18n, "reading.resumePointShort")}</span></span>{/if}
                                     {#if entry.kind === "clip" && entry.priority && entry.priority > 0}
                                         <span class="glean-tier-badge" title={t(i18n, "library.keyboardPriority")}>⚡ P{entry.priority}</span>
                                     {/if}
@@ -3926,7 +3926,7 @@ function metaLine(entry: Row): string {
                                         <span class="glean-tier-badge" title={t(i18n, "library.keyboardRating")}>⭐ {entry.rating}★</span>
                                     {/if}
                                     {#if entry.kind === "clip" && entry.favorite}
-                                        <span class="glean-tier-badge glean-tier-badge--fav" title={t(i18n, "roaming.favoriteOnly")}>❤️</span>
+                                        <span class="glean-tier-badge glean-tier-badge--fav" title={t(i18n, "roaming.favoriteOnly")}><svg class="glean-icon glean-icon--xs glean-icon--fav" aria-hidden="true"><use href="#iconGleanHeart" /></svg></span>
                                     {/if}
                                     {#if entry.kind === "clip"}
                                         {@const days = staleDays(entry.time)}

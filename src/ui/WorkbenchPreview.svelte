@@ -436,9 +436,10 @@
                     class="glean-btn glean-btn--ghost glean-preview__fav-btn"
                     class:glean-preview__fav-btn--active={attrs.favorite}
                     title={attrs.favorite ? t(i18n, "roaming.favoriteRemoved") : t(i18n, "roaming.favoriteAction") + " (F)"}
+                    aria-label={attrs.favorite ? t(i18n, "roaming.favoriteRemoved") : t(i18n, "roaming.favoriteAction")}
                     onclick={() => void toggleFavorite()}
                 >
-                    {attrs.favorite ? "❤️" : "🤍"}
+                    <svg class="glean-icon glean-icon--xs" class:glean-icon--fav={attrs.favorite} aria-hidden="true"><use href={attrs.favorite ? "#iconGleanHeart" : "#iconGleanHeartOutline"} /></svg>
                 </button>
             {/if}
             <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void triggerRoaming()} title={t(i18n, "roaming.buttonHint")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanRefresh" /></svg> <span>{t(i18n, "roaming.button")}</span></button>

@@ -2094,7 +2094,7 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                     class:glean-reader__toolbar-fav--active={context.favorite}
                     title={context.favorite ? t(i18n, "roaming.favoriteRemoved") : t(i18n, "roaming.favoriteAction") + " (Alt+F)"}
                     onclick={() => void toggleFavorite()}
-                >{context.favorite ? "❤️" : "🤍"} {t(i18n, "roaming.favoriteAction")}</button>
+                ><svg class="glean-icon glean-icon--xs" class:glean-icon--fav={context.favorite} aria-hidden="true"><use href={context.favorite ? "#iconGleanHeart" : "#iconGleanHeartOutline"} /></svg> <span>{t(i18n, "roaming.favoriteAction")}</span></button>
             {/if}
             <div class="glean-reader__toolbar-secondary" role="group" aria-label={t(i18n, "reader.shortcuts")}>
                 <button class="glean-btn glean-btn--ghost glean-reader__toolbar-utility glean-reader__toolbar-focus" disabled={mode !== "read"} title={t(i18n, "reader.keyboardFocus")} onclick={() => readerRoot?.focus({ preventScroll: true })}>{t(i18n, "reader.keyboardFocus")}</button>
@@ -2272,17 +2272,19 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
                         type="button"
                         class="glean-icon-btn glean-reader__floating-speech-btn"
                         title={speechState === "playing" ? t(i18n, "reader.speechPause") : t(i18n, "reader.speechResume")}
+                        aria-label={speechState === "playing" ? t(i18n, "reader.speechPause") : t(i18n, "reader.speechResume")}
                         onclick={toggleSpeechPause}
                     >
-                        {speechState === "playing" ? "⏸" : "▶"}
+                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href={speechState === "playing" ? "#iconGleanPause" : "#iconGleanPlay"} /></svg>
                     </button>
                     <button
                         type="button"
                         class="glean-icon-btn glean-reader__floating-speech-btn"
                         title={t(i18n, "reader.speechStop")}
+                        aria-label={t(i18n, "reader.speechStop")}
                         onclick={stopSpeech}
                     >
-                        ⏹
+                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanStop" /></svg>
                     </button>
                 </div>
             {/if}

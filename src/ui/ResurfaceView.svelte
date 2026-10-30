@@ -850,7 +850,7 @@ function focusCard(id: string): void {
                         <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg>
                         <span>{t(i18n, "resurface.streakCardTitle")}</span>
                     </div>
-                    <strong class="glean-surf-streak-card__count">🔥 {t(i18n, "resurface.streakCardDays", { n: completionStreak || 0 })}</strong>
+                    <strong class="glean-surf-streak-card__count"><svg class="glean-icon glean-icon--xs glean-icon--flame" aria-hidden="true"><use href="#iconGleanFlame" /></svg> {t(i18n, "resurface.streakCardDays", { n: completionStreak || 0 })}</strong>
                 </div>
                 <div class="glean-surf-stepper" role="group" aria-label={t(i18n, "resurface.weeklyStepper")}>
                     {#each recent7Days as step (step.date)}
@@ -858,7 +858,7 @@ function focusCard(id: string): void {
                             <span class="glean-surf-step__day">{step.dayLabel}</span>
                             <div class="glean-surf-step__circle">
                                 {#if step.completed}
-                                    ✓
+                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCheck" /></svg>
                                 {:else if step.isToday}
                                     <span class="glean-surf-step__dot"></span>
                                 {/if}
@@ -901,7 +901,7 @@ function focusCard(id: string): void {
                         <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg>
                         <span>{t(i18n, "resurface.streakCardTitle")}</span>
                     </div>
-                    <strong class="glean-surf-streak-card__count">🔥 {t(i18n, "resurface.streakCardDays", { n: completionStreak || 0 })}</strong>
+                    <strong class="glean-surf-streak-card__count"><svg class="glean-icon glean-icon--xs glean-icon--flame" aria-hidden="true"><use href="#iconGleanFlame" /></svg> {t(i18n, "resurface.streakCardDays", { n: completionStreak || 0 })}</strong>
                 </div>
                 {#if onStartRoaming}
                     <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm" title={t(i18n, "roaming.buttonHint")} onclick={onStartRoaming}>
@@ -921,7 +921,7 @@ function focusCard(id: string): void {
                             <span class="glean-surf-step__day">{step.dayLabel}</span>
                             <div class="glean-surf-step__circle">
                                 {#if step.completed}
-                                    ✓
+                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCheck" /></svg>
                                 {:else if step.isToday}
                                     <span class="glean-surf-step__dot"></span>
                                 {/if}
@@ -1028,8 +1028,8 @@ function focusCard(id: string): void {
             {#each picks as pick, pickIdx (pick.item.id)}
                 {@const clip = index.clips[pick.item.id]}
                 <div class="glean-surf-swipe">
-                    <div class="glean-surf-swipe__action glean-surf-swipe__action--archive" aria-hidden="true">← {t(i18n, "resurface.swipeArchive")}</div>
-                    <div class="glean-surf-swipe__action glean-surf-swipe__action--later" aria-hidden="true">{t(i18n, "resurface.swipeLater")} →</div>
+                    <div class="glean-surf-swipe__action glean-surf-swipe__action--archive" aria-hidden="true"><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArrowLeft" /></svg> <span>{t(i18n, "resurface.swipeArchive")}</span></div>
+                    <div class="glean-surf-swipe__action glean-surf-swipe__action--later" aria-hidden="true"><span>{t(i18n, "resurface.swipeLater")}</span> <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArrowRight" /></svg></div>
                     <article
                         class:glean-surf-card--swiping={swipeState?.id === pick.item.id}
                         class="glean-surf-card"
@@ -1087,7 +1087,7 @@ function focusCard(id: string): void {
                     {/if}
                     <div class="glean-surf__acts">
                         <button class="glean-surf-act" class:glean-surf-act--fav-active={clip?.favorite} aria-pressed={Boolean(clip?.favorite)} aria-busy={actingId === pick.item.id} aria-disabled={!!actingId || !!undoingId} title={clip?.favorite ? t(i18n, "roaming.favoriteRemoved") : t(i18n, "roaming.favoriteAction") + " (F)"} onclick={() => void togglePickFavorite(pick)}>
-                            {clip?.favorite ? "❤️" : "🤍"} {t(i18n, "roaming.favoriteAction")}
+                            <svg class="glean-icon glean-icon--xs" class:glean-icon--fav={clip?.favorite} aria-hidden="true"><use href={clip?.favorite ? "#iconGleanHeart" : "#iconGleanHeartOutline"} /></svg> <span>{t(i18n, "roaming.favoriteAction")}</span>
                         </button>
                         <button class="glean-surf-act" aria-pressed={isPinnedToday(pick)} aria-busy={actingId === pick.item.id} aria-disabled={!!actingId || !!undoingId} onclick={() => void togglePin(pick)}>
                             <svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanPin" /></svg>{t(i18n, isPinnedToday(pick) ? "resurface.unpinToday" : "resurface.pinToday")}
@@ -1127,7 +1127,7 @@ function focusCard(id: string): void {
                             {t(i18n, "resurface.archive")}
                         </button>
                         <button class="glean-surf-act glean-surf-act--pri" aria-busy={actingId === pick.item.id} aria-disabled={!!actingId || !!undoingId} onclick={() => void act(pick, "read")}>
-                            ✓ {t(i18n, "resurface.read")}
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCheck" /></svg> <span>{t(i18n, "resurface.read")}</span>
                         </button>
                     </div>
                     </article>
