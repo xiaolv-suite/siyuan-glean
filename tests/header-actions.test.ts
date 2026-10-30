@@ -706,5 +706,15 @@ test("列表行尾操作与看板选择框平滑微交互契约：默认低透�
     assert.match(quotesViewSvelte, /\.glean-quotes__count\s*\{[\s\S]*font-variant-numeric:\s*tabular-nums;/);
     assert.match(authorEditorSvelte, /@media\s*\(max-width:\s*560px\)\s*\{[\s\S]*\.glean-author-editor__form input\s*\{[\s\S]*min-height:\s*44px;/);
     assert.match(authorEditorSvelte, /@media\s*\(forced-colors:\s*active\)\s*\{[\s\S]*\.glean-author-editor__form\s*\{[\s\S]*border:\s*1px solid CanvasText;/);
+
+    // 49. 微信读书向导弹窗（WeReadGuideDialog）全量采用 SVG 矢量图标替代 Emoji，纯净链接复制条与本地阅读卡无障碍对齐
+    const wereadGuideSvelte = read("src/ui/WeReadGuideDialog.svelte");
+    assert.match(wereadGuideSvelte, /use href="#iconGleanCopy"/);
+    assert.match(wereadGuideSvelte, /use href="#iconGleanCheck"/);
+    assert.match(wereadGuideSvelte, /use href="#iconGleanExternal"/);
+    assert.match(wereadGuideSvelte, /use href="#iconGleanSpark"/);
+    assert.match(wereadGuideSvelte, /use href="#iconGleanLocal"/);
+    assert.match(wechatScss, /\.glean-weread-local-card\s*\{[\s\S]*&__icon\s*\{[\s\S]*\.glean-icon\s*\{[\s\S]*width:\s*16px;[\s\S]*height:\s*16px;/);
+    assert.match(wechatScss, /\.glean-weread-shelf-btn\s*\{[\s\S]*display:\s*inline-flex;[\s\S]*gap:\s*var\(--glean-space-1-5,\s*6px\);/);
 });
 

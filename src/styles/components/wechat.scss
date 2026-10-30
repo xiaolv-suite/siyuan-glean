@@ -279,6 +279,13 @@
     border-radius: var(--glean-radius-pill);
     background: var(--glean-inset-surface, var(--b3-theme-surface));
     border: 1px solid var(--glean-border-soft);
+
+    button {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        flex-shrink: 0;
+    }
 }
 
 .glean-weread-url-text {
@@ -296,6 +303,10 @@
 .glean-weread-shelf-btn {
     border-radius: var(--glean-radius-pill);
     box-shadow: 0 2px 8px color-mix(in srgb, var(--glean-color-wechat) 25%, transparent);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--glean-space-1-5, 6px);
+    justify-content: center;
 
     &:focus-visible {
         outline: 2px solid var(--glean-color-wechat);
@@ -325,6 +336,16 @@
         font-size: 16px;
         flex-shrink: 0;
         margin-top: 1px;
+        color: var(--glean-color-action);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        .glean-icon {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
     }
 
     &__info {

@@ -84,7 +84,13 @@
                     <div class="glean-weread-url-box">
                         <span class="glean-weread-url-text" title={cleanUrl}>{cleanUrl}</span>
                         <button type="button" class="glean-btn glean-btn--ghost glean-btn--xs" onclick={copyLink}>
-                            {copied ? `✓ ${t(i18n, "wechat.copiedLink")}` : `📋 ${t(i18n, "wechat.copyCleanLink")}`}
+                            {#if copied}
+                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCheck" /></svg>
+                                <span>{t(i18n, "wechat.copiedLink")}</span>
+                            {:else}
+                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
+                                <span>{t(i18n, "wechat.copyCleanLink")}</span>
+                            {/if}
                         </button>
                     </div>
                 {/if}
@@ -106,7 +112,8 @@
                 <div class="glean-weread-step__desc">{t(i18n, "wechat.step3Desc")}</div>
                 <div class="glean-weread-step__actions">
                     <button type="button" class="glean-btn glean-btn--pri glean-weread-shelf-btn" onclick={openShelf}>
-                        🌐 {t(i18n, "wechat.openWereadShelf")}
+                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanExternal" /></svg>
+                        <span>{t(i18n, "wechat.openWereadShelf")}</span>
                     </button>
                 </div>
             </div>
@@ -115,14 +122,17 @@
 
     <div class="glean-weread-local-card">
         <div class="glean-weread-local-card__head">
-            <span class="glean-weread-local-card__icon" aria-hidden="true">💡</span>
+            <span class="glean-weread-local-card__icon" aria-hidden="true">
+                <svg class="glean-icon" aria-hidden="true"><use href="#iconGleanSpark" /></svg>
+            </span>
             <div class="glean-weread-local-card__info">
                 <strong>{t(i18n, "wechat.localReaderOption")}</strong>
                 <p>{t(i18n, "wechat.localReaderDesc")}</p>
             </div>
         </div>
         <button type="button" class="glean-btn glean-btn--ghost glean-weread-local-btn" onclick={openLocalReader}>
-            📖 {t(i18n, "wechat.openLocalReader")}
+            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanLocal" /></svg>
+            <span>{t(i18n, "wechat.openLocalReader")}</span>
         </button>
     </div>
 
