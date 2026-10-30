@@ -90,7 +90,7 @@
     }
 
     function handleWindowKeydown(event: KeyboardEvent): void {
-        if (event.isComposing || event.keyCode === 229) return;
+        if (event.repeat || event.isComposing || event.keyCode === 229) return;
         if (event.key === "Escape" && editing && !busy) {
             event.preventDefault();
             event.stopPropagation();
@@ -103,7 +103,7 @@
     }
 
     function handleInputKeydown(event: KeyboardEvent): void {
-        if (event.isComposing || event.keyCode === 229) return;
+        if (event.repeat || event.isComposing || event.keyCode === 229) return;
         if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
             event.preventDefault();
             void save();
