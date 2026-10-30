@@ -635,5 +635,21 @@ test("列表行尾操作与看板选择框平滑微交互契约：默认低透�
     assert.match(bentoScss, /\.glean-tag\s*\{[\s\S]*border-color:\s*var\(--glean-color-action\);[\s\S]*color:\s*var\(--glean-color-action\);/);
     assert.match(bentoScss, /@media\s*\(max-width:\s*560px\)\s*\{[\s\S]*\.glean-bento\s*\{[\s\S]*grid-template-columns:\s*1fr;/);
     assert.match(bentoScss, /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{[\s\S]*\.glean-tile,[\s\S]*\.glean-tag[\s\S]*transition:\s*var\(--glean-motion-none\)\s*!important;/);
+
+    // 43. 统计回顾样式松青色彩统一、搜索清空聚焦光圈与移动端排版
+    assert.match(statsScss, /\.glean-stats__distribution h3::before\s*\{[\s\S]*background:\s*var\(--glean-color-action\);/);
+    assert.match(statsScss, /\.glean-stats__search-clear\s*\{[\s\S]*color:\s*var\(--glean-color-action\);/);
+    assert.match(statsScss, /\.glean-stats__field\s*\{[\s\S]*&:focus-visible\s*\{[\s\S]*outline:\s*2px solid var\(--glean-color-action\);/);
+    assert.match(statsScss, /@media\s*\(max-width:\s*560px\)\s*\{[\s\S]*\.glean-stats__completed-acts\s*\{[\s\S]*\.glean-btn\s*\{[\s\S]*min-height:\s*44px;/);
+    assert.match(statsScss, /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{[\s\S]*\.glean-stats__trend-bar,[\s\S]*\.glean-stats__day[\s\S]*transition:\s*var\(--glean-motion-none\)\s*!important;/);
+
+    // 44. 色彩主题体系 16px 柔和外壳、高对比度与移动端触控热区
+    const paletteScss = read("src/styles/components/palette.scss");
+    assert.match(paletteScss, /\.glean-palette-card\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-lg,\s*16px\);/);
+    assert.match(paletteScss, /\.glean-palette-card--active\s*\{[\s\S]*@media\s*\(forced-colors:\s*active\)[\s\S]*border:\s*2px solid Highlight;/);
+    assert.match(paletteScss, /\.glean-reader__palette-dropdown,[\s\S]*\.glean-palette-quick-menu\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-lg,\s*16px\);/);
+    assert.match(paletteScss, /\.glean-reader__palette-opt,[\s\S]*\.glean-palette-quick-item\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
+    assert.match(paletteScss, /@media\s*\(max-width:\s*560px\)\s*\{[\s\S]*\.glean-palette-card\s*\{[\s\S]*min-height:\s*44px;/);
+    assert.match(paletteScss, /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{[\s\S]*\.glean-palette-card,[\s\S]*\.glean-reader__palette-opt[\s\S]*transition:\s*var\(--glean-motion-none\)\s*!important;/);
 });
 

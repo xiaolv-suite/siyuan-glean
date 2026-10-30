@@ -58,7 +58,9 @@
        * 微信公众号与微信读书向导（`wechat.scss`）本地阅读卡与按钮统一对齐松青操作色（`--glean-color-action`），专栏合集与向导跳转按钮补齐聚焦光圈，移动端（`max-width: 560px`）保障 44px 触控热区与 360px 视口单列流水折行；
        * 弹窗通用组件样式（`dialogs.scss`）确认勾选框统一松青主题色（`accent-color: var(--glean-color-action)`），彻底删除按钮补齐 2px 聚焦光圈，迁移统计卡、预览项与归档选项补充 560px / 360px 移动端网格与触控热区自适应及动效抑制；
        * Bento 统计卡（`bento.scss`）瓷片与数据块统一升级为 `16px` 大圆角柔和外壳与微阴影，标签云标签悬停统一收敛至松青主题色与微混底色，补充 560px 移动端单列排版与动效抑制；
-  3. **门禁全通**：全套测试通过（**1750 / 1750 PASS**，`tests/header-actions.test.ts` 补充守门断言 28–42，`tests/quote-card.test.ts` 与 `tests/margin-notes.test.ts` 补充 UI-UX-PRO-MAX 契约测试）；`pnpm check` 0 错 0 警告；`pnpm build` 1.74s 干净构建；`pnpm check:release` 14 项全绿通过。
+       * 统计仪表盘与阅读回顾（`stats.scss`）分类前置点、搜索框清空按钮悬停与折叠摘要打开统一收敛至松青操作色（`--glean-color-action`），输入框与搜索清空补齐 2px 聚焦光圈，补充 560px / 360px 移动端网格与完成列表操作栏全宽展开及 44px 舒适触控热区，抑制动效位移；
+       * 色彩主题切换体系（`palette.scss`）主题卡升级为 `16px` 大圆角柔和外壳并补齐 2px 松青聚焦光圈与高对比度模式（`forced-colors: active`），浮动微菜单升级为 `16px` 柔和外壳与全圆角胶囊选项，补充 560px 移动端单列排版与 44px 触控热区；
+  3. **门禁全通**：全套测试通过（**1750 / 1750 PASS**，`tests/header-actions.test.ts` 补充守门断言 28–44，`tests/quote-card.test.ts` 与 `tests/margin-notes.test.ts` 补充 UI-UX-PRO-MAX 契约测试）；`pnpm check` 0 错 0 警告；`pnpm build` 1.99s 干净构建；`pnpm check:release` 14 项全绿通过。
 - 下一步：按当前执行板顺序推进下一个任务（如 T-3367 批量选择范围与底部操作在更多场景的走查，或按作者点单继续）。版本保持 1.4.0，等待解封通知后统一处理。
 
 ## 历史交接（2026-10-29 本地发版轮：v1.4.0 次版本发布、五处版本同步、双语 README 全面重构、全门禁验证与本地打包）
