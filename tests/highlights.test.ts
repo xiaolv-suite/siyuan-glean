@@ -144,6 +144,8 @@ test("HighlightView 接线：全库制卡贯通与导出预览 Escape 退出交�
     assert.match(view, /if \(session && !exportBusy\)/);
     // 搜索输入框按 Escape 清空当前搜索词
     assert.match(view, /if \(event\.key === "Escape" && search\)/);
+    // 统计优先：顶部指标条
+    assert.match(view, /class="glean-stat-strip"/);
 });
 
 test("HighlightView 行级键盘导航复用读库仲裁层（T-3399 / T-3509）", () => {

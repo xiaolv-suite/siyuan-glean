@@ -902,7 +902,8 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
     }
 
     async function toggleFavorite(): Promise<void> {
-        if (!context || !docId) return;
+        if (!context || !docId || statusBusy) return;
+        statusBusy = true;
         const current = Boolean(context.favorite);
         const next = !current;
         context = { ...context, favorite: next };
@@ -914,6 +915,8 @@ import { formatHighlightShare, formatHighlightTime } from "../domain/highlights"
             context = { ...context, favorite: current };
             console.warn("[glean] 收藏切换失败:", error);
             showMessage(t(i18n, "msg.actionFailed"), 2500);
+        } finally {
+            statusBusy = false;
         }
     }
 

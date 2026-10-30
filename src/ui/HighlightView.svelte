@@ -695,6 +695,24 @@ function focusHighlightRow(id: string): void {
             <button type="button" class="glean-highlights__roam" title={t(i18n, "roaming.buttonHint")} onclick={() => void triggerRoaming()}>🎲 {t(i18n, "roaming.button")}</button>
         </div>
     </div>
+
+    <div class="glean-stat-strip" role="region" aria-label={t(i18n, "highlight.title")}>
+        <div class="glean-stat-strip__item">
+            <span class="glean-stat-strip__val">{items.length}</span>
+            <span class="glean-stat-strip__lbl">{t(i18n, "highlight.title")}</span>
+        </div>
+        <div class="glean-stat-strip__divider" aria-hidden="true"></div>
+        <div class="glean-stat-strip__item">
+            <span class="glean-stat-strip__val">{articleGroups.length}</span>
+            <span class="glean-stat-strip__lbl">{t(i18n, "highlight.viewArticle")}</span>
+        </div>
+        <div class="glean-stat-strip__divider" aria-hidden="true"></div>
+        <div class="glean-stat-strip__item glean-stat-strip__item--done">
+            <span class="glean-stat-strip__val">{selected.length}</span>
+            <span class="glean-stat-strip__lbl">{t(i18n, "action.selected")}</span>
+        </div>
+    </div>
+
     <div class="glean-highlights__filters" role="search" aria-label={t(i18n, "action.search")}>
         <div class="glean-highlights__search-wrap">
             <input bind:this={searchInputEl} type="search" bind:value={search} oninput={() => page = 1} onkeydown={(event) => { if (event.key === "Escape" && search) { event.stopPropagation(); search = ""; page = 1; } }} placeholder={t(i18n, "highlight.searchPlaceholder")} aria-label={t(i18n, "action.search")} />
