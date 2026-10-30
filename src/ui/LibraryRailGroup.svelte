@@ -76,7 +76,7 @@
 
 <div class="glean-rail__group">
     <button class="glean-rail__title glean-rail__toggle" title={hint} disabled={busy} aria-expanded={!prefs.collapsed} onclick={() => void toggle("collapsed")}>
-        <span aria-hidden="true">{prefs.collapsed ? "▸" : "▾"}</span>
+        <span class="glean-rail__arrow" aria-hidden="true"><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href={prefs.collapsed ? "#iconGleanArrowRight" : "#iconGleanArrowDown"} /></svg></span>
         <span>{label}</span><span class="glean-rail__group-count">{t(i18n, "rail.itemCount", { n: items.length })}</span>
     </button>
     {#if selected && group !== "queues" && (prefs.collapsed || selectedMissing)}

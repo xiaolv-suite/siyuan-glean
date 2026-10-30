@@ -89,9 +89,18 @@
 }
 
 .glean-palette-check {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     font-weight: var(--glean-weight-semibold);
     font-size: 12px;
     color: var(--glean-color-action);
+
+    .glean-icon {
+        width: 14px;
+        height: 14px;
+        flex-shrink: 0;
+    }
 }
 
 /* 阅读器与工作台快捷色盘微菜单 */

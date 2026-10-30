@@ -153,7 +153,7 @@ async function dismiss(item: Shorthand) {
             <span id={titleId} class="glean-meta-icon"><svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanInbox" /></svg>{t(i18n, "inbox.title")}</span>
             <span class="glean-inbox__count">{items.length}</span>
             <span class="glean-inbox__spacer"></span>
-            <span class="glean-inbox__arrow">{expanded ? "▾" : "▸"}</span>
+            <span class="glean-inbox__arrow" aria-hidden="true"><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href={expanded ? "#iconGleanArrowDown" : "#iconGleanArrowRight"} /></svg></span>
         </button>
         {#if expanded}
             <div id={contentId} role="group" aria-labelledby={titleId}>

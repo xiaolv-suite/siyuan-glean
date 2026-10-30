@@ -60,6 +60,12 @@
             font-weight: var(--glean-weight-bold);
             background: var(--b3-theme-background-light);
             color: var(--b3-theme-on-surface);
+
+            .glean-icon {
+                width: 13px;
+                height: 13px;
+                flex-shrink: 0;
+            }
         }
 
         .glean-step__lb {
@@ -511,7 +517,23 @@
     }
 }
 
+@media (forced-colors: active) {
+    .glean-step__ball,
+    .glean-mstat,
+    .glean-archive-dlg__opt {
+        border: 1px solid CanvasText;
+    }
+
+    .glean-step--on .glean-step__ball,
+    .glean-step--done .glean-step__ball {
+        border: 2px solid Highlight;
+        color: Highlight;
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
+    .glean-step__ball,
+    .glean-stepper__line,
     .glean-mstat,
     .glean-archive-dlg__opt,
     .glean-archive-dlg__purge {

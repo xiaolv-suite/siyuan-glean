@@ -792,5 +792,37 @@ test("列表行尾操作与看板选择框平滑微交互契约：默认低透�
     assert.match(readerTabSvelte, /glean-reader__preset-chip[\s\S]*use href="#iconGleanSpark"/);
     assert.match(readerTabSvelte, /glean-reader__preset-chip[\s\S]*use href="#iconGleanEdit"/);
     assert.match(readerTabSvelte, /glean-reader__preset-chip[\s\S]*use href="#iconGleanNews"/);
+
+    // 55. 状态动作栏、侧边导轨、设置视图与初始化/迁移引导 SVG 矢量图标与无障碍规范守门
+    const clipStatusActionsSvelte = read("src/ui/ClipStatusActions.svelte");
+    const inboxSectionSvelte = read("src/ui/InboxSection.svelte");
+    const libraryRailGroupSvelte = read("src/ui/LibraryRailGroup.svelte");
+    const settingsViewSvelte = read("src/ui/SettingsView.svelte");
+    const onboardingDialogSvelte = read("src/ui/OnboardingDialog.svelte");
+    const migrateDialogSvelte = read("src/ui/MigrateDialog.svelte");
+
+    assert.match(clipStatusActionsSvelte, /glean-status-actions__btn--restore[\s\S]*use href="#iconGleanArrowUp"/);
+    assert.match(clipStatusActionsSvelte, /glean-status-actions__btn--primary[\s\S]*use href="#iconGleanNews"/);
+    assert.match(clipStatusActionsSvelte, /use href="#iconGleanArrowRight"/);
+    assert.match(clipStatusActionsSvelte, /use href="#iconGleanCheck"/);
+    assert.match(clipStatusActionsSvelte, /glean-status-actions__btn--archive[\s\S]*use href="#iconGleanArchive"/);
+
+    assert.match(inboxSectionSvelte, /glean-inbox__arrow[\s\S]*expanded \? "#iconGleanArrowDown" : "#iconGleanArrowRight"/);
+    assert.match(libraryRailGroupSvelte, /glean-rail__arrow[\s\S]*prefs\.collapsed \? "#iconGleanArrowRight" : "#iconGleanArrowDown"/);
+
+    assert.match(settingsViewSvelte, /role="radio"[\s\S]*aria-checked=\{currentThemePalette === palette\.id\}/);
+    assert.match(settingsViewSvelte, /glean-palette-check[\s\S]*use href="#iconGleanCheck"/);
+    assert.match(settingsViewSvelte, /glean-nb-search__clear[\s\S]*use href="#iconGleanClose"/);
+    assert.match(settingsViewSvelte, /\.glean-nb-count\s*\{[\s\S]*font-variant-numeric:\s*tabular-nums;/);
+    assert.match(settingsViewSvelte, /@media \(forced-colors: active\)/);
+    assert.match(settingsViewSvelte, /@media \(prefers-reduced-motion: reduce\)/);
+
+    assert.match(onboardingDialogSvelte, /glean-onb-progress__dot[\s\S]*use href="#iconGleanCheck"/);
+    assert.match(onboardingDialogSvelte, /glean-nb[\s\S]*use href="#iconGleanCheck"/);
+
+    assert.match(migrateDialogSvelte, /case "ok": return t\(i18n, "migrate\.okLabel"\);/);
+    assert.match(migrateDialogSvelte, /glean-step__ball[\s\S]*use href="#iconGleanCheck"/);
+    assert.match(dialogsScss, /@media \(forced-colors: active\)\s*\{[\s\S]*\.glean-step__ball/);
+    assert.match(dialogsScss, /@media \(prefers-reduced-motion: reduce\)\s*\{[\s\S]*\.glean-step__ball/);
 });
 

@@ -372,7 +372,7 @@ function rowStateLabel(row: MigrateRow): string {
     if (row.state === "pending" && row.resolution === "local") return t(i18n, "migrate.plannedLocal");
     if (row.state === "pending" && row.resolution === "exclude") return t(i18n, "migrate.plannedExclude");
     switch (row.state) {
-        case "ok": return "✓";
+        case "ok": return t(i18n, "migrate.okLabel");
         case "skipped": return t(i18n, "migrate.skipHasAttrs");
         case "manual": return t(i18n, "migrate.needUrl");
         case "error": return t(i18n, "import.failed");
@@ -429,12 +429,24 @@ function handleWindowKeydown(event: KeyboardEvent): void {
     {#if phase !== "intro"}
         <div class="glean-stepper" role="list" aria-label={t(i18n, "migrate.title")}>
             <div class="glean-step" role="listitem" aria-current={step === 1 ? "step" : undefined} class:glean-step--done={step > 1} class:glean-step--on={step === 1}>
-                <div class="glean-step__ball">{step > 1 ? "✓" : "1"}</div>
+                <div class="glean-step__ball">
+                    {#if step > 1}
+                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCheck" /></svg>
+                    {:else}
+                        1
+                    {/if}
+                </div>
                 <div class="glean-step__lb">{t(i18n, "migrate.stepScan")}</div>
             </div>
             <div class="glean-stepper__line" class:glean-stepper__line--done={step > 2}></div>
             <div class="glean-step" role="listitem" aria-current={step === 2 ? "step" : undefined} class:glean-step--done={step > 2} class:glean-step--on={step === 2}>
-                <div class="glean-step__ball">{step > 2 ? "✓" : "2"}</div>
+                <div class="glean-step__ball">
+                    {#if step > 2}
+                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCheck" /></svg>
+                    {:else}
+                        2
+                    {/if}
+                </div>
                 <div class="glean-step__lb">{t(i18n, "migrate.stepRun")}</div>
             </div>
             <div class="glean-stepper__line" class:glean-stepper__line--done={step > 2}></div>

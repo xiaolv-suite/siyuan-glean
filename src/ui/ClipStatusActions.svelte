@@ -54,21 +54,21 @@
             disabled={disabled || pending}
             title={t(i18n, "action.restore")}
             onclick={(event) => { stop(event); void invoke(() => onRestore ? onRestore() : onSetStatus("later")); }}
-        ><span aria-hidden="true">↩</span><span>{t(i18n, "action.restore")}</span></button>
+        ><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanArrowUp" /></svg><span>{t(i18n, "action.restore")}</span></button>
     {:else}
         <button
             class="glean-status-actions__btn glean-status-actions__btn--primary"
             disabled={disabled || pending}
             title={labelForStart()}
             onclick={(event) => { stop(event); void invoke(onStartReading); }}
-        ><span aria-hidden="true">▶</span><span>{labelForStart()}</span></button>
+        ><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanNews" /></svg><span>{labelForStart()}</span></button>
 
         <button
             class="glean-status-actions__btn"
             disabled={disabled || pending || status === "later"}
             title={t(i18n, "action.moveToLater")}
             onclick={(event) => { stop(event); void invoke(() => onSetStatus("later")); }}
-        ><span aria-hidden="true">↷</span><span>{t(i18n, "action.moveToLater")}</span></button>
+        ><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanArrowRight" /></svg><span>{t(i18n, "action.moveToLater")}</span></button>
 
         {#if showDone}
             <button
@@ -76,7 +76,7 @@
                 disabled={disabled || pending || status === "done"}
                 title={t(i18n, "action.markDone")}
                 onclick={(event) => { stop(event); void invoke(() => onSetStatus("done")); }}
-            ><span aria-hidden="true">✓</span><span>{t(i18n, "action.markDone")}</span></button>
+            ><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanCheck" /></svg><span>{t(i18n, "action.markDone")}</span></button>
         {/if}
 
         <button
@@ -84,6 +84,6 @@
             disabled={disabled || pending}
             title={t(i18n, "action.archive")}
             onclick={(event) => { stop(event); void invoke(() => onArchive ? onArchive() : onSetStatus("archived")); }}
-        ><span aria-hidden="true">⤓</span><span>{t(i18n, "action.archive")}</span></button>
+        ><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanArchive" /></svg><span>{t(i18n, "action.archive")}</span></button>
     {/if}
 </div>

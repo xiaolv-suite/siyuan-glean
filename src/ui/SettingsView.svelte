@@ -693,6 +693,8 @@ async function doMountBoard() {
                         type="button"
                         class="glean-palette-card"
                         class:glean-palette-card--active={currentThemePalette === palette.id}
+                        role="radio"
+                        aria-checked={currentThemePalette === palette.id}
                         onclick={() => void selectThemePalette(palette.id)}
                     >
                         <div class="glean-palette-preview" style="background: linear-gradient(135deg, {palette.brand} 0%, {palette.brandHover} 100%);">
@@ -703,7 +705,7 @@ async function doMountBoard() {
                             <div class="glean-palette-desc">{t(i18n, palette.descriptionKey)}</div>
                         </div>
                         {#if currentThemePalette === palette.id}
-                            <span class="glean-palette-check">✓</span>
+                            <span class="glean-palette-check" aria-hidden="true"><svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanCheck" /></svg></span>
                         {/if}
                     </button>
                 {/each}
@@ -735,7 +737,7 @@ async function doMountBoard() {
                         }}
                     />
                     {#if notebookFilter}
-                        <button class="glean-linkish glean-nb-search__clear" type="button" aria-label={t(i18n, "settings.anchorSearchClear")} onclick={() => (notebookFilter = "")}>×</button>
+                        <button class="glean-linkish glean-nb-search__clear" type="button" aria-label={t(i18n, "settings.anchorSearchClear")} onclick={() => (notebookFilter = "")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanClose" /></svg></button>
                     {/if}
                 </div>
                 {#if !notebookLoading && !notebookLoadError}
@@ -759,7 +761,10 @@ async function doMountBoard() {
                         aria-pressed={anchorNotebooks.includes(notebook.id)}
                         onclick={() => toggleNotebook(notebook.id)}
                     >
-                        {anchorNotebooks.includes(notebook.id) ? "✓ " : ""}{notebook.name}
+                        {#if anchorNotebooks.includes(notebook.id)}
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCheck" /></svg>
+                        {/if}
+                        <span>{notebook.name}</span>
                     </button>
                 {/each}
                 {#if notebooks.length === 0}
@@ -1442,8 +1447,8 @@ async function doMountBoard() {
     }
 
     .glean-nb-search:focus-within {
-        border-color: color-mix(in srgb, var(--b3-theme-primary) 45%, var(--glean-border-soft));
-        box-shadow: 0 0 0 3px var(--glean-primary-soft);
+        border-color: color-mix(in srgb, var(--glean-color-action) 45%, var(--glean-border-soft));
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--glean-color-action) 18%, transparent);
     }
 
     .glean-nb-search__input {
@@ -1472,6 +1477,7 @@ async function doMountBoard() {
         flex: 0 0 auto;
         color: var(--b3-theme-on-surface);
         font-size: 12px;
+        font-variant-numeric: tabular-nums;
         overflow-wrap: anywhere;
     }
 
@@ -1540,6 +1546,9 @@ async function doMountBoard() {
     }
 
     .glean-settings .glean-nb {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--glean-space-1);
         min-height: 36px;
         max-width: 100%;
         padding: 6px 14px;
@@ -1552,6 +1561,10 @@ async function doMountBoard() {
         mask-image: linear-gradient(to right, #000 88%, transparent 100%);
         -webkit-mask-image: linear-gradient(to right, #000 88%, transparent 100%);
         transition: transform var(--glean-duration-fast) var(--glean-ease-enter), background-color var(--glean-duration-fast) var(--glean-ease-enter), border-color var(--glean-duration-fast) var(--glean-ease-enter);
+
+        .glean-icon {
+            flex-shrink: 0;
+        }
 
         &:hover {
             transform: translateY(-1px);
@@ -1738,6 +1751,31 @@ async function doMountBoard() {
 
         .glean-settings__ai-toggle input[type="checkbox"]:checked::after {
             transform: translateX(17px);
+        }
+    }
+
+    @media (forced-colors: active) {
+        .glean-settings__tab[aria-selected="true"],
+        .glean-nb--on {
+            border: 2px solid Highlight;
+            color: Highlight;
+        }
+
+        .glean-settings__newbie-banner,
+        .glean-nb-search,
+        .glean-settings__section > .glean-set-group {
+            border: 1px solid CanvasText;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .glean-settings__tab,
+        .glean-palette-card,
+        .glean-settings .glean-nb,
+        .glean-settings__ai-toggle input[type="checkbox"],
+        .glean-settings__ai-toggle input[type="checkbox"]::after {
+            transition: none !important;
+            transform: none !important;
         }
     }
 </style>

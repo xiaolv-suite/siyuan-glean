@@ -277,7 +277,13 @@ function handleWindowKeydown(event: KeyboardEvent): void {
     <nav class="glean-onb-progress" aria-label={t(i18n, "onboarding.stepProgress", { n: step })}>
         {#each [1, 2, 3, 4] as progressStep, index}
             <span class="glean-onb-progress__item" class:glean-onb-progress__item--done={progressStep < step} class:glean-onb-progress__item--current={progressStep === step} aria-current={progressStep === step ? "step" : undefined}>
-                <span class="glean-onb-progress__dot" aria-hidden="true">{progressStep < step ? "✓" : progressStep}</span>
+                <span class="glean-onb-progress__dot" aria-hidden="true">
+                    {#if progressStep < step}
+                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCheck" /></svg>
+                    {:else}
+                        {progressStep}
+                    {/if}
+                </span>
                 <span class="glean-sr-only">{t(i18n, "onboarding.stepProgress", { n: progressStep })}</span>
             </span>
             {#if index < 3}<span class="glean-onb-progress__line" class:glean-onb-progress__line--done={progressStep < step} aria-hidden="true"></span>{/if}
@@ -321,7 +327,12 @@ function handleWindowKeydown(event: KeyboardEvent): void {
                         aria-pressed={anchorNotebooks.includes(notebook.id)}
                         disabled={actionBusy || scanning}
                         onclick={() => toggleNotebook(notebook.id)}
-                    >{anchorNotebooks.includes(notebook.id) ? "✓ " : ""}{notebook.name}</button>
+                    >
+                        {#if anchorNotebooks.includes(notebook.id)}
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCheck" /></svg>
+                        {/if}
+                        <span>{notebook.name}</span>
+                    </button>
                 {/each}
                 {#if notebooks.length === 0}
                     <span class="glean-onb-empty__mark" role="status">{t(i18n, "onboarding.anchorNone")}</span>
