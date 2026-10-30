@@ -386,3 +386,29 @@ test("large library keeps full filtering but bounds list, table and kanban DOM w
     assert.match(source, /library\.loadMore/);
     assert.match(styles, /\.glean-list-more\s*\{[\s\S]*justify-content:\s*center/);
 });
+
+test("列表行尾操作与看板选择框平滑微交互契约：默认低透、悬停/获焦浮现（T-3541）", () => {
+    const styles = read("src/index.scss");
+    const settings = read("src/ui/SettingsView.svelte");
+    const marginNotes = read("src/styles/components/margin-notes.scss");
+
+    // 1. 读库行尾操作按钮默认低透，hover/focus-within 浮现
+    assert.match(styles, /\.glean-drow__ops\s*\{[\s\S]*opacity:\s*0\.35;/);
+    assert.match(styles, /&:hover \.glean-drow__ops,[\s\S]*&:focus-within \.glean-drow__ops/);
+
+    // 2. 看板选择框默认低透，hover/focus-within 浮现
+    assert.match(styles, /\.glean-kcard__select\s*\{[\s\S]*opacity:\s*0\.35;/);
+    assert.match(styles, /\.glean-kcard:hover \.glean-kcard__select,[\s\S]*\.glean-kcard:focus-within \.glean-kcard__select/);
+
+    // 3. 设置面板分类导航与输入胶囊化
+    assert.match(settings, /\.glean-settings__tab\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill/);
+    assert.match(settings, /\.glean-settings__tab--on\s*\{[\s\S]*background:\s*color-mix\(in srgb, var\(--glean-color-action\)/);
+    assert.match(settings, /\.glean-settings \.glean-mini-input,[\s\S]*\.glean-settings \.b3-select\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
+
+    // 4. 阅读伴生大纲与悬浮边注胶囊化
+    assert.match(styles, /\.glean-reader__outline-filter\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
+    assert.match(styles, /\.glean-reader__outline-item\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
+    assert.match(marginNotes, /&__memo\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill/);
+    assert.match(marginNotes, /&__btn\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill/);
+});
+

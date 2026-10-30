@@ -2147,9 +2147,11 @@ mark.glean-search-highlight {
 .glean-reader__outline-filter {
     width: 100%;
     padding-right: 22px;
+    padding-left: var(--glean-space-2-5);
     font-size: var(--glean-text-xs);
-    height: 26px;
-    border-radius: var(--glean-radius-sm);
+    height: 28px;
+    border-radius: var(--glean-radius-pill);
+    border: 1px solid var(--glean-border-soft);
 }
 
 .glean-reader__outline-filter-clear {
@@ -2275,8 +2277,8 @@ mark.glean-search-highlight {
     line-height: var(--glean-leading-compact);
     overflow: hidden;
     min-height: 28px;
-    padding: var(--glean-space-1-25) var(--glean-space-1-75) var(--glean-space-1-25) calc(var(--glean-space-1-75) + (var(--glean-outline-level) - 1) * var(--glean-space-2-5));
-    border-radius: var(--glean-radius-sm);
+    padding: var(--glean-space-1) var(--glean-space-2) var(--glean-space-1) calc(var(--glean-space-2) + (var(--glean-outline-level) - 1) * var(--glean-space-2-5));
+    border-radius: var(--glean-radius-pill);
     text-align: left;
     white-space: nowrap;
     transition: color var(--glean-duration-fast) ease, background var(--glean-duration-fast) ease, transform var(--glean-duration-fast) var(--glean-ease-out);
@@ -2293,8 +2295,8 @@ mark.glean-search-highlight {
 .glean-reader__outline-tag {
     font-size: 9.5px;
     font-weight: var(--glean-weight-bold);
-    padding: 1px 3.5px;
-    border-radius: 3px;
+    padding: 1px 5px;
+    border-radius: var(--glean-radius-pill);
     background: color-mix(in srgb, var(--b3-theme-on-surface) 10%, transparent);
     color: var(--b3-theme-on-surface);
     opacity: 0.7;
@@ -2303,7 +2305,7 @@ mark.glean-search-highlight {
 }
 
 .glean-reader__outline-item--active .glean-reader__outline-tag {
-    background: var(--b3-theme-primary);
+    background: var(--glean-color-action);
     color: var(--b3-theme-on-primary);
     opacity: 1;
 }
@@ -2315,10 +2317,9 @@ mark.glean-search-highlight {
 }
 
 .glean-reader__outline-item--active {
-    color: var(--b3-theme-primary);
-    background: color-mix(in srgb, var(--b3-theme-primary) 12%, transparent);
+    color: var(--glean-color-action);
+    background: color-mix(in srgb, var(--glean-color-action) 12%, transparent);
     font-weight: var(--glean-weight-semibold);
-    border-left: 2.5px solid var(--b3-theme-primary);
 }
 
 @media (forced-colors: active) {
@@ -6557,11 +6558,20 @@ mark.glean-search-highlight {
         justify-content: flex-start;
         flex-wrap: wrap;
         gap: var(--glean-space-1-25);
-        opacity: 1;
+        opacity: 0.35;
         min-width: 0;
         margin: var(--glean-space-0);
         padding: var(--glean-space-0);
         border: 0;
+        transition: opacity var(--glean-duration-fast) var(--glean-ease-out);
+    }
+
+    &:hover .glean-drow__ops,
+    &:focus-within .glean-drow__ops,
+    &.glean-drow--selected .glean-drow__ops,
+    &.glean-drow--preview .glean-drow__ops,
+    &.glean-drow--cursor .glean-drow__ops {
+        opacity: 1;
     }
 
     .glean-drow__ops > .glean-btn {
@@ -11246,6 +11256,21 @@ body.b3-theme-dark .glean-panel--mobile,
     position: absolute;
     top: 8px;
     right: 8px;
+    opacity: 0.35;
+    transition: opacity var(--glean-duration-fast) var(--glean-ease-out), background-color var(--glean-duration-fast) var(--glean-ease-out);
+}
+
+.glean-kcard:hover .glean-kcard__select,
+.glean-kcard:focus-within .glean-kcard__select,
+.glean-kcard.glean-kcard--selected .glean-kcard__select,
+.glean-kcard.glean-kcard--cursor .glean-kcard__select {
+    opacity: 1;
+}
+
+@media (hover: none), (pointer: coarse) {
+    .glean-kcard__select {
+        opacity: 1 !important;
+    }
 }
 
 .glean-kcard.glean-kcard--selected {

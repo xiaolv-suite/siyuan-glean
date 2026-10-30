@@ -1271,9 +1271,9 @@ async function doMountBoard() {
         gap: var(--glean-space-2-5);
         width: 100%;
         min-height: 42px;
-        padding: 8px 12px;
+        padding: 8px 14px;
         border: none;
-        border-radius: var(--glean-radius-md);
+        border-radius: var(--glean-radius-pill, 999px);
         background: none;
         color: var(--b3-theme-on-background);
         font: inherit;
@@ -1297,19 +1297,19 @@ async function doMountBoard() {
     }
 
     .glean-settings__tab:focus-visible {
-        outline: 2px solid var(--b3-theme-primary);
+        outline: 2px solid var(--glean-color-action);
         outline-offset: -2px;
     }
 
     .glean-settings__tab--on {
-        background: var(--glean-primary-soft);
-        color: var(--glean-accent-b);
+        background: color-mix(in srgb, var(--glean-color-action) 12%, var(--b3-theme-surface));
+        color: var(--glean-color-action);
         font-weight: 650;
     }
 
     .glean-settings__tab--on .glean-settings__tab-icon {
         opacity: 1;
-        color: var(--glean-accent-b);
+        color: var(--glean-color-action);
     }
 
     .glean-settings__tab-label {
@@ -1322,8 +1322,8 @@ async function doMountBoard() {
 
     .glean-settings__tab-badge {
         flex: 0 0 auto;
-        padding: 0 7px;
-        border-radius: var(--glean-radius-sm);
+        padding: 0 8px;
+        border-radius: var(--glean-radius-pill, 999px);
         background: var(--glean-inset-surface);
         color: var(--b3-theme-on-surface);
         font-size: 11px;
@@ -1331,8 +1331,8 @@ async function doMountBoard() {
     }
 
     .glean-settings__tab--on .glean-settings__tab-badge {
-        background: color-mix(in srgb, var(--glean-accent-b) 18%, transparent);
-        color: var(--glean-accent-b);
+        background: color-mix(in srgb, var(--glean-color-action) 18%, transparent);
+        color: var(--glean-color-action);
     }
 
     .glean-settings__content {
@@ -1484,10 +1484,10 @@ async function doMountBoard() {
 
     .glean-settings__section > .glean-set-group {
         min-width: 0;
-        border: 1px solid color-mix(in srgb, var(--b3-border-color) 40%, transparent);
+        border: 1px solid var(--glean-border-soft);
         border-radius: var(--glean-radius-lg);
         background: var(--glean-card-surface);
-        box-shadow: var(--glean-shadow-card);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
     }
 
     .glean-settings__section .glean-set-row {
@@ -1496,7 +1496,7 @@ async function doMountBoard() {
         padding: var(--glean-space-4) var(--glean-space-5);
         font-size: 14px;
         line-height: 1.65;
-        border-color: color-mix(in srgb, var(--b3-border-color) 30%, transparent);
+        border-color: color-mix(in srgb, var(--glean-border-soft) 85%, transparent);
         box-shadow: none;
     }
 
@@ -1520,9 +1520,10 @@ async function doMountBoard() {
     .glean-settings .glean-mini-input,
     .glean-settings .b3-select {
         min-height: 38px;
-        border-radius: var(--glean-radius-sm);
+        border-radius: var(--glean-radius-pill);
         background: var(--b3-theme-background);
-        border: 1px solid color-mix(in srgb, var(--b3-border-color) 50%, transparent);
+        border: 1px solid var(--glean-border-soft);
+        padding-inline: var(--glean-space-3);
         font-size: 13px;
         transition: border-color var(--glean-duration-fast) var(--glean-ease-enter), box-shadow var(--glean-duration-fast) var(--glean-ease-enter);
     }

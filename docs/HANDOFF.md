@@ -13,13 +13,15 @@
      - 修复 `ReaderTab.svelte` 顶栏收藏按钮缺失 `statusBusy` 锁保护的问题，彻底杜绝快速双击或快捷键连发冲突；
      - 修复 `QuoteCardDialog.svelte`、`WeReadGuideDialog.svelte`、`FlashcardDialog.svelte`、`FormattingDialog.svelte`、`ImportDialog.svelte`、`OnboardingDialog.svelte`、`AuthorEditor.svelte` 与 `SettingsView.svelte` 键盘监听过滤 `event.repeat`，并在弹窗 Escape 退出时可靠调用 `stopPropagation()` 阻断冒泡；
      - 修复 `DockPanel.svelte` 看板拖拽越界与异步写入中防二次拖拽问题：全局监听 `ondragend` 兜底清理 `dragId` 与 `dragOverCol`，写入中卡片展示 `aria-busy` 并在 `ondragstart` 阻断二次拖拽；
-  2. **UI 结构升级（现代三段式、外壳分层、统计优先、全圆角胶囊体系）**：
+  2. **UI 结构升级（现代三段式、外壳分层、统计优先、全圆角胶囊体系与微交互）**：
      - **外壳分层**：底色采用微色相浅色背景托底（`--glean-app-background`），内部浮起近白大圆角外壳容器（`border-radius: 20px`，复合软阴影），区域间依靠底色差区分，消除繁复黑描边；
      - **三段式布局**：左侧常驻 64px 极窄图标导航栏（常驻图标 + 紧凑小标签，活跃项采用主题色背景填充块而非仅文字变色）；中间为主内容工作台；右侧为随选中条目联动的抽屉式上下文详情面板（预览/大纲/文献著录）；
      - **统计优先**：读库工作台与全局摘录墙顶部固定置入无包边、细竖线分隔的关键核心指标条（`.glean-stat-strip`），统计页主指标移除封闭卡片粗边框并对齐细竖线结构，24px 大数字（`tabular-nums`）配紧凑小标签；
      - **数据柔和表达与胶囊体系**：看板列与抽屉边框柔和混色去硬边，热力图单元格消除生硬描边（`border: none; border-radius: 3px;`），30 天趋势图容器去边框改用柔和渐变圆头柱（`border-radius: var(--glean-radius-pill)`），作者时间线胶囊横幅（`.glean-author-timeline`）、治理卡片圆角化（`.glean-governance-summary`）、设置页笔记本胶囊（`.glean-nb`）、卡片通用状态流转按钮（`.glean-status-actions__btn`）、筛选下拉框（`.glean-filter`）、排序切换按钮（`.glean-filter-dir`）、弹出触发器（`.glean-action-popover__trigger`）、今日拾遗卡片操作按钮（`.glean-surf-act`）以及思源原生阅读胶囊栏动作（`.glean-reading-context__source-btn`、`.glean-reading-context__back`）全量统一为全圆角胶囊与松青操作语义自洽；
-     - **列表密度与行尾操作**：行高维持中等舒适度，标题与元数据清晰双行层级，行尾图标操作按钮采用默认低透、悬停/获焦平滑浮现（`opacity: 0.35 -> 1`）；
-  3. **门禁全通**：全套测试通过（**1748 / 1748 PASS**，新增键盘隔离与并发互斥守护测试）；`pnpm check` 0 错 0 警告；`pnpm build` 1.44s 干净构建；`pnpm check:release` 14 项全绿通过。
+     - **设置面板外壳分层与胶囊化**：`SettingsView` 分类导航标签（`.glean-settings__tab`）与未完成徽章全量升级为全圆角胶囊，活跃态采用松青柔和背景块（`color-mix(in srgb, var(--glean-color-action) 12%, ...)`）；设置项分组消除粗边框，单项输入框与下拉选择框统一为全圆角胶囊与松青光圈；
+     - **阅读大纲与悬浮边注胶囊化**：`ReaderTab` 章节大纲搜索框（`.glean-reader__outline-filter`）、大纲项（`.glean-reader__outline-item`）与大纲标题标签（`.glean-reader__outline-tag`）统一为全圆角胶囊；悬浮边注便签卡片（`margin-notes.scss`）圆角化（`12px`）且便签备忘徽章与操作按钮统一为全圆角胶囊；
+     - **列表密度与行尾操作微动**：列表行尾图标操作按钮（`.glean-drow__ops`）与看板卡片勾选框（`.glean-kcard__select`）默认保持低透（`opacity: 0.35`），悬停、`:focus-within`、键盘选中或活跃时平滑浮现（`opacity: 1`），触屏设备自动常显保底；
+  3. **门禁全通**：全套测试通过（**1749 / 1749 PASS**，新增微交互与胶囊契约守护测试）；`pnpm check` 0 错 0 警告；`pnpm build` 1.90s 干净构建；`pnpm check:release` 14 项全绿通过。
 - 下一步：按当前执行板顺序推进下一个任务（如 T-3367 批量选择范围与底部操作在更多场景的走查，或按作者点单继续）。版本保持 1.4.0，等待解封通知后统一处理。
 
 ## 历史交接（2026-10-29 本地发版轮：v1.4.0 次版本发布、五处版本同步、双语 README 全面重构、全门禁验证与本地打包）
