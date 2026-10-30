@@ -4377,13 +4377,13 @@ mark.glean-search-highlight {
 .glean-status-actions__btn {
     min-height: 24px;
     min-width: 24px;
-    padding: var(--glean-space-micro) var(--glean-space-1-5);
+    padding: var(--glean-space-micro) var(--glean-space-2);
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: var(--glean-space-tight);
-    border: 1px solid var(--b3-border-color);
-    border-radius: var(--glean-radius-sm);
+    border: 1px solid var(--glean-border-soft);
+    border-radius: var(--glean-radius-pill);
     background: var(--b3-theme-surface);
     color: var(--b3-theme-on-surface);
     font-size: var(--glean-text-caption);
