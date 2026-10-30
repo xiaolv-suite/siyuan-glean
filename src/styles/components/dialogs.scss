@@ -157,8 +157,8 @@
 .glean-onb-preview__group {
     min-width: 0;
     padding: var(--glean-space-2) var(--glean-space-2-5);
-    border: 1px solid color-mix(in srgb, var(--b3-border-color) 40%, transparent);
-    border-radius: var(--glean-radius-sm);
+    border: 1px solid var(--glean-border-soft);
+    border-radius: var(--glean-radius-md);
     background: var(--glean-card-surface, var(--b3-theme-surface));
 }
 
@@ -219,9 +219,9 @@
 
 .glean-import-confirm {
     padding: var(--glean-space-2-5) var(--glean-space-3);
-    border: 1px solid var(--b3-border-color);
-    border-radius: var(--glean-radius-md);
-    background: var(--b3-theme-background-light);
+    border: 1px solid var(--glean-border-soft);
+    border-radius: var(--glean-radius-lg, 16px);
+    background: var(--glean-card-surface, var(--b3-theme-surface));
 }
 
 .glean-import-confirm__title {
@@ -248,9 +248,10 @@
     display: inline-flex;
     align-items: center;
     gap: var(--glean-space-1-25);
-    padding: var(--glean-space-1) var(--glean-space-1-75);
-    border: 1px solid var(--b3-border-color);
+    padding: var(--glean-space-1) var(--glean-space-2);
+    border: 1px solid var(--glean-border-soft);
     border-radius: var(--glean-radius-pill);
+    background: var(--glean-inset-surface);
     color: var(--b3-theme-on-surface);
     font-size: var(--glean-text-caption-plus);
 }
@@ -281,11 +282,15 @@
 .glean-import__select {
     min-width: 150px;
     font-size: var(--glean-text-sm);
+    border-radius: var(--glean-radius-pill);
+    padding-inline: var(--glean-space-2-5);
 }
 
 .glean-import__folder {
     width: 160px;
     text-align: left;
+    border-radius: var(--glean-radius-pill);
+    padding-inline: var(--glean-space-2-5);
 }
 
 .glean-import__pick { flex-shrink: 0; }
@@ -316,6 +321,7 @@
 
 .glean-import__page-btn {
     min-height: 32px;
-    padding: var(--glean-space-1-25) var(--glean-space-2-5);
+    padding: var(--glean-space-1) var(--glean-space-3);
+    border-radius: var(--glean-radius-pill);
     font-size: var(--glean-text-xs);
 }

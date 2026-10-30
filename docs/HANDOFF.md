@@ -22,7 +22,8 @@
      - **阅读大纲与悬浮边注胶囊化**：`ReaderTab` 章节大纲搜索框（`.glean-reader__outline-filter`）、大纲项（`.glean-reader__outline-item`）与大纲标题标签（`.glean-reader__outline-tag`）统一为全圆角胶囊；悬浮边注便签卡片（`margin-notes.scss`）圆角化（`12px`）且便签备忘徽章与操作按钮统一为全圆角胶囊；
      - **列表密度与行尾操作微动**：列表行尾图标操作按钮（`.glean-drow__ops`）与看板卡片勾选框（`.glean-kcard__select`）默认保持低透（`opacity: 0.35`），悬停、`:focus-within`、键盘选中或活跃时平滑浮现（`opacity: 1`），触屏设备自动常显保底；
      - **图表深色胶囊工具提示与浮层胶囊化**：30 天阅读趋势柱（`.glean-stats__trend-bar`）与年度热力图单元格（`.glean-stats__day`）接入纯 CSS 深色胶囊工具提示（`data-tooltip`，`border-radius: 999px; background: #18181B; color: #FFF;`），悬停平滑浮现；操作弹出层（`.glean-action-popover__body`）规范为 `16px` 大圆角且其内表单输入框全量胶囊化；
-  3. **门禁全通**：全套测试通过（**1749 / 1749 PASS**，新增微交互与胶囊契约守护测试）；`pnpm check` 0 错 0 警告；`pnpm build` 1.41s 干净构建；`pnpm check:release` 14 项全绿通过。
+     - **外部导入与首启弹窗柔和外壳与胶囊流**：`ImportDialog` 确认卡（`.glean-import-confirm`）升级为 `16px` 柔和外壳，状态徽章（`.glean-import-confirm__status`）、目标笔记本下拉与目录输入（`.glean-import__select`、`.glean-import__folder`）及翻页按钮（`.glean-import__page-btn`）统一升级为全圆角胶囊；首启预览组（`.glean-onb-preview__group`）消除粗描边并对齐柔和底板边界；
+  3. **门禁全通**：全套测试通过（**1749 / 1749 PASS**，新增微交互与胶囊契约守护测试）；`pnpm check` 0 错 0 警告；`pnpm build` 1.46s 干净构建；`pnpm check:release` 14 项全绿通过。
 - 下一步：按当前执行板顺序推进下一个任务（如 T-3367 批量选择范围与底部操作在更多场景的走查，或按作者点单继续）。版本保持 1.4.0，等待解封通知后统一处理。
 
 ## 历史交接（2026-10-29 本地发版轮：v1.4.0 次版本发布、五处版本同步、双语 README 全面重构、全门禁验证与本地打包）
