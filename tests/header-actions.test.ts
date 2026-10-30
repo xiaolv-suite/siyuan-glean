@@ -425,5 +425,11 @@ test("列表行尾操作与看板选择框平滑微交互契约：默认低透�
     assert.match(highlightScss, /\.glean-highlights button,[\s\S]*\.glean-highlights select,[\s\S]*\.glean-highlights input\[type="search"\]\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
     assert.match(highlightScss, /\.glean-highlights__tools--selection\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
     assert.match(highlightScss, /\.glean-highlights__item,[\s\S]*\.glean-highlights__preview\s*\{[\s\S]*border:\s*1px solid var\(--glean-border-soft\);/);
+
+    // 7. 漫游抽屉盲盒卡片柔和外壳与胶囊流
+    const roamingScss = read("src/styles/components/roaming.scss");
+    assert.match(roamingScss, /\.glean-roaming-card\s*\{[\s\S]*border:\s*1px solid var\(--glean-border-soft\);/);
+    assert.match(roamingScss, /\.glean-roaming-tag\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
+    assert.match(roamingScss, /\.glean-roaming-triage-btn\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
 });
 

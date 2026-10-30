@@ -24,7 +24,8 @@
      - **图表深色胶囊工具提示与浮层胶囊化**：30 天阅读趋势柱（`.glean-stats__trend-bar`）与年度热力图单元格（`.glean-stats__day`）接入纯 CSS 深色胶囊工具提示（`data-tooltip`，`border-radius: 999px; background: #18181B; color: #FFF;`），悬停平滑浮现；操作弹出层（`.glean-action-popover__body`）规范为 `16px` 大圆角且其内表单输入框全量胶囊化；
      - **外部导入与首启弹窗柔和外壳与胶囊流**：`ImportDialog` 确认卡（`.glean-import-confirm`）升级为 `16px` 柔和外壳，状态徽章（`.glean-import-confirm__status`）、目标笔记本下拉与目录输入（`.glean-import__select`、`.glean-import__folder`）及翻页按钮（`.glean-import__page-btn`）统一升级为全圆角胶囊；首启预览组（`.glean-onb-preview__group`）消除粗描边并对齐柔和底板边界；
      - **摘录墙全圆角胶囊化与柔和外壳**：`HighlightView` 搜索输入、分面下拉框与多选批量操作条（`.glean-highlights__tools--selection`）全量采用全圆角胶囊，折叠开关（`.glean-highlights__fold-toggle`）升级为胶囊微控，卡片（`.glean-highlights__item`）消除 1px 生硬黑框升级为柔和底板边界；
-  3. **门禁全通**：全套测试通过（**1749 / 1749 PASS**，新增微交互与胶囊契约守护测试）；`pnpm check` 0 错 0 警告；`pnpm build` 1.39s 干净构建；`pnpm check:release` 14 项全绿通过。
+     - **漫游盲盒抽屉柔和外壳与胶囊流**：`RoamingDrawerDialog` 盲盒卡片（`.glean-roaming-card`）升级为 `16px` 大圆角卡片，主题标签选择下拉框（`.glean-roaming-tag-select`）、星标筛选按钮（`.glean-roaming-fav-filter-btn`）、文章标签胶囊（`.glean-roaming-tag`）与底部快捷分拣按钮（`.glean-roaming-triage-btn`）统一升级为全圆角胶囊；
+  3. **门禁全通**：全套测试通过（**1749 / 1749 PASS**，新增微交互与胶囊契约守护测试）；`pnpm check` 0 错 0 警告；`pnpm build` 1.38s 干净构建；`pnpm check:release` 14 项全绿通过。
 - 下一步：按当前执行板顺序推进下一个任务（如 T-3367 批量选择范围与底部操作在更多场景的走查，或按作者点单继续）。版本保持 1.4.0，等待解封通知后统一处理。
 
 ## 历史交接（2026-10-29 本地发版轮：v1.4.0 次版本发布、五处版本同步、双语 README 全面重构、全门禁验证与本地打包）
