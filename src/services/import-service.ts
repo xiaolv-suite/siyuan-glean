@@ -15,6 +15,7 @@ import { batchReadClipAttrs, captureClip, ClipRestoreError, findClipUrlConflict,
 import { ImportProgressError, isImportFingerprint, isImportId, normalizeImportFolder, recoverImportProgress, type ImportFailureReason, type ImportProgress } from "../domain/import-progress";
 import { isInternalDocument } from "../domain/candidate-policy";
 import { fingerprintImportSource, readImportProgress, saveImportProgress, withImportLock } from "./import-progress";
+import { evaluateAutoTriage } from "../domain/auto-triage";
 
 export interface ImportPreviewRow {
     title: string;
@@ -49,16 +50,25 @@ export async function previewImport(content: string, format: ImportFormat | "aut
     const parsed = parseImport(content, format);
     // 无有效链接时只反馈文件问题，不让无关的内核查重故障盖住解析诊断。
     const existingUrls = parsed.items.length > 0 ? await collectExistingUrls() : new Set<string>();
-    const rows: ImportPreviewRow[] = parsed.items.map((item) => ({
-        title: item.title,
-        url: item.url,
-        site: item.site,
-        time: item.time,
-        doneTime: item.doneTime,
-        tags: item.tags,
-        status: item.status,
-        duplicate: existingUrls.has(normalizeUrl(item.url)),
-    }));
+    const rows: ImportPreviewRow[] = parsed.items.map((item) => {
+        const triaged = evaluateAutoTriage({
+            url: item.url,
+            title: item.title,
+            site: item.site,
+            currentStatus: item.status,
+            currentTags: item.tags,
+        });
+        return {
+            title: item.title,
+            url: item.url,
+            site: item.site,
+            time: item.time,
+            doneTime: item.doneTime,
+            tags: triaged.tags,
+            status: triaged.status as ImportedItem["status"],
+            duplicate: existingUrls.has(normalizeUrl(item.url)),
+        };
+    });
     return {
         fingerprint: sourceFingerprint,
         format: parsed.format,

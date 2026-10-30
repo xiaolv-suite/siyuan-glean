@@ -23,7 +23,7 @@ export function readerShortcut(input: ReaderKeyInput): ReaderShortcut | null {
         : input.key === "k" ? "scrollUp"
         : input.key === "e" ? "edit"
         : input.key === "m" ? "done"
-        : input.key === "a" ? "later"
+        : (input.key === "a" || input.key === "l") ? "later"
         : input.key === "o" ? "openSource"
         : input.key === "x" ? "excerpt"
         : input.key === "h" ? "nextHighlight"

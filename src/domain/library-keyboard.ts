@@ -115,7 +115,7 @@ export function resolveLibraryShortcut(
     if (lower === "s") return repeatOrNull(event, { type: "selectDisplayed" });
     if (lower === "o") return repeatOrNull(event, { type: "openDocument" });
     if (lower === "r") return repeatOrNull(event, { type: "startReading" });
-    if (lower === "a") return repeatOrNull(event, { type: "later" });
+    if (lower === "a" || lower === "l") return repeatOrNull(event, { type: "later" });
     if (lower === "e") return repeatOrNull(event, { type: "archive" });
     if (lower === "x") return repeatOrNull(event, { type: "toggleSelect" });
     if (lower === "p") return repeatOrNull(event, { type: "cyclePriority" });

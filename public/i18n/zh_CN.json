@@ -1561,5 +1561,17 @@
   "foldReader.collapseCard": "收起为当前层级",
   "foldReader.empty": "暂无可用正文段落块",
   "foldReader.loading": "正在解析文章折叠层级…",
-  "foldReader.toggleAction": "语义折叠阅读 (Alt+Z)"
+  "foldReader.toggleAction": "语义折叠阅读 (Alt+Z)",
+  "snapshotHealth.title": "本地快照健康度",
+  "snapshotHealth.healthy": "快照健康",
+  "snapshotHealth.healthyDesc": "完整离线快照，抗 404 防腐",
+  "snapshotHealth.partial": "快照良好",
+  "snapshotHealth.partialDesc": "已有本地正文",
+  "snapshotHealth.missing": "缺少快照",
+  "snapshotHealth.missingDesc": "仅记录外部链接",
+  "triage.ruleWechat": "微信公众号专栏",
+  "triage.ruleAcademic": "学术长文与论文",
+  "triage.ruleDeepRead": "深度长文精读",
+  "triage.ruleQuickRead": "碎片短文速读",
+  "triage.applied": "已自动分拣为 ${status}"
 }

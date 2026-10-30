@@ -37,6 +37,7 @@ import { ageDays, todayStamp } from "../domain/resurface.ts";
 import { recordReadingDone } from "../services/checkin-bridge";
 import { hasSourceAction, openTargetForCarrier, resolveCarrier, sourceUrlForCarrier } from "../domain/carrier";
 import { isWechatUrl, displayWechatAuthor, isWechatSeriesTag } from "../domain/wechat";
+import { calculateSnapshotHealth } from "../domain/snapshot-health";
 import { pickRoamingArticle } from "../domain/roaming";
 import { openRoamingDialog } from "./roaming-dialog";
 import { formatAPA, formatBibTeX, formatGBT7714, formatMLA, type CitationFormat, type CitationItem } from "../domain/citation";
@@ -3459,6 +3460,7 @@ function metaLine(entry: Row): string {
                             </div>
                         {/if}
                         {#each col.items as entry (entry.id)}
+                            {@const snapHealth = calculateSnapshotHealth(entry)}
                             <div
                                 class="glean-kcard"
                                 class:glean-kcard--selected={selection.has(entry.id)}
@@ -3519,6 +3521,7 @@ function metaLine(entry: Row): string {
                                         <span class="glean-tier-badge glean-tier-badge--fav" title={t(i18n, "roaming.favoriteOnly")}><svg class="glean-icon glean-icon--xs glean-icon--fav" aria-hidden="true"><use href="#iconGleanHeart" /></svg></span>
                                     {/if}
                                     {#if entry.readPoint && (entry.status === "reading" || entry.status === "later")}<span class="glean-read-point-badge" title={t(i18n, "reading.resumePoint")}><svg class="glean-icon glean-icon--xs glean-icon--bookmark" aria-hidden="true"><use href="#iconGleanBookmark" /></svg> <span>{t(i18n, "reading.resumePointShort")}</span></span>{/if}
+                                    <span class="glean-tier-badge glean-snap-badge glean-snap-badge--{snapHealth.grade}" title="{t(i18n, snapHealth.labelKey)}: {t(i18n, snapHealth.descKey)} ({snapHealth.score}分)"><svg class="glean-icon glean-icon--xs" class:glean-icon--shield-ok={snapHealth.grade === "healthy"} aria-hidden="true"><use href={snapHealth.grade === "healthy" ? "#iconGleanShieldCheck" : "#iconGleanShield"} /></svg> <span>{snapHealth.score}</span></span>
                                     {#if (entry.status === "inbox" || entry.status === "later") && staleText(entry.time) !== null}
                                         <span class="glean-stale">{staleText(entry.time)}</span>
                                     {/if}
@@ -3670,6 +3673,7 @@ function metaLine(entry: Row): string {
                             {#each visibleRows as entry (entry.id)}
                                 {#if entry.kind === "clip"}
                                     {@const badge = matchBadge(entry)}
+                                    {@const snapHealth = calculateSnapshotHealth(entry)}
                                     <div
                                         class="glean-drow"
                                         data-glean-clip-id={entry.id}
@@ -3727,6 +3731,7 @@ function metaLine(entry: Row): string {
                                                     <span class="glean-tier-badge glean-tier-badge--fav" title={t(i18n, "roaming.favoriteOnly")}><svg class="glean-icon glean-icon--xs glean-icon--fav" aria-hidden="true"><use href="#iconGleanHeart" /></svg></span>
                                                 {/if}
                                                 {#if entry.readPoint && (entry.status === "reading" || entry.status === "later")}<span class="glean-read-point-badge" title={t(i18n, "reading.resumePoint")}><svg class="glean-icon glean-icon--xs glean-icon--bookmark" aria-hidden="true"><use href="#iconGleanBookmark" /></svg> <span>{t(i18n, "reading.resumePointShort")}</span></span>{/if}
+                                                <span class="glean-tier-badge glean-snap-badge glean-snap-badge--{snapHealth.grade}" title="{t(i18n, snapHealth.labelKey)}: {t(i18n, snapHealth.descKey)} ({snapHealth.score}分)"><svg class="glean-icon glean-icon--xs" class:glean-icon--shield-ok={snapHealth.grade === "healthy"} aria-hidden="true"><use href={snapHealth.grade === "healthy" ? "#iconGleanShieldCheck" : "#iconGleanShield"} /></svg> <span>{snapHealth.score}</span></span>
                                                 <span class="glean-drow__st">
                                                     <span class="glean-st-badge glean-st-badge--{entry.status}">{queueLabel(entry.status)}</span>
                                                 </span>

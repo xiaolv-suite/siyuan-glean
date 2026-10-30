@@ -935,5 +935,25 @@ test("列表行尾操作与看板选择框平滑微交互契约：默认低透�
     assert.match(freshFoldedScss, /\.glean-fold-card\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-lg,\s*16px\);/);
     assert.match(freshFoldedScss, /@media\s*\(max-width:\s*560px\)[\s\S]*\.glean-fold-reader__pill\s*\{[\s\S]*min-height:\s*44px;/);
     assert.match(freshFoldedScss, /@media\s*\(forced-colors:\s*active\)[\s\S]*\.glean-fold-card\s*\{[\s\S]*border:\s*1px solid CanvasText;/);
+
+    // 61. 入库自动分拣规则引擎、词表防膨胀、快照健康度盾牌徽标与 j/k/e/l Inbox Zero 极速流守门
+    const freshImportService = read("src/services/import-service.ts");
+    const freshEnrichDomain = read("src/domain/enrich.ts");
+    const freshDockPanel = read("src/ui/DockPanel.svelte");
+    const freshIndexTs = read("src/index.ts");
+    const freshLibKeyboard = read("src/domain/library-keyboard.ts");
+    const freshReaderShortcuts = read("src/domain/reader-shortcuts.ts");
+
+    assert.match(freshImportService, /evaluateAutoTriage/);
+    assert.match(freshEnrichDomain, /alignTagsWithVocabulary/);
+
+    assert.match(freshDockPanel, /calculateSnapshotHealth/);
+    assert.match(freshDockPanel, /glean-snap-badge/);
+    assert.match(freshIndexTs, /<symbol id="iconGleanShield"/);
+    assert.match(freshIndexTs, /<symbol id="iconGleanShieldCheck"/);
+    assert.match(styles, /\.glean-snap-badge\s*\{/);
+
+    assert.match(freshLibKeyboard, /lower === "a" \|\| lower === "l"/);
+    assert.match(freshReaderShortcuts, /input\.key === "a" \|\| input\.key === "l"/);
 });
 

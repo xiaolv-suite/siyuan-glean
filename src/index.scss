@@ -11227,6 +11227,41 @@ body.b3-theme-dark .glean-panel--mobile,
     }
 }
 
+.glean-snap-badge {
+    border-radius: var(--glean-radius-pill);
+    padding: 1px 6px;
+    font-size: 10.5px;
+    border: 1px solid transparent;
+    transition: all var(--glean-duration-fast) ease;
+
+    &--healthy {
+        color: #059669;
+        background: color-mix(in srgb, #10B981 12%, var(--b3-theme-surface));
+        border-color: color-mix(in srgb, #10B981 28%, transparent);
+    }
+
+    &--partial {
+        color: #D97706;
+        background: color-mix(in srgb, #F59E0B 12%, var(--b3-theme-surface));
+        border-color: color-mix(in srgb, #F59E0B 28%, transparent);
+    }
+
+    &--missing {
+        color: var(--b3-theme-on-surface);
+        opacity: 0.6;
+        background: color-mix(in srgb, var(--b3-theme-on-surface) 6%, var(--b3-theme-surface));
+        border-color: var(--glean-border-soft);
+    }
+
+    .glean-icon--shield-ok {
+        color: #059669;
+    }
+
+    @media (forced-colors: active) {
+        border: 1px solid CanvasText;
+    }
+}
+
 .glean-drow__ops {
     border-left-color: color-mix(in srgb, var(--glean-border-soft) 82%, transparent);
 }

@@ -1,6 +1,28 @@
 # HANDOFF — 续跑交接（每轮开发结束更新本页）
 
-## 当前有效交接（2026-10-31 借鉴 textfold 构建 5 阶语义保真折叠阅读器）
+## 当前有效交接（2026-10-31 融合 GitHub 顶级对标产品：TextFold 5 阶折叠、Omnivore+Hoarder 入库自动分拣引擎、词表防膨胀、快照健康度徽标与 j/k/e/l Inbox Zero 极速流）
+
+- **T-3544/D-0422：GitHub 顶级标杆三合一融合方案（TextFold + Omnivore + Hoarder）全面落地闭环**：
+  1. **TextFold 5 阶语义保真折叠阅读器（Folded Reader）**：
+     - `src/domain/folded-reader.ts` 纯函数层实现 5 阶语义折叠数据契约与 Verbatim Guard 强校验；Level 2 `brief` 强制逐字子串校验；
+     - `src/services/folded-reader-service.ts` 实现段落块获取与降级备用逻辑；
+     - `src/ui/FoldedReaderView.svelte` 与 `src/styles/components/folded-reader.scss`：数字键 1~5 全局连续缩放、单段卡片展开/折叠、双栏联动 Protyle `scrollAndPulseReadPoint` 平滑滚动定位；
+     - `src/ui/ReaderTab.svelte` 顶栏接入 `Alt+Z` 专属入口与快捷键说明；
+  2. **入库自动分拣规则引擎（Auto-Triage Engine）与词表防膨胀**：
+     - `src/domain/auto-triage.ts` 建立分拣规则引擎与默认规则集（`rule-wechat`、`rule-academic`、`rule-deep-read`、`rule-quick-read`），支持按来源域名、预计阅读时长、标题关键词自动分配初始五态（`later`/`inbox`）与追加预设标签；
+     - 在 `src/services/import-service.ts`（外部导入）贯通自动分拣评估；
+     - 实现 `alignTagsWithVocabulary` 智能标签防膨胀算法并在 `src/domain/enrich.ts` 中接入，自动对齐库内既有高频标签，消除大小写与近义词重复爆炸；
+  3. **快照健康度与抗 404 防腐徽标（Snapshot Health & Link Rot Guard）**：
+     - `src/domain/snapshot-health.ts` 建立 0-100 综合分值模型（字数充盈度、本地正文完整度、离线快照存在性），分出 `healthy`（绿盾）、`partial`（黄盾）、`missing`（红盾）三级；
+     - 在 `src/index.ts` 注册 `#iconGleanShield` 与 `#iconGleanShieldCheck` SVG 矢量图标符号；
+     - `src/ui/DockPanel.svelte` 列表行条与看板卡片全面展示 `.glean-snap-badge` 盾牌微徽标与详细健康度提示；
+  4. **全键盘 Inbox Zero 极速分拣流（j/k/e/l）**：
+     - `src/domain/library-keyboard.ts` 与 `src/domain/reader-shortcuts.ts` 补齐 `j`/`k`（上下移动光标）、`e`（一键读完归档）、`l`/`a`（移入稍后读）极速流；
+  5. **门禁与测试闭环**：
+     - `tests/auto-triage.test.ts`（7 项专项）与 `tests/folded-reader.test.ts`（9 项专项）全绿；
+     - `tests/header-actions.test.ts` 新增第 60、61 项守门断言；
+     - 全仓测试 **1,767 / 1,767 PASS**，`pnpm check` 0 errors / 0 warnings，`pnpm build` 顺利产出，发布门禁 14/14 PASS；
+     - `.tasks/TASK-20261030-textfold-reading-core.md` 与 `.tasks/TASK-20261031-github-benchmark-fusion.md` 全量标记为 `completed`。
 
 - **T-3543/D-0421：借鉴 GitHub 标杆 textfold 构建 5 阶语义折叠交互阅读器 (Folded Reader)**：
   1. **数据契约（领域层纯函数）**：

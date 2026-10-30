@@ -4,6 +4,8 @@
  * 解析必须鲁棒（模型可能带 markdown 代码栏/前后杂文/字数越界），解析失败返回 null 由上层静默降级。
  */
 
+import { alignTagsWithVocabulary } from "./auto-triage.ts";
+
 /** 喂给模型的正文上限（字符）；超长截断保头部（新闻/博客主旨在前部）。 */
 export const ENRICH_CONTENT_LIMIT = 6000;
 
@@ -32,8 +34,8 @@ export interface EnrichResult {
     tags: string[];
 }
 
-/** 从模型回复里提取 JSON 并规范化；任何一步失败返回 null（静默降级）。 */
-export function parseEnrichResponse(raw: string): EnrichResult | null {
+/** 从模型回复里提取 JSON 并规范化；支持既有词表复用防膨胀；任何一步失败返回 null（静默降级）。 */
+export function parseEnrichResponse(raw: string, existingVocabulary?: readonly string[]): EnrichResult | null {
     if (!raw) return null;
     const jsonText = extractJson(raw);
     if (!jsonText) return null;
@@ -47,7 +49,10 @@ export function parseEnrichResponse(raw: string): EnrichResult | null {
     const record = parsed as Record<string, unknown>;
     const summary = typeof record.summary === "string" ? record.summary.replace(/\s+/g, " ").trim() : "";
     const rawTags = Array.isArray(record.tags) ? record.tags : [];
-    const tags = normalizeTags(rawTags);
+    let tags = normalizeTags(rawTags);
+    if (existingVocabulary && existingVocabulary.length > 0) {
+        tags = alignTagsWithVocabulary(tags, existingVocabulary);
+    }
     if (!summary || tags.length === 0) return null;
     if (summary.length > 120) return { summary: summary.slice(0, 117) + "…", tags };
     return { summary, tags };

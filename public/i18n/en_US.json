@@ -1561,5 +1561,17 @@
   "foldReader.collapseCard": "Collapse to current level",
   "foldReader.empty": "No content paragraph blocks available",
   "foldReader.loading": "Analyzing semantic fold levels...",
-  "foldReader.toggleAction": "Semantic Folded Reader (Alt+Z)"
+  "foldReader.toggleAction": "Semantic Folded Reader (Alt+Z)",
+  "snapshotHealth.title": "Snapshot Health",
+  "snapshotHealth.healthy": "Healthy",
+  "snapshotHealth.healthyDesc": "Complete offline snapshot, link rot proof",
+  "snapshotHealth.partial": "Partial",
+  "snapshotHealth.partialDesc": "Local body captured",
+  "snapshotHealth.missing": "Missing",
+  "snapshotHealth.missingDesc": "Link only, no local snapshot",
+  "triage.ruleWechat": "WeChat Articles",
+  "triage.ruleAcademic": "Academic Papers",
+  "triage.ruleDeepRead": "Deep Longform Reads",
+  "triage.ruleQuickRead": "Quick Snippet Reads",
+  "triage.applied": "Auto-triaged to ${status}"
 }

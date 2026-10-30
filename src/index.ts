@@ -154,7 +154,9 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
 <symbol id="iconGleanBolt" viewBox="0 0 32 32"><path d="M18 3L6 17h8l-2 12 14-16h-9l3-10z"/></symbol>
 <symbol id="iconGleanStar" viewBox="0 0 32 32"><path d="M16 3.5l3.8 8.4 9.2 1-6.8 6.2 1.9 9.1L16 23.6l-8.1 4.6 1.9-9.1-6.8-6.2 9.2-1z"/></symbol>
 <symbol id="iconGleanStarOutline" viewBox="0 0 32 32"><path d="M16 3.5l3.8 8.4 9.2 1-6.8 6.2 1.9 9.1L16 23.6l-8.1 4.6 1.9-9.1-6.8-6.2 9.2-1z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/></symbol>
-<symbol id="iconGleanClock" viewBox="0 0 32 32"><circle cx="16" cy="16" r="12" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M16 9v7.5l5 3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>`);
+<symbol id="iconGleanClock" viewBox="0 0 32 32"><circle cx="16" cy="16" r="12" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M16 9v7.5l5 3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+<symbol id="iconGleanShield" viewBox="0 0 32 32"><path d="M16 3L5 7v10c0 7 4.5 11.5 11 12 6.5-.5 11-5 11-12V7L16 3zm0 3.2l8.5 3.1V17c0 5.2-3.3 8.6-8.5 9.1-5.2-.5-8.5-3.9-8.5-9.1v-7.7L16 6.2z"/></symbol>
+<symbol id="iconGleanShieldCheck" viewBox="0 0 32 32"><path d="M16 3L5 7v10c0 7 4.5 11.5 11 12 6.5-.5 11-5 11-12V7L16 3zm-2 18.5l-5-5 1.8-1.8 3.2 3.2 7.2-7.2 1.8 1.8-9 9z"/></symbol>`);
 
         // 设置只在此处加载一次；面板/弹窗都读这个缓存
         this.settings = await loadSettings(this);
