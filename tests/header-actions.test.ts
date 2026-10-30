@@ -450,5 +450,10 @@ test("列表行尾操作与看板选择框平滑微交互契约：默认低透�
     assert.match(wechatScss, /\.glean-wechat-publisher__series-chip\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
     assert.match(wechatScss, /\.glean-weread-step\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-lg,\s*16px\);/);
     assert.match(wechatScss, /\.glean-weread-url-box\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
+
+    // 11. 闪卡制作弹窗柔和外壳与胶囊按钮流
+    const flashcardDialog = read("src/ui/FlashcardDialog.svelte");
+    assert.match(flashcardDialog, /\.glean-flashcard__head\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-lg,\s*16px\);/);
+    assert.match(flashcardDialog, /\.glean-flashcard__actions \.glean-btn\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
 });
 
