@@ -215,6 +215,9 @@ test("LibraryBatchBar 优先级与评分输入范围校验，DockPanel 批量更
     assert.match(dock, /async function batchSetRating[\s\S]*?selection = new Set\(\)/);
     assert.match(dock, /async function batchFavorite[\s\S]*?selection = new Set\(\)/);
     assert.match(dock, /case "toggleFavorite":[\s\S]*?if \(statusActionId\)/);
+    assert.match(dock, /<svelte:window ondragend=/);
+    assert.match(dock, /if \(statusActionId\) \{ e\.preventDefault\(\); return; \}/);
+    assert.match(dock, /class:glean-kcard--busy=\{statusActionId === entry\.id\}/);
 });
 
 test("实际批量状态：忙态与空选择阻止第二次提交", async () => {

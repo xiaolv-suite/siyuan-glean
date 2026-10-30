@@ -2774,6 +2774,8 @@ function metaLine(entry: Row): string {
 }
 </script>
 
+<svelte:window ondragend={() => { if (dragId || dragOverCol) { dragId = ""; dragOverCol = null; } }} />
+
 <div class="glean-panel-host">
 <div class="glean-panel glean-panel--shell" class:glean-panel--mobile={facade.isMobile} bind:this={rootEl} oninput={markPrefsInteraction} onchange={markPrefsInteraction} aria-busy={loading}>
     {#if !facade.isMobile}
@@ -3461,12 +3463,18 @@ function metaLine(entry: Row): string {
                                 class="glean-kcard"
                                 class:glean-kcard--selected={selection.has(entry.id)}
                                 class:glean-kcard--cursor={keyboardCursorId === entry.id}
+                                class:glean-kcard--busy={statusActionId === entry.id}
                                 data-glean-clip-id={entry.id}
                                 draggable="true"
                                 role="group"
                                 aria-label={entry.title || t(i18n, "panel.untitled")}
                                 aria-current={keyboardCursorId === entry.id ? "true" : undefined}
-                                ondragstart={(e) => { dragId = entry.id; e.dataTransfer?.setData("text/plain", entry.id); }}
+                                aria-busy={statusActionId === entry.id ? "true" : undefined}
+                                ondragstart={(e) => {
+                                    if (statusActionId) { e.preventDefault(); return; }
+                                    dragId = entry.id;
+                                    e.dataTransfer?.setData("text/plain", entry.id);
+                                }}
                                 ondragend={() => { dragId = ""; dragOverCol = null; }}
                             >
                                 <label class="glean-kcard__select" title={t(i18n, "library.selectArticle")}>
