@@ -568,10 +568,10 @@
     }
 
     .glean-quote-card-font-btn--active {
-        background: color-mix(in srgb, var(--lv-brand) 12%, var(--b3-theme-surface));
-        color: var(--lv-brand);
+        background: color-mix(in srgb, var(--glean-color-action) 12%, var(--b3-theme-surface));
+        color: var(--glean-color-action);
         font-weight: var(--glean-weight-semibold);
-        border-color: color-mix(in srgb, var(--lv-brand) 28%, transparent);
+        border-color: color-mix(in srgb, var(--glean-color-action) 28%, transparent);
     }
 
     .glean-quote-card-themes {
@@ -604,11 +604,11 @@
     }
 
     .glean-quote-card-theme-btn--active {
-        background: color-mix(in srgb, var(--lv-brand) 12%, var(--b3-theme-surface));
-        color: var(--lv-brand);
+        background: color-mix(in srgb, var(--glean-color-action) 12%, var(--b3-theme-surface));
+        color: var(--glean-color-action);
         font-weight: var(--glean-weight-semibold);
-        border-color: var(--lv-brand);
-        box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--lv-brand) 40%, transparent);
+        border-color: var(--glean-color-action);
+        box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--glean-color-action) 40%, transparent);
     }
 
     .glean-quote-card-theme-preview {
@@ -631,8 +631,8 @@
         justify-content: center;
         overflow-y: auto;
         padding: var(--glean-space-3);
-        background: color-mix(in srgb, var(--b3-theme-background) 80%, transparent);
-        border-radius: var(--glean-radius-md);
+        background: color-mix(in srgb, var(--glean-app-background) 75%, var(--b3-theme-surface));
+        border-radius: var(--glean-radius-lg, 16px);
         border: 1px solid var(--glean-border-soft);
     }
 
@@ -640,7 +640,7 @@
         width: 100%;
         max-width: 520px;
         padding: 32px 28px;
-        border-radius: var(--glean-radius-14);
+        border-radius: 20px;
         box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.25);
         display: flex;
         flex-direction: column;
@@ -729,6 +729,7 @@
 
     .glean-quote-card-btn {
         min-height: 36px;
-        padding: 0 var(--glean-space-3);
+        padding: 0 var(--glean-space-3-5);
+        border-radius: var(--glean-radius-pill);
     }
 </style>

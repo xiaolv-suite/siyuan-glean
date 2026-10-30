@@ -431,5 +431,11 @@ test("列表行尾操作与看板选择框平滑微交互契约：默认低透�
     assert.match(roamingScss, /\.glean-roaming-card\s*\{[\s\S]*border:\s*1px solid var\(--glean-border-soft\);/);
     assert.match(roamingScss, /\.glean-roaming-tag\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
     assert.match(roamingScss, /\.glean-roaming-triage-btn\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
+
+    // 8. 金句分享卡片工作台舞台分层与按钮胶囊化
+    const quoteCardDialog = read("src/ui/QuoteCardDialog.svelte");
+    assert.match(quoteCardDialog, /\.glean-quote-card-stage\s*\{[\s\S]*border:\s*1px solid var\(--glean-border-soft\);/);
+    assert.match(quoteCardDialog, /\.glean-quote-card-btn\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
+    assert.match(quoteCardDialog, /\.glean-quote-card-theme-btn--active\s*\{[\s\S]*background:\s*color-mix\(in srgb, var\(--glean-color-action\)/);
 });
 
