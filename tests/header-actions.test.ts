@@ -468,5 +468,12 @@ test("列表行尾操作与看板选择框平滑微交互契约：默认低透�
     assert.match(aiBatchPanel, /\.glean-ai-batch__row\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-lg,\s*16px\);/);
     assert.match(snapshotGov, /\.glean-snapshot-governance\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-lg,\s*16px\);/);
     assert.match(styles, /\.glean-migrate__filter,[\s\S]*\.glean-migrate__batch-input\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
+
+    // 13. 情境选文面板柔和外壳与胶囊流
+    const contextPanel = read("src/ui/ContextSelectionPanel.svelte");
+    assert.match(contextPanel, /\.glean-context-selection\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-lg,\s*16px\);/);
+    assert.match(contextPanel, /\.glean-context-selection__item\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-lg,\s*16px\);/);
+    assert.match(contextPanel, /\.glean-context-selection__field select\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
+    assert.match(contextPanel, /\.glean-context-selection__open\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
 });
 
