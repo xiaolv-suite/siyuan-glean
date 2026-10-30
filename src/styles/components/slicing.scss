@@ -250,7 +250,16 @@
     color: var(--b3-theme-on-surface);
     opacity: 0.45;
     cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     transition: transform var(--glean-motion-fast) var(--glean-ease-out), opacity var(--glean-motion-fast) ease, color var(--glean-motion-fast) ease;
+
+    .glean-icon {
+        width: 13px;
+        height: 13px;
+        flex-shrink: 0;
+    }
 
     &:hover:not(:disabled) {
         transform: scale(1.15);

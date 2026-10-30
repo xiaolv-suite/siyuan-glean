@@ -9614,6 +9614,9 @@ mark.glean-search-highlight {
 .glean-icon--fav { color: #EF4444; }
 .glean-icon--flame { color: #F97316; }
 .glean-icon--bookmark { color: var(--glean-color-action); }
+.glean-icon--bolt { color: #EAB308; }
+.glean-icon--star { color: #F59E0B; }
+.glean-icon--clock { color: var(--b3-theme-on-surface); }
 
 .glean-meta-icon {
     display: inline-flex;
@@ -11208,6 +11211,19 @@ body.b3-theme-dark .glean-panel--mobile,
 .glean-drow__len--long,
 .glean-tier-badge--long {
     color: var(--glean-st-inbox);
+}
+
+.glean-tier-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-variant-numeric: tabular-nums;
+    font-size: var(--glean-text-caption);
+    line-height: 1;
+
+    .glean-icon {
+        flex-shrink: 0;
+    }
 }
 
 .glean-drow__ops {

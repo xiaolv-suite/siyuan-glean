@@ -134,10 +134,10 @@
                 <button type="button" class="glean-bb" disabled={busy} onclick={triggerSetAuthor}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanEdit" /></svg> <span>{t(i18n, "library.batchSetAuthor")}</span></button>
             {/if}
             {#if onBatchPriority}
-                <button type="button" class="glean-bb glean-bb--priority" disabled={busy} onclick={triggerSetPriority} title={t(i18n, "library.batchSetPriority")}>⚡ {t(i18n, "library.batchSetPriority")}</button>
+                <button type="button" class="glean-bb glean-bb--priority" disabled={busy} onclick={triggerSetPriority} title={t(i18n, "library.batchSetPriority")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanBolt" /></svg> <span>{t(i18n, "library.batchSetPriority")}</span></button>
             {/if}
             {#if onBatchRating}
-                <button type="button" class="glean-bb glean-bb--rating" disabled={busy} onclick={triggerSetRating} title={t(i18n, "library.batchSetRating")}>⭐ {t(i18n, "library.batchSetRating")}</button>
+                <button type="button" class="glean-bb glean-bb--rating" disabled={busy} onclick={triggerSetRating} title={t(i18n, "library.batchSetRating")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanStar" /></svg> <span>{t(i18n, "library.batchSetRating")}</span></button>
             {/if}
             {#if onPurifyWechat && hasWechatSelected}
                 <button type="button" class="glean-bb" disabled={busy} onclick={() => void onPurifyWechat?.()}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg> <span>{t(i18n, "wechat.batchPurify")}</span></button>

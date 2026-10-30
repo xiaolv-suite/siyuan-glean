@@ -150,7 +150,11 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
 <symbol id="iconGleanFlame" viewBox="0 0 32 32"><path d="M16 3c-1 3.5-3.5 6-6 8.5-2.2 2.2-4 5.2-4 8.5 0 5.5 4.5 9 10 9s10-3.5 10-9c0-4.5-2.5-8-6-10.5-1-1-2-2.5-2.5-4-.5 2-2 3.5-3.5 4-1-3.5.5-6.5 2-8z"/></symbol>
 <symbol id="iconGleanPlay" viewBox="0 0 32 32"><path d="M10 7l15 9-15 9z"/></symbol>
 <symbol id="iconGleanPause" viewBox="0 0 32 32"><path d="M9 7h4v18H9zm10 0h4v18h-4z"/></symbol>
-<symbol id="iconGleanStop" viewBox="0 0 32 32"><path d="M8 8h16v16H8z"/></symbol>`);
+<symbol id="iconGleanStop" viewBox="0 0 32 32"><path d="M8 8h16v16H8z"/></symbol>
+<symbol id="iconGleanBolt" viewBox="0 0 32 32"><path d="M18 3L6 17h8l-2 12 14-16h-9l3-10z"/></symbol>
+<symbol id="iconGleanStar" viewBox="0 0 32 32"><path d="M16 3.5l3.8 8.4 9.2 1-6.8 6.2 1.9 9.1L16 23.6l-8.1 4.6 1.9-9.1-6.8-6.2 9.2-1z"/></symbol>
+<symbol id="iconGleanStarOutline" viewBox="0 0 32 32"><path d="M16 3.5l3.8 8.4 9.2 1-6.8 6.2 1.9 9.1L16 23.6l-8.1 4.6 1.9-9.1-6.8-6.2 9.2-1z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/></symbol>
+<symbol id="iconGleanClock" viewBox="0 0 32 32"><circle cx="16" cy="16" r="12" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M16 9v7.5l5 3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>`);
 
         // 设置只在此处加载一次；面板/弹窗都读这个缓存
         this.settings = await loadSettings(this);

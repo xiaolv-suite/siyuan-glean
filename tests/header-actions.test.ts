@@ -861,5 +861,24 @@ test("列表行尾操作与看板选择框平滑微交互契约：默认低透�
     assert.match(roamingDrawerSvelte, /use href="#iconGleanArrowRight"[\s\S]*roaming\.mobileSwipeTips/);
     assert.match(roamingDrawerSvelte, /use href="#iconGleanSpark"[\s\S]*roaming\.keyboardTips/);
     assert.match(roamingScss, /\.glean-roaming-score\s*\{[\s\S]*font-variant-numeric:\s*tabular-nums;/);
+
+    // 58. 批量条优先级/评分按钮、星级微控与读库/漫游闪电/星标/时钟 SVG 矢量图标守门
+    assert.match(libraryBatchBarSvelte, /glean-bb--priority[\s\S]*use href="#iconGleanBolt"/);
+    assert.match(libraryBatchBarSvelte, /glean-bb--rating[\s\S]*use href="#iconGleanStar"/);
+
+    assert.match(clipRankControlsSvelte, /use href=\{\(rating \?\? 0\) >= star \? "#iconGleanStar" : "#iconGleanStarOutline"\}/);
+
+    assert.match(dockPanelSvelte, /use href="#iconGleanBolt"/);
+    assert.match(dockPanelSvelte, /use href="#iconGleanStar"/);
+
+    assert.match(roamingDrawerSvelte, /use href="#iconGleanBolt"/);
+    assert.match(roamingDrawerSvelte, /use href="#iconGleanStar"/);
+    assert.match(roamingDrawerSvelte, /use href="#iconGleanClock"/);
+
+    assert.match(styles, /\.glean-icon--bolt\s*\{\s*color:\s*#EAB308;/);
+    assert.match(styles, /\.glean-icon--star\s*\{\s*color:\s*#F59E0B;/);
+    assert.match(styles, /\.glean-icon--clock\s*\{\s*color:\s*var\(--b3-theme-on-surface\);/);
+    assert.match(styles, /\.glean-tier-badge\s*\{[\s\S]*font-variant-numeric:\s*tabular-nums;/);
+    assert.match(slicingScss, /\.glean-star-btn\s*\{[\s\S]*\.glean-icon\s*\{[\s\S]*width:\s*13px;/);
 });
 

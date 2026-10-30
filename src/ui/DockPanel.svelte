@@ -3510,10 +3510,10 @@ function metaLine(entry: Row): string {
                                     {/if}
                                     {#if entry.minutes > 0}<span class="glean-tier-badge glean-tier-badge--{resolveReadingTimeTier(entry.minutes)}">· {t(i18n, "panel.minutes", { n: entry.minutes })}</span>{/if}
                                     {#if entry.priority && entry.priority > 0}
-                                        <span class="glean-tier-badge" title={t(i18n, "library.keyboardPriority")}>⚡ P{entry.priority}</span>
+                                        <span class="glean-tier-badge" title={t(i18n, "library.keyboardPriority")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanBolt" /></svg> <span>P{entry.priority}</span></span>
                                     {/if}
                                     {#if entry.rating && entry.rating > 0}
-                                        <span class="glean-tier-badge" title={t(i18n, "library.keyboardRating")}>⭐ {entry.rating}★</span>
+                                        <span class="glean-tier-badge" title={t(i18n, "library.keyboardRating")}><svg class="glean-icon glean-icon--xs glean-icon--star" aria-hidden="true"><use href="#iconGleanStar" /></svg> <span>{entry.rating}★</span></span>
                                     {/if}
                                     {#if entry.favorite}
                                         <span class="glean-tier-badge glean-tier-badge--fav" title={t(i18n, "roaming.favoriteOnly")}><svg class="glean-icon glean-icon--xs glean-icon--fav" aria-hidden="true"><use href="#iconGleanHeart" /></svg></span>
@@ -3718,10 +3718,10 @@ function metaLine(entry: Row): string {
                                                 {/if}
                                                 <span class="glean-drow__len glean-drow__len--{resolveReadingTimeTier(entry.minutes)}" title={timeSource(entry)}>{lengthLabel(entry)}</span>
                                                 {#if entry.priority && entry.priority > 0}
-                                                    <span class="glean-tier-badge" title={t(i18n, "library.keyboardPriority")}>⚡ P{entry.priority}</span>
+                                                    <span class="glean-tier-badge" title={t(i18n, "library.keyboardPriority")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanBolt" /></svg> <span>P{entry.priority}</span></span>
                                                 {/if}
                                                 {#if entry.rating && entry.rating > 0}
-                                                    <span class="glean-tier-badge" title={t(i18n, "library.keyboardRating")}>⭐ {entry.rating}★</span>
+                                                    <span class="glean-tier-badge" title={t(i18n, "library.keyboardRating")}><svg class="glean-icon glean-icon--xs glean-icon--star" aria-hidden="true"><use href="#iconGleanStar" /></svg> <span>{entry.rating}★</span></span>
                                                 {/if}
                                                 {#if entry.favorite}
                                                     <span class="glean-tier-badge glean-tier-badge--fav" title={t(i18n, "roaming.favoriteOnly")}><svg class="glean-icon glean-icon--xs glean-icon--fav" aria-hidden="true"><use href="#iconGleanHeart" /></svg></span>
@@ -3920,10 +3920,10 @@ function metaLine(entry: Row): string {
                                     {/if}
                                     {#if entry.kind === "clip" && entry.readPoint && (entry.status === "reading" || entry.status === "later")}<span class="glean-read-point-badge" title={t(i18n, "reading.resumePoint")}><svg class="glean-icon glean-icon--xs glean-icon--bookmark" aria-hidden="true"><use href="#iconGleanBookmark" /></svg> <span>{t(i18n, "reading.resumePointShort")}</span></span>{/if}
                                     {#if entry.kind === "clip" && entry.priority && entry.priority > 0}
-                                        <span class="glean-tier-badge" title={t(i18n, "library.keyboardPriority")}>⚡ P{entry.priority}</span>
+                                        <span class="glean-tier-badge" title={t(i18n, "library.keyboardPriority")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanBolt" /></svg> <span>P{entry.priority}</span></span>
                                     {/if}
                                     {#if entry.kind === "clip" && entry.rating && entry.rating > 0}
-                                        <span class="glean-tier-badge" title={t(i18n, "library.keyboardRating")}>⭐ {entry.rating}★</span>
+                                        <span class="glean-tier-badge" title={t(i18n, "library.keyboardRating")}><svg class="glean-icon glean-icon--xs glean-icon--star" aria-hidden="true"><use href="#iconGleanStar" /></svg> <span>{entry.rating}★</span></span>
                                     {/if}
                                     {#if entry.kind === "clip" && entry.favorite}
                                         <span class="glean-tier-badge glean-tier-badge--fav" title={t(i18n, "roaming.favoriteOnly")}><svg class="glean-icon glean-icon--xs glean-icon--fav" aria-hidden="true"><use href="#iconGleanHeart" /></svg></span>

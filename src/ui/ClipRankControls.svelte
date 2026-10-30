@@ -52,7 +52,7 @@
                         void onRating(next);
                     }}
                 >
-                    {(rating ?? 0) >= star ? "★" : "☆"}
+                    <svg class="glean-icon glean-icon--xs" class:glean-icon--star={(rating ?? 0) >= star} aria-hidden="true"><use href={(rating ?? 0) >= star ? "#iconGleanStar" : "#iconGleanStarOutline"} /></svg>
                 </button>
             {/each}
         </div>

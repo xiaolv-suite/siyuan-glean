@@ -459,7 +459,7 @@
                 onclick={() => void changeBudget("short")}
                 title="{t(i18n, 'roaming.budgetShort')} (2)"
             >
-                ⚡ ≤5m
+                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanBolt" /></svg> <span>≤5m</span>
             </button>
             <button
                 type="button"
@@ -468,7 +468,7 @@
                 onclick={() => void changeBudget("medium")}
                 title="{t(i18n, 'roaming.budgetMedium')} (3)"
             >
-                ⏱️ 5-15m
+                <svg class="glean-icon glean-icon--xs glean-icon--clock" aria-hidden="true"><use href="#iconGleanClock" /></svg> <span>5-15m</span>
             </button>
             <button
                 type="button"
@@ -477,7 +477,7 @@
                 onclick={() => void changeBudget("long")}
                 title="{t(i18n, 'roaming.budgetLong')} (4)"
             >
-                📚 >15m
+                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanLocal" /></svg> <span>>15m</span>
             </button>
         </div>
 
@@ -528,13 +528,13 @@
                 <span class="glean-badge">{currentPick.item.site}</span>
             {/if}
             {#if (currentPick.item.minutes ?? 0) > 0}
-                <span class="glean-tier-badge">⏱️ 约 {currentPick.item.minutes} 分钟</span>
+                <span class="glean-tier-badge"><svg class="glean-icon glean-icon--xs glean-icon--clock" aria-hidden="true"><use href="#iconGleanClock" /></svg> <span>约 {currentPick.item.minutes} 分钟</span></span>
             {/if}
             {#if (currentPick.item.priority ?? 0) > 0}
-                <span class="glean-tier-badge">⚡ P{currentPick.item.priority}</span>
+                <span class="glean-tier-badge"><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanBolt" /></svg> <span>P{currentPick.item.priority}</span></span>
             {/if}
             {#if (currentPick.item.rating ?? 0) > 0}
-                <span class="glean-tier-badge">⭐ {currentPick.item.rating}★</span>
+                <span class="glean-tier-badge"><svg class="glean-icon glean-icon--xs glean-icon--star" aria-hidden="true"><use href="#iconGleanStar" /></svg> <span>{currentPick.item.rating}★</span></span>
             {/if}
             {#if currentPick.item.favorite}
                 <span class="glean-tier-badge glean-tier-badge--fav"><svg class="glean-icon glean-icon--xs glean-icon--fav" aria-hidden="true"><use href="#iconGleanHeart" /></svg> <span>{t(i18n, "roaming.favoriteAction")}</span></span>
@@ -628,7 +628,7 @@
                 onclick={() => void cycleCurrentPriority()}
                 title="{t(i18n, 'library.keyboardPriority')} (P)"
             >
-                ⚡ P{currentPick.item.priority || 0}
+                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanBolt" /></svg> <span>P{currentPick.item.priority || 0}</span>
             </button>
             <button
                 type="button"
@@ -637,7 +637,7 @@
                 onclick={() => void cycleCurrentRating()}
                 title="{t(i18n, 'library.keyboardRating')} (M)"
             >
-                ⭐ {currentPick.item.rating || 0}
+                <svg class="glean-icon glean-icon--xs glean-icon--star" aria-hidden="true"><use href="#iconGleanStar" /></svg> <span>{currentPick.item.rating || 0}★</span>
             </button>
             <button
                 type="button"
