@@ -29,6 +29,19 @@
     color: var(--glean-color-action);
 }
 
+.glean-roaming-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--glean-color-action);
+
+    .glean-icon {
+        width: 16px;
+        height: 16px;
+        fill: currentColor;
+    }
+}
+
 .glean-roaming-score {
     font-size: 13px;
     font-weight: var(--glean-weight-semibold);
@@ -196,8 +209,8 @@
 }
 
 .glean-roaming-tag--ai {
-    color: var(--b3-theme-primary);
-    background: color-mix(in srgb, var(--b3-theme-primary) 10%, transparent);
+    color: var(--glean-color-action);
+    background: color-mix(in srgb, var(--glean-color-action) 10%, transparent);
 }
 
 .glean-roaming-actions {
@@ -223,6 +236,10 @@
     color: var(--b3-theme-on-surface);
     opacity: 0.88;
     border: 1px solid var(--glean-border-soft);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--glean-space-1, 4px);
+    justify-content: center;
 
     &:hover {
         opacity: 1;

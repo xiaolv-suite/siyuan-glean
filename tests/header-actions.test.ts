@@ -757,5 +757,25 @@ test("列表行尾操作与看板选择框平滑微交互契约：默认低透�
     assert.match(dockPanelSvelte, /use href="#iconGleanNews"[\s\S]*view\.modeList/);
     assert.match(dockPanelSvelte, /use href="#iconGleanCard"[\s\S]*view\.modeKanban/);
     assert.match(styles, /\.glean-seg__btn\s*\{[\s\S]*&:focus-visible\s*\{[\s\S]*outline:\s*2px solid var\(--glean-color-action\);/);
+
+    // 53. 今日拾遗与漫游阅读抽屉（ResurfaceView 与 RoamingDrawerDialog）SVG 矢量图标替代、全圆角胶囊与无障碍契约守门
+    const resurfaceViewSvelte = read("src/ui/ResurfaceView.svelte");
+    const roamingDrawerSvelte = read("src/ui/RoamingDrawerDialog.svelte");
+    const roamingScssStyles = read("src/styles/components/roaming.scss");
+    assert.match(resurfaceViewSvelte, /use href="#iconGleanRefresh"/);
+    assert.match(resurfaceViewSvelte, /use href="#iconGleanSearch"/);
+    assert.match(resurfaceViewSvelte, /use href="#iconGleanCopy"/);
+    assert.match(resurfaceViewSvelte, /use href="#iconGleanNews"/);
+    assert.match(resurfaceViewSvelte, /use href="#iconGleanArchive"/);
+    assert.match(resurfaceViewSvelte, /use href="#iconGleanCamera"/);
+    assert.match(roamingDrawerSvelte, /use href="#iconGleanRefresh"/);
+    assert.match(roamingDrawerSvelte, /use href="#iconGleanCopy"/);
+    assert.match(roamingDrawerSvelte, /use href="#iconGleanNews"/);
+    assert.match(roamingDrawerSvelte, /use href="#iconGleanArchive"/);
+    assert.match(roamingDrawerSvelte, /use href="#iconGleanLocal"/);
+    assert.match(roamingDrawerSvelte, /use href="#iconGleanCard"/);
+    assert.match(roamingDrawerSvelte, /use href="#iconGleanCamera"/);
+    assert.match(roamingDrawerSvelte, /use href="#iconGleanInbox"/);
+    assert.match(roamingScssStyles, /\.glean-roaming-tag--ai\s*\{[\s\S]*color:\s*var\(--glean-color-action\);/);
 });
 

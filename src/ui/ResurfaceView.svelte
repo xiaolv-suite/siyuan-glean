@@ -905,12 +905,14 @@ function focusCard(id: string): void {
                 </div>
                 {#if onStartRoaming}
                     <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm" title={t(i18n, "roaming.buttonHint")} onclick={onStartRoaming}>
-                        🎲 {t(i18n, "roaming.button")}
+                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanRefresh" /></svg>
+                        <span>{t(i18n, "roaming.button")}</span>
                     </button>
                 {/if}
                 {#if onQuickSearch}
                     <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm" title="{t(i18n, 'action.search')} (/)" onclick={onQuickSearch}>
-                        🔍 {t(i18n, "action.search")}
+                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSearch" /></svg>
+                        <span>{t(i18n, "action.search")}</span>
                     </button>
                 {/if}
                 <div class="glean-surf-stepper" role="group" aria-label={t(i18n, "resurface.weeklyStepper")}>
@@ -1091,22 +1093,22 @@ function focusCard(id: string): void {
                             <svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanPin" /></svg>{t(i18n, isPinnedToday(pick) ? "resurface.unpinToday" : "resurface.pinToday")}
                         </button>
                         <button class="glean-surf-act" title={t(i18n, "action.copyBlockRef")} aria-label={t(i18n, "action.copyBlockRef")} onclick={() => void copyPickBlockRef(pick.item)}>
-                            🔗 {t(i18n, "action.copyBlockRef")}
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg> <span>{t(i18n, "action.copyBlockRef")}</span>
                         </button>
                         <button class="glean-surf-act" title={t(i18n, "citation.copyGBT") + " (C)"} aria-label={t(i18n, "citation.copyGBT")} onclick={() => void copyPickCitation(pick, "gbt")}>
-                            📄 {t(i18n, "citation.copyGBT")}
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg> <span>{t(i18n, "citation.copyGBT")}</span>
                         </button>
                         <button class="glean-surf-act" title={t(i18n, "citation.copyBibTeX") + " (Shift+C)"} aria-label={t(i18n, "citation.copyBibTeX")} onclick={() => void copyPickCitation(pick, "bibtex")}>
-                            📚 BibTeX
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArchive" /></svg> <span>BibTeX</span>
                         </button>
                         <button class="glean-surf-act" title={t(i18n, "citation.copyAPA")} aria-label={t(i18n, "citation.copyAPA")} onclick={() => void copyPickCitation(pick, "apa")}>
-                            🎓 APA
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanLocal" /></svg> <span>APA</span>
                         </button>
                         <button class="glean-surf-act" title={t(i18n, "citation.copyMLA")} aria-label={t(i18n, "citation.copyMLA")} onclick={() => void copyPickCitation(pick, "mla")}>
-                            📖 MLA
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg> <span>MLA</span>
                         </button>
                         <button class="glean-surf-act" title={(clip?.snapshot ? t(i18n, "snapshot.open") : t(i18n, "snapshot.take")) + " (S)"} aria-label={clip?.snapshot ? t(i18n, "snapshot.open") : t(i18n, "snapshot.take")} onclick={() => void openOrTakePickSnapshot(pick)}>
-                            💾 {clip?.snapshot ? t(i18n, "snapshot.open") : t(i18n, "snapshot.take")}
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCamera" /></svg> <span>{clip?.snapshot ? t(i18n, "snapshot.open") : t(i18n, "snapshot.take")}</span>
                         </button>
                         {#if hasSourceAction(pick.item.contentType, pick.item.url)}
                             <button class="glean-surf-act" aria-busy={actingId === pick.item.id} disabled={actingId === pick.item.id} onclick={() => openSource(pick)}>

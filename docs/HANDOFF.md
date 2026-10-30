@@ -65,7 +65,8 @@
        * 金句制卡与读库批量操作栏（`QuoteCardDialog` 与 `LibraryBatchBar`）完成全量加固：彻底消除结构性 Emoji（替换为项目统一 SVG 矢量图标 `#iconGleanSpark`、`#iconGleanDownload`、`#iconGleanEdit`、`#iconGleanCopy`、`#iconGleanNews`、`#iconGleanArchive`、`#iconGleanLocal`、`#iconGleanCard` 与 `#iconGleanPlus`），按钮规范为全圆角胶囊药丸与 Flex 垂直居中对齐；
        * 摘录墙/工作台预览/统计回顾/阅读上下文（`HighlightView`、`WorkbenchPreview`、`StatsView`、`ReadingContext`）完成全量加固：彻底消除结构性 Emoji（替换为项目统一 SVG 矢量图标 `#iconGleanRefresh`、`#iconGleanClose`、`#iconGleanCopy`、`#iconGleanNews`、`#iconGleanArchive`、`#iconGleanLocal`、`#iconGleanCard`、`#iconGleanSpark`、`#iconGleanEdit`、`#iconGleanDownload` 与 `#iconGleanCamera`），摘录多选计数补齐等宽排版（`font-variant-numeric: tabular-nums`）；
        * 读库主工作台（`DockPanel` 与 `index.scss`）完成全量加固：彻底消除结构性 Emoji（替换为项目统一 SVG 矢量图标 `#iconGleanRefresh`、`#iconGleanNews`、`#iconGleanCard`、`#iconGleanCopy`、`#iconGleanArchive` 与 `#iconGleanLocal`），分段模式切换按钮（`.glean-seg__btn`）消除 outline: none 反模式，补齐 2px 松青获焦光圈与 Flex 垂直居中；
-  3. **门禁全通**：全套测试通过（**1750 / 1750 PASS**，`tests/header-actions.test.ts` 补充守门断言 28–52，`tests/quote-card.test.ts` 与 `tests/margin-notes.test.ts` 补充 UI-UX-PRO-MAX 契约测试）；`pnpm check` 0 错 0 警告；`pnpm build` 干净构建；`pnpm check:release` 14 项全绿通过。
+       * 今日拾遗与漫游阅读抽屉（`ResurfaceView`、`RoamingDrawerDialog` 与 `roaming.scss`）完成全量加固：彻底消除结构性 Emoji（替换为项目统一 SVG 矢量图标 `#iconGleanRefresh`、`#iconGleanSearch`、`#iconGleanCopy`、`#iconGleanNews`、`#iconGleanArchive`、`#iconGleanLocal`、`#iconGleanCard`、`#iconGleanCamera`、`#iconGleanInbox` 与 `#iconGleanArrowLeft`），漫游徽标与 AI 标签对齐松青操作色标准（`--glean-color-action`）；
+  3. **门禁全通**：全套测试通过（**1750 / 1750 PASS**，`tests/header-actions.test.ts` 补充守门断言 28–53，`tests/quote-card.test.ts` 与 `tests/margin-notes.test.ts` 补充 UI-UX-PRO-MAX 契约测试）；`pnpm check` 0 错 0 警告；`pnpm build` 干净构建；`pnpm check:release` 14 项全绿通过。
 - 下一步：按当前执行板顺序推进下一个任务（如 T-3367 批量选择范围与底部操作在更多场景的走查，或按作者点单继续）。版本保持 1.4.0，等待解封通知后统一处理。
 
 ## 历史交接（2026-10-29 本地发版轮：v1.4.0 次版本发布、五处版本同步、双语 README 全面重构、全门禁验证与本地打包）

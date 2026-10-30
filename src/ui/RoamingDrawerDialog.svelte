@@ -430,7 +430,7 @@
 <div class="glean-roaming-dialog">
     <div class="glean-roaming-banner">
         <div class="glean-roaming-badge">
-            <span class="glean-roaming-icon" aria-hidden="true">🎲</span>
+            <span class="glean-roaming-icon" aria-hidden="true"><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanRefresh" /></svg></span>
             <span>{currentPick.reason}</span>
         </div>
         <div class="glean-roaming-score" title="综合匹配得分">
@@ -582,7 +582,7 @@
                 onclick={() => void copyCurrentBlockRef()}
                 title="{t(i18n, 'action.copyBlockRef')} (Y)"
             >
-                🔗 {t(i18n, "action.copyBlockRef")}
+                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg> <span>{t(i18n, "action.copyBlockRef")}</span>
             </button>
             <button
                 type="button"
@@ -591,7 +591,7 @@
                 onclick={() => void copyCurrentCitation("gbt")}
                 title="{t(i18n, 'citation.copyGBT')} (C)"
             >
-                📄 {t(i18n, "citation.copyGBT")}
+                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg> <span>{t(i18n, "citation.copyGBT")}</span>
             </button>
             <button
                 type="button"
@@ -600,7 +600,7 @@
                 onclick={() => void copyCurrentCitation("bibtex")}
                 title="{t(i18n, 'citation.copyBibTeX')} (Shift+C)"
             >
-                📚 BibTeX
+                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArchive" /></svg> <span>BibTeX</span>
             </button>
             <button
                 type="button"
@@ -609,7 +609,7 @@
                 onclick={() => void copyCurrentCitation("apa")}
                 title={t(i18n, "citation.copyAPA")}
             >
-                🎓 APA
+                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanLocal" /></svg> <span>APA</span>
             </button>
             <button
                 type="button"
@@ -618,7 +618,7 @@
                 onclick={() => void copyCurrentCitation("mla")}
                 title={t(i18n, "citation.copyMLA")}
             >
-                📖 MLA
+                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg> <span>MLA</span>
             </button>
             <button
                 type="button"
@@ -645,7 +645,7 @@
                 onclick={() => void openOrTakeCurrentSnapshot()}
                 title="{(currentPick.item.snapshot ? t(i18n, 'snapshot.open') : t(i18n, 'snapshot.take'))} (S)"
             >
-                💾 {currentPick.item.snapshot ? t(i18n, "snapshot.open") : t(i18n, "snapshot.take")}
+                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCamera" /></svg> <span>{currentPick.item.snapshot ? t(i18n, "snapshot.open") : t(i18n, "snapshot.take")}</span>
             </button>
             <button
                 type="button"
@@ -654,7 +654,7 @@
                 onclick={() => void markCurrentLater()}
                 title="稍后读 (A)"
             >
-                📥 {t(i18n, "queue.later")}
+                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanInbox" /></svg> <span>{t(i18n, "queue.later")}</span>
             </button>
             <button
                 type="button"
@@ -663,20 +663,20 @@
                 onclick={() => void markCurrentArchive()}
                 title="归档 (E)"
             >
-                📦 {t(i18n, "queue.archived")}
+                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArchive" /></svg> <span>{t(i18n, "queue.archived")}</span>
             </button>
         </div>
         <div class="glean-roaming-nav">
             {#if canPrev}
                 <button type="button" class="glean-btn glean-btn--ghost glean-roaming-prev-btn" onclick={prevPick} title={t(i18n, "roaming.prevBlindBox")}>
-                    ⏮️ {t(i18n, "roaming.prevBlindBox")}
+                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArrowLeft" /></svg> <span>{t(i18n, "roaming.prevBlindBox")}</span>
                 </button>
             {/if}
             <button type="button" class="glean-btn glean-btn--ghost glean-roaming-next-btn" disabled={loading} onclick={() => void nextPick()}>
-                🎲 {t(i18n, "roaming.nextBlindBox")}
+                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanRefresh" /></svg> <span>{t(i18n, "roaming.nextBlindBox")}</span>
             </button>
             <button type="button" class="glean-btn glean-btn--pri glean-roaming-read-btn" onclick={startRead}>
-                🎯 {t(i18n, "roaming.startReadNow")}
+                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg> <span>{t(i18n, "roaming.startReadNow")}</span>
             </button>
         </div>
     </div>
