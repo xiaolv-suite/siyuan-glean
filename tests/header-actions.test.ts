@@ -419,5 +419,11 @@ test("列表行尾操作与看板选择框平滑微交互契约：默认低透�
     assert.match(statsScss, /\.glean-stats__trend-bar[\s\S]*&::after\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill/);
     assert.match(styles, /\.glean-action-popover__body\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-lg/);
     assert.match(styles, /\.glean-action-popover__body \.glean-action-popover__field :where\(\.b3-select, input\)\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
+
+    // 6. 摘录墙搜索过滤、下拉与操作全圆角胶囊化
+    const highlightScss = read("src/styles/components/highlights.scss");
+    assert.match(highlightScss, /\.glean-highlights button,[\s\S]*\.glean-highlights select,[\s\S]*\.glean-highlights input\[type="search"\]\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
+    assert.match(highlightScss, /\.glean-highlights__tools--selection\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
+    assert.match(highlightScss, /\.glean-highlights__item,[\s\S]*\.glean-highlights__preview\s*\{[\s\S]*border:\s*1px solid var\(--glean-border-soft\);/);
 });
 

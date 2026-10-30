@@ -1050,7 +1050,8 @@ function focusHighlightRow(id: string): void {
     .glean-highlights select,
     .glean-highlights button {
         min-height: 36px;
-        border-radius: 10px;
+        border-radius: var(--glean-radius-pill);
+        padding-inline: 12px;
         font-size: 13px;
         box-shadow: none;
     }
@@ -1068,8 +1069,8 @@ function focusHighlightRow(id: string): void {
     }
 
     .glean-highlights__tools--selection {
-        padding: 12px 16px;
-        border-radius: 12px;
+        padding: 8px 16px;
+        border-radius: var(--glean-radius-pill);
         background: var(--glean-primary-soft);
         box-shadow: none;
     }
