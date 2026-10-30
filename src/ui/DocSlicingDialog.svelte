@@ -85,7 +85,8 @@
 
     {#if outline.length === 0}
         <div class="glean-slicing-hint-empty">
-            💡 {t(i18n, "docSlicing.emptyOutline")}
+            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg>
+            <span>{t(i18n, "docSlicing.emptyOutline")}</span>
         </div>
     {/if}
 
@@ -110,7 +111,8 @@
                 {#if slice.startBlockId && onJumpToBlock}
                     <div class="glean-slicing-card__ops">
                         <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm" onclick={() => handleJump(slice)}>
-                            🔍 {t(i18n, "docSlicing.previewBlock")}
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSearch" /></svg>
+                            <span>{t(i18n, "docSlicing.previewBlock")}</span>
                         </button>
                     </div>
                 {/if}

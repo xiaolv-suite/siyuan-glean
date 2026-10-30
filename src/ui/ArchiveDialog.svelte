@@ -107,6 +107,7 @@
 
     function handleWindowKeydown(e: KeyboardEvent): void {
         if (e.isComposing || e.keyCode === 229) return;
+        if (e.repeat) return;
         if (e.key === "Escape") {
             if (pending) return;
             e.preventDefault();
@@ -130,14 +131,14 @@
         {/if}
     </div>
     <button class="glean-archive-dlg__opt" disabled={pending || purgeConfirmOpen} onclick={() => void keepInPlace()}>
-        <span class="glean-archive-dlg__icon" aria-hidden="true">⤓</span>
+        <span class="glean-archive-dlg__icon" aria-hidden="true"><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanArrowDown" /></svg></span>
         <span class="glean-archive-dlg__body">
             <span class="glean-archive-dlg__name">{t(i18n, "archive.inPlace")}</span>
             <span class="glean-archive-dlg__desc">{t(i18n, "archive.inPlaceHint")}</span>
         </span>
     </button>
     <button class="glean-archive-dlg__opt" disabled={pending || purgeConfirmOpen} onclick={() => void moveToArchive()}>
-        <span class="glean-archive-dlg__icon" aria-hidden="true">📁</span>
+        <span class="glean-archive-dlg__icon" aria-hidden="true"><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanArchive" /></svg></span>
         <span class="glean-archive-dlg__body">
             <span class="glean-archive-dlg__name">{t(i18n, "archive.moveToHost")}</span>
             <span class="glean-archive-dlg__desc">
@@ -147,7 +148,7 @@
         </span>
     </button>
     <button class="glean-archive-dlg__opt" disabled={pending || purgeConfirmOpen} onclick={() => void moveToRecycle()}>
-        <span class="glean-archive-dlg__icon" aria-hidden="true">🗑</span>
+        <span class="glean-archive-dlg__icon" aria-hidden="true"><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanClose" /></svg></span>
         <span class="glean-archive-dlg__body">
             <span class="glean-archive-dlg__name">{t(i18n, "archive.recycle")}</span>
             <span class="glean-archive-dlg__desc">{t(i18n, "archive.recycleHint")}</span>
@@ -225,6 +226,11 @@
         padding: var(--glean-space-1-5) var(--glean-space-3-5);
     }
 
+    .glean-confirm__actions .glean-btn:focus-visible {
+        outline: 2px solid var(--glean-color-action);
+        outline-offset: 2px;
+    }
+
     .glean-btn--danger {
         border: 1px solid color-mix(in srgb, var(--b3-theme-error) 62%, var(--glean-border-soft));
         background: var(--b3-theme-error);
@@ -233,6 +239,27 @@
 
     .glean-btn--danger:hover:not(:disabled) {
         filter: brightness(0.94);
+    }
+
+    .glean-btn--danger:focus-visible {
+        outline: 2px solid var(--b3-theme-error) !important;
+        outline-offset: 2px;
+    }
+
+    @media (forced-colors: active) {
+        .glean-confirm {
+            border: 1px solid CanvasText;
+        }
+        .glean-btn--danger {
+            border: 1px solid Highlight;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .glean-confirm__actions .glean-btn {
+            transition: var(--glean-motion-none) !important;
+            transform: none !important;
+        }
     }
 
     @media (max-width: 560px) {

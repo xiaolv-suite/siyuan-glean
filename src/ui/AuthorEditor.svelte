@@ -267,9 +267,21 @@
     .glean-author-editor__status-dot { width: 7px; height: 7px; flex: 0 0 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 4px color-mix(in srgb, currentColor 12%, transparent); animation: glean-author-pulse 1.4s ease-in-out infinite; }
     .glean-author-editor :global(button):focus-visible, .glean-author-editor input:focus-visible { outline: 2px solid var(--glean-color-action); outline-offset: 2px; }
     @keyframes glean-author-pulse { 50% { opacity: .45; transform: scale(.82); } }
-    @media (prefers-reduced-motion: reduce) { .glean-author-editor__status-dot { animation: none; } }
+    @media (forced-colors: active) {
+        .glean-author-editor__form { border: 1px solid CanvasText; }
+        .glean-author-editor__suggestion { border: 1px solid CanvasText; }
+        .glean-author-editor__badge { border: 1px solid Highlight; color: Highlight; }
+        .glean-author-editor__status--success,
+        .glean-author-editor__status--error { border: 1px solid Highlight; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .glean-author-editor__status-dot { animation: none !important; }
+        .glean-author-editor__form input { transition: var(--glean-motion-none) !important; }
+        .glean-author-editor__actions .glean-btn { transition: var(--glean-motion-none) !important; transform: none !important; }
+    }
     @media (max-width: 560px) {
         .glean-author-editor__form { padding: var(--glean-space-3); }
-        .glean-author-editor__actions :global(button) { min-height: 44px; }
+        .glean-author-editor__form input { min-height: 44px; }
+        .glean-author-editor__actions :global(button) { min-height: 44px; flex: 1 1 120px; }
     }
 </style>

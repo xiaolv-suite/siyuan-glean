@@ -680,5 +680,31 @@ test("列表行尾操作与看板选择框平滑微交互契约：默认低透�
     assert.match(snapshotSvelte, /\.glean-snapshot-governance :is\(button, \.glean-btn\):focus-visible\s*\{[\s\S]*outline:\s*2px solid var\(--glean-color-action\);/);
     assert.match(snapshotSvelte, /@media\s*\(max-width:\s*560px\)\s*\{[\s\S]*\.glean-snapshot-governance__actions \.glean-btn\s*\{[\s\S]*min-height:\s*44px;/);
     assert.match(flashcardRecoverySvelte, /\.glean-flashcard-recovery__id\s*\{[\s\S]*font-variant-numeric:\s*tabular-nums;/);
+
+    // 47. 归档与恢复对话框（ArchiveDialog 与 RestoreDialog）SVG 矢量图标替代、键盘防抖与高对比度无障碍守门
+    const archiveSvelte = read("src/ui/ArchiveDialog.svelte");
+    const restoreSvelte = read("src/ui/RestoreDialog.svelte");
+    assert.match(archiveSvelte, /use href="#iconGleanArrowDown"/);
+    assert.match(archiveSvelte, /use href="#iconGleanArchive"/);
+    assert.match(archiveSvelte, /use href="#iconGleanClose"/);
+    assert.match(archiveSvelte, /if \(e\.repeat\) return;/);
+    assert.match(archiveSvelte, /@media\s*\(forced-colors:\s*active\)\s*\{[\s\S]*\.glean-confirm\s*\{[\s\S]*border:\s*1px solid CanvasText;/);
+    assert.match(restoreSvelte, /use href="#iconGleanArrowUp"/);
+    assert.match(restoreSvelte, /use href="#iconGleanExternal"/);
+    assert.match(restoreSvelte, /if \(e\.repeat\) return;/);
+    assert.match(dialogsScss, /\.glean-archive-dlg__icon\s*\{[\s\S]*\.glean-icon\s*\{[\s\S]*width:\s*16px;[\s\S]*height:\s*16px;/);
+
+    // 48. 切片向导/引述墙/作者编辑器（DocSlicingDialog, QuotesView, AuthorEditor）SVG 矢量图标、等宽排版与触控热区守门
+    const docSlicingSvelte = read("src/ui/DocSlicingDialog.svelte");
+    const quotesViewSvelte = read("src/ui/QuotesView.svelte");
+    const authorEditorSvelte = read("src/ui/AuthorEditor.svelte");
+    assert.match(docSlicingSvelte, /use href="#iconGleanSpark"/);
+    assert.match(docSlicingSvelte, /use href="#iconGleanSearch"/);
+    assert.match(quotesViewSvelte, /use href="#iconGleanNews"/);
+    assert.match(quotesViewSvelte, /use href="#iconGleanArrowLeft"/);
+    assert.match(quotesViewSvelte, /use href="#iconGleanCopy"/);
+    assert.match(quotesViewSvelte, /\.glean-quotes__count\s*\{[\s\S]*font-variant-numeric:\s*tabular-nums;/);
+    assert.match(authorEditorSvelte, /@media\s*\(max-width:\s*560px\)\s*\{[\s\S]*\.glean-author-editor__form input\s*\{[\s\S]*min-height:\s*44px;/);
+    assert.match(authorEditorSvelte, /@media\s*\(forced-colors:\s*active\)\s*\{[\s\S]*\.glean-author-editor__form\s*\{[\s\S]*border:\s*1px solid CanvasText;/);
 });
 

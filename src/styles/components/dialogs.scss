@@ -398,6 +398,12 @@
     background: color-mix(in srgb, var(--glean-color-action) 10%, var(--b3-theme-surface));
     color: var(--glean-color-action);
     margin-top: 2px;
+
+    .glean-icon {
+        width: 16px;
+        height: 16px;
+        fill: currentColor;
+    }
 }
 
 .glean-archive-dlg__body {

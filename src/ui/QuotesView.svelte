@@ -188,7 +188,7 @@ async function doExport(): Promise<void> {
         </div>
     {:else if entries.length === 0}
         <div class="glean-empty">
-            <div class="glean-empty__art">❝</div>
+            <div class="glean-empty__art"><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanNews" /></svg></div>
             <div class="glean-empty__title">{t(i18n, "quotes.empty")}</div>
             <div class="glean-empty__hint">{t(i18n, "quotes.emptyHint")}</div>
         </div>
@@ -256,7 +256,8 @@ async function doExport(): Promise<void> {
                     <div class="glean-quote__text">{quote.text.slice(0, 160)}{quote.text.length > 160 ? "…" : ""}</div>
                     <div class="glean-quote__meta">
                         <button class="glean-quote__src" title={quote.title || quote.rootId} onclick={() => openRoot(quote.rootId)}>
-                            ↩ {quote.title || t(i18n, "panel.untitled")}{quote.site ? ` · ${quote.site}` : ""}
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArrowLeft" /></svg>
+                            <span>{quote.title || t(i18n, "panel.untitled")}{quote.site ? ` · ${quote.site}` : ""}</span>
                         </button>
                         <!-- T-1901 延伸：颜色循环切换 -->
                         <button
@@ -271,7 +272,7 @@ async function doExport(): Promise<void> {
                             class="glean-quote__src"
                             title={t(i18n, "highlight.copyShare")}
                             onclick={() => void copyQuoteShare(quote)}
-                        >⧉ {t(i18n, "highlight.copyShare")}</button>
+                        ><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg> <span>{t(i18n, "highlight.copyShare")}</span></button>
                     </div>
                 </div>
             {:else}
@@ -300,5 +301,20 @@ async function doExport(): Promise<void> {
 <style>
     .glean-quotes-filter-empty {
         padding: var(--glean-space-3);
+    }
+    .glean-quotes__count {
+        font-variant-numeric: tabular-nums;
+    }
+    .glean-quotes__truncated {
+        font-variant-numeric: tabular-nums;
+    }
+    .glean-quote__src {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .glean-quote__src:focus-visible {
+        outline: 2px solid var(--glean-color-action);
+        outline-offset: 2px;
     }
 </style>

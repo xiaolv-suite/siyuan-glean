@@ -101,6 +101,9 @@
     padding: var(--glean-space-2, 8px) var(--glean-space-3, 12px);
     border-radius: var(--glean-radius-md, 8px);
     border: 1px dashed var(--glean-border-soft, var(--b3-border-color));
+    display: flex;
+    align-items: center;
+    gap: var(--glean-space-1-5, 6px);
 }
 
 .glean-slicing-list {
@@ -181,6 +184,9 @@
 .glean-slicing-card__ops .glean-btn {
     border-radius: var(--glean-radius-pill);
     padding: var(--glean-space-1) var(--glean-space-2-5);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--glean-space-1, 4px);
 }
 
 .glean-slicing-footer {
