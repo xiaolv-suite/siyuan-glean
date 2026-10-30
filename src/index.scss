@@ -6947,8 +6947,8 @@ mark.glean-search-highlight {
     gap: var(--glean-space-2);
     min-height: 32px;
     border: 1px solid var(--glean-border-soft);
-    padding: var(--glean-space-1-75) var(--glean-space-0);
-    border-radius: var(--glean-radius-sm);
+    padding: var(--glean-space-1-75) var(--glean-space-2);
+    border-radius: var(--glean-radius-pill);
     font-size: var(--glean-text-xs-plus);
     font-weight: var(--glean-weight-semibold);
     line-height: var(--glean-leading-snug);
@@ -7473,8 +7473,8 @@ mark.glean-search-highlight {
 .glean-reading-context__back {
     flex: 0 0 auto;
     border: 1px solid var(--glean-border-soft);
-    border-radius: var(--glean-radius-sm);
-    padding: var(--glean-space-1) var(--glean-space-1-75);
+    border-radius: var(--glean-radius-pill);
+    padding: var(--glean-space-1) var(--glean-space-2-5);
     background: var(--glean-inset-surface);
     color: var(--b3-theme-on-surface);
     cursor: pointer;
@@ -7513,9 +7513,9 @@ mark.glean-search-highlight {
     display: inline-flex;
     align-items: center;
     min-height: 28px;
-    padding: var(--glean-space-1) var(--glean-space-1-75);
+    padding: var(--glean-space-1) var(--glean-space-2-5);
     border: 1px solid var(--glean-border-soft);
-    border-radius: var(--glean-radius-sm);
+    border-radius: var(--glean-radius-pill);
     background: var(--glean-inset-surface);
     color: var(--b3-theme-on-surface);
     cursor: pointer;
