@@ -1404,7 +1404,7 @@ body.b3-theme-dark {
     padding: var(--glean-space-2-75) var(--glean-space-3);
     border-radius: var(--glean-card-radius);
     background: var(--b3-theme-surface);
-    border: 1px solid var(--b3-border-color);
+    border: 1px solid var(--glean-border-soft);
     cursor: default;
     position: relative;
     transition: transform var(--glean-duration-normal) var(--glean-ease-spring), box-shadow var(--glean-duration-normal), border-color var(--glean-duration-normal);
@@ -4753,7 +4753,7 @@ mark.glean-search-highlight {
     border: none;
     font-size: var(--glean-text-xs);
     padding: var(--glean-space-1-25) var(--glean-space-2-5);
-    border-radius: var(--glean-radius-sm);
+    border-radius: var(--glean-radius-pill);
     cursor: pointer;
     background: color-mix(in srgb, var(--b3-theme-on-surface) 10%, transparent);
     color: var(--b3-theme-on-background);
