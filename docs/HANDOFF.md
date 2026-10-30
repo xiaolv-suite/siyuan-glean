@@ -32,7 +32,8 @@
      - **弹窗与维护面板柔和外壳与胶囊体系贯通**：`FormattingDialog`（排版整理）、`BackupPanel`（备份恢复）、`AiBatchPanel`（AI批处理）、`SnapshotGovernance`（快照治理）、`AiTagMergePanel`（AI标签合并）与 `MigrateDialog`（存量迁移）完成全量升级：头部横幅、候选组与数据行统一升级为 `16px` 大圆角柔和外壳，状态徽章、输入选择框、筛选下拉与操作按钮全量升级为全圆角胶囊；
      - **情境选文面板柔和外壳与胶囊流**：`ContextSelectionPanel`（情境选文）升级为 `16px` 大圆角微混底色外壳，选文卡片（`.glean-context-selection__item`）升级为 `16px` 大圆角卡片，时间预算下拉、主题标签下拉、理由标签（`.glean-chip`）与打开阅读按钮全量采用全圆角胶囊；
      - **归档与恢复对话框选项外壳与胶囊流**：`ArchiveDialog` 与 `RestoreDialog` 选项卡片（`.glean-archive-dlg__opt`）升级为 `16px` 大圆角卡片，图标（`.glean-archive-dlg__icon`）与常驻徽章升级为全圆角胶囊药丸，彻底删除触发按钮（`.glean-archive-dlg__purge`）升级为悬浮危险胶囊，二次确认面板升级为 `16px` 柔和外壳及全圆角胶囊操作按钮；
-  3. **门禁全通**：全套测试通过（**1749 / 1749 PASS**，新增微交互与胶囊契约守护测试）；`pnpm check` 0 错 0 警告；`pnpm build` 1.49s 干净构建；`pnpm check:release` 14 项全绿通过。
+     - **云端收集箱迁入动作与消除按钮胶囊化**：`InboxSection`（收集箱）条目迁入按钮（`.glean-inbox__ops .glean-cap-btn`）升级为全圆角胶囊与松青微混底色，消除按钮（`.glean-inbox__dismiss`）升级为全圆角药丸胶囊；
+  3. **门禁全通**：全套测试通过（**1749 / 1749 PASS**，新增微交互与胶囊契约守护测试）；`pnpm check` 0 错 0 警告；`pnpm build` 3.88s 干净构建；`pnpm check:release` 14 项全绿通过。
 - 下一步：按当前执行板顺序推进下一个任务（如 T-3367 批量选择范围与底部操作在更多场景的走查，或按作者点单继续）。版本保持 1.4.0，等待解封通知后统一处理。
 
 ## 历史交接（2026-10-29 本地发版轮：v1.4.0 次版本发布、五处版本同步、双语 README 全面重构、全门禁验证与本地打包）

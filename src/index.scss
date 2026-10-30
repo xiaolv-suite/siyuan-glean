@@ -7345,7 +7345,7 @@ mark.glean-search-highlight {
     width: 22px;
     height: 22px;
     border: none;
-    border-radius: var(--glean-radius-6);
+    border-radius: var(--glean-radius-pill);
     background: transparent;
     color: var(--b3-theme-on-surface);
     cursor: pointer;
@@ -11071,19 +11071,19 @@ body.b3-theme-dark .glean-panel--mobile,
 
 .glean-inbox__ops .glean-cap-btn {
     min-height: 30px;
-    padding-inline: var(--glean-space-2-5);
-    border: 1px solid color-mix(in srgb, var(--glean-accent-b) 26%, var(--glean-border-soft));
-    border-radius: var(--glean-radius-sm);
-    background: color-mix(in srgb, var(--glean-accent-b) 8%, var(--b3-theme-surface));
-    color: var(--glean-accent-b);
+    padding-inline: var(--glean-space-3);
+    border: 1px solid color-mix(in srgb, var(--glean-color-action) 26%, var(--glean-border-soft));
+    border-radius: var(--glean-radius-pill);
+    background: color-mix(in srgb, var(--glean-color-action) 8%, var(--b3-theme-surface));
+    color: var(--glean-color-action);
     font-size: var(--glean-text-xs);
     font-weight: var(--glean-weight-650);
     transition: background-color var(--glean-duration-fast) var(--glean-ease-out), border-color var(--glean-duration-fast) var(--glean-ease-out), transform var(--glean-duration-fast) var(--glean-ease-out);
 }
 
 .glean-inbox__ops .glean-cap-btn:hover:not(:disabled) {
-    border-color: var(--glean-accent-b);
-    background: var(--glean-primary-soft);
+    border-color: var(--glean-color-action);
+    background: color-mix(in srgb, var(--glean-color-action) 16%, var(--b3-theme-surface));
     transform: translateY(-1px);
 }
 

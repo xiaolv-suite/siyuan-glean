@@ -481,5 +481,9 @@ test("列表行尾操作与看板选择框平滑微交互契约：默认低透�
     assert.match(dialogsScss, /\.glean-archive-dlg__opt\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-lg,\s*16px\);/);
     assert.match(dialogsScss, /\.glean-archive-dlg__icon\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
     assert.match(dialogsScss, /\.glean-archive-dlg__purge\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
+
+    // 15. 收集箱迁入按钮与关闭微控胶囊化
+    assert.match(styles, /\.glean-inbox__ops \.glean-cap-btn\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
+    assert.match(styles, /\.glean-inbox__dismiss\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
 });
 
