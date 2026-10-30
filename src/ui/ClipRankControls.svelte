@@ -41,6 +41,8 @@
                     type="button"
                     class="glean-star-btn"
                     class:glean-star-btn--on={(rating ?? 0) >= star}
+                    role="radio"
+                    aria-checked={(rating ?? 0) === star}
                     title={`${star} ★`}
                     aria-label={`${star} ★`}
                     disabled={disabled}

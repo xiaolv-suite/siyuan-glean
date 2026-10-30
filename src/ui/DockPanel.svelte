@@ -3505,7 +3505,7 @@ function metaLine(entry: Row): string {
                                                 }
                                             }}
                                         >
-                                            ✨{t(i18n, "wechat.recognizeSingle")}
+                                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg> <span>{t(i18n, "wechat.recognizeSingle")}</span>
                                         </button>
                                     {/if}
                                     {#if entry.minutes > 0}<span class="glean-tier-badge glean-tier-badge--{resolveReadingTimeTier(entry.minutes)}">· {t(i18n, "panel.minutes", { n: entry.minutes })}</span>{/if}
@@ -3706,7 +3706,7 @@ function metaLine(entry: Row): string {
                                                             }
                                                         }}
                                                     >
-                                                        ✨{t(i18n, "wechat.recognizeSingle")}
+                                                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg> <span>{t(i18n, "wechat.recognizeSingle")}</span>
                                                     </button>
                                                 {/if}
                                                 <span class={carrierClass(entry)} title={entry.contentType === "link" && !hasSourceAction(entry.contentType, entry.url) ? t(i18n, "clip.sourceMissing") : carrierLabel(entry)}>{carrierLabel(entry)}</span>
@@ -3903,7 +3903,7 @@ function metaLine(entry: Row): string {
                                                 }
                                             }}
                                         >
-                                            ✨{t(i18n, "wechat.recognizeSingle")}
+                                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg> <span>{t(i18n, "wechat.recognizeSingle")}</span>
                                         </button>
                                     {/if}
                                      {#if entry.kind === "clip"}

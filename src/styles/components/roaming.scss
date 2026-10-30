@@ -43,6 +43,9 @@
 }
 
 .glean-roaming-score {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     font-size: 13px;
     font-weight: var(--glean-weight-semibold);
     color: var(--glean-color-data);
@@ -265,6 +268,13 @@
     color: var(--glean-text-muted, color-mix(in srgb, var(--b3-theme-on-surface) 60%, transparent));
     text-align: center;
     padding-top: var(--glean-space-1);
+
+    span {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        justify-content: center;
+    }
 }
 
 @media (max-width: 560px) {

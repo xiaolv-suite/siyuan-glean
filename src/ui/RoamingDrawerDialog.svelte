@@ -437,7 +437,7 @@
             {#if history.length > 1}
                 <span class="glean-roaming-pos">({historyIndex + 1}/{history.length})</span>
             {/if}
-            🔥 {currentPick.score}分
+            <svg class="glean-icon glean-icon--xs glean-icon--flame" aria-hidden="true"><use href="#iconGleanFlame" /></svg> <span>{currentPick.score}分</span>
         </div>
     </div>
 
@@ -684,9 +684,9 @@
 
     <div class="glean-roaming-hint">
         {#if facade.isMobile}
-            <span aria-hidden="true">👆 {t(i18n, "roaming.mobileSwipeTips")}</span>
+            <span aria-hidden="true"><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArrowRight" /></svg> <span>{t(i18n, "roaming.mobileSwipeTips")}</span></span>
         {:else}
-            <span aria-hidden="true">💡 {t(i18n, "roaming.keyboardTips")}</span>
+            <span aria-hidden="true"><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg> <span>{t(i18n, "roaming.keyboardTips")}</span></span>
         {/if}
     </div>
 </div>

@@ -846,5 +846,20 @@ test("列表行尾操作与看板选择框平滑微交互契约：默认低透�
     assert.match(styles, /\.glean-icon--fav\s*\{\s*color:\s*#EF4444;/);
     assert.match(styles, /\.glean-icon--flame\s*\{\s*color:\s*#F97316;/);
     assert.match(styles, /\.glean-icon--bookmark\s*\{\s*color:\s*var\(--glean-color-action\);/);
+
+    // 57. 漏斗图连接箭头、星级打分 WAI-ARIA Radio Group 与微信识别/漫游提示矢量化守门
+    const clipRankControlsSvelte = read("src/ui/ClipRankControls.svelte");
+
+    assert.match(statsViewSvelte, /glean-stats__funnel-arrow[\s\S]*use href="#iconGleanArrowRight"/);
+    assert.match(styles, /\.glean-stats__funnel-count\s*\{[\s\S]*font-variant-numeric:\s*tabular-nums;/);
+
+    assert.match(clipRankControlsSvelte, /role="radio"[\s\S]*aria-checked=\{\(rating \?\? 0\) === star\}/);
+
+    assert.match(dockPanelSvelte, /use href="#iconGleanSpark"[\s\S]*wechat\.recognizeSingle/);
+
+    assert.match(roamingDrawerSvelte, /glean-roaming-score[\s\S]*use href="#iconGleanFlame"/);
+    assert.match(roamingDrawerSvelte, /use href="#iconGleanArrowRight"[\s\S]*roaming\.mobileSwipeTips/);
+    assert.match(roamingDrawerSvelte, /use href="#iconGleanSpark"[\s\S]*roaming\.keyboardTips/);
+    assert.match(roamingScss, /\.glean-roaming-score\s*\{[\s\S]*font-variant-numeric:\s*tabular-nums;/);
 });
 

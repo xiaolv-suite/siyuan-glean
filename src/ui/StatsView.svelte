@@ -519,12 +519,12 @@ function onWindowKeyDown(event: KeyboardEvent): void {
                     <span class="glean-stats__funnel-label">{t(i18n, "stats.funnel.candidate")}</span>
                     <span class="glean-stats__funnel-count">{funnel.candidateCount}</span>
                 </div>
-                <div class="glean-stats__funnel-arrow" aria-hidden="true">→</div>
+                <div class="glean-stats__funnel-arrow" aria-hidden="true"><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArrowRight" /></svg></div>
                 <div class="glean-stats__funnel-stage">
                     <span class="glean-stats__funnel-label">{t(i18n, "stats.funnel.captured")}</span>
                     <span class="glean-stats__funnel-count">{funnel.capturedCount}</span>
                 </div>
-                <div class="glean-stats__funnel-arrow" aria-hidden="true">→</div>
+                <div class="glean-stats__funnel-arrow" aria-hidden="true"><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArrowRight" /></svg></div>
                 <div class="glean-stats__funnel-stage">
                     <span class="glean-stats__funnel-label">{t(i18n, "stats.funnel.done")}</span>
                     <span class="glean-stats__funnel-count">{funnel.doneCount}</span>
