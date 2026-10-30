@@ -23,6 +23,7 @@ test("WeReadGuideDialog 契约守门：三步流转引导、纯净短链复制�
     assert.match(dialogSource, /wechat\.step3Title/);
     assert.match(dialogSource, /wechat\.localReaderOption/);
     assert.match(dialogSource, /onKeyDown/);
+    assert.match(dialogSource, /if \(e\.repeat\) return;/);
     assert.match(dialogSource, /e\.key === "c" \|\| e\.key === "C"/);
     assert.match(dialogSource, /e\.key === "Enter"/);
     assert.match(dialogSource, /e\.key === "r" \|\| e\.key === "R"/);

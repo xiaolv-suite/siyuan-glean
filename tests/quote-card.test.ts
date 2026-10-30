@@ -51,6 +51,7 @@ test("QUOTE_CARD_FONTS 与 resolveQuoteCardFont：包含三档字号与行高配
 test("QuoteCardDialog 键盘流与块引用支持契约（T-3511 / T-3525）", () => {
     const dialog = fs.readFileSync(new URL("../src/ui/QuoteCardDialog.svelte", import.meta.url), "utf8");
     assert.match(dialog, /<svelte:window onkeydown=\{onKeyDown\} \/>/);
+    assert.match(dialog, /if \(e\.repeat\) return;/);
     assert.match(dialog, /e\.key === "1"/);
     assert.match(dialog, /e\.key === "2"/);
     assert.match(dialog, /e\.key === "3"/);

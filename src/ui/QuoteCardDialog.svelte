@@ -282,6 +282,7 @@
     }
 
     function onKeyDown(e: KeyboardEvent): void {
+        if (e.repeat) return;
         const target = e.target instanceof Element ? e.target : null;
         if (target?.closest("input, textarea, select, [contenteditable]:not([contenteditable='false'])")) return;
         if (e.isComposing || e.keyCode === 229) return;
