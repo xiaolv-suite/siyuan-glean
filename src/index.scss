@@ -5856,6 +5856,8 @@ mark.glean-search-highlight {
     max-width: 132px;
     min-width: 82px;
     font-size: var(--glean-text-xs);
+    border-radius: var(--glean-radius-pill);
+    border-color: var(--glean-border-soft);
 }
 
 .glean-filter-dir,
@@ -5864,15 +5866,16 @@ mark.glean-search-highlight {
     align-items: center;
     justify-content: center;
     gap: var(--glean-space-1-25);
-    border: 1px solid var(--b3-border-color);
-    border-radius: var(--glean-radius-sm);
+    border: 1px solid var(--glean-border-soft);
+    border-radius: var(--glean-radius-pill);
     background: var(--b3-theme-surface);
     color: var(--b3-theme-on-background);
     min-height: 28px;
-    padding: var(--glean-space-tight) var(--glean-space-2);
+    padding: var(--glean-space-tight) var(--glean-space-2-5);
     cursor: pointer;
     font-size: var(--glean-text-xs);
     text-align: center;
+    transition: all var(--glean-duration-fast) ease;
 }
 
 .glean-filter-clear {
@@ -10188,7 +10191,7 @@ body.b3-theme-dark .glean-panel--mobile,
 .glean-action-popover__trigger {
     min-height: 30px;
     border: 1px solid var(--glean-border-soft);
-    border-radius: var(--glean-radius-sm);
+    border-radius: var(--glean-radius-pill);
     padding-inline: var(--glean-space-2-25);
     transition: background-color var(--glean-duration-fast) var(--glean-ease-out), border-color var(--glean-duration-fast) var(--glean-ease-out), color var(--glean-duration-fast) var(--glean-ease-out), transform var(--glean-duration-fast) var(--glean-ease-out);
 }
