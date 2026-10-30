@@ -136,8 +136,23 @@
     .glean-snapshot-governance__count { font-size: 13px; font-variant-numeric: tabular-nums; }
     .glean-snapshot-governance__actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
     .glean-snapshot-governance__actions .glean-btn { border-radius: var(--glean-radius-pill); padding: var(--glean-space-1-5) var(--glean-space-3-5); }
+    .glean-snapshot-governance :is(button, .glean-btn):focus-visible { outline: 2px solid var(--glean-color-action); outline-offset: 2px; }
     .glean-snapshot-governance__success { margin-top: 12px; color: var(--b3-theme-success); }
     .glean-snapshot-governance__error { margin-top: 12px; color: var(--b3-theme-error); }
-    .glean-snapshot-governance__refresh { margin-top: 12px; border: 0; padding: 0; background: transparent; color: var(--b3-theme-on-surface); cursor: pointer; font: inherit; font-size: 12px; }
+    .glean-snapshot-governance__refresh { margin-top: 12px; border: 0; padding: 4px 8px; border-radius: var(--glean-radius-pill); background: transparent; color: var(--b3-theme-on-surface); cursor: pointer; font: inherit; font-size: 12px; transition: color 140ms var(--glean-ease-out); }
+    .glean-snapshot-governance__refresh:hover:not(:disabled) { color: var(--glean-color-action); }
     .glean-snapshot-governance__refresh:disabled { cursor: default; opacity: .6; }
+    @media (forced-colors: active) {
+        .glean-snapshot-governance { border: 1px solid CanvasText; }
+        .glean-snapshot-governance__meter { border: 1px solid CanvasText; }
+        .glean-snapshot-governance__meter span { background: Highlight; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .glean-snapshot-governance__meter span { transition: var(--glean-motion-none) !important; }
+    }
+    @media (max-width: 560px) {
+        .glean-snapshot-governance { padding: var(--glean-space-3); }
+        .glean-snapshot-governance__actions .glean-btn { min-height: 44px; width: 100%; justify-content: center; }
+        .glean-snapshot-governance__refresh { min-height: 44px; display: inline-flex; align-items: center; }
+    }
 </style>

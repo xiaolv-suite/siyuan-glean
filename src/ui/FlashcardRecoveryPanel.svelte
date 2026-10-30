@@ -123,7 +123,7 @@
     .glean-flashcard-recovery__status { display: inline-flex; align-items: center; padding: 4px 8px; border: 1px solid var(--glean-border-soft); border-radius: 999px; color: var(--b3-theme-on-surface); background: var(--glean-inset-surface); font-size: var(--glean-text-xs); font-weight: 600; overflow-wrap: anywhere; }
     .glean-flashcard-recovery__status--ready, .glean-flashcard-recovery__status--registered { color: var(--glean-st-done-text); border-color: color-mix(in srgb, var(--glean-st-done) 28%, var(--glean-border-soft)); background: color-mix(in srgb, var(--glean-st-done) 8%, transparent); }
     .glean-flashcard-recovery__status--missing { color: var(--glean-st-inbox-text); background: color-mix(in srgb, var(--glean-st-inbox) 9%, transparent); }
-    .glean-flashcard-recovery__id { max-width: min(100%, 240px); padding: 4px 10px; border: 1px solid var(--glean-border-soft); border-radius: var(--glean-radius-pill); color: var(--b3-theme-on-surface); background: var(--glean-inset-surface); font-size: var(--glean-text-xs); overflow-wrap: anywhere; }
+    .glean-flashcard-recovery__id { max-width: min(100%, 240px); padding: 4px 10px; border: 1px solid var(--glean-border-soft); border-radius: var(--glean-radius-pill); color: var(--b3-theme-on-surface); background: var(--glean-inset-surface); font-size: var(--glean-text-xs); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
     .glean-flashcard-recovery__actions :global(button) { border-radius: var(--glean-radius-pill); }
     .glean-flashcard-recovery__message { color: var(--b3-theme-on-surface); font-size: var(--glean-text-xs); line-height: 1.5; overflow-wrap: anywhere; }
     .glean-flashcard-recovery__message--busy { display: inline-flex; align-items: center; gap: var(--glean-space-2); color: var(--glean-color-action); }
@@ -131,6 +131,20 @@
     .glean-flashcard-recovery__dot { width: 7px; height: 7px; flex: 0 0 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 4px color-mix(in srgb, currentColor 12%, transparent); animation: glean-recovery-pulse 1.4s ease-in-out infinite; }
     .glean-flashcard-recovery :global(button):focus-visible { outline: 2px solid var(--glean-color-action); outline-offset: 2px; }
     @keyframes glean-recovery-pulse { 50% { opacity: .45; transform: scale(.82); } }
-    @media (prefers-reduced-motion: reduce) { .glean-flashcard-recovery__dot { animation: none; } }
-    @media (max-width: 600px) { .glean-flashcard-recovery__body { justify-content: flex-start; } .glean-flashcard-recovery__actions { width: 100%; } .glean-flashcard-recovery__actions :global(button) { min-height: 44px; flex: 1 1 auto; } }
+    @media (forced-colors: active) {
+        .glean-flashcard-recovery__status { border: 1px solid Highlight; color: Highlight; }
+        .glean-flashcard-recovery__id { border: 1px solid CanvasText; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .glean-flashcard-recovery__dot { animation: none !important; }
+        .glean-flashcard-recovery__actions :global(button) { transition: var(--glean-motion-none) !important; transform: none !important; }
+    }
+    @media (max-width: 600px) {
+        .glean-flashcard-recovery__body { justify-content: flex-start; }
+        .glean-flashcard-recovery__actions { width: 100%; }
+        .glean-flashcard-recovery__actions :global(button) { min-height: 44px; flex: 1 1 auto; }
+    }
+    @media (max-width: 360px) {
+        .glean-flashcard-recovery__actions :global(button) { width: 100%; }
+    }
 </style>

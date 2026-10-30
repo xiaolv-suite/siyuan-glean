@@ -651,5 +651,34 @@ test("列表行尾操作与看板选择框平滑微交互契约：默认低透�
     assert.match(paletteScss, /\.glean-reader__palette-opt,[\s\S]*\.glean-palette-quick-item\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
     assert.match(paletteScss, /@media\s*\(max-width:\s*560px\)\s*\{[\s\S]*\.glean-palette-card\s*\{[\s\S]*min-height:\s*44px;/);
     assert.match(paletteScss, /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{[\s\S]*\.glean-palette-card,[\s\S]*\.glean-reader__palette-opt[\s\S]*transition:\s*var\(--glean-motion-none\)\s*!important;/);
+
+    // 45. 次级维护弹窗（FormattingDialog 与 FlashcardDialog）松青色彩、等宽排版、聚焦光圈与移动端触控热区
+    const formattingSvelte = read("src/ui/FormattingDialog.svelte");
+    const flashcardSvelte = read("src/ui/FlashcardDialog.svelte");
+    assert.match(formattingSvelte, /accent-color:\s*var\(--glean-color-action\);/);
+    assert.match(formattingSvelte, /\.glean-formatting__selected\s*\{[\s\S]*font-variant-numeric:\s*tabular-nums;/);
+    assert.match(formattingSvelte, /@media\s*\(forced-colors:\s*active\)\s*\{[\s\S]*\.glean-formatting__mode\s*\{[\s\S]*border:\s*1px solid Highlight;/);
+    assert.match(formattingSvelte, /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{[\s\S]*\.glean-formatting__candidate\s*\{[\s\S]*transition:\s*var\(--glean-motion-none\)\s*!important;/);
+    assert.match(flashcardSvelte, /\.glean-flashcard__sides label span\s*\{[\s\S]*font-variant-numeric:\s*tabular-nums;/);
+    assert.match(flashcardSvelte, /\.glean-flashcard button:focus-visible[\s\S]*outline:\s*2px solid var\(--glean-color-action\);/);
+    assert.match(flashcardSvelte, /@media\s*\(forced-colors:\s*active\)\s*\{[\s\S]*\.glean-flashcard__mode\s*\{[\s\S]*border:\s*1px solid Highlight;/);
+    assert.match(flashcardSvelte, /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{[\s\S]*\.glean-flashcard__actions \.glean-btn/);
+
+    // 46. AI批量/标签合并/备份/快照治理面板松青聚焦光圈、等宽计数与触控热区守门
+    const aiBatchSvelte = read("src/ui/AiBatchPanel.svelte");
+    const aiTagMergeSvelte = read("src/ui/AiTagMergePanel.svelte");
+    const backupSvelte = read("src/ui/BackupPanel.svelte");
+    const snapshotSvelte = read("src/ui/SnapshotGovernance.svelte");
+    const flashcardRecoverySvelte = read("src/ui/FlashcardRecoveryPanel.svelte");
+    assert.match(aiBatchSvelte, /\.glean-ai-batch :is\(button, \.glean-btn, input, details summary\):focus-visible\s*\{[\s\S]*outline:\s*2px solid var\(--glean-color-action\);/);
+    assert.match(aiBatchSvelte, /\.glean-ai-batch__count\s*\{[\s\S]*font-variant-numeric:\s*tabular-nums;/);
+    assert.match(aiBatchSvelte, /\.glean-ai-batch input\[type="checkbox"\]\s*\{[\s\S]*accent-color:\s*var\(--glean-color-action\);/);
+    assert.match(aiTagMergeSvelte, /\.glean-ai-tag-merge :is\(button, \.glean-btn, select\):focus-visible\s*\{[\s\S]*outline:\s*2px solid var\(--glean-color-action\);/);
+    assert.match(aiTagMergeSvelte, /\.glean-ai-tag-merge__affected\s*\{[\s\S]*font-variant-numeric:\s*tabular-nums;/);
+    assert.match(backupSvelte, /\.glean-backup input\[type="checkbox"\]\s*\{[\s\S]*accent-color:\s*var\(--glean-color-action\);/);
+    assert.match(backupSvelte, /\.glean-backup__meta, \.glean-backup__section-hint\s*\{[\s\S]*font-variant-numeric:\s*tabular-nums;/);
+    assert.match(snapshotSvelte, /\.glean-snapshot-governance :is\(button, \.glean-btn\):focus-visible\s*\{[\s\S]*outline:\s*2px solid var\(--glean-color-action\);/);
+    assert.match(snapshotSvelte, /@media\s*\(max-width:\s*560px\)\s*\{[\s\S]*\.glean-snapshot-governance__actions \.glean-btn\s*\{[\s\S]*min-height:\s*44px;/);
+    assert.match(flashcardRecoverySvelte, /\.glean-flashcard-recovery__id\s*\{[\s\S]*font-variant-numeric:\s*tabular-nums;/);
 });
 

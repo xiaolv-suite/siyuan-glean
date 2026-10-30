@@ -256,14 +256,16 @@
     .glean-backup__actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--glean-space-2); }
     .glean-backup__actions :global(button) { border-radius: var(--glean-radius-pill); padding: var(--glean-space-1-5) var(--glean-space-3-5); }
     .glean-backup__pagination { justify-content: space-between; padding-top: var(--glean-space-1); }
-    .glean-backup__pagination > span { min-width: 0; flex: 1 1 auto; text-align: center; color: var(--b3-theme-on-surface); font-size: var(--glean-text-xs); overflow-wrap: anywhere; }
+    .glean-backup__pagination > span { min-width: 0; flex: 1 1 auto; text-align: center; color: var(--b3-theme-on-surface); font-size: var(--glean-text-xs); overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
     .glean-backup__actions--primary { padding-bottom: var(--glean-space-1); }
     .glean-backup__actions--tools { padding: var(--glean-space-2) 0; border-block: 1px solid var(--glean-border-soft); }
+    .glean-backup input[type="checkbox"] { accent-color: var(--glean-color-action); }
     .glean-backup__file { display: grid; gap: var(--glean-space-1); min-width: 160px; padding: 7px 14px; border: 1px dashed var(--glean-border-soft); border-radius: var(--glean-radius-pill); color: var(--b3-theme-on-surface); font-size: var(--glean-text-sm); cursor: pointer; transition: background-color 160ms var(--glean-ease-out), border-color 160ms var(--glean-ease-out); }
     .glean-backup__file:hover { background: var(--glean-primary-soft); border-color: color-mix(in srgb, var(--glean-color-action) 45%, var(--glean-border-soft)); }
+    .glean-backup__file:focus-within { outline: 2px solid var(--glean-color-action); outline-offset: 2px; }
     .glean-backup__file input { max-width: 100%; font-size: var(--glean-text-xs); }
     .glean-backup__filename { padding: 6px 10px; border-radius: var(--glean-radius-pill); background: var(--glean-inset-surface); font-family: var(--b3-font-family-code); font-size: var(--glean-text-xs) !important; }
-    .glean-backup__meta, .glean-backup__section-hint { color: var(--b3-theme-on-surface); font-size: var(--glean-text-xs) !important; }
+    .glean-backup__meta, .glean-backup__section-hint { color: var(--b3-theme-on-surface); font-size: var(--glean-text-xs) !important; font-variant-numeric: tabular-nums; }
     .glean-backup__row { padding: var(--glean-space-2) var(--glean-space-3); border: 1px solid var(--glean-border-soft); border-radius: var(--glean-radius-lg, 16px); background: var(--glean-status-surface); box-shadow: var(--glean-shadow-card); transition: border-color 160ms var(--glean-ease-out), background-color 160ms var(--glean-ease-out), box-shadow 160ms var(--glean-ease-out); }
     .glean-backup__row[open] { border-color: color-mix(in srgb, var(--glean-color-action) 36%, var(--glean-border-soft)); background: var(--glean-section-surface); box-shadow: var(--glean-shadow-float); }
     .glean-backup summary { display: flex; align-items: center; gap: var(--glean-space-2); cursor: pointer; overflow-wrap: anywhere; padding: var(--glean-space-1) 0; font-size: var(--glean-text-md); font-weight: 600; list-style-position: outside; }
@@ -283,7 +285,7 @@
     .glean-backup__diff { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--glean-space-2); }
     .glean-backup__preferences { padding: var(--glean-space-2) var(--glean-space-3); border: 1px solid var(--glean-border-soft); border-radius: var(--glean-radius-lg, 16px); background: var(--glean-inset-surface); }
     .glean-backup__preferences summary { font-size: var(--glean-text-sm); }
-    .glean-backup__status { display: flex; align-items: center; gap: var(--glean-space-2); padding: var(--glean-space-2) var(--glean-space-3); border: 1px solid var(--glean-border-soft); border-radius: var(--glean-radius-pill); background: var(--glean-status-surface); }
+    .glean-backup__status { display: flex; align-items: center; gap: var(--glean-space-2); padding: var(--glean-space-2) var(--glean-space-3); border: 1px solid var(--glean-border-soft); border-radius: var(--glean-radius-pill); background: var(--glean-status-surface); font-variant-numeric: tabular-nums; }
     .glean-backup__status--busy { color: var(--glean-color-action) !important; }
     .glean-backup__status--success { color: var(--glean-st-done-text) !important; border-color: color-mix(in srgb, var(--glean-st-done) 25%, var(--glean-border-soft)); background: color-mix(in srgb, var(--glean-st-done) 8%, transparent); }
     .glean-backup__status--notice { color: var(--glean-st-later-text) !important; }
@@ -291,7 +293,16 @@
     .glean-backup__status-dot { width: 7px; height: 7px; flex: 0 0 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 4px color-mix(in srgb, currentColor 12%, transparent); animation: glean-backup-pulse 1.4s ease-in-out infinite; }
     .glean-backup :is(input, button, summary):focus-visible { outline: 2px solid var(--glean-color-action); outline-offset: 2px; }
     @keyframes glean-backup-pulse { 50% { opacity: .45; transform: scale(.82); } }
-    @media (prefers-reduced-motion: reduce) { .glean-backup__status-dot { animation: none; } }
+    @media (forced-colors: active) {
+        .glean-backup__mode { border: 1px solid Highlight; color: Highlight; }
+        .glean-backup__row { border: 1px solid CanvasText; }
+        .glean-backup__row-state { border: 1px solid Highlight; }
+        .glean-backup__status--error, .glean-backup__status--success { border: 1px solid Highlight; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .glean-backup__status-dot { animation: none !important; }
+        .glean-backup__row, .glean-backup__file { transition: var(--glean-motion-none) !important; transform: none !important; }
+    }
     @media (max-width: 560px) {
         .glean-backup { padding: var(--glean-space-3); }
         .glean-backup__head { padding: var(--glean-space-3); }
@@ -303,5 +314,9 @@
         .glean-backup__pagination { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) minmax(0, 1fr); }
         .glean-backup__pagination > :is(button, span) { min-width: 0; text-align: center; }
         .glean-backup__pagination > button { width: 100%; }
+    }
+    @media (max-width: 360px) {
+        .glean-backup__actions--primary > :global(button),
+        .glean-backup__file { width: 100%; min-width: 100%; }
     }
 </style>

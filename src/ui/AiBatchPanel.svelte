@@ -299,7 +299,7 @@
     .glean-ai-batch__stop-hint { color: var(--b3-theme-on-background); font-size: var(--glean-text-xs, 11px) !important; }
     .glean-ai-batch__head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--glean-space-3, 12px); padding-bottom: var(--glean-space-2, 8px); border-bottom: 1px solid var(--glean-border-soft, var(--b3-border-color)); }
     .glean-ai-batch__heading { min-width: 0; display: grid; gap: 3px; }
-    .glean-ai-batch__eyebrow { display: inline-flex; align-items: center; gap: 5px; color: var(--b3-theme-primary); font-size: var(--glean-text-xs, 11px); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+    .glean-ai-batch__eyebrow { display: inline-flex; align-items: center; gap: 5px; color: var(--glean-color-action); font-size: var(--glean-text-xs, 11px); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
     .glean-ai-batch__head > .glean-btn { flex: 0 0 auto; min-height: 32px; }
     .glean-ai-batch__actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--glean-space-2, 8px); }
     .glean-ai-batch__counts { display: flex; flex-wrap: wrap; gap: var(--glean-space-1, 4px); }
@@ -327,6 +327,7 @@
         background: var(--glean-primary-soft, transparent);
         color: var(--b3-theme-on-background);
         font-size: var(--glean-text-xs, 11px);
+        font-variant-numeric: tabular-nums;
     }
     .glean-ai-batch__count--pending,
     .glean-ai-batch__row--pending .glean-ai-batch__stage { color: var(--glean-st-inbox, var(--b3-theme-primary)); }
@@ -338,11 +339,12 @@
     .glean-ai-batch__row--unknown .glean-ai-batch__stage { color: var(--b3-theme-on-surface); }
     .glean-ai-batch__counts { margin-block: 2px; padding: 6px 10px; border: 1px solid var(--glean-border-soft); border-radius: var(--glean-radius-pill); background: var(--glean-status-surface); }
     .glean-ai-batch button, .glean-ai-batch .glean-btn { border-radius: var(--glean-radius-pill); }
+    .glean-ai-batch :is(button, .glean-btn, input, details summary):focus-visible { outline: 2px solid var(--glean-color-action); outline-offset: 2px; }
     .glean-ai-batch__primary-actions { padding-top: 2px; }
     .glean-ai-batch__resume-actions { padding-block: 2px; }
     .glean-ai-batch--busy { box-shadow: var(--glean-shadow-card, none), 0 0 0 1px color-mix(in srgb, var(--glean-color-action) 12%, transparent); }
     .glean-ai-batch label { display: flex; align-items: center; gap: 8px; overflow-wrap: anywhere; min-height: 44px; }
-    .glean-ai-batch input[type="checkbox"] { flex: 0 0 auto; }
+    .glean-ai-batch input[type="checkbox"] { flex: 0 0 auto; accent-color: var(--glean-color-action); }
     .glean-ai-batch pre {
         max-height: 220px;
         overflow: auto;
@@ -357,6 +359,7 @@
     .glean-ai-batch details summary { cursor: pointer; color: var(--glean-color-action); }
     .glean-ai-batch__preview { display: grid; gap: var(--glean-space-3, 12px); padding: var(--glean-space-3, 12px); border: 1px solid var(--glean-border-soft); border-radius: var(--glean-radius-lg, 16px); background: var(--glean-grad-soft); box-shadow: var(--glean-shadow-card, none); }
     .glean-ai-batch__preview-meta { display: grid; gap: 4px; padding-bottom: var(--glean-space-2, 8px); border-bottom: 1px solid color-mix(in srgb, var(--glean-border-soft) 72%, transparent); }
+    .glean-ai-batch__preview-meta p { font-variant-numeric: tabular-nums; }
     .glean-ai-batch__preview-meta p:first-child { color: var(--b3-theme-on-background); font-weight: 650; }
     .glean-ai-batch__preview-disabled { color: var(--b3-theme-error) !important; font-weight: 650; }
     .glean-ai-batch__preview-list { display: grid; gap: var(--glean-space-2, 8px); max-height: 38vh; overflow: auto; padding-inline-end: 2px; scrollbar-gutter: stable; }
@@ -367,8 +370,8 @@
     .glean-ai-batch__pager > span { min-width: 90px; color: var(--b3-theme-on-surface); font-size: var(--glean-text-xs, 11px); text-align: center; font-variant-numeric: tabular-nums; }
     .glean-ai-batch__discard { display: grid; gap: var(--glean-space-2, 8px); padding-top: var(--glean-space-2, 8px); border-top: 1px dashed var(--glean-border-soft, var(--b3-border-color)); }
     .glean-ai-batch__discard .glean-btn { justify-self: start; }
-    .glean-ai-batch__busy { display: inline-flex; align-items: center; gap: 7px; color: var(--b3-theme-primary) !important; }
-    .glean-ai-batch__busy::before { width: 8px; height: 8px; border: 2px solid color-mix(in srgb, var(--b3-theme-primary) 28%, transparent); border-top-color: var(--b3-theme-primary); border-radius: 50%; animation: glean-ai-batch-spin 700ms linear infinite; content: ""; }
+    .glean-ai-batch__busy { display: inline-flex; align-items: center; gap: 7px; color: var(--glean-color-action) !important; }
+    .glean-ai-batch__busy::before { width: 8px; height: 8px; border: 2px solid color-mix(in srgb, var(--glean-color-action) 28%, transparent); border-top-color: var(--glean-color-action); border-radius: 50%; animation: glean-ai-batch-spin 700ms linear infinite; content: ""; }
     .glean-ai-batch__error { margin-top: 2px !important; }
     .glean-ai-batch [role="alert"] {
         padding: var(--glean-space-2, 8px) var(--glean-space-3, 12px);
@@ -378,7 +381,15 @@
         color: var(--b3-theme-error);
     }
     @keyframes glean-ai-batch-spin { to { transform: rotate(360deg); } }
-    @media (prefers-reduced-motion: reduce) { .glean-ai-batch__busy::before { animation: none; } }
+    @media (forced-colors: active) {
+        .glean-ai-batch__count { border: 1px solid Highlight; }
+        .glean-ai-batch__row { border: 1px solid CanvasText; }
+        .glean-ai-batch [role="alert"] { border: 1px solid Highlight; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .glean-ai-batch__row { transition: var(--glean-motion-none) !important; transform: none !important; }
+        .glean-ai-batch__busy::before { animation: none !important; }
+    }
     @media (max-width: 600px) {
         .glean-ai-batch { max-height: none; padding: var(--glean-space-3, 12px); border-radius: var(--glean-radius-md, 12px); }
         .glean-ai-batch__head > .glean-btn { min-height: 44px; }
@@ -390,5 +401,8 @@
         .glean-ai-batch__pager .glean-btn:last-child { justify-self: end; }
         .glean-ai-batch__confirm .glean-btn,
         .glean-ai-batch__discard .glean-btn { width: 100%; justify-self: stretch; }
+    }
+    @media (max-width: 360px) {
+        .glean-ai-batch__actions > .glean-btn { width: 100%; }
     }
 </style>
