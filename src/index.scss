@@ -628,23 +628,27 @@ body.b3-theme-dark {
 
 .glean-empty__clear-btn {
     margin-top: var(--glean-space-2-5);
+    border-radius: var(--glean-radius-pill);
+    min-height: 36px;
+    padding-inline: var(--glean-space-4);
 }
 
 .glean-icon-btn {
     width: 28px;
     height: 28px;
     border: none;
-    border-radius: var(--glean-radius-9);
+    border-radius: var(--glean-radius-pill);
     background: transparent;
     color: var(--b3-theme-on-surface);
     display: grid;
     place-items: center;
     cursor: pointer;
     padding: var(--glean-space-1-25);
-    transition: background var(--glean-duration-base), transform var(--glean-duration-base) var(--glean-ease-spring);
+    transition: background var(--glean-duration-base), transform var(--glean-duration-base) var(--glean-ease-spring), color var(--glean-duration-base) ease;
 
     &:hover {
-        background: color-mix(in srgb, var(--b3-theme-on-surface) 10%, transparent);
+        background: color-mix(in srgb, var(--glean-color-action) 10%, var(--b3-theme-surface));
+        color: var(--glean-color-action);
     }
 
     &:active {
@@ -1269,6 +1273,7 @@ body.b3-theme-dark {
     place-items: center;
     background: color-mix(in srgb, var(--b3-theme-on-surface) 14%, transparent);
     font-weight: var(--glean-weight-semibold);
+    font-variant-numeric: tabular-nums;
 }
 
 .glean-q--on .glean-q__n {
@@ -4649,18 +4654,19 @@ mark.glean-search-highlight {
 }
 
 .glean-empty__art {
-    width: 72px;
-    height: 72px;
-    margin: var(--glean-space-0) auto var(--glean-space-4);
-    border-radius: var(--glean-radius-24);
+    width: 64px;
+    height: 64px;
+    margin: var(--glean-space-0) auto var(--glean-space-3);
+    border-radius: var(--glean-radius-20, 20px);
     display: grid;
     place-items: center;
-    background: linear-gradient(160deg, color-mix(in srgb, var(--glean-accent-a) 18%, transparent), color-mix(in srgb, var(--glean-accent-b) 8%, transparent));
+    background: color-mix(in srgb, var(--glean-color-action) 12%, var(--b3-theme-surface));
+    border: 1px solid color-mix(in srgb, var(--glean-color-action) 20%, transparent);
 
     svg {
-        width: 30px;
-        height: 30px;
-        fill: var(--glean-accent-b);
+        width: 28px;
+        height: 28px;
+        fill: var(--glean-color-action);
     }
 }
 
@@ -4692,6 +4698,9 @@ mark.glean-search-highlight {
 .glean-empty__actions .glean-empty__action,
 .glean-empty__actions .glean-resurface__setup {
     margin-top: var(--glean-space-0);
+    border-radius: var(--glean-radius-pill);
+    min-height: 36px;
+    padding-inline: var(--glean-space-4);
 }
 
 @media (max-width: 560px) {
@@ -4863,26 +4872,13 @@ mark.glean-search-highlight {
     }
 
     &:focus-visible {
-        outline: none;
-        box-shadow: var(--glean-shadow-focus);
-    }
-
-    &:focus-visible {
-        outline: 2px solid var(--b3-theme-primary);
+        outline: 2px solid var(--glean-color-action);
         outline-offset: 2px;
     }
 
     &:disabled {
         opacity: .48;
-        cursor: default;
-    }
-
-    &:hover {
-        background: var(--b3-theme-background-light);
-    }
-
-    &:active:not(:disabled) {
-        transform: scale(0.97);
+        cursor: not-allowed;
     }
 
     &.glean-bb--pri {
@@ -5806,6 +5802,7 @@ mark.glean-search-highlight {
     color: var(--glean-color-action);
     font-size: var(--glean-text-caption);
     font-weight: var(--glean-weight-bold);
+    font-variant-numeric: tabular-nums;
 }
 
 .glean-mobile-filter-results {
@@ -11193,8 +11190,16 @@ body.b3-theme-dark .glean-panel--mobile,
     .glean-filter-chip,
     .glean-rail__item,
     .glean-drow,
-    .glean-kcard {
+    .glean-kcard,
+    .glean-stat-strip__item,
+    .glean-mobile-filter-trigger,
+    .glean-mobile-filter-direction,
+    .glean-search,
+    .glean-rail__toggle,
+    .glean-rail__more,
+    .glean-distribution__item {
         transition: var(--glean-motion-none);
+        transform: none;
     }
 }
 

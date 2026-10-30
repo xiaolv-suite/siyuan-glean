@@ -578,5 +578,22 @@ test("列表行尾操作与看板选择框平滑微交互契约：默认低透�
     // 32. 超窄视口（< 360px）紧凑筛选框、行条、看板卡片与保存视图弹性自适应
     assert.match(styles, /@media\s*\(max-width:\s*360px\)\s*\{[\s\S]*\.glean-filters--compact \.glean-filter\s*\{[\s\S]*flex:\s*1 1 calc\(50% - var\(--glean-space-1\)\);/);
     assert.match(styles, /@media\s*\(max-width:\s*360px\)\s*\{[\s\S]*\.glean-saved-views\s*\{[\s\S]*flex-direction:\s*column;/);
+
+    // 33. 摘录墙松青主题色统一与过滤器 16px 柔和外壳
+    assert.match(highlightScss, /\.glean-highlights__filters,\s*\.glean-highlights__tools--selection\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-lg,\s*16px\);/);
+    assert.match(highlightScss, /\.glean-highlights__item::after\s*\{[\s\S]*border:\s*2px solid var\(--glean-color-action\);/);
+    assert.match(highlightScss, /\.glean-highlights__tools--card button\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);[\s\S]*color:\s*var\(--glean-color-action\);/);
+
+    // 34. 空状态艺术图标 20px 圆角与松青底色、消除按钮与动作全圆角胶囊化
+    assert.match(styles, /\.glean-empty__art\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-20,\s*20px\);[\s\S]*background:\s*color-mix\(in srgb, var\(--glean-color-action\)/);
+    assert.match(styles, /\.glean-empty__clear-btn\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
+    assert.match(styles, /\.glean-empty__actions \.glean-empty__action,\s*\.glean-empty__actions \.glean-resurface__setup\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
+
+    // 35. 批量操作按钮全圆角胶囊聚焦光圈与禁用指针语义
+    assert.match(styles, /\.glean-bb\s*\{[\s\S]*&:focus-visible\s*\{[\s\S]*outline:\s*2px solid var\(--glean-color-action\);/);
+    assert.match(styles, /\.glean-bb\s*\{[\s\S]*&:disabled\s*\{[\s\S]*cursor:\s*not-allowed;/);
+
+    // 36. 减弱动效响应覆盖核心指标条、搜索框、手风琴开关与分布标签
+    assert.match(styles, /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{[\s\S]*\.glean-stat-strip__item,[\s\S]*\.glean-search,[\s\S]*\.glean-rail__toggle/);
 });
 

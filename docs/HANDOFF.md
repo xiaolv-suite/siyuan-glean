@@ -45,7 +45,13 @@
        * 核心指标条（`.glean-stat-strip`）条目升级为全圆角胶囊药丸，补齐松青点击激活状态样式（`.glean-stat-strip__item--active`），并补充 480px / 360px 窄视口等比收缩与弹性对齐规则；
        * 漫游阅读盲盒（`roaming.scss`）统一收敛至松青操作色（`--glean-color-action`），补充 560px / 360px 移动端网格与触控热区自适应断点；
        * 超窄视口（`< 360px`）下紧凑筛选框、行条元数据、看板卡片与保存视图弹性折行防溢出与触控热区保障；
-  3. **门禁全通**：全套测试通过（**1749 / 1749 PASS**，`tests/header-actions.test.ts` 补充守门断言 28–32）；`pnpm check` 0 错 0 警告；`pnpm build` 1.57s 干净构建；`pnpm check:release` 14 项全绿通过。
+     - **UI-UX-PRO-MAX 专业级体验与无障碍加固**：
+       * 摘录墙（`highlights.scss`）时间轴指示节点与连线统一对齐松青操作色（`--glean-color-action`），卡片悬浮/选中高亮统一为松青高亮边框，卡片操作微按钮升级为全圆角胶囊药丸与松青悬停底色，多维过滤器容器升级为 `16px` 大圆角卡片；
+       * 空状态（`.glean-empty`）艺术图标插槽（`.glean-empty__art`）升级为 `20px` 圆角与松青微混底色，消除按钮（`.glean-empty__clear-btn`）与通用引导操作按钮（`.glean-empty__action`）全量胶囊化；
+       * 批量操作栏按钮（`.glean-bb`）消除样式重复与悬停冲突，统一 2px 松青获焦光圈与禁用指针（`cursor: not-allowed`）；
+       * 队列数字徽章（`.glean-q__n`）与移动端抽屉徽章（`.glean-mobile-filter-badge`）补齐等宽排版（`font-variant-numeric: tabular-nums`），彻底消除数字变动带来的横向宽度抖动；
+       * 系统减弱动效（`prefers-reduced-motion: reduce`）全量覆盖核心指标条、搜索框、手风琴开关与分布标签，彻底消除闪烁与强制位移；
+  3. **门禁全通**：全套测试通过（**1749 / 1749 PASS**，`tests/header-actions.test.ts` 补充守门断言 28–36）；`pnpm check` 0 错 0 警告；`pnpm build` 1.48s 干净构建；`pnpm check:release` 14 项全绿通过。
 - 下一步：按当前执行板顺序推进下一个任务（如 T-3367 批量选择范围与底部操作在更多场景的走查，或按作者点单继续）。版本保持 1.4.0，等待解封通知后统一处理。
 
 ## 历史交接（2026-10-29 本地发版轮：v1.4.0 次版本发布、五处版本同步、双语 README 全面重构、全门禁验证与本地打包）
