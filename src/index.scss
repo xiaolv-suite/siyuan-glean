@@ -115,6 +115,8 @@
     --glean-glass: color-mix(in srgb, var(--b3-theme-surface) 72%, transparent);
     --glean-glass-border: var(--b3-border-color);
     --glean-radius: 16px;
+    --glean-radius-20: var(--glean-radius-xl);
+    --glean-badge-bg: color-mix(in srgb, var(--b3-theme-on-surface) 8%, transparent);
     --glean-shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px -2px rgba(0, 0, 0, 0.05);
     --glean-shadow-float: 0 8px 24px -4px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.04);
     --glean-shadow-control: 0 1px 2px rgba(0, 0, 0, 0.05);
@@ -11229,21 +11231,21 @@ body.b3-theme-dark .glean-panel--mobile,
 
 .glean-snap-badge {
     border-radius: var(--glean-radius-pill);
-    padding: 1px 6px;
-    font-size: 10.5px;
+    padding: var(--glean-space-micro) var(--glean-space-1-5);
+    font-size: var(--glean-text-caption);
     border: 1px solid transparent;
     transition: all var(--glean-duration-fast) ease;
 
     &--healthy {
-        color: #059669;
-        background: color-mix(in srgb, #10B981 12%, var(--b3-theme-surface));
-        border-color: color-mix(in srgb, #10B981 28%, transparent);
+        color: var(--glean-st-done-text);
+        background: color-mix(in srgb, var(--glean-color-data) 12%, var(--b3-theme-surface));
+        border-color: color-mix(in srgb, var(--glean-color-data) 28%, transparent);
     }
 
     &--partial {
-        color: #D97706;
-        background: color-mix(in srgb, #F59E0B 12%, var(--b3-theme-surface));
-        border-color: color-mix(in srgb, #F59E0B 28%, transparent);
+        color: var(--glean-st-inbox-text);
+        background: color-mix(in srgb, var(--glean-st-inbox) 12%, var(--b3-theme-surface));
+        border-color: color-mix(in srgb, var(--glean-st-inbox) 28%, transparent);
     }
 
     &--missing {
@@ -11254,7 +11256,7 @@ body.b3-theme-dark .glean-panel--mobile,
     }
 
     .glean-icon--shield-ok {
-        color: #059669;
+        color: var(--glean-st-done-text);
     }
 
     @media (forced-colors: active) {

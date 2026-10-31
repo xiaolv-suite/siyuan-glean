@@ -1573,5 +1573,19 @@
   "triage.ruleAcademic": "学术长文与论文",
   "triage.ruleDeepRead": "深度长文精读",
   "triage.ruleQuickRead": "碎片短文速读",
-  "triage.applied": "已自动分拣为 ${status}"
+  "triage.applied": "已自动分拣为 ${status}",
+  "foldReader.level1Badge": "全文",
+  "foldReader.level2Badge": "逐字",
+  "foldReader.level3Badge": "论点",
+  "foldReader.level4Badge": "要旨",
+  "foldReader.level5Badge": "概念",
+  "foldReader.paragraphIndex": "段落 ${n}",
+  "docSlicing.sliceMeta": "约 ${minutes} 分钟 · ${words} 字",
+  "roaming.scoreTitle": "综合匹配得分",
+  "roaming.scoreLabel": "${score}分",
+  "roaming.budgetGroupLabel": "可用时间",
+  "roaming.snapshotSaved": "已快照",
+  "roaming.snapshotSavedHint": "已保存离线网页单文件快照",
+  "snapshotHealth.scoreBadgeTitle": "${label}: ${desc} (${score})",
+  "highlight.keyboardCursorSelected": "已用键盘选中摘录"
 }

@@ -32,18 +32,18 @@
     display: inline-flex;
     background: var(--glean-inset-surface, var(--b3-theme-surface));
     border-radius: var(--glean-radius-pill);
-    padding: 2px;
+    padding: var(--glean-space-0-5);
     border: 1px solid var(--glean-border-soft);
-    gap: 2px;
+    gap: var(--glean-space-0-5);
 }
 
 .glean-fold-reader__pill {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--glean-space-1);
     border: none;
     background: transparent;
-    padding: 3px 10px;
+    padding: var(--glean-space-0-75) var(--glean-space-2-5);
     border-radius: var(--glean-radius-pill);
     font-size: var(--glean-text-xs, 12px);
     color: var(--b3-theme-on-surface);
@@ -64,7 +64,7 @@
 .glean-fold-reader__pill--active {
     background: var(--glean-color-action);
     color: var(--b3-theme-on-primary);
-    font-weight: 600;
+    font-weight: var(--glean-weight-semibold);
 
     @media (forced-colors: active) {
         border: 1px solid Highlight;
@@ -73,7 +73,7 @@
 }
 
 .glean-fold-reader__pill-num {
-    font-weight: 700;
+    font-weight: var(--glean-weight-semibold);
     font-variant-numeric: tabular-nums;
     opacity: 0.95;
 }
@@ -82,24 +82,24 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    font-size: 11.5px;
+    font-size: var(--glean-text-caption);
     color: var(--b3-theme-on-surface);
     opacity: 0.88;
-    gap: 8px;
+    gap: var(--glean-space-2);
     flex-wrap: wrap;
 }
 
 .glean-fold-reader__verbatim-tag {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    font-size: 11px;
-    font-weight: 600;
-    padding: 1px 8px;
+    gap: var(--glean-space-1);
+    font-size: var(--glean-text-caption);
+    font-weight: var(--glean-weight-semibold);
+    padding: var(--glean-space-micro) var(--glean-space-2);
     border-radius: var(--glean-radius-pill);
-    background: color-mix(in srgb, #10B981 12%, var(--b3-theme-surface));
-    color: #059669;
-    border: 1px solid color-mix(in srgb, #10B981 30%, transparent);
+    background: color-mix(in srgb, var(--glean-color-data) 12%, var(--b3-theme-surface));
+    color: var(--glean-st-done-text);
+    border: 1px solid color-mix(in srgb, var(--glean-color-data) 30%, transparent);
 
     @media (forced-colors: active) {
         border: 1px solid Highlight;
@@ -113,7 +113,7 @@
     display: flex;
     flex-direction: column;
     gap: var(--glean-space-2);
-    padding-right: 2px;
+    padding-right: var(--glean-space-0-5);
 }
 
 .glean-fold-card {
@@ -154,35 +154,35 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
+    gap: var(--glean-space-2);
 }
 
 .glean-fold-card__meta {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--glean-space-1-5);
     flex: 1;
     min-width: 0;
     overflow: hidden;
 }
 
 .glean-fold-card__idx {
-    font-size: 11px;
-    font-weight: 600;
+    font-size: var(--glean-text-caption);
+    font-weight: var(--glean-weight-semibold);
     color: var(--glean-color-action);
     background: var(--glean-primary-soft);
-    padding: 1px 7px;
+    padding: var(--glean-space-micro) var(--glean-space-1-75);
     border-radius: var(--glean-radius-pill);
     font-variant-numeric: tabular-nums;
     flex-shrink: 0;
 }
 
 .glean-fold-card__concept {
-    font-size: 11.5px;
-    font-weight: 600;
+    font-size: var(--glean-text-caption);
+    font-weight: var(--glean-weight-semibold);
     color: var(--b3-theme-on-surface);
     background: color-mix(in srgb, var(--glean-color-action) 10%, var(--b3-theme-surface));
-    padding: 1px 8px;
+    padding: var(--glean-space-micro) var(--glean-space-2);
     border-radius: var(--glean-radius-pill);
     border: 1px solid color-mix(in srgb, var(--glean-color-action) 25%, transparent);
     overflow: hidden;
@@ -198,22 +198,22 @@
 .glean-fold-card__ops {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--glean-space-1);
     flex-shrink: 0;
 }
 
 .glean-fold-card__btn {
     border: none;
     background: transparent;
-    padding: 2px 6px;
+    padding: var(--glean-space-0-5) var(--glean-space-1-5);
     border-radius: var(--glean-radius-pill);
     color: var(--b3-theme-on-surface);
     opacity: 0.6;
     cursor: pointer;
-    font-size: 11.5px;
+    font-size: var(--glean-text-caption);
     display: inline-flex;
     align-items: center;
-    gap: 2px;
+    gap: var(--glean-space-0-5);
     transition: all var(--glean-duration-fast) ease;
 
     &:hover {
@@ -231,44 +231,44 @@
 .glean-fold-card__body {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: var(--glean-space-1-5);
 }
 
 .glean-fold-card__text-full {
-    font-size: 14px;
-    line-height: 1.68;
+    font-size: var(--glean-text-base);
+    line-height: var(--glean-leading-body);
     color: var(--b3-theme-on-surface);
     word-break: break-word;
-    margin: 0;
+    margin: var(--glean-space-0);
     white-space: pre-wrap;
 }
 
 .glean-fold-card__brief {
-    font-size: 13.5px;
-    line-height: 1.6;
-    font-weight: 500;
+    font-size: var(--glean-text-sm);
+    line-height: var(--glean-leading-normal);
+    font-weight: var(--glean-weight-medium);
     color: var(--b3-theme-on-surface);
     border-left: 3px solid var(--glean-color-action);
-    padding: 6px 12px;
+    padding: var(--glean-space-1-5) var(--glean-space-3);
     background: color-mix(in srgb, var(--glean-color-action) 5%, transparent);
-    border-radius: 0 var(--glean-radius-md, 8px) var(--glean-radius-md, 8px) 0;
+    border-radius: var(--glean-radius-none) var(--glean-radius-md, 8px) var(--glean-radius-md, 8px) var(--glean-radius-none);
     font-style: normal;
 }
 
 .glean-fold-card__points {
-    margin: 0;
-    padding-left: 18px;
+    margin: var(--glean-space-0);
+    padding-left: var(--glean-space-4);
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    font-size: 13px;
-    line-height: 1.5;
+    gap: var(--glean-space-1);
+    font-size: var(--glean-text-sm);
+    line-height: var(--glean-leading-normal);
     color: var(--b3-theme-on-surface);
 }
 
 .glean-fold-card__gist {
-    font-size: 13px;
-    line-height: 1.55;
+    font-size: var(--glean-text-sm);
+    line-height: var(--glean-leading-normal);
     color: var(--b3-theme-on-surface);
     opacity: 0.92;
 }
@@ -276,8 +276,8 @@
 .glean-fold-card__concept-view {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 13px;
+    gap: var(--glean-space-2);
+    font-size: var(--glean-text-sm);
     color: var(--b3-theme-on-surface);
 }
 

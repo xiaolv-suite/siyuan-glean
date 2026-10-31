@@ -32,16 +32,17 @@ export interface FoldLevelConfig {
     level: FoldLevel;
     nameKey: string;
     descKey: string;
+    badgeKey: string;
     badge: string;
     shortcut: string;
 }
 
 export const FOLD_LEVEL_CONFIGS: readonly FoldLevelConfig[] = [
-    { level: 1, nameKey: "foldReader.level1Name", descKey: "foldReader.level1Desc", badge: "全文", shortcut: "1" },
-    { level: 2, nameKey: "foldReader.level2Name", descKey: "foldReader.level2Desc", badge: "逐字", shortcut: "2" },
-    { level: 3, nameKey: "foldReader.level3Name", descKey: "foldReader.level3Desc", badge: "论点", shortcut: "3" },
-    { level: 4, nameKey: "foldReader.level4Name", descKey: "foldReader.level4Desc", badge: "要旨", shortcut: "4" },
-    { level: 5, nameKey: "foldReader.level5Name", descKey: "foldReader.level5Desc", badge: "概念", shortcut: "5" },
+    { level: 1, nameKey: "foldReader.level1Name", descKey: "foldReader.level1Desc", badgeKey: "foldReader.level1Badge", badge: "全文", shortcut: "1" },
+    { level: 2, nameKey: "foldReader.level2Name", descKey: "foldReader.level2Desc", badgeKey: "foldReader.level2Badge", badge: "逐字", shortcut: "2" },
+    { level: 3, nameKey: "foldReader.level3Name", descKey: "foldReader.level3Desc", badgeKey: "foldReader.level3Badge", badge: "论点", shortcut: "3" },
+    { level: 4, nameKey: "foldReader.level4Name", descKey: "foldReader.level4Desc", badgeKey: "foldReader.level4Badge", badge: "要旨", shortcut: "4" },
+    { level: 5, nameKey: "foldReader.level5Name", descKey: "foldReader.level5Desc", badgeKey: "foldReader.level5Badge", badge: "概念", shortcut: "5" },
 ];
 
 /**

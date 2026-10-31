@@ -12,14 +12,18 @@
         context: ReadingClipContext;
         outline: readonly OutlineItem[];
         onJumpToBlock?: (blockId: string) => void;
+        onClose?: () => void;
+        registerCloseGuard?: (guard: () => boolean) => () => void;
     }
 
-    let { facade, context, outline, onJumpToBlock }: Props = $props();
+    let { facade, context, outline, onJumpToBlock, onClose, registerCloseGuard }: Props = $props();
 
     const i18n = $derived(facade.i18n);
 
     let targetMinutes = $state(8);
     let creating = $state(false);
+
+    $effect(() => registerCloseGuard?.(() => !creating));
 
     const estimatedMinutes = $derived(context.words ? Math.max(1, Math.round(context.words / 400)) : 1);
 
@@ -33,6 +37,7 @@
 
     function handleJump(slice: DocSlice): void {
         if (slice.startBlockId && onJumpToBlock) {
+            onClose?.();
             onJumpToBlock(slice.startBlockId);
         }
     }
@@ -45,6 +50,7 @@
             if (result.ok) {
                 showMessage(t(i18n, "docSlicing.createdSuccess", { count: result.createdCount }), 3500);
                 facade.notifyDataChanged();
+                onClose?.();
             } else {
                 showMessage(result.errors[0] || t(i18n, "msg.actionFailed"), 3500);
             }
@@ -53,6 +59,20 @@
             showMessage(t(i18n, "msg.actionFailed"), 3500);
         } finally {
             creating = false;
+        }
+    }
+
+    function onWindowKeyDown(e: KeyboardEvent): void {
+        if (e.repeat) return;
+        if (e.key === "Escape") {
+            if (creating) {
+                e.preventDefault();
+                e.stopPropagation();
+                return;
+            }
+            e.preventDefault();
+            e.stopPropagation();
+            onClose?.();
         }
     }
 
@@ -77,6 +97,8 @@
         }
     }
 </script>
+
+<svelte:window onkeydown={onWindowKeyDown} />
 
 <div class="lv-glean glean-slicing-dialog">
     <div class="glean-slicing-head">
@@ -121,7 +143,7 @@
                 <div class="glean-slicing-card__head">
                     <span class="glean-slicing-card__badge">{slice.index}</span>
                     <span class="glean-slicing-card__title" title={slice.title}>{slice.title}</span>
-                    <span class="glean-slicing-card__time">约 {slice.estimatedMinutes} 分钟 · {slice.estimatedWords} 字</span>
+                    <span class="glean-slicing-card__time">{t(i18n, "docSlicing.sliceMeta", { minutes: slice.estimatedMinutes, words: slice.estimatedWords })}</span>
                 </div>
                 {#if slice.sectionTitles.length > 0}
                     <div class="glean-slicing-card__sections">

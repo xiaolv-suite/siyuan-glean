@@ -1,6 +1,25 @@
 # HANDOFF — 续跑交接（每轮开发结束更新本页）
 
-## 当前有效交接（2026-10-31 融合 GitHub 顶级对标产品：TextFold 5 阶折叠、Omnivore+Hoarder 入库自动分拣引擎、词表防膨胀、快照健康度徽标与 j/k/e/l Inbox Zero 极速流）
+## 当前有效交接（2026-10-31 v1.4.1 本地发版：全仓存量材料四态盘点、6 项核心缺陷修复、AI 词表防膨胀服务层贯通与三视图令牌收口）
+
+- **T-3545/D-0423：全仓存量材料盘点、6 项核心缺陷修复、词表防膨胀服务层贯通与 v1.4.1 本地发版**：
+  1. **存量材料盘点与单一事实来源（`docs/AUDIT-AND-BACKLOG-2026-10-31.md`）**：
+     - 全量扫描非源码文件并按“有效 / 过期 / 重复 / 已落地未标记”四态分级，有效待办统一收敛至 `docs/AUDIT-AND-BACKLOG-2026-10-31.md`；
+     - 早期琥珀色原型归档至 `design/archive/prototype-v1.html` 与 `design/archive/prototype-settings-v1.html` 并附 `design/archive/README.md`，原文件保留并标注迁移去向；
+  2. **6 项实测可复现缺陷修复**：
+     - **B-01（导入自动分拣防标签污染）**：修复 `src/domain/auto-triage.ts` 的 `matchesAutoTriageRule` 在条目缺少字数/时长字段时未拦截 `minMinutes`/`maxMinutes`，导致普通导入书签被同时贴上「深度长文」与「速读」互斥标签的问题；
+     - **B-02（漫游盲盒稍后读/归档自动翻页）**：修复 `src/ui/RoamingDrawerDialog.svelte` 中 `markCurrentLater` 与 `markCurrentArchive` 调用 `nextPick()` 时被自身 `loading = true` 重入锁拦截导致界面卡在原文章的问题；
+     - **B-03（思源 3.8.9 `createDocWithMd` 兼容）**：修复思源内核 v3.8.9 新建笔记本或多级路径创建文档时返回 `code=-1, msg="document metadata is not ready"` 的集成故障，在 `src/api/client.ts` 中对前置未就绪状态自动激活笔记本元数据并幂等预建父目录；
+     - **B-04（全局键盘遮罩隔离与按钮焦点保护）**：修复 `RoamingDrawerDialog` 聚焦按钮时按 `Enter`/`Space` 被全局监听劫持的问题，升级 `WorkbenchPreview` 与 `FoldedReaderView` 的 `.b3-dialog` / `[aria-modal="true"]` 模态遮罩与宿主可见性守卫；
+     - **B-05（折叠阅读器切文竞态与块定位回退）**：为 `ReaderTab.svelte` 的 `refreshFoldNodes` 增加 `targetDocId` 与 `sessionGeneration` 校验并在 `onData` 时同步刷新，区分真实块 ID 与合成段落并在跨视口时回退调用 `openTab`；
+     - **B-06（渐进切片弹窗关闭守卫与防重入）**：`DocSlicingDialog.svelte` 接入 `onClose` 与 `registerCloseGuard(() => !creating)`，点击「定位小节」或生成成功后自动关闭弹窗，生成期间拦截 `Escape`；
+  3. **功能半成品清零（F-01）**：
+     - 在 `src/services/enrich-service.ts` 接入 `loadExistingTagVocabulary`，从 `glean-index.json` 提取既有高频标签词表传入 `parseEnrichResponse`，真正打通生产环境 AI 富化标签防膨胀闭环；
+  4. **界面审查与本地 v1.4.1 发版（U-01）**：
+     - 为 `DockPanel.svelte` 紧凑卡片（`.glean-card`）补齐 `.glean-snap-badge` 快照健康度盾牌徽标，对齐表格、看板、卡片三视图；
+     - 清理 6 个组件的硬编码中文与裸 Emoji，补齐 `:root` 运行时令牌声明（`pnpm tokens:audit` 未声明运行时变量归零），采集 Headless Chrome 实测截图存至 `output/round-v141-audit/`；
+     - 四处版本号（`package.json`、`plugin.json`、`README.md`、`src/domain/schema.ts` `PLUGIN_VERSION`）统一升至 `1.4.1`，保留上一版回滚包 `output/release-v1.4.0-rollback/package.zip`，完成本地 tag `v1.4.1` 锚定；
+     - 门禁全绿：`pnpm check` 0 错误/0 警告、`pnpm test` 1,769/1,769 PASS、隔离内核 S1 E2E 58/58 PASS、spike 8/8 PASS、`pnpm check:release` 14/14 PASS。
 
 - **T-3544/D-0422：GitHub 顶级标杆三合一融合方案（TextFold + Omnivore + Hoarder）全面落地闭环**：
   1. **TextFold 5 阶语义保真折叠阅读器（Folded Reader）**：

@@ -375,10 +375,11 @@
     }
 
     function onPreviewKeyDown(event: KeyboardEvent): void {
+        if (event.repeat) return;
         const target = event.target instanceof Element ? event.target : null;
         const textEntry = Boolean(target?.closest("input, textarea, select, [contenteditable]:not([contenteditable='false'])"));
         if (textEntry || event.isComposing || event.ctrlKey || event.metaKey || event.altKey) return;
-        if (document.querySelector("dialog[open], .b3-menu")) return;
+        if (Array.from(document.querySelectorAll<HTMLElement>('dialog[open], .b3-dialog, .b3-menu, [role="dialog"], [aria-modal="true"], .glean-dialog')).some((el) => el.getClientRects().length > 0)) return;
 
         const lower = event.key.length === 1 ? event.key.toLowerCase() : event.key;
         if (event.shiftKey && lower !== "c") return;
@@ -551,7 +552,7 @@
         <div class="glean-preview__excerpt">
             <span title={excerpt.text}>{excerpt.text.slice(0, 100)}</span>
             <button type="button" class="glean-btn" disabled={busy || !confirmed || !excerpt.blockId} title={excerpt.blockId ? "" : t(i18n, "reader.excerptNoBlock")} onclick={quote}>{t(i18n, "reader.excerptQuote")}</button>
-            <button type="button" class="glean-btn glean-btn--ghost" disabled={!excerpt.blockId} onclick={() => void copySelectedBlockRef()} title="复制选中段落块引用 (Y)">{t(i18n, "action.copyBlockRef")}</button>
+            <button type="button" class="glean-btn glean-btn--ghost" disabled={!excerpt.blockId} onclick={() => void copySelectedBlockRef()} title="{t(i18n, 'action.copyBlockRef')} (Y)">{t(i18n, "action.copyBlockRef")}</button>
             <button type="button" class="glean-btn glean-btn--ghost glean-preview__excerpt-quote-btn" onclick={makeExcerptQuoteCard} title={t(i18n, "quoteCard.action")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg> <span>{t(i18n, "quoteCard.action")}</span></button>
             <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyExcerpt()}>{t(i18n, "reader.copy")}</button>
         </div>

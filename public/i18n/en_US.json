@@ -1573,5 +1573,19 @@
   "triage.ruleAcademic": "Academic Papers",
   "triage.ruleDeepRead": "Deep Longform Reads",
   "triage.ruleQuickRead": "Quick Snippet Reads",
-  "triage.applied": "Auto-triaged to ${status}"
+  "triage.applied": "Auto-triaged to ${status}",
+  "foldReader.level1Badge": "Full",
+  "foldReader.level2Badge": "Verbatim",
+  "foldReader.level3Badge": "Points",
+  "foldReader.level4Badge": "Gist",
+  "foldReader.level5Badge": "Concept",
+  "foldReader.paragraphIndex": "Paragraph ${n}",
+  "docSlicing.sliceMeta": "~${minutes} min · ${words} words",
+  "roaming.scoreTitle": "Match Score",
+  "roaming.scoreLabel": "${score} pts",
+  "roaming.budgetGroupLabel": "Available Time",
+  "roaming.snapshotSaved": "Snapshot",
+  "roaming.snapshotSavedHint": "Offline HTML snapshot saved",
+  "snapshotHealth.scoreBadgeTitle": "${label}: ${desc} (${score})",
+  "highlight.keyboardCursorSelected": "Highlight selected via keyboard"
 }

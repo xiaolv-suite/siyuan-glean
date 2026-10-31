@@ -483,9 +483,65 @@ export async function exportMdContent(id: string, options: ExportMarkdownOptions
     });
 }
 
-/** 创建文档（同路径会再建新文档，不幂等——调用方先查重，人脉 D-0007 同款结论）。返回文档 ID。 */
+const readyMetadataNotebooks = new Set<string>();
+const ensuredParentPaths = new Set<string>();
+
+async function ensureNotebookAndParentMetadata(notebookId: string, hPath: string): Promise<void> {
+    if (!readyMetadataNotebooks.has(notebookId)) {
+        try {
+            await kernelPost("/api/notebook/closeNotebook", { notebook: notebookId });
+            await kernelPost("/api/notebook/openNotebook", { notebook: notebookId });
+            await new Promise((resolve) => setTimeout(resolve, 200));
+            readyMetadataNotebooks.add(notebookId);
+        } catch {
+            // 忽略笔记本重开辅助错误，继续后续重试
+        }
+    }
+    const parts = String(hPath || "").split("/").filter(Boolean);
+    if (parts.length <= 1) return;
+    for (let i = 1; i < parts.length; i += 1) {
+        const prefix = `/${parts.slice(0, i).join("/")}`;
+        const cacheKey = `${notebookId}:${prefix}`;
+        if (ensuredParentPaths.has(cacheKey)) continue;
+        const existing = await querySql<{ id: string }>(
+            `SELECT id FROM blocks WHERE box = '${notebookId.replace(/'/g, "''")}' AND hpath = '${prefix.replace(/'/g, "''")}' AND type = 'd' LIMIT 1`
+        ).catch(() => []);
+        if (existing.length > 0) {
+            ensuredParentPaths.add(cacheKey);
+            continue;
+        }
+        try {
+            await kernelPost<string>("/api/filetree/createDocWithMd", {
+                notebook: notebookId,
+                path: prefix,
+                markdown: `# ${parts[i - 1]}`,
+            });
+            ensuredParentPaths.add(cacheKey);
+            await new Promise((resolve) => setTimeout(resolve, 150));
+        } catch {
+            // 若并发已创建或短暂未就绪，交由外层循环重试
+        }
+    }
+}
+
+/** 创建文档（同路径会再建新文档，不幂等——调用方先查重，人脉 D-0007 同款结论）。返回文档 ID。
+ * 思源 3.8.9+ 新建笔记本或自动补建多级父目录时，若父级或笔记本 document_metadata 尚未就绪会返回前置拒止 "document metadata is not ready"（未发生目标文档写入），对此自动初始化笔记本元数据与父目录后再创建。
+ */
 export async function createDocWithMd(notebookId: string, hPath: string, markdown: string, tags?: string): Promise<string> {
-    return kernelPost<string>("/api/filetree/createDocWithMd", { notebook: notebookId, path: hPath, markdown, ...(tags ? { tags } : {}) });
+    const payload = { notebook: notebookId, path: hPath, markdown, ...(tags ? { tags } : {}) };
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+        try {
+            return await kernelPost<string>("/api/filetree/createDocWithMd", payload);
+        } catch (error) {
+            if (attempt < 9 && /document metadata is not ready/i.test(String((error as Error)?.message ?? error ?? ""))) {
+                await ensureNotebookAndParentMetadata(notebookId, hPath);
+                await new Promise((resolve) => setTimeout(resolve, 200));
+                continue;
+            }
+            throw error;
+        }
+    }
+    return kernelPost<string>("/api/filetree/createDocWithMd", payload);
 }
 
 /** 移动文档到目标笔记本/文档路径；生命周期服务只通过此 API 调用内核。 */

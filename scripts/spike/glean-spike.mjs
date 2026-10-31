@@ -158,10 +158,45 @@ async function api(route, body = {}) {
     try { payload = text ? JSON.parse(text) : {}; } catch { throw new Error(`${route} 非 JSON 响应: ${text.slice(0, 200)}`); }
     return payload;
 }
+const readySpikeBoxes = new Set();
+const ensuredSpikeParents = new Set();
+async function ensureSpikeBoxAndParents(notebookId, hPath) {
+    if (notebookId && !readySpikeBoxes.has(notebookId)) {
+        await api("/api/notebook/closeNotebook", { notebook: notebookId }).catch(() => undefined);
+        await api("/api/notebook/openNotebook", { notebook: notebookId }).catch(() => undefined);
+        await new Promise((r) => setTimeout(r, 200));
+        readySpikeBoxes.add(notebookId);
+    }
+    const parts = String(hPath || "").split("/").filter(Boolean);
+    for (let i = 1; i < parts.length; i += 1) {
+        const prefix = `/${parts.slice(0, i).join("/")}`;
+        const key = `${notebookId}:${prefix}`;
+        if (ensuredSpikeParents.has(key)) continue;
+        const q = await api("/api/query/sql", {
+            stmt: `SELECT id FROM blocks WHERE box = '${notebookId}' AND hpath = '${prefix.replace(/'/g, "''")}' AND type = 'd' LIMIT 1`,
+        }).catch(() => undefined);
+        if (Array.isArray(q?.data) && q.data.length > 0) {
+            ensuredSpikeParents.add(key);
+            continue;
+        }
+        const created = await api("/api/filetree/createDocWithMd", { notebook: notebookId, path: prefix, markdown: `# ${parts[i - 1]}` }).catch(() => undefined);
+        if (created?.code === 0) ensuredSpikeParents.add(key);
+        await new Promise((r) => setTimeout(r, 150));
+    }
+}
 async function apiChecked(route, body = {}) {
-    const payload = await api(route, body);
-    if (payload.code !== 0) throw new Error(`${route} code=${payload.code} msg=${payload.msg}`);
-    return payload.data;
+    for (let attempt = 0; attempt < 12; attempt += 1) {
+        const payload = await api(route, body);
+        if (payload.code !== 0 && /document metadata is not ready|Access is denied/i.test(String(payload.msg ?? "")) && attempt < 11) {
+            if (route === "/api/filetree/createDocWithMd" && body?.notebook) {
+                await ensureSpikeBoxAndParents(body.notebook, body.path);
+            }
+            await new Promise((r) => setTimeout(r, 200));
+            continue;
+        }
+        if (payload.code !== 0) throw new Error(`${route} code=${payload.code} msg=${payload.msg}`);
+        return payload.data;
+    }
 }
 
 function newNodeID() {
@@ -567,7 +602,8 @@ async function main() {
         console.log(`内核 v${kernelVersion} @ ${BASE}（隔离工作区: ${WORKSPACE}）\n`);
 
         if (!ATTACHED_BASE) {
-            token = options.token || process.env.SIYUAN_TOKEN || (JSON.parse(fs.readFileSync(path.join(WORKSPACE, "conf", "conf.json"), "utf8")).accessAuthCode) || "";
+            const conf = JSON.parse(fs.readFileSync(path.join(WORKSPACE, "conf", "conf.json"), "utf8"));
+            token = options.token || process.env.SIYUAN_TOKEN || conf.api?.token || conf.accessAuthCode || "";
             if (!token) throw new Error("隔离内核未生成 token；请传入 --token 或设置 SIYUAN_TOKEN");
         }
         await prepareWriteSmoke(api, { base: BASE, log: console });

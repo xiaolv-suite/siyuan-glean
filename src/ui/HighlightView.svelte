@@ -973,7 +973,7 @@ function focusHighlightRow(id: string): void {
                 <kbd>Esc</kbd> {t(i18n, "library.keyboardExit")}
             </span>
             <span class="glean-sr-only" role="status" aria-live="polite">
-                {cursorId ? "已用键盘选中摘录" : ""}
+                {cursorId ? t(i18n, "highlight.keyboardCursorSelected") : ""}
             </span>
         </div>
     {/if}

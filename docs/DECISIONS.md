@@ -2966,3 +2966,21 @@ T-3416 承接方向五（有依据的阅读 AI）与同类产品对标（Readwis
    - 展台动作区同步呈现「⚡ P」与「⭐」可交互微标；
 3. 严格本地交付保障：
    - 严格在本地完成构建和测试，不执行任何外部推送与远程 API 调用。
+
+## D-0423（2026-10-31）全仓存量材料盘点、6 项核心缺陷修复、词表防膨胀服务层贯通与 v1.4.1 本地发版（T-3545）
+
+1. **存量材料单一事实源与原型归档**：
+   - 将全仓非源码材料按“有效 / 过期 / 重复 / 已落地未标记”四态归类并汇总至 `docs/AUDIT-AND-BACKLOG-2026-10-31.md`；
+   - 保留原文件并在头部注明状态与迁移去向；将早期琥珀色 `design/prototype.html` 与 `design/prototype-settings.html` 归档副本至 `design/archive/` 并附 `README.md` 说明，`design/prototype-v2.html` 继续作为唯一 canonical 原型。
+2. **6 项核心缺陷实证修复**：
+   - **B-01（导入自动分拣防标签污染）**：`matchesAutoTriageRule` 在规则声明了 `minMinutes`/`maxMinutes` 或 `minWords`/`maxWords` 时，必须要求条目对应指标非 `undefined` 且在区间内才判命中，防止无字数/时长的外部导入书签同时命中“深度长文”与“速读”；
+   - **B-02（漫游盲盒状态流转翻页）**：`RoamingDrawerDialog.svelte` 的 `nextPick(force = false)` 支持内部连调豁免，`markCurrentLater` 与 `markCurrentArchive` 在写盘成功后调用 `await nextPick(true)`，解决 `loading` 锁重入导致界面停留在原文章的问题；
+   - **B-03（思源 3.8.9 `createDocWithMd` 兼容）**：针对思源 v3.8.9 新增的 `document_metadata_state` / `document_metadata_pending` 前置拒止（`code=-1, msg="document metadata is not ready"`），在 `src/api/client.ts` 的 `createDocWithMd` 中仅对该前置未就绪错误自动执行一次笔记本重开激活与父级目录幂等预建（`ensuredParentPaths` 去重防路径歧义），对其他错误保持零重试幂等红线；
+   - **B-04（全局键盘遮罩隔离与按钮焦点保护）**：`RoamingDrawerDialog` 在 `Enter`/`Space` 放行聚焦按钮原生激活；`WorkbenchPreview` 与 `FoldedReaderView` 补齐 `event.repeat`、`event.shiftKey`、`.b3-dialog` / `[aria-modal="true"]` 模态遮罩检测与宿主可见性校验；
+   - **B-05（折叠阅读器切文竞态与定位降级）**：`ReaderTab` 的 `refreshFoldNodes` 绑定 `targetDocId` 与 `sessionGeneration` 并在 `onData` 时同步刷新；`FoldedReaderView` 区分真实块 ID 与合成段落，`ReaderTab` 在 `scrollAndPulseReadPoint` 返回 `false` 时回退调用 `openTab`；
+   - **B-06（渐进切片弹窗关闭守卫与防重入）**：`DocSlicingDialog` 接入 `onClose` 与 `registerCloseGuard(() => !creating)`，点击「定位小节」或生成成功后自动关闭弹窗，生成期间拦截 `Escape`。
+3. **AI 富化词表防膨胀服务层贯通（F-01）**：
+   - 在 `src/services/enrich-service.ts` 新增 `loadExistingTagVocabulary(plugin, docId)`，从 `glean-index.json` 按频次提取库内既有 `tags` 与 `aiTags` 词表并传入 `parseEnrichResponse`，消除半成品断点。
+4. **三视图一致性与本地 v1.4.1 发版（U-01）**：
+   - 补齐 `DockPanel.svelte` 紧凑/移动卡片（`.glean-card`）的 `.glean-snap-badge` 快照健康度徽标；收口未翻译中文与 `:root` 令牌声明；
+   - 同步 `package.json`、`plugin.json`、双语 `README` 与 `src/domain/schema.ts` 的 `PLUGIN_VERSION = "1.4.1"`，保留 `output/release-v1.4.0-rollback/package.zip` 回滚包，完成本地 tag `v1.4.1` 锚定，严格不执行任何远程操作。

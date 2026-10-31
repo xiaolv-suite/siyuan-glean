@@ -3521,7 +3521,7 @@ function metaLine(entry: Row): string {
                                         <span class="glean-tier-badge glean-tier-badge--fav" title={t(i18n, "roaming.favoriteOnly")}><svg class="glean-icon glean-icon--xs glean-icon--fav" aria-hidden="true"><use href="#iconGleanHeart" /></svg></span>
                                     {/if}
                                     {#if entry.readPoint && (entry.status === "reading" || entry.status === "later")}<span class="glean-read-point-badge" title={t(i18n, "reading.resumePoint")}><svg class="glean-icon glean-icon--xs glean-icon--bookmark" aria-hidden="true"><use href="#iconGleanBookmark" /></svg> <span>{t(i18n, "reading.resumePointShort")}</span></span>{/if}
-                                    <span class="glean-tier-badge glean-snap-badge glean-snap-badge--{snapHealth.grade}" title="{t(i18n, snapHealth.labelKey)}: {t(i18n, snapHealth.descKey)} ({snapHealth.score}分)"><svg class="glean-icon glean-icon--xs" class:glean-icon--shield-ok={snapHealth.grade === "healthy"} aria-hidden="true"><use href={snapHealth.grade === "healthy" ? "#iconGleanShieldCheck" : "#iconGleanShield"} /></svg> <span>{snapHealth.score}</span></span>
+                                    <span class="glean-tier-badge glean-snap-badge glean-snap-badge--{snapHealth.grade}" title={t(i18n, "snapshotHealth.scoreBadgeTitle", { label: t(i18n, snapHealth.labelKey), desc: t(i18n, snapHealth.descKey), score: snapHealth.score })}><svg class="glean-icon glean-icon--xs" class:glean-icon--shield-ok={snapHealth.grade === "healthy"} aria-hidden="true"><use href={snapHealth.grade === "healthy" ? "#iconGleanShieldCheck" : "#iconGleanShield"} /></svg> <span>{snapHealth.score}</span></span>
                                     {#if (entry.status === "inbox" || entry.status === "later") && staleText(entry.time) !== null}
                                         <span class="glean-stale">{staleText(entry.time)}</span>
                                     {/if}
@@ -3731,7 +3731,7 @@ function metaLine(entry: Row): string {
                                                     <span class="glean-tier-badge glean-tier-badge--fav" title={t(i18n, "roaming.favoriteOnly")}><svg class="glean-icon glean-icon--xs glean-icon--fav" aria-hidden="true"><use href="#iconGleanHeart" /></svg></span>
                                                 {/if}
                                                 {#if entry.readPoint && (entry.status === "reading" || entry.status === "later")}<span class="glean-read-point-badge" title={t(i18n, "reading.resumePoint")}><svg class="glean-icon glean-icon--xs glean-icon--bookmark" aria-hidden="true"><use href="#iconGleanBookmark" /></svg> <span>{t(i18n, "reading.resumePointShort")}</span></span>{/if}
-                                                <span class="glean-tier-badge glean-snap-badge glean-snap-badge--{snapHealth.grade}" title="{t(i18n, snapHealth.labelKey)}: {t(i18n, snapHealth.descKey)} ({snapHealth.score}分)"><svg class="glean-icon glean-icon--xs" class:glean-icon--shield-ok={snapHealth.grade === "healthy"} aria-hidden="true"><use href={snapHealth.grade === "healthy" ? "#iconGleanShieldCheck" : "#iconGleanShield"} /></svg> <span>{snapHealth.score}</span></span>
+                                                <span class="glean-tier-badge glean-snap-badge glean-snap-badge--{snapHealth.grade}" title={t(i18n, "snapshotHealth.scoreBadgeTitle", { label: t(i18n, snapHealth.labelKey), desc: t(i18n, snapHealth.descKey), score: snapHealth.score })}><svg class="glean-icon glean-icon--xs" class:glean-icon--shield-ok={snapHealth.grade === "healthy"} aria-hidden="true"><use href={snapHealth.grade === "healthy" ? "#iconGleanShieldCheck" : "#iconGleanShield"} /></svg> <span>{snapHealth.score}</span></span>
                                                 <span class="glean-drow__st">
                                                     <span class="glean-st-badge glean-st-badge--{entry.status}">{queueLabel(entry.status)}</span>
                                                 </span>
@@ -3934,7 +3934,9 @@ function metaLine(entry: Row): string {
                                         <span class="glean-tier-badge glean-tier-badge--fav" title={t(i18n, "roaming.favoriteOnly")}><svg class="glean-icon glean-icon--xs glean-icon--fav" aria-hidden="true"><use href="#iconGleanHeart" /></svg></span>
                                     {/if}
                                     {#if entry.kind === "clip"}
+                                        {@const snapHealth = calculateSnapshotHealth(entry)}
                                         {@const days = staleDays(entry.time)}
+                                        <span class="glean-tier-badge glean-snap-badge glean-snap-badge--{snapHealth.grade}" title={t(i18n, "snapshotHealth.scoreBadgeTitle", { label: t(i18n, snapHealth.labelKey), desc: t(i18n, snapHealth.descKey), score: snapHealth.score })}><svg class="glean-icon glean-icon--xs" class:glean-icon--shield-ok={snapHealth.grade === "healthy"} aria-hidden="true"><use href={snapHealth.grade === "healthy" ? "#iconGleanShieldCheck" : "#iconGleanShield"} /></svg> <span>{snapHealth.score}</span></span>
                                         {#if days !== null && (entry.status === "inbox" || entry.status === "later")}
                                             <span class="glean-stale">{t(i18n, "panel.staleDays", { n: days })}</span>
                                         {/if}

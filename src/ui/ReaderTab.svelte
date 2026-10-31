@@ -162,16 +162,24 @@ import { aiFailureKey } from "../libs/ai-feedback";
     let foldLoading = $state(false);
     let foldGlobalLevel = $state<FoldLevel>(2);
 
-    async function refreshFoldNodes(): Promise<void> {
-        if (!docId || foldLoading) return;
+    async function refreshFoldNodes(targetDocId = docId): Promise<void> {
+        if (!targetDocId) return;
+        const generation = sessionGeneration;
         foldLoading = true;
         try {
-            foldNodes = await loadDocumentFoldNodes(docId, foldGlobalLevel);
+            const loaded = await loadDocumentFoldNodes(targetDocId, foldGlobalLevel);
+            if (docId === targetDocId && generation === sessionGeneration && mounted) {
+                foldNodes = loaded;
+            }
         } catch (err) {
             console.warn("[glean] loadDocumentFoldNodes failed:", err);
-            foldNodes = [];
+            if (docId === targetDocId && generation === sessionGeneration && mounted) {
+                foldNodes = [];
+            }
         } finally {
-            foldLoading = false;
+            if (docId === targetDocId && generation === sessionGeneration && mounted) {
+                foldLoading = false;
+            }
         }
     }
 
@@ -1284,6 +1292,9 @@ import { aiFailureKey } from "../libs/ai-feedback";
                 void loadContext(docId);
                 void loadOutline(docId);
                 void loadDocHighlights(docId);
+                if (companionTab === "fold") {
+                    void refreshFoldNodes(docId);
+                }
             }
         };
         const onVisibility = () => syncReadingTimer();
@@ -2665,7 +2676,10 @@ import { aiFailureKey } from "../libs/ai-feedback";
                             foldNodes = applyGlobalFoldLevel(foldNodes, lvl);
                         }}
                         onJumpToBlock={(blockId) => {
-                            scrollAndPulseReadPoint(protyleHost, blockId);
+                            const jumped = scrollAndPulseReadPoint(protyleHost, blockId);
+                            if (!jumped && /^\d{14}-[a-z0-9]{7}$/.test(blockId)) {
+                                void openTab({ app: facade.pluginInstance.app, doc: { id: blockId }, keepCursor: false });
+                            }
                         }}
                         onToggleNode={(nodeId) => {
                             foldNodes = foldNodes.map((n) => n.id === nodeId ? toggleNodeFold(n) : n);

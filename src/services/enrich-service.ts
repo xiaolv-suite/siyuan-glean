@@ -14,6 +14,7 @@ import { todayStamp } from "../domain/resurface";
 import { buildEnrichPrompt, isLikelyDuplicate, parseEnrichResponse, type EnrichResult } from "../domain/enrich";
 import { parseClipAttrs } from "../domain/schema";
 import { batchReadClipAttrs, writeClip, type WriteClipOptions } from "./clip-store";
+import { loadIndex } from "./index-store";
 import { normalizeSettings, type GleanSettings } from "./settings";
 
 const LOG_FILE = "ai-log.json";
@@ -167,6 +168,26 @@ export async function callLLM(
     }
 }
 
+async function loadExistingTagVocabulary(plugin: Plugin, excludeDocId?: string): Promise<string[]> {
+    try {
+        const index = await loadIndex(plugin);
+        const counts = new Map<string, number>();
+        for (const [id, entry] of Object.entries(index.clips)) {
+            if (id === excludeDocId) continue;
+            for (const tag of [...(entry.tags ?? []), ...(entry.aiTags ?? [])]) {
+                const clean = typeof tag === "string" ? tag.trim() : "";
+                if (!clean) continue;
+                counts.set(clean, (counts.get(clean) ?? 0) + 1);
+            }
+        }
+        return [...counts.entries()]
+            .sort((a, b) => b[1] - a[1])
+            .map(([tag]) => tag);
+    } catch {
+        return [];
+    }
+}
+
 /** 单篇富化（串行队列执行）。关闭模式不调用模型；每日上限由队列内统一把守。 */
 export function enrichClip(plugin: Plugin, docId: string, settings: GleanSettings, options: Pick<WriteClipOptions, "expectedAttrs" | "expectedLocation"> = {}): Promise<EnrichOutcome> {
     if (!aiEnabled(activeAiSettings(plugin, settings))) {
@@ -207,7 +228,8 @@ async function enrichClipInner(plugin: Plugin, docId: string, settings: GleanSet
         await recordAiUsage(plugin);
         currentSettings = activeAiSettings(plugin, settings);
         if (!aiEnabled(currentSettings)) return { ok: false, duplicates: [], skipped: "off" };
-        const parsed: EnrichResult | null = parseEnrichResponse(typeof llm.text === "string" ? llm.text : "");
+        const existingVocabulary = await loadExistingTagVocabulary(plugin, docId);
+        const parsed: EnrichResult | null = parseEnrichResponse(typeof llm.text === "string" ? llm.text : "", existingVocabulary);
         if (!parsed) {
             await appendLog(plugin, docId, "parse", "模型响应无法解析为 JSON，已跳过");
             return { ok: false, duplicates: [], skipped: "parse" };

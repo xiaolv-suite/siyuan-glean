@@ -61,6 +61,12 @@ test("RoamingDrawerDialog 契约守门：展示推荐理由、匹配得分、换
     assert.match(dialogSource, /roaming\.mobileSwipeTips/);
     assert.match(dialogSource, /roaming\.favoriteAction/);
     assert.match(dialogSource, /roaming\.keyboardTips/);
+    assert.match(dialogSource, /async function nextPick\(force = false\)/);
+    assert.match(dialogSource, /await nextPick\(true\)/);
+    assert.match(dialogSource, /roaming\.scoreTitle/);
+    assert.match(dialogSource, /roaming\.scoreLabel/);
+    assert.match(dialogSource, /roaming\.budgetGroupLabel/);
+    assert.match(dialogSource, /roaming\.snapshotSaved/);
 });
 
 test("DockPanel 漫游盲盒与滑动窗口限流契约", () => {

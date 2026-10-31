@@ -151,8 +151,8 @@
         }
     }
 
-    async function nextPick(): Promise<void> {
-        if (loading) return;
+    async function nextPick(force = false): Promise<void> {
+        if (loading && !force) return;
         const currentList = history.length > 0 ? history : [initialPick];
         if (historyIndex < currentList.length - 1) {
             historyIndex += 1;
@@ -193,7 +193,7 @@
             showMessage(t(i18n, "msg.statusChanged"), 2000);
             facade.notifyDataChanged();
             cachedIndex = null;
-            await nextPick();
+            await nextPick(true);
         } catch (error) {
             console.warn("[glean] 盲盒稍后读写入失败:", error);
             showMessage(t(i18n, "msg.statusFailed"), 2500);
@@ -211,7 +211,7 @@
             showMessage(t(i18n, "msg.statusChanged"), 2000);
             facade.notifyDataChanged();
             cachedIndex = null;
-            await nextPick();
+            await nextPick(true);
         } catch (error) {
             console.warn("[glean] 盲盒归档写入失败:", error);
             showMessage(t(i18n, "msg.statusFailed"), 2500);
@@ -382,6 +382,7 @@
         e.preventDefault();
         prevPick();
     } else if (e.key === "ArrowRight" || e.key === " " || e.code === "Space") {
+        if ((e.key === " " || e.code === "Space") && target?.closest("button, a[href], summary, [role='button']")) return;
         e.preventDefault();
         void nextPick();
     } else if ((e.key === "a" || e.key === "A") && !e.ctrlKey && !e.metaKey && !e.altKey) {
@@ -422,6 +423,7 @@
         e.preventDefault();
         void changeBudget("long");
     } else if (e.key === "Enter") {
+        if (target?.closest("button, a[href], summary, [role='button']")) return;
         e.preventDefault();
         startRead();
     }
@@ -433,16 +435,16 @@
             <span class="glean-roaming-icon" aria-hidden="true"><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanRefresh" /></svg></span>
             <span>{currentPick.reason}</span>
         </div>
-        <div class="glean-roaming-score" title="综合匹配得分">
+        <div class="glean-roaming-score" title={t(i18n, "roaming.scoreTitle")}>
             {#if history.length > 1}
                 <span class="glean-roaming-pos">({historyIndex + 1}/{history.length})</span>
             {/if}
-            <svg class="glean-icon glean-icon--xs glean-icon--flame" aria-hidden="true"><use href="#iconGleanFlame" /></svg> <span>{currentPick.score}分</span>
+            <svg class="glean-icon glean-icon--xs glean-icon--flame" aria-hidden="true"><use href="#iconGleanFlame" /></svg> <span>{t(i18n, "roaming.scoreLabel", { score: currentPick.score })}</span>
         </div>
     </div>
 
     <div class="glean-roaming-budget-row">
-        <div class="glean-roaming-budget" role="group" aria-label="可用时间">
+        <div class="glean-roaming-budget" role="group" aria-label={t(i18n, "roaming.budgetGroupLabel")}>
             <button
                 type="button"
                 class="glean-roaming-budget-btn"
@@ -528,7 +530,7 @@
                 <span class="glean-badge">{currentPick.item.site}</span>
             {/if}
             {#if (currentPick.item.minutes ?? 0) > 0}
-                <span class="glean-tier-badge"><svg class="glean-icon glean-icon--xs glean-icon--clock" aria-hidden="true"><use href="#iconGleanClock" /></svg> <span>约 {currentPick.item.minutes} 分钟</span></span>
+                <span class="glean-tier-badge"><svg class="glean-icon glean-icon--xs glean-icon--clock" aria-hidden="true"><use href="#iconGleanClock" /></svg> <span>{t(i18n, "panel.minutes", { n: currentPick.item.minutes ?? 0 })}</span></span>
             {/if}
             {#if (currentPick.item.priority ?? 0) > 0}
                 <span class="glean-tier-badge"><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanBolt" /></svg> <span>P{currentPick.item.priority}</span></span>
@@ -540,10 +542,10 @@
                 <span class="glean-tier-badge glean-tier-badge--fav"><svg class="glean-icon glean-icon--xs glean-icon--fav" aria-hidden="true"><use href="#iconGleanHeart" /></svg> <span>{t(i18n, "roaming.favoriteAction")}</span></span>
             {/if}
             {#if (currentPick.item.words ?? 0) > 0}
-                <span class="glean-tier-badge">📝 {t(i18n, "panel.words", { n: currentPick.item.words ?? 0 })}</span>
+                <span class="glean-tier-badge"><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg> <span>{t(i18n, "panel.words", { n: currentPick.item.words ?? 0 })}</span></span>
             {/if}
             {#if currentPick.item.snapshot}
-                <span class="glean-tier-badge" title="已保存离线网页单文件快照">💾 已快照</span>
+                <span class="glean-tier-badge" title={t(i18n, "roaming.snapshotSavedHint")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanShieldCheck" /></svg> <span>{t(i18n, "roaming.snapshotSaved")}</span></span>
             {/if}
             {#if currentPick.item.readPoint}
                 <span class="glean-tier-badge glean-tier-badge--bookmark" title={t(i18n, "roaming.hasReadPoint")}><svg class="glean-icon glean-icon--xs glean-icon--bookmark" aria-hidden="true"><use href="#iconGleanBookmark" /></svg> <span>{t(i18n, "roaming.hasReadPoint")}</span></span>
@@ -653,7 +655,7 @@
                 class="glean-btn glean-btn--ghost glean-roaming-triage-btn"
                 disabled={loading}
                 onclick={() => void markCurrentLater()}
-                title="稍后读 (A)"
+                title="{t(i18n, 'queue.later')} (A)"
             >
                 <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanInbox" /></svg> <span>{t(i18n, "queue.later")}</span>
             </button>
@@ -662,7 +664,7 @@
                 class="glean-btn glean-btn--ghost glean-roaming-triage-btn"
                 disabled={loading}
                 onclick={() => void markCurrentArchive()}
-                title="归档 (E)"
+                title="{t(i18n, 'queue.archived')} (E)"
             >
                 <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArchive" /></svg> <span>{t(i18n, "queue.archived")}</span>
             </button>

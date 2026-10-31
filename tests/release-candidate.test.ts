@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { PLUGIN_VERSION } from "../src/domain/schema.ts";
 
 const root = resolve(import.meta.dirname, "..");
 const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8")) as { name: string; version: string };
@@ -15,6 +16,7 @@ const capability = readFileSync(resolve(root, "docs/CAPABILITY-MATRIX.md"), "utf
 test("发布候选版本、变更记录和构建门禁口径一致", () => {
     assert.equal(pkg.name, manifest.name);
     assert.equal(pkg.version, manifest.version);
+    assert.equal(PLUGIN_VERSION, pkg.version);
     assert.match(changelog, new RegExp(`## v${pkg.version.replace(".", "\\.")}`));
     for (const command of ["pnpm check", "pnpm test", "pnpm build"]) {
         assert.ok(release.includes(command), `发布手册缺少 ${command}`);

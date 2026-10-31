@@ -20,6 +20,11 @@
    （富化依 D-0013 默认仅手动），失败静默降级。
 9. **zip 产物 mtime 用真实构建时间**；发版走仓库 Latest Release 的 package.zip。
 10. 移动端判定用 `getFrontend()`，禁 UA 嗅探。
+11. **浏览器自动化一律显式指定 Chrome**：Playwright 启动必须带 `channel: "chrome"`（或 `executablePath` 指向 chrome.exe），
+    禁止裸 `chromium.launch()`。Playwright 自带的 `chrome-headless-shell.exe` 是 CONSOLE 子系统程序，
+    被无控制台的父进程（ZCode 隐藏执行、launcher 已退出的孤儿 node）拉起时，Windows 会为它新分配一个
+    空白控制台黑框（标题为完整 exe 路径、带滚动条、内容纯黑）。`--window-position` / `--window-size`
+    是 Chromium 参数，管不到那个控制台窗口。`scripts/`、`.tmp/`、`.artifacts/` 里的临时脚本同样适用。
 
 ## 工作流
 

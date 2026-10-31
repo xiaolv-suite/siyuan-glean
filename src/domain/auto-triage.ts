@@ -124,20 +124,20 @@ export function matchesAutoTriageRule(rule: AutoTriageRule, item: TriageItemInpu
         if (!domainHit && !keywordHit) return false;
     }
 
-    // 2. 阅读时长区间校验 (硬约束)
+    // 2. 阅读时长区间校验 (硬约束：规则显式声明时长阈值时，未知时长不误判命中)
     const minutes = item.estimatedMinutes ?? (item.words ? Math.max(1, Math.round(item.words / 400)) : undefined);
-    if (minMinutes !== undefined && minutes !== undefined && minutes < minMinutes) {
+    if (minMinutes !== undefined && (minutes === undefined || minutes < minMinutes)) {
         return false;
     }
-    if (maxMinutes !== undefined && minutes !== undefined && minutes > maxMinutes) {
+    if (maxMinutes !== undefined && (minutes === undefined || minutes > maxMinutes)) {
         return false;
     }
 
-    // 3. 字数区间校验 (硬约束)
-    if (minWords !== undefined && item.words !== undefined && item.words < minWords) {
+    // 3. 字数区间校验 (硬约束：规则显式声明字数阈值时，未知字数不误判命中)
+    if (minWords !== undefined && (item.words === undefined || item.words < minWords)) {
         return false;
     }
-    if (maxWords !== undefined && item.words !== undefined && item.words > maxWords) {
+    if (maxWords !== undefined && (item.words === undefined || item.words > maxWords)) {
         return false;
     }
 

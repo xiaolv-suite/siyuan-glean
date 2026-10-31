@@ -348,3 +348,46 @@ for (const stage of ["embedding", "search", "attrs", "metadata"]) {
         assert.doesNotMatch(JSON.stringify(fixture.files.get("ai-log.json")), /private .* details/);
     });
 }
+
+test("enrichClip 自动读取库内既有标签词表并执行防膨胀对齐（alignTagsWithVocabulary）", async () => {
+    const h = harness();
+    h.files.set("glean-index.json", {
+        version: 1,
+        updatedAt: "2026-10-31T00:00:00.000Z",
+        clips: {
+            "20261001120000-existing": {
+                id: "20261001120000-existing",
+                title: "既有文章",
+                hpath: "/既有文章",
+                box: "test-box",
+                status: "later",
+                url: "https://example.com/1",
+                site: "example.com",
+                tags: ["TypeScript", "人工智能"],
+                aiTags: ["React"],
+                src: "manual",
+                time: "20261001120000",
+                doneTime: "",
+                timeSource: "capture",
+                words: 1200,
+                minutes: 3,
+                priority: 3,
+                rating: 0,
+                summary: "",
+                updated: "20261001120000",
+                contentType: "fulltext",
+                hasBody: true,
+                lastSurfaced: "",
+            },
+        },
+        candidates: {},
+    });
+    h.answers.push(JSON.stringify({
+        summary: "新文章摘要",
+        tags: ["typescript", "人工智能技术", "react", "全新主题"],
+    }));
+    const outcome = await within(enrichClip(h.plugin, "20261031120000-newclip", h.settings("manual")));
+    assert.equal(outcome.ok, true);
+    const savedAiTags = h.attrs.get("20261031120000-newclip")["custom-clip-ai-tags"].split(",");
+    assert.deepEqual(savedAiTags, ["TypeScript", "人工智能", "React", "全新主题"]);
+});

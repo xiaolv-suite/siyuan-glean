@@ -27,6 +27,8 @@
     }: Props = $props();
 
     let currentLevel = $state<FoldLevel>(2);
+    let rootEl = $state<HTMLElement | null>(null);
+    const REAL_BLOCK_ID = /^\d{14}-[a-z0-9]{7}$/;
 
     $effect(() => {
         currentLevel = globalLevel;
@@ -69,7 +71,16 @@
         const target = e.target instanceof Element ? e.target : null;
         if (target?.closest("input, textarea, select, [contenteditable]:not([contenteditable='false'])")) return;
         if (e.isComposing || e.keyCode === 229) return;
-        if (e.ctrlKey || e.altKey || e.metaKey) return;
+        if (e.ctrlKey || e.altKey || e.metaKey || e.shiftKey) return;
+        if (typeof document !== "undefined") {
+            const modalOpen = Array.from(document.querySelectorAll<HTMLElement>('.b3-dialog, .b3-menu, [role="dialog"], [aria-modal="true"], .glean-dialog'))
+                .some((el) => el.getClientRects().length > 0);
+            if (modalOpen) return;
+            if (rootEl && rootEl.getClientRects().length === 0) return;
+            const readerHost = rootEl?.closest(".glean-reader") ?? rootEl;
+            const active = document.activeElement;
+            if (readerHost && target && !readerHost.contains(target) && active && active !== document.body && !readerHost.contains(active)) return;
+        }
 
         if (e.key === "1") {
             e.preventDefault();
@@ -92,7 +103,7 @@
 
 <svelte:window onkeydown={handleWindowKeyDown} />
 
-<div class="glean-fold-reader" role="region" aria-label={t(i18n, "foldReader.title")}>
+<div bind:this={rootEl} class="glean-fold-reader" role="region" aria-label={t(i18n, "foldReader.title")}>
     <header class="glean-fold-reader__head">
         <div class="glean-fold-reader__levels-row">
             <div
@@ -113,7 +124,7 @@
                         onkeydown={(e) => handlePillKeyDown(e, cfg.level)}
                     >
                         <span class="glean-fold-reader__pill-num">{cfg.level}</span>
-                        <span>{cfg.badge}</span>
+                        <span>{t(i18n, cfg.badgeKey)}</span>
                     </button>
                 {/each}
             </div>
@@ -152,13 +163,18 @@
                     class="glean-fold-card glean-fold-card--level-{effectiveLevel}"
                     class:glean-fold-card--expanded={isExpanded}
                     tabindex="0"
-                    aria-label={`段落 ${idx + 1}`}
-                    onclick={() => onJumpToBlock?.(node.blockId)}
+                    aria-label={t(i18n, "foldReader.paragraphIndex", { n: idx + 1 })}
+                    onclick={() => {
+                        if (REAL_BLOCK_ID.test(node.blockId)) onJumpToBlock?.(node.blockId);
+                        else onToggleNode?.(node.id);
+                    }}
                     onkeydown={(e) => {
                         if (e.key === "Enter" || e.key === " ") {
                             e.preventDefault();
-                            onJumpToBlock?.(node.blockId);
+                            if (REAL_BLOCK_ID.test(node.blockId)) onJumpToBlock?.(node.blockId);
+                            else onToggleNode?.(node.id);
                         } else if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+                            e.preventDefault();
                             e.stopPropagation();
                             onToggleNode?.(node.id);
                         }
@@ -187,18 +203,20 @@
                                 </svg>
                                 <span>{isExpanded ? t(i18n, "foldReader.collapseCard") : t(i18n, "foldReader.expandCard")}</span>
                             </button>
-                            <button
-                                type="button"
-                                class="glean-fold-card__btn"
-                                title={t(i18n, "foldReader.jumpToBlock")}
-                                aria-label={t(i18n, "foldReader.jumpToBlock")}
-                                onclick={(e) => {
-                                    e.stopPropagation();
-                                    onJumpToBlock?.(node.blockId);
-                                }}
-                            >
-                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSearch" /></svg>
-                            </button>
+                            {#if REAL_BLOCK_ID.test(node.blockId)}
+                                <button
+                                    type="button"
+                                    class="glean-fold-card__btn"
+                                    title={t(i18n, "foldReader.jumpToBlock")}
+                                    aria-label={t(i18n, "foldReader.jumpToBlock")}
+                                    onclick={(e) => {
+                                        e.stopPropagation();
+                                        onJumpToBlock?.(node.blockId);
+                                    }}
+                                >
+                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSearch" /></svg>
+                                </button>
+                            {/if}
                         </div>
                     </header>
 

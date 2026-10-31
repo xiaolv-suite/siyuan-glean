@@ -170,21 +170,19 @@ In just 3 minutes, transform scattered clippings into structured knowledge asset
 - **Real-Environment Acceptance**:
   - Automated tests and architectural gates pass 100%. Device-specific touch behaviors, external AI integrations, and real-environment acceptance boundaries are detailed in the [capability matrix](docs/CAPABILITY-MATRIX.md) and [known blockers](docs/BLOCKERS.md).
 
-## v1.4.0 update (2026-10-29)
+## v1.4.1 update (2026-10-31)
 
-This release implements a complete visual and perception overhaul (two-color semantics, dual-layer spatial hierarchy, dark contrast rhythm block), end-to-end usability audit across 26 entry points, keyboard triage workflow, and MLA citation support in the roaming drawer.
+This release completes the repository-wide inventory audit, fixes 5 defects across import auto-triage, roaming blind-box navigation, keyboard overlay isolation, folded reader race conditions, and progressive doc slicing, wires AI tag vocabulary alignment end-to-end in `enrich-service.ts`, and aligns snapshot health badges and design tokens across all views.
 
-**New features & improvements:**
+**Fixes, completions & improvements:**
 
-- **Visual & Perception Overhaul**: Establishes 174° pine-teal action semantics (`--glean-color-action: #0D9488`) and 154° emerald data semantics (`--glean-color-data: #10B981`), a tinted light background supporting pure white floating cards (`--glean-card-surface`), and theme-tinted dark contrast surfaces (`--glean-surface-dark-contrast: #0B1317`) for streaks and core stats;
-- **Quadruple Academic Citation Standards**: The roaming blind-box drawer adds MLA 9th citation formatting, completing the matrix alongside GB/T 7714-2015, BibTeX `@article`, and APA 7th;
-- **Universal Keyboard Flow**: Universal `/` and `Ctrl+F` / `Cmd+F` search focus across Workbench, Highlights, Stats, and Resurface views; single-key `P` (cycle priority) and `M` (cycle rating) shortcuts;
-- **WeChat Reading & Purification**: Adds `WeReadGuideDialog` with full keyboard flow (`C` / `Enter` / `R` / `Esc`), auto-extracting official account authors, publication dates, and series collections;
-- **Quote Card Generator**: Selection capsule in Companion Reader enables 1-click 2x retina Quote Cards with 4 design themes, 3 typography sizes, and watermark toggle;
-- **AI Summary Callout Insertion**: 1-click insertion of companion AI summaries and structured digests into document headers;
-- **Icon Symbol Bundle Completeness**: Adds SVG symbols `iconGleanCopy` and `iconGleanDownload`, eliminating blank icon placeholders in dialogs;
-- **Reading Typography Comfort**: Restricts article reading column to `min(100%, 760px)` with auto margins to eliminate visual fatigue on wide screens;
-- **Batch Selection Consistency**: Batch priority and rating updates clear selection sets upon completion, aligning with batch status and author operations.
+- **Fix Import Auto-Triage Unknown Duration False-Positive**: Fixes `matchesAutoTriageRule` so rules requiring `minMinutes`/`maxMinutes` or `minWords`/`maxWords` no longer falsely match imported bookmarks lacking word/duration metadata;
+- **Fix Roaming Blind-Box Stuck After Later/Archive**: Fixes `markCurrentLater` and `markCurrentArchive` in `RoamingDrawerDialog` where the `loading` guard prevented `nextPick()` from advancing to the next article;
+- **Fix Global Keyboard Interception & Focus Conflicts**: Preserves native `Enter`/`Space` activation when a button is focused in `RoamingDrawerDialog`, and upgrades modal overlay (`.b3-dialog` / `[aria-modal="true"]`) and host visibility guards in `WorkbenchPreview` and `FoldedReaderView`;
+- **Fix Folded Reader Async Race & Block Jump Fallback**: Guards `refreshFoldNodes` in `ReaderTab` with target document and session generation checks, refreshes folded nodes on document changes, and falls back to `openTab` when a valid block is outside the current DOM viewport;
+- **Fix Doc Slicing Modal Preview & Busy Close Guard**: Automatically closes `DocSlicingDialog` when jumping to a section or after creating slice sub-documents, and blocks `Escape` while creation is in progress;
+- **Wire AI Tag Vocabulary Alignment in Service Layer**: Connects `loadExistingTagVocabulary` from `glean-index.json` into `parseEnrichResponse` inside `enrich-service.ts`;
+- **Cross-View Badge & Token Consistency**: Adds `.glean-snap-badge` to compact/mobile library cards (`.glean-card`), localizes remaining hardcoded strings in `FoldedReaderView`, `RoamingDrawerDialog`, `DocSlicingDialog`, and `HighlightView`, and declares `--glean-radius-20` and `--glean-badge-bg` in `:root`.
 
 ## The Lv plugin family
 
@@ -203,6 +201,22 @@ QQ group: **871707735** for bug reports, feature requests, and discussion.
 
 <details>
 <summary>Historical release notes (click to expand)</summary>
+
+## v1.4.0 update (2026-10-29)
+
+This release implements a complete visual and perception overhaul (two-color semantics, dual-layer spatial hierarchy, dark contrast rhythm block), end-to-end usability audit across 26 entry points, keyboard triage workflow, and MLA citation support in the roaming drawer.
+
+**New features & improvements:**
+
+- **Visual & Perception Overhaul**: Establishes 174° pine-teal action semantics (`--glean-color-action: #0D9488`) and 154° emerald data semantics (`--glean-color-data: #10B981`), a tinted light background supporting pure white floating cards (`--glean-card-surface`), and theme-tinted dark contrast surfaces (`--glean-surface-dark-contrast: #0B1317`) for streaks and core stats;
+- **Quadruple Academic Citation Standards**: The roaming blind-box drawer adds MLA 9th citation formatting, completing the matrix alongside GB/T 7714-2015, BibTeX `@article`, and APA 7th;
+- **Universal Keyboard Flow**: Universal `/` and `Ctrl+F` / `Cmd+F` search focus across Workbench, Highlights, Stats, and Resurface views; single-key `P` (cycle priority) and `M` (cycle rating) shortcuts;
+- **WeChat Reading & Purification**: Adds `WeReadGuideDialog` with full keyboard flow (`C` / `Enter` / `R` / `Esc`), auto-extracting official account authors, publication dates, and series collections;
+- **Quote Card Generator**: Selection capsule in Companion Reader enables 1-click 2x retina Quote Cards with 4 design themes, 3 typography sizes, and watermark toggle;
+- **AI Summary Callout Insertion**: 1-click insertion of companion AI summaries and structured digests into document headers;
+- **Icon Symbol Bundle Completeness**: Adds SVG symbols `iconGleanCopy` and `iconGleanDownload`, eliminating blank icon placeholders in dialogs;
+- **Reading Typography Comfort**: Restricts article reading column to `min(100%, 760px)` with auto margins to eliminate visual fatigue on wide screens;
+- **Batch Selection Consistency**: Batch priority and rating updates clear selection sets upon completion, aligning with batch status and author operations.
 
 ## v1.3.99 update (2026-10-29)
 

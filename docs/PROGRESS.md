@@ -1,5 +1,13 @@
 # 进度（PROGRESS）
 
+## T-3545 全仓存量材料盘点、6 项核心缺陷修复、词表防膨胀服务层贯通与 v1.4.1 本地发版（2026-10-31）
+
+- [x] 存量材料全量盘点与原型归档：产出单一事实来源 `docs/AUDIT-AND-BACKLOG-2026-10-31.md`，归档早期原型至 `design/archive/`，原文件保留并注明状态与迁移去向；
+- [x] 6 项实测缺陷修复：修复 `matchesAutoTriageRule` 未知时长/字数误触发规则污染导入书签标签、`RoamingDrawerDialog` 稍后读/归档后因 `loading` 锁重入无法翻页、思源 3.8.9 `createDocWithMd` 元数据未就绪报错、弹窗与预览区全局键盘穿透与按钮焦点冲突、`ReaderTab` 折叠阅读器异步切文竞态与定位回退、`DocSlicingDialog` 预览遮挡与生成期关闭守卫；
+- [x] AI 富化既有标签词表防膨胀服务层贯通：`src/services/enrich-service.ts` 接入 `loadExistingTagVocabulary` 传入 `parseEnrichResponse`；
+- [x] 三视图一致性与设计令牌收口：补齐 `.glean-card` 快照健康度徽标，清理 6 组件未翻译中文与裸 Emoji，补齐 `:root` 运行时令牌声明；
+- [x] 本地 v1.4.1 发版与隔离内核实测：四处版本号统一为 `1.4.1`，保留 `output/release-v1.4.0-rollback/package.zip` 回滚包，全量单测 1769/1769、S1 E2E 58/58、spike 8/8 全通，本地打 tag `v1.4.1`，零远程调用。
+
 ## T-3534 漫游盲盒展台 MLA 著录补齐、全键盘优先级（P）与星级评分（M）流转闭环（2026-10-29）
 
 - [x] 漫游盲盒 MLA 9th 学术著录补齐：`src/ui/RoamingDrawerDialog.svelte` 动作区增设「📖 MLA」按钮，并与已有的 GB/T 7714、BibTeX、APA 统一并列；

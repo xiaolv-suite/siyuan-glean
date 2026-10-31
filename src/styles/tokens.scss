@@ -68,12 +68,14 @@
     --glean-glass: color-mix(in srgb, var(--b3-theme-surface) 88%, transparent);
     --glean-glass-border: color-mix(in srgb, var(--b3-border-color) 45%, transparent);
     --glean-radius-xl: 20px;
+    --glean-radius-20: var(--glean-radius-xl);
     --glean-radius: 16px;
     --glean-radius-lg: 16px;
     --glean-radius-md: 12px;
     --glean-radius-sm: 8px;
     --glean-radius-xs: 4px;
     --glean-radius-pill: 999px;
+    --glean-badge-bg: color-mix(in srgb, var(--b3-theme-on-surface) 8%, transparent);
 
     /* 双层复合软投影：统一向下，近距小模糊 + 远距大模糊叠合，拒绝内阴影 */
     --glean-shadow-card: 0 1px 3px rgba(15, 23, 42, 0.03), 0 8px 20px -4px rgba(15, 23, 42, 0.05);

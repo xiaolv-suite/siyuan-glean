@@ -1,5 +1,25 @@
 # 更新日志（CHANGELOG）
 
+## v1.4.1（2026-10-31）
+
+### 全仓盘点、入库分拣与盲盒流转等 5 项缺陷修复、词表防膨胀服务层贯通与三视图令牌收口
+
+- **修复（Fixed）**：
+  - 修复 `matchesAutoTriageRule` 在导入条目无字数/时长字段时未拦截 `minMinutes`/`maxMinutes`，导致普通书签同时被附加互斥的「深度长文」与「速读」标签并错改状态的问题；
+  - 修复 `RoamingDrawerDialog` 执行「稍后读 (A)」或「归档 (E)」时因 `loading` 锁重入拦截导致 `nextPick()` 直接短路返回、无法自动切换下一篇的问题；
+  - 修复 `RoamingDrawerDialog` 按钮获焦时按 `Enter`/`Space` 被全局监听劫持的问题，并补齐 `WorkbenchPreview` 与 `FoldedReaderView` 对 `.b3-dialog` / `[aria-modal="true"]` 模态遮罩与宿主可见性的拦截守卫；
+  - 修复 `ReaderTab` 折叠阅读器异步切文竞态与外部数据变更未刷新问题，补齐非真实块 ID 点击展开及真实块跨视口 `openTab` 回退；
+  - 修复 `DocSlicingDialog` 点击「定位小节」被模态窗遮挡及子文档生成期间缺少 `Escape` 关闭守卫的问题，生成成功后自动收起防重复创建。
+
+- **新增与补齐（Added & Completed）**：
+  - 在 `src/services/enrich-service.ts` 接入 `loadExistingTagVocabulary`，从 `glean-index.json` 按频次提取库内既有标签词表并传入 `parseEnrichResponse`，打通 AI 富化与批处理的标签防膨胀全链路；
+  - 在 `src/domain/schema.ts` 导出 `PLUGIN_VERSION` 常量，实现 `package.json`、`plugin.json`、`README.md` 与代码常量四处版本强一致守门。
+
+- **变更与优化（Changed）**：
+  - 为 `DockPanel.svelte` 紧凑/移动卡片（`.glean-card`）补齐 `.glean-snap-badge` 快照健康度盾牌徽标，对齐行表、看板、紧凑卡片三视图；
+  - 全面收口 `FoldedReaderView`、`RoamingDrawerDialog`、`DocSlicingDialog`、`HighlightView`、`DockPanel`、`WorkbenchPreview` 中的未翻译硬编码中文与裸 Emoji；
+  - 在 `:root` 补齐 `--glean-radius-20` 与 `--glean-badge-bg` 令牌声明，并将 `folded-reader.scss` 与 `.glean-snap-badge` 的裸色值/裸字号统一收敛至标准设计令牌。
+
 ## v1.4.0（2026-10-29）
 
 ### 视觉与感知层全面重构、全入口可用性闭环与 v1.4.0 里程碑

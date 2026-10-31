@@ -31,6 +31,24 @@ test("matchesAutoTriageRule：按域名、关键词、时长与字数精准匹�
     const deepRule = DEFAULT_AUTO_TRIAGE_RULES.find((r) => r.id === "rule-deep-read")!;
     assert.equal(matchesAutoTriageRule(deepRule, { words: 8000, estimatedMinutes: 20 }), true);
     assert.equal(matchesAutoTriageRule(deepRule, { words: 1200, estimatedMinutes: 3 }), false);
+    assert.equal(matchesAutoTriageRule(deepRule, { url: "https://example.com/unknown-len" }), false);
+
+    const quickRule = DEFAULT_AUTO_TRIAGE_RULES.find((r) => r.id === "rule-quick-read")!;
+    assert.equal(matchesAutoTriageRule(quickRule, { words: 300, estimatedMinutes: 2 }), true);
+    assert.equal(matchesAutoTriageRule(quickRule, { url: "https://example.com/unknown-len" }), false);
+});
+
+test("evaluateAutoTriage：未知时长与字数的外部导入条目不误触发时长分拣规则（防标签污染）", () => {
+    const unknownLen = evaluateAutoTriage({
+        url: "https://example.com/bookmark",
+        title: "普通收藏链接",
+        site: "example.com",
+        currentStatus: "inbox",
+        currentTags: ["技术"],
+    });
+    assert.equal(unknownLen.status, "inbox");
+    assert.deepEqual(unknownLen.tags, ["技术"]);
+    assert.deepEqual(unknownLen.matchedRuleIds, []);
 });
 
 test("evaluateAutoTriage：多规则加权评估，自动推导初始五态与标签追加", () => {

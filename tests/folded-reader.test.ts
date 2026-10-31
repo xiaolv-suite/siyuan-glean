@@ -141,6 +141,9 @@ test("FoldedReaderView 交互、键盘流、无障碍与双栏联动契约守门
     // 思源原文块联动与单卡展开
     assert.match(viewCode, /onJumpToBlock\?\.?\(node\.blockId\)/);
     assert.match(viewCode, /onToggleNode\?\.?\(node\.id\)/);
+    assert.match(viewCode, /t\(i18n,\s*cfg\.badgeKey\)/);
+    assert.match(viewCode, /t\(i18n,\s*"foldReader\.paragraphIndex"/);
+    assert.match(viewCode, /REAL_BLOCK_ID\.test\(node\.blockId\)/);
 });
 
 test("ReaderTab 接入 5 阶语义折叠伴生栏与 Alt+Z 快捷键联动契约", () => {
@@ -153,6 +156,7 @@ test("ReaderTab 接入 5 阶语义折叠伴生栏与 Alt+Z 快捷键联动契约
     assert.match(readerCode, /event\.altKey && \(event\.key === "z" \|\| event\.key === "Z"\)/);
     assert.match(readerCode, /<dt><kbd>Alt\+Z<\/kbd><\/dt><dd>\{t\(i18n, "foldReader\.toggleAction"\)\}<\/dd>/);
     assert.match(readerCode, /scrollAndPulseReadPoint\(protyleHost, blockId\)/);
+    assert.match(readerCode, /docId === targetDocId && generation === sessionGeneration && mounted/);
 });
 
 test("folded-reader.scss 样式规范符合 UI-UX-PRO-MAX 触控、高对比度与动效契约", () => {
