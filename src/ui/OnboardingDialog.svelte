@@ -44,15 +44,17 @@ let doneBeforeOpen = false;
 let prefsLoaded = $state(false);
 /** 用户已请求的目标步骤：moveTo 的 await 期间关窗时，onDestroy 保存意图步骤而非旧值 */
 let requestedStep: OnboardingStep = 1;
+let seedStarterArticles = $state(true);
 
 onMount(() => {
     anchorNotebooks = [...facade.settings.anchorNotebooks];
     let active = true;
     void loadUiPrefs(facade.pluginInstance).then((prefs) => {
         if (!active || disposed || completed) return;
+        // 手动重新打开引导时，从第 1 步开始浏览，绝不自动关闭
         if (prefs.onboardingDone && !progressTouched) {
-            doneBeforeOpen = true;
-            onClose();
+            step = 1;
+            prefsLoaded = true;
             return;
         }
         if (progressTouched) {
@@ -60,7 +62,7 @@ onMount(() => {
             return;
         }
         // 扫描预览是派生数据，关闭后不落盘；从第 4 步恢复时回到第 3 步重算。
-        step = prefs.onboardingStep === 4 ? 3 : prefs.onboardingStep;
+        step = prefs.onboardingStep === 4 ? 3 : (prefs.onboardingStep || 1);
         prefsLoaded = true;
         if (step === 3) void runScan();
     }).catch((error) => {
@@ -70,7 +72,13 @@ onMount(() => {
         actionFailed = true;
     });
     void listNotebooks().then((items) => {
-        if (active && !disposed) notebooks = items;
+        if (active && !disposed) {
+            notebooks = items;
+            // 若用户尚未指定读库笔记本，默认勾选首个笔记本，防止空选
+            if (anchorNotebooks.length === 0 && items.length > 0) {
+                anchorNotebooks = [items[0].id];
+            }
+        }
     }).catch((error) => {
         if (!active || disposed || completed) return;
         console.warn("[glean] 引导笔记本读取失败:", error);
@@ -197,10 +205,22 @@ async function finish(openImport: boolean): Promise<void> {
         if (disposed || completed) return;
         await markDone();
         if (disposed || completed) return;
+        // 自动为新笔记本预置示范精读长文
+        if (seedStarterArticles && anchorNotebooks.length > 0) {
+            try {
+                const { createStarterArticles } = await import("../services/starter-service");
+                await createStarterArticles(facade.pluginInstance, anchorNotebooks[0]);
+            } catch (seedErr) {
+                console.debug("[glean] 预置示范文章降级:", seedErr);
+            }
+        }
         actionFailed = false;
         completed = true;
+        actionBusy = false;
         onClose();
+        facade.notifyDataChanged();
         if (openImport) facade.openImport();
+        else facade.openWorkbenchPopup();
     } catch (error) {
         completionRequested = false;
         reportActionFailure("引导完成失败", error);
@@ -221,7 +241,9 @@ async function finishByConfirmingCandidates(): Promise<void> {
         if (disposed || completed) return;
         actionFailed = false;
         completed = true;
+        actionBusy = false;
         onClose();
+        facade.notifyDataChanged();
         facade.openWorkbenchPopup(preview?.examples.candidates[0]?.id);
     } catch (error) {
         completionRequested = false;
@@ -240,7 +262,9 @@ async function skip(): Promise<void> {
         if (disposed || completed) return;
         actionFailed = false;
         completed = true;
+        actionBusy = false;
         onClose();
+        facade.notifyDataChanged();
     } catch (error) {
         completionRequested = false;
         reportActionFailure("跳过引导失败", error);
@@ -262,7 +286,7 @@ function handleWindowKeydown(event: KeyboardEvent): void {
         continueLater();
     }
 }
-$effect(() => registerCloseGuard?.(() => !actionBusy && !scanning));
+$effect(() => registerCloseGuard?.(() => completed || (!actionBusy && !scanning)));
 $effect(() => {
     if (!rootEl) return;
     return installEscapeHandler(rootEl, (event) => {
@@ -295,6 +319,7 @@ $effect(() => {
                         {progressStep}
                     {/if}
                 </span>
+                <span class="glean-onb-progress__text">{t(i18n, `onboarding.step${progressStep}`)}</span>
                 <span class="glean-sr-only">{t(i18n, "onboarding.stepProgress", { n: progressStep })}</span>
             </span>
             {#if index < 3}<span class="glean-onb-progress__line" class:glean-onb-progress__line--done={progressStep < step} aria-hidden="true"></span>{/if}
@@ -318,6 +343,11 @@ $effect(() => {
             <div class="glean-empty__art"><svg aria-hidden="true"><use href="#iconGleanWheat" /></svg></div>
             <h3 id={`${idPrefix}-welcome-title`} class="glean-empty__title">{t(i18n, "onboarding.welcomeTitle")}</h3>
             <div class="glean-empty__hint">{t(i18n, "onboarding.welcomeBody")}</div>
+            <div class="glean-onb-hero__highlights">
+                <span class="glean-badge glean-onb-hero__badge"><span class="glean-dot glean-dot--live"></span>沉浸阅读 · 5阶语义折叠</span>
+                <span class="glean-badge glean-onb-hero__badge"><span class="glean-dot glean-dot--live"></span>金句摘录 · 双向反链图谱</span>
+                <span class="glean-badge glean-onb-hero__badge"><span class="glean-dot glean-dot--live"></span>数据主权 · 块属性不私存</span>
+            </div>
         </div>
         <div class="glean-migrate__ops">
             <button class="glean-linkish glean-onb-pause" disabled={actionBusy} onclick={continueLater}>{t(i18n, "onboarding.continueLater")}</button>
@@ -385,49 +415,40 @@ $effect(() => {
                 <div class="glean-mstat"><div class="glean-mstat__n">{preview.ordinary}</div><div class="glean-mstat__l">{t(i18n, "onboarding.previewOrdinary")}</div></div>
             </div>
             <div class="glean-onb-preview__total">{t(i18n, "onboarding.previewTotal", { n: preview.total })}</div>
-            <div class="glean-onb-preview__examples">
-                <div class="glean-onb-preview__group">
-                    <div class="glean-onb-preview__label">{t(i18n, "onboarding.previewClips")}</div>
-                    {#if preview.examples.confirmed.length === 0}
-                        <div class="glean-onb-preview__empty">{t(i18n, "onboarding.previewNoExamples")}</div>
-                    {:else}
-                        {#each preview.examples.confirmed as item (item.id)}
-                            <div class="glean-onb-preview__item" title={item.hpath || item.id}>
-                                <span>{item.title || item.hpath || item.id}</span>
-                                <span class="glean-onb-preview__meta">{item.status}</span>
-                            </div>
-                        {/each}
-                    {/if}
+            {#if preview.total > 0}
+                <div class="glean-onb-preview__examples">
+                    <div class="glean-onb-preview__group">
+                        <div class="glean-onb-preview__label">{t(i18n, "onboarding.previewClips")}</div>
+                        {#if preview.examples.confirmed.length === 0}
+                            <div class="glean-onb-preview__empty">{t(i18n, "onboarding.previewNoExamples")}</div>
+                        {:else}
+                            {#each preview.examples.confirmed as item (item.id)}
+                                <div class="glean-onb-preview__item" title={item.hpath || item.id}>
+                                    <span>{item.title || item.hpath || item.id}</span>
+                                    <span class="glean-onb-preview__meta">{item.status}</span>
+                                </div>
+                            {/each}
+                        {/if}
+                    </div>
+                    <div class="glean-onb-preview__group">
+                        <div class="glean-onb-preview__label">{t(i18n, "onboarding.previewCandidates")}</div>
+                        {#if preview.examples.candidates.length === 0}
+                            <div class="glean-onb-preview__empty">{t(i18n, "onboarding.previewNoExamples")}</div>
+                        {:else}
+                            {#each preview.examples.candidates as item (item.id)}
+                                <div class="glean-onb-preview__item" title={item.hpath || item.id}>
+                                    <span>{item.title || item.hpath || item.id}</span>
+                                    <span class="glean-onb-preview__meta">{item.url || t(i18n, "onboarding.previewMissingUrl")}</span>
+                                </div>
+                            {/each}
+                        {/if}
+                    </div>
                 </div>
-                <div class="glean-onb-preview__group">
-                    <div class="glean-onb-preview__label">{t(i18n, "onboarding.previewCandidates")}</div>
-                    {#if preview.examples.candidates.length === 0}
-                        <div class="glean-onb-preview__empty">{t(i18n, "onboarding.previewNoExamples")}</div>
-                    {:else}
-                        {#each preview.examples.candidates as item (item.id)}
-                            <div class="glean-onb-preview__item" title={item.hpath || item.id}>
-                                <span>{item.title || item.hpath || item.id}</span>
-                                <span class="glean-onb-preview__meta">{item.url || t(i18n, "onboarding.previewMissingUrl")}</span>
-                            </div>
-                        {/each}
-                    {/if}
+            {:else}
+                <div class="glean-empty glean-onb-empty">
+                    <div class="glean-empty__hint">💡 当前笔记本暂无剪藏文章。引导完成后将为您自动放入示范长文，您也可以随时使用剪藏扩展收录！</div>
                 </div>
-                <div class="glean-onb-preview__group">
-                    <div class="glean-onb-preview__label">{t(i18n, "onboarding.previewOrdinary")}</div>
-                    {#if preview.examples.ordinary.length === 0}
-                        <div class="glean-onb-preview__empty">{t(i18n, "onboarding.previewNoExamples")}</div>
-                    {:else}
-                        {#each preview.examples.ordinary as item (item.id)}
-                            <div class="glean-onb-preview__item" title={item.hpath || item.id}>
-                                <span>{item.title || item.hpath || item.id}</span>
-                            </div>
-                        {/each}
-                    {/if}
-                </div>
-            </div>
-            <div class="glean-empty glean-onb-empty glean-onb-empty--note">
-                <div class="glean-empty__hint">{t(i18n, "onboarding.previewNote")}</div>
-            </div>
+            {/if}
             <div class="glean-migrate__ops">
                 <button class="glean-linkish glean-onb-pause" disabled={actionBusy} onclick={continueLater}>{t(i18n, "onboarding.continueLater")}</button>
                 <button class="glean-btn glean-btn--ghost" disabled={actionBusy || scanning} onclick={() => void moveTo(2)}>{t(i18n, "onboarding.back")}</button>
@@ -436,17 +457,37 @@ $effect(() => {
             </div>
         {/if}
     {:else}
-        <div class="glean-mstats">
-            <div class="glean-mstat"><div class="glean-mstat__n"><svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanInbox" /></svg></div><div class="glean-mstat__l">{t(i18n, "onboarding.cap1")}</div></div>
-            <div class="glean-mstat"><div class="glean-mstat__n"><svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanRefresh" /></svg></div><div class="glean-mstat__l">{t(i18n, "onboarding.cap2")}</div></div>
-            <div class="glean-mstat"><div class="glean-mstat__n"><svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanSpark" /></svg></div><div class="glean-mstat__l">{t(i18n, "onboarding.cap3")}</div></div>
+        <div class="glean-onb-features" role="region" aria-label={t(i18n, "onboarding.title")}>
+            <div class="glean-onb-feat">
+                <div class="glean-onb-feat__icon"><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanInbox" /></svg></div>
+                <div class="glean-onb-feat__text">
+                    <div class="glean-onb-feat__title">{t(i18n, "onboarding.feat1Title")}</div>
+                    <div class="glean-onb-feat__desc">{t(i18n, "onboarding.feat1Desc")}</div>
+                </div>
+            </div>
+            <div class="glean-onb-feat">
+                <div class="glean-onb-feat__icon"><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanNews" /></svg></div>
+                <div class="glean-onb-feat__text">
+                    <div class="glean-onb-feat__title">{t(i18n, "onboarding.feat2Title")}</div>
+                    <div class="glean-onb-feat__desc">{t(i18n, "onboarding.feat2Desc")}</div>
+                </div>
+            </div>
+            <div class="glean-onb-feat">
+                <div class="glean-onb-feat__icon"><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanSpark" /></svg></div>
+                <div class="glean-onb-feat__text">
+                    <div class="glean-onb-feat__title">{t(i18n, "onboarding.feat3Title")}</div>
+                    <div class="glean-onb-feat__desc">{t(i18n, "onboarding.feat3Desc")}</div>
+                </div>
+            </div>
         </div>
-        <div class="glean-empty glean-onb-empty glean-onb-empty--capability">
-            <div class="glean-empty__hint">{t(i18n, "onboarding.aiLater")}</div>
+
+        <div class="glean-onb-seed-bar">
+            <label class="glean-onb-seed-label">
+                <input type="checkbox" class="b3-switch fn__flex-center" bind:checked={seedStarterArticles} disabled={actionBusy || scanning} />
+                <span>{t(i18n, "onboarding.seedStarter")}</span>
+            </label>
         </div>
-        <div class="glean-empty glean-onb-empty glean-onb-empty--capability">
-            <div class="glean-empty__hint">{t(i18n, "onboarding.doneHint")}</div>
-        </div>
+
         <div class="glean-empty glean-onb-empty glean-onb-empty--import">
             <div class="glean-empty__hint">
                 {t(i18n, "onboarding.importLink")}
@@ -458,7 +499,7 @@ $effect(() => {
             {#if (preview?.candidates ?? 0) > 0}
                 <button class="glean-btn glean-btn--pri" disabled={actionBusy || scanning} aria-busy={actionBusy} onclick={() => void finishByConfirmingCandidates()}>{t(i18n, "onboarding.ctaConfirm")}</button>
             {:else}
-                <button class="glean-btn glean-btn--pri" disabled={actionBusy || scanning} aria-busy={actionBusy} onclick={() => void finish(false)}>{t(i18n, "onboarding.finish")}</button>
+                <button class="glean-btn glean-btn--pri" disabled={actionBusy || scanning} aria-busy={actionBusy} onclick={() => void finish(false)}>{t(i18n, "onboarding.startExploring")}</button>
             {/if}
         </div>
     {/if}
