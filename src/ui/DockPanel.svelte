@@ -4071,12 +4071,6 @@ function metaLine(entry: Row): string {
                                         <span class="glean-tier-badge glean-tier-badge--{entry.kind === 'clip' ? resolveReadingTimeTier(entry.minutes) : 'unknown'}">· {metaLine(entry)}</span>
                                     {/if}
                                     {#if entry.kind === "clip" && entry.readPoint && (entry.status === "reading" || entry.status === "later")}<span class="glean-read-point-badge" title={t(i18n, "reading.resumePoint")}><svg class="glean-icon glean-icon--xs glean-icon--bookmark" aria-hidden="true"><use href="#iconGleanBookmark" /></svg> <span>{t(i18n, "reading.resumePointShort")}</span></span>{/if}
-                                    {#if entry.kind === "clip" && entry.priority && entry.priority > 0}
-                                        <span class="glean-tier-badge" title={t(i18n, "library.keyboardPriority")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanBolt" /></svg> <span>P{entry.priority}</span></span>
-                                    {/if}
-                                    {#if entry.kind === "clip" && entry.rating && entry.rating > 0}
-                                        <span class="glean-tier-badge" title={t(i18n, "library.keyboardRating")}><svg class="glean-icon glean-icon--xs glean-icon--star" aria-hidden="true"><use href="#iconGleanStar" /></svg> <span>{entry.rating}★</span></span>
-                                    {/if}
                                     {#if entry.kind === "clip" && entry.favorite}
                                         <span class="glean-tier-badge glean-tier-badge--fav" title={t(i18n, "roaming.favoriteOnly")}><svg class="glean-icon glean-icon--xs glean-icon--fav" aria-hidden="true"><use href="#iconGleanHeart" /></svg></span>
                                     {/if}
@@ -4125,53 +4119,6 @@ function metaLine(entry: Row): string {
                                     </div>
                                 {/if}
                             {:else}
-                                <div class="glean-card__ops">
-                                    <ActionPopover label={t(i18n, "library.moreActions")} compact>
-                                        <AuthorEditor {facade} docId={entry.id} onSaved={reload} />
-                                        <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryBlockRef(entry)}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg> <span>{t(i18n, "action.copyBlockRef")}</span></button>
-                                        <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "gbt")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg> <span>{t(i18n, "citation.copyGBT")}</span></button>
-                                        <details class="glean-citation-more" data-keep-popover-open>
-                                            <summary class="glean-btn glean-btn--ghost" data-keep-popover-open>BibTeX / APA / MLA</summary>
-                                            <div class="glean-citation-more__list">
-                                                <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "bibtex")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArchive" /></svg> <span>{t(i18n, "citation.copyBibTeX")}</span></button>
-                                                <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "apa")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanLocal" /></svg> <span>{t(i18n, "citation.copyAPA")}</span></button>
-                                                <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "mla")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg> <span>{t(i18n, "citation.copyMLA")}</span></button>
-                                            </div>
-                                        </details>
-                                    </ActionPopover>
-                                    <button
-                                        class="glean-op-btn"
-                                        title={snapshotLabel(entry)}
-                                        aria-label={snapshotLabel(entry)}
-                                        disabled={snappingId === entry.id}
-                                        onclick={(e) => { e.stopPropagation(); void takeSnapshot(entry); }}
-                                    ><svg class="glean-icon" aria-hidden="true"><use href={entry.snapshot ? "#iconGleanArchive" : "#iconGleanCamera"} /></svg></button>
-                                    <button
-                                        class="glean-op-btn"
-                                        title={t(i18n, "ai.actionEnrich")}
-                                        aria-label={t(i18n, "ai.actionEnrich")}
-                                        disabled={enrichingId === entry.id}
-                                        onclick={(e) => { e.stopPropagation(); void enrich(entry); }}
-                                    ><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanSpark" /></svg></button>
-                                    <button
-                                        class="glean-op-btn"
-                                        title={surfacePinLabel(entry)}
-                                        aria-label={surfacePinLabel(entry)}
-                                        aria-pressed={isPinnedToday(entry)}
-                                        disabled={Boolean(statusActionId)}
-                                        onclick={(e) => { e.stopPropagation(); void toggleSurfacePin(entry); }}
-                                    ><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanPin" /></svg></button>
-                                     {#if hasSourceAction(entry.contentType, entry.url)}
-                                         <button
-                                             class="glean-op-btn"
-                                             title={t(i18n, "clip.openSource")}
-                                             aria-label={t(i18n, "clip.openSource")}
-                                             onclick={(e) => { e.stopPropagation(); openSource(entry); }}
-                                         ><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanExternal" /></svg></button>
-                                     {:else if entry.contentType === "link"}
-                                         <span class="glean-source-missing">{t(i18n, "clip.sourceMissing")}</span>
-                                     {/if}
-                                </div>
                                 <div class="glean-card__foot">
                                     <div class="glean-card__foot-left">
                                         {#if entry.priority && entry.priority > 0}

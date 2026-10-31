@@ -1038,6 +1038,7 @@
   "panel.migrateShort": "整理",
   "workbench.popupTitle": "拾遗工作台",
   "library.filters": "筛选与排序",
+  "library.activeFilters": "已启用",
   "library.filterSite": "站点",
   "library.filterTag": "用户标签",
   "library.tagAliasManage": "管理标签别名",

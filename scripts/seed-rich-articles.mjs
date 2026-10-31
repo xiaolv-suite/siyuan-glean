@@ -29,11 +29,14 @@ export const ARTICLES = [
             {
                 text: "注意力机制的最大瓶颈从来不是算力上限，而是显存带宽与二次方序列复杂度的双重夹击。",
                 color: "red",
+                annotationTag: "pinned",
             },
             {
                 text: "真正的工程优雅在于将显存换入换出重叠在算子流水线中，避免 GPU 闲置等待。",
                 memo: "这一点和操作系统的虚拟内存换页机制如出一辙，计算机底层哲学的共通性再次体现！",
                 color: "green",
+                isSiyuanComment: true,
+                annotationTag: "important",
             },
         ],
         body: `在过去两年中，大语言模型的上下文窗口从最初的 4K、8K 飙升到了 1M 甚至更高。然而，上下文窗口的数字狂飙并不意味着模型能够毫无代价地处理无限长文本。
@@ -322,11 +325,16 @@ export async function seedRichArticles({ base, token, notebookId: targetNbId, wo
             data: calloutMd,
         });
 
-        // 查找正文中的引述块并设置颜色标记 / 批注
+        // 查找正文中的引述块并设置颜色标记 / 批注（带内核 SQLite 索引异步轮询守门）
         try {
-            const qBlocks = await api("/api/query/sql", {
-                stmt: `SELECT id, content FROM blocks WHERE root_id = '${docId}' AND type = 'b' AND ial NOT LIKE '%meta-callout%'`,
-            });
+            let qBlocks = [];
+            for (let attempt = 0; attempt < 25; attempt += 1) {
+                qBlocks = await api("/api/query/sql", {
+                    stmt: `SELECT id, content FROM blocks WHERE root_id = '${docId}' AND type = 'b' AND ial NOT LIKE '%meta-callout%'`,
+                });
+                if (Array.isArray(qBlocks) && qBlocks.length >= art.quotes.length) break;
+                await new Promise((r) => setTimeout(r, 150));
+            }
             if (Array.isArray(qBlocks)) {
                 for (let i = 0; i < Math.min(qBlocks.length, art.quotes.length); i += 1) {
                     const blockId = qBlocks[i].id;
@@ -337,6 +345,16 @@ export async function seedRichArticles({ base, token, notebookId: targetNbId, wo
                     };
                     if (qData.memo) {
                         patch["memo"] = qData.memo;
+                    }
+                    if (qData.annotationTag) {
+                        patch["custom-comment-tag"] = qData.annotationTag;
+                    }
+                    if (qData.isSiyuanComment) {
+                        patch["custom-siyuan-comment"] = "true";
+                        patch["custom-comment-text"] = qData.text;
+                        patch["custom-comment-source"] = qBlocks[0]?.id || blockId;
+                        patch["custom-comment-tag"] = qData.annotationTag || "important";
+                        patch["custom-comment-highlight-custom-color"] = qData.color || "green";
                     }
                     await api("/api/attr/setBlockAttrs", { id: blockId, attrs: patch });
                 }

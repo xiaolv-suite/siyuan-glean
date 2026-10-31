@@ -757,21 +757,32 @@ window.require = (id) => {
             if (hasToggle) break;
             await new Promise((r) => setTimeout(r, 150));
         }
+        for (let i = 0; i < 25; i += 1) {
+            const hasTag = await evalInPage(`Boolean(document.querySelector(".glean-annotation-tag"))`);
+            if (hasTag) break;
+            await new Promise((r) => setTimeout(r, 150));
+        }
         const highlightCheck = await evalInPage(`(() => {
             const groupToggle = document.querySelector(".glean-highlights__article-toggle");
             const nestedBtnInSummary = document.querySelector(".glean-highlights summary button");
             const cardPopover = document.querySelector(".glean-highlights__tools--card .glean-action-popover__trigger");
+            const hasAnnotationTag = Boolean(document.querySelector(".glean-annotation-tag"));
+            const hasAnnotationKind = Boolean(document.querySelector(".glean-annotation-kind"));
             return {
                 hasGroupToggle: Boolean(groupToggle),
                 expandedAttr: groupToggle ? groupToggle.getAttribute("aria-expanded") : "",
                 hasNestedBtnInSummary: Boolean(nestedBtnInSummary),
                 hasCardPopover: Boolean(cardPopover),
+                hasAnnotationTag,
+                hasAnnotationKind,
             };
         })()`);
         assert.equal(highlightCheck.hasGroupToggle, true, "摘录按文章聚类视图必须渲染独立折叠按钮（BL-14）");
         assert.equal(highlightCheck.expandedAttr, "true");
         assert.equal(highlightCheck.hasNestedBtnInSummary, false, "摘录聚类严禁在 summary 内非法嵌套 button（BL-14）");
         assert.equal(highlightCheck.hasCardPopover, true, "摘录卡片低频操作必须收纳进 ActionPopover（BL-13）");
+        assert.equal(highlightCheck.hasAnnotationTag, true, "摘录视图必须展示批注标记徽标（📌⭐📖✔️❓）");
+        assert.equal(highlightCheck.hasAnnotationKind, true, "摘录视图必须展示批注类型来源徽标（💬鲸鱼批注/📝块备注）");
         await saveShot("08-highlights-grouped-live.png");
 
         // 真实点击摘录聚类头部的「创建摘录笔记」按钮，验证 toast 反馈并在思源内核验证新笔记文档落盘 + internal:true 标记
@@ -910,25 +921,38 @@ window.require = (id) => {
         })()`);
         await new Promise((r) => setTimeout(r, 400));
         
-        // 走查 Dock 读库视图：断言 5 视图单行平铺、筛选折叠条、行级操作不碰撞
+        // 走查 Dock 读库视图：切换到读库视图，断言 5 视图单行平铺、筛选折叠条、侧边栏卡片紧凑排版（.glean-card <= 140px，消灭380px巨卡）
+        await evalInPage(`(() => {
+            const viewsBtns = Array.from(document.querySelectorAll("#dock-host .glean-views__btn"));
+            viewsBtns[1]?.click(); // 切换到「读库」
+        })()`);
+        for (let i = 0; i < 30; i += 1) {
+            const hasCard = await evalInPage(`Boolean(document.querySelector("#dock-host .glean-card"))`);
+            if (hasCard) break;
+            await new Promise((r) => setTimeout(r, 200));
+        }
         const dockLibCheck = await evalInPage(`(() => {
             const viewsBtns = Array.from(document.querySelectorAll("#dock-host .glean-views__btn"));
-            const doneBtn = document.querySelector("#dock-host .glean-drow__done-btn");
             const filterFold = document.querySelector("#dock-host .glean-filters-fold");
-            const firstRowOps = document.querySelector("#dock-host .glean-drow__ops");
+            const firstCard = document.querySelector("#dock-host .glean-card");
+            const cardHeight = firstCard ? Math.round(firstCard.getBoundingClientRect().height) : 0;
+            const hasCardFoot = Boolean(document.querySelector("#dock-host .glean-card__foot"));
             return {
                 viewBtnCount: viewsBtns.length,
-                doneBtnHidden: doneBtn ? window.getComputedStyle(doneBtn).display === "none" : true,
                 filterFoldCollapsed: filterFold ? !filterFold.open : true,
-                opsButtonCount: firstRowOps ? firstRowOps.children.length : 0,
+                hasCard: Boolean(firstCard),
+                cardHeight,
+                hasCardFoot,
             };
         })()`);
         assert.equal(dockLibCheck.viewBtnCount, 5, "Dock 侧边栏必须平铺 5 个视图入口");
-        assert.equal(dockLibCheck.doneBtnHidden, true, "Dock 侧边栏文章卡片必须隐藏直接标记已读，由操作弹窗承载防挤压");
         assert.equal(dockLibCheck.filterFoldCollapsed, true, "Dock 侧边栏筛选必须默认折叠节省高度");
+        assert.equal(dockLibCheck.hasCard, true, "Dock 侧边栏必须渲染精简文章卡片 .glean-card");
+        assert.ok(dockLibCheck.cardHeight > 0 && dockLibCheck.cardHeight <= 140, `Dock 侧边栏文章卡片高度必须紧凑（<=140px），实测 height=${dockLibCheck.cardHeight}px`);
+        assert.equal(dockLibCheck.hasCardFoot, true, "Dock 侧边栏文章卡片底部必须集成紧凑型操作脚部");
         await saveShot("10-dock-library-360px.png");
 
-        // 走查 Dock 高亮摘录墙：断言筛选折叠、卡片无水平溢出
+        // 走查 Dock 高亮摘录墙：断言筛选折叠、卡片无水平溢出与摘录卡片渲染
         await evalInPage(`(() => {
             const viewsBtns = Array.from(document.querySelectorAll("#dock-host .glean-views__btn"));
             viewsBtns[3]?.click(); // 切换到「高亮」
@@ -936,13 +960,14 @@ window.require = (id) => {
         await new Promise((r) => setTimeout(r, 350));
         const dockHlCheck = await evalInPage(`(() => {
             const hlFold = document.querySelector("#dock-host .glean-highlights__filters-fold");
-            const hlCards = document.querySelectorAll("#dock-host .glean-highlights__card");
+            const hlItems = document.querySelectorAll("#dock-host .glean-highlights__item");
             return {
                 hlFoldCollapsed: hlFold ? !hlFold.open : true,
-                hasCards: hlCards.length > 0,
+                hasItems: hlItems.length > 0,
             };
         })()`);
         assert.equal(dockHlCheck.hlFoldCollapsed, true, "Dock 侧边栏摘录墙筛选必须默认折叠消除 500px 堆叠");
+        assert.equal(dockHlCheck.hasItems, true, "Dock 侧边栏摘录墙必须渲染摘录卡片项 .glean-highlights__item");
         await saveShot("11-dock-highlights-360px.png");
 
         // 走查 Dock 统计视图：断言两列度量平铺与无水平溢出
@@ -1221,17 +1246,23 @@ async function main() {
         assert.equal(contextResult.candidates[0].item.id, fulltextDocId);
         recordStep("Step 5 · 按 15 分钟预算与主题选文", true, `命中 "${contextResult.candidates[0].item.title}" (${contextResult.candidates[0].item.minutes}m)`);
 
-        // Step 6: 中途中断与阅读位置书签保存，并写入一条真实高亮引述块供摘录墙实测
+        // Step 6: 中途中断与阅读位置书签保存，并写入一条真实高亮与鲸鱼批注引述块供摘录墙实测
         const childBlocks = await client.apiChecked("/api/block/getChildBlocks", { id: fulltextDocId });
         const paraBlock = (childBlocks || []).find((b) => b.type === "p" && (b.content || "").trim().length > 0) || childBlocks?.[1] || childBlocks?.[0];
         const targetBlockId = paraBlock?.id || fulltextDocId;
         await client.apiChecked("/api/attr/setBlockAttrs", {
             id: targetBlockId,
-            attrs: { "custom-clip-highlight": "yellow" },
+            attrs: {
+                "custom-clip-highlight": "yellow",
+                "custom-siyuan-comment": "true",
+                "custom-comment-text": "这是一篇用于验证真实主链的全文剪藏文章",
+                "custom-comment-tag": "pinned",
+                "memo": "核心论点清晰有力，需要反复体会",
+            },
         });
         for (let attempt = 0; attempt < 30; attempt += 1) {
             const rows = await client.apiChecked("/api/query/sql", {
-                stmt: `SELECT id FROM blocks WHERE id = '${targetBlockId}' AND instr(ial, 'custom-clip-highlight') > 0 LIMIT 1`,
+                stmt: `SELECT id FROM blocks WHERE id = '${targetBlockId}' AND instr(ial, 'custom-clip-highlight') > 0 AND instr(ial, 'custom-siyuan-comment') > 0 LIMIT 1`,
             });
             if (Array.isArray(rows) && rows.length > 0) break;
             await new Promise((r) => setTimeout(r, 200));
