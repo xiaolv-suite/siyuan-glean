@@ -275,7 +275,7 @@
                 <svg class="glean-icon" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
                 <span>{t(i18n, "action.copyBlockRef")}</span>
             </button>
-            <button type="button" class="glean-reading-context__source-btn" title={t(i18n, "reading.openInReader")} onclick={() => { if (context) facade.openReadingDocument(context.id); }}>
+            <button type="button" class="glean-reading-context__source-btn" title={t(i18n, "reading.openInReader")} onclick={() => { if (context) (facade.openReader ?? facade.openReadingDocument).call(facade, context.id); }}>
                 <svg class="glean-icon" aria-hidden="true"><use href="#iconGleanNews" /></svg>
                 <span>{t(i18n, "reading.openInReader")}</span>
             </button>

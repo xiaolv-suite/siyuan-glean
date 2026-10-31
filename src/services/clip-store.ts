@@ -779,9 +779,17 @@ export async function measureClipBody(plugin: Plugin, docId: string): Promise<Cl
 /* ---------- 查询 ---------- */
 
 async function fetchDocMeta(docId: string): Promise<DocMeta> {
-    const rows = await querySql<DocRow>(
-        `SELECT id, content, hpath, box, updated FROM blocks WHERE id = '${docId.replace(/'/g, "''")}' AND type = 'd' LIMIT 1`
-    );
+    const stmt = `SELECT id, content, hpath, box, updated FROM blocks WHERE id = '${docId.replace(/'/g, "''")}' AND type = 'd' LIMIT 1`;
+    let rows: DocRow[];
+    try {
+        rows = await querySql<DocRow>(stmt);
+    } catch (err) {
+        if (String(err).includes("已过期")) {
+            rows = await querySql<DocRow>(stmt);
+        } else {
+            throw err;
+        }
+    }
     const row = rows[0];
     if (row) return { id: row.id, title: row.content || "", hpath: row.hpath || "", box: row.box || "", updated: row.updated || "" };
     return { id: docId, title: "", hpath: "", box: "", updated: "" };

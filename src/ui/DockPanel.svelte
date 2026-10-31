@@ -1020,8 +1020,8 @@ async function batchAddTag(tag: string): Promise<void> {
     if (batchBusy || selection.size === 0) return;
     batchBusy = true;
     const ids = Array.from(selection);
+    let count = 0;
     try {
-        let count = 0;
         for (const id of ids) {
             const clip = index.clips[id];
             if (!clip) continue;
@@ -1031,14 +1031,16 @@ async function batchAddTag(tag: string): Promise<void> {
                 count += 1;
             }
         }
-        facade.notifyDataChanged();
-        await reload();
         selection = new Set();
         showMessage(t(i18n, "library.batchTagsApplied", { count }), 3000);
     } catch (err) {
         console.warn("[LvGlean] 批量打标签失败:", err);
         showMessage(t(i18n, "msg.actionFailed"), 3000);
     } finally {
+        if (count > 0) {
+            facade.notifyDataChanged();
+            await reload();
+        }
         batchBusy = false;
     }
 }
@@ -1345,20 +1347,22 @@ async function batchSetAuthor(author: string): Promise<void> {
     if (batchBusy || selection.size === 0) return;
     batchBusy = true;
     const ids = Array.from(selection);
+    let count = 0;
     try {
-        let count = 0;
         for (const id of ids) {
-            await writeClip(facade.pluginInstance, id, { author: author.trim() });
+            await writeClip(facade.pluginInstance, id, { author: author.trim() }, { force: true });
             count += 1;
         }
-        facade.notifyDataChanged();
-        await reload();
         selection = new Set();
         showMessage(t(i18n, "library.batchAuthorApplied", { count }), 3000);
     } catch (err) {
         console.warn("[LvGlean] 批量设置作者失败:", err);
         showMessage(t(i18n, "msg.actionFailed"), 3000);
     } finally {
+        if (count > 0) {
+            facade.notifyDataChanged();
+            await reload();
+        }
         batchBusy = false;
     }
 }
@@ -1388,6 +1392,10 @@ async function moveTo(entry: ClipIndexEntry, status: ClipStatus) {
     dragId = "";
     dragOverCol = null;
     if (entry.status === status) return;
+    if (entry.status === "archived" && status !== "archived") {
+        facade.openRestoreDialog(entry.id);
+        return;
+    }
     await setStatus(entry, status);
 }
 
@@ -2521,6 +2529,12 @@ async function runKeyboardAction(action: LibraryKeyboardAction): Promise<void> {
             if (await setStatus(entry, "later")) setKeyboardCursor(next);
             break;
         }
+        case "markDone": {
+            if (entry.status === "done") break;
+            const next = cursorAfterRemoval(entry.id);
+            if (await setStatus(entry, "done")) setKeyboardCursor(next);
+            break;
+        }
         case "archive":
             // 归档是带后处理选项的显式动作；已经归档的行不再重复打开对话框。
             if (entry.status !== "archived") facade.openArchiveDialog(entry.id);
@@ -2584,6 +2598,40 @@ async function runKeyboardAction(action: LibraryKeyboardAction): Promise<void> {
             break;
     }
 }
+
+$effect(() => {
+    if (!paletteMenuOpen) return;
+    const onPointerDown = (event: PointerEvent) => {
+        const target = event.target instanceof Element ? event.target : null;
+        if (target?.closest(".glean-palette-quick-wrap")) return;
+        paletteMenuOpen = false;
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+        if (event.key === "Escape" && !event.defaultPrevented) {
+            event.preventDefault();
+            event.stopPropagation();
+            paletteMenuOpen = false;
+        }
+    };
+    document.addEventListener("pointerdown", onPointerDown, true);
+    document.addEventListener("keydown", onKeyDown, true);
+    return () => {
+        document.removeEventListener("pointerdown", onPointerDown, true);
+        document.removeEventListener("keydown", onKeyDown, true);
+    };
+});
+
+$effect(() => {
+    const onSwitchView = (event: Event) => {
+        const nextView = (event as CustomEvent<{ view?: string }>).detail?.view;
+        if (nextView && views.some((item) => item.key === nextView)) {
+            markPrefsInteraction();
+            view = nextView as PanelView;
+        }
+    };
+    document.addEventListener("glean:switch-view", onSwitchView);
+    return () => document.removeEventListener("glean:switch-view", onSwitchView);
+});
 
 $effect(() => {
     const root = rootEl;
@@ -2947,6 +2995,8 @@ function metaLine(entry: Row): string {
                         class="glean-icon-btn glean-head-action"
                         title={t(i18n, "settings.themePalette")}
                         aria-label={t(i18n, "settings.themePalette")}
+                        aria-expanded={paletteMenuOpen}
+                        aria-haspopup="menu"
                         onclick={() => { paletteMenuOpen = !paletteMenuOpen; }}
                     >
                         <span class="glean-head-palette-dot"></span>
@@ -2956,6 +3006,8 @@ function metaLine(entry: Row): string {
                             {#each THEME_PALETTES as p}
                                 <button
                                     type="button"
+                                    role="menuitemradio"
+                                    aria-checked={currentThemePalette === p.id}
                                     class="glean-palette-quick-item"
                                     class:glean-palette-quick-item--active={currentThemePalette === p.id}
                                     title={t(i18n, p.nameKey)}
@@ -3106,30 +3158,33 @@ function metaLine(entry: Row): string {
         </nav>
 
         {#if !facade.isMobile}
-            <div class="glean-kbdhint" class:glean-kbdhint--active={Boolean(keyboardEntry)}>
-                <span class="glean-kbdhint__keys" aria-hidden="true">
-                    <kbd>J</kbd><kbd>K</kbd> {t(i18n, "library.keyboardMove")}
-                    <kbd>Enter</kbd> {t(i18n, "library.keyboardView")}
-                    <kbd>O</kbd> {t(i18n, "library.keyboardSource")}
-                    <kbd>R</kbd> {t(i18n, "library.keyboardRead")}
-                    <kbd>A</kbd> {t(i18n, "library.keyboardLater")}
-                    <kbd>E</kbd> {t(i18n, "library.keyboardArchive")}
-                    <kbd>X</kbd> {t(i18n, "library.keyboardSelect")}
-                    <kbd>S</kbd> {t(i18n, "library.keyboardSelectDisplayed")}
-                    <kbd>F</kbd> {selection.size > 0 ? t(i18n, "library.keyboardKeepFiltered") : t(i18n, "roaming.favoriteAction")}
-                    <kbd>C</kbd> {selection.size > 0 ? t(i18n, "library.keyboardClearSelection") : t(i18n, "citation.copyGBT")}
-                    <kbd>Shift+C</kbd> BibTeX
-                    <kbd>P</kbd><kbd>1-5</kbd> {t(i18n, "library.keyboardPriority")}
-                    <kbd>M</kbd> {t(i18n, "library.keyboardRating")}
-                    <kbd>Y</kbd> {t(i18n, "action.copyBlockRef")}
-                    <kbd>B</kbd> {t(i18n, "roaming.button")}
-                    <kbd>/</kbd> {t(i18n, "action.search")}
-                    <kbd>Esc</kbd> {t(i18n, "library.keyboardExit")}
-                </span>
-                <span class="glean-sr-only" role="status" aria-live="polite">
-                    {keyboardEntry ? t(i18n, "library.keyboardCursor", { title: keyboardEntry.title || t(i18n, "panel.untitled") }) : ""}
-                </span>
-            </div>
+            <details class="glean-kbdhint-fold">
+                <summary class="glean-kbdhint-fold__summary"><kbd>?</kbd> <span>{t(i18n, "reader.shortcuts")}</span></summary>
+                <div class="glean-kbdhint" class:glean-kbdhint--active={Boolean(keyboardEntry)}>
+                    <span class="glean-kbdhint__keys" aria-hidden="true">
+                        <kbd>J</kbd><kbd>K</kbd> {t(i18n, "library.keyboardMove")}
+                        <kbd>Enter</kbd> {t(i18n, "library.keyboardView")}
+                        <kbd>O</kbd> {t(i18n, "library.keyboardSource")}
+                        <kbd>R</kbd> {t(i18n, "library.keyboardRead")}
+                        <kbd>A</kbd> {t(i18n, "library.keyboardLater")}
+                        <kbd>E</kbd> {t(i18n, "library.keyboardArchive")}
+                        <kbd>X</kbd> {t(i18n, "library.keyboardSelect")}
+                        <kbd>S</kbd> {t(i18n, "library.keyboardSelectDisplayed")}
+                        <kbd>F</kbd> {selection.size > 0 ? t(i18n, "library.keyboardKeepFiltered") : t(i18n, "roaming.favoriteAction")}
+                        <kbd>C</kbd> {selection.size > 0 ? t(i18n, "library.keyboardClearSelection") : t(i18n, "citation.copyGBT")}
+                        <kbd>Shift+C</kbd> BibTeX
+                        <kbd>P</kbd><kbd>1-5</kbd> {t(i18n, "library.keyboardPriority")}
+                        <kbd>M</kbd> {t(i18n, "library.keyboardRating")}
+                        <kbd>Y</kbd> {t(i18n, "action.copyBlockRef")}
+                        <kbd>B</kbd> {t(i18n, "roaming.button")}
+                        <kbd>/</kbd> {t(i18n, "action.search")}
+                        <kbd>Esc</kbd> {t(i18n, "library.keyboardExit")}
+                    </span>
+                </div>
+            </details>
+            <span class="glean-sr-only" role="status" aria-live="polite">
+                {keyboardEntry ? t(i18n, "library.keyboardCursor", { title: keyboardEntry.title || t(i18n, "panel.untitled") }) : ""}
+            </span>
         {/if}
 
         {#if facade.isMobile}
@@ -3203,7 +3258,7 @@ function metaLine(entry: Row): string {
                     <option value="">{t(i18n, "library.savedViews")}</option>
                     {#each savedViews as saved (saved.id)}<option value={saved.id}>{saved.name}</option>{/each}
                 </select>
-                <input class="b3-text-field" maxlength="40" value={savedViewName} placeholder={t(i18n, "library.savedViewName")} oninput={(event) => (savedViewName = (event.currentTarget as HTMLInputElement).value)} />
+                <input class="b3-text-field" maxlength="40" value={savedViewName} placeholder={t(i18n, "library.savedViewName")} aria-label={t(i18n, "library.savedViewName")} oninput={(event) => (savedViewName = (event.currentTarget as HTMLInputElement).value)} onkeydown={(event) => { if (event.key === "Enter" && !event.isComposing) { event.preventDefault(); saveCurrentView(); } }} />
                 <button class="glean-btn" disabled={!savedViewName.trim() || savedViews.length >= 20} onclick={saveCurrentView}>{t(i18n, "library.savedViewSave")}</button>
                 <button class="glean-btn glean-btn--ghost" disabled={!savedViewId} onclick={makeDefaultSavedView}>{t(i18n, "library.savedViewDefault")}</button>
                 <button class="glean-btn glean-btn--ghost" disabled={!savedViewId} onclick={removeSavedView}>{t(i18n, "library.savedViewDelete")}</button>
@@ -3546,15 +3601,30 @@ function metaLine(entry: Row): string {
                                         </div>
                                     {/if}
                                 </div>
-                                <ClipStatusActions
-                                    {i18n}
-                                    status={entry.status || "inbox"}
-                                    disabled={Boolean(statusActionId)}
-                                    onStartReading={() => void startReading(entry)}
-                                    onSetStatus={(status) => void setStatus(entry, status)}
-                                    onArchive={() => facade.openArchiveDialog(entry.id)}
-                                    onRestore={() => facade.openRestoreDialog(entry.id)}
-                                />
+                                <div class="glean-kcard__foot">
+                                    <ClipStatusActions
+                                        {i18n}
+                                        status={entry.status || "inbox"}
+                                        disabled={Boolean(statusActionId)}
+                                        onStartReading={() => void startReading(entry)}
+                                        onSetStatus={(status) => void setStatus(entry, status)}
+                                        onArchive={() => facade.openArchiveDialog(entry.id)}
+                                        onRestore={() => facade.openRestoreDialog(entry.id)}
+                                    />
+                                    <div class="glean-kcard__more">
+                                        <ActionPopover label={t(i18n, "library.moreActions")} compact>
+                                            <button class="glean-btn glean-btn--ghost" onclick={() => selectPreview(entry.id)}>{t(i18n, "library.keyboardView")}</button>
+                                            {#if entry.status !== "inbox" && entry.status !== "archived"}
+                                                <button class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId)} onclick={() => void setStatus(entry, "inbox")}>{t(i18n, "status.inbox")}</button>
+                                            {/if}
+                                            <AuthorEditor {facade} docId={entry.id} onSaved={reload} />
+                                            <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryBlockRef(entry)}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg> <span>{t(i18n, "action.copyBlockRef")}</span></button>
+                                            <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "gbt")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg> <span>{t(i18n, "citation.copyGBT")}</span></button>
+                                            <button class="glean-btn glean-btn--ghost" disabled={snappingId === entry.id} onclick={() => void takeSnapshot(entry)}>{snapshotLabel(entry)}</button>
+                                            <button class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId)} aria-pressed={isPinnedToday(entry)} onclick={() => void toggleSurfacePin(entry)}>{surfacePinLabel(entry)}</button>
+                                        </ActionPopover>
+                                    </div>
+                                </div>
                             </div>
                         {/each}
                         {#if col.totalCount !== undefined && col.items.length < col.totalCount}
@@ -3763,9 +3833,14 @@ function metaLine(entry: Row): string {
                                                 <AuthorEditor {facade} docId={entry.id} onSaved={reload} />
                                                 <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryBlockRef(entry)}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg> <span>{t(i18n, "action.copyBlockRef")}</span></button>
                                                 <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "gbt")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg> <span>{t(i18n, "citation.copyGBT")}</span></button>
-                                                <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "bibtex")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArchive" /></svg> <span>{t(i18n, "citation.copyBibTeX")}</span></button>
-                                                <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "apa")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanLocal" /></svg> <span>{t(i18n, "citation.copyAPA")}</span></button>
-                                                <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "mla")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg> <span>{t(i18n, "citation.copyMLA")}</span></button>
+                                                <details class="glean-citation-more" data-keep-popover-open>
+                                                    <summary class="glean-btn glean-btn--ghost" data-keep-popover-open>BibTeX / APA / MLA</summary>
+                                                    <div class="glean-citation-more__list">
+                                                        <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "bibtex")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArchive" /></svg> <span>{t(i18n, "citation.copyBibTeX")}</span></button>
+                                                        <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "apa")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanLocal" /></svg> <span>{t(i18n, "citation.copyAPA")}</span></button>
+                                                        <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "mla")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg> <span>{t(i18n, "citation.copyMLA")}</span></button>
+                                                    </div>
+                                                </details>
                                                 {#if entry.status !== "archived"}
                                                     <button class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId) || entry.status === "later"} onclick={() => void setStatus(entry, "later")}>{t(i18n, "action.moveToLater")}</button>
                                                     <button class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId)} onclick={() => facade.openArchiveDialog(entry.id)}>{t(i18n, "action.archive")}</button>
@@ -3983,9 +4058,14 @@ function metaLine(entry: Row): string {
                                         <AuthorEditor {facade} docId={entry.id} onSaved={reload} />
                                         <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryBlockRef(entry)}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg> <span>{t(i18n, "action.copyBlockRef")}</span></button>
                                         <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "gbt")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg> <span>{t(i18n, "citation.copyGBT")}</span></button>
-                                        <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "bibtex")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArchive" /></svg> <span>{t(i18n, "citation.copyBibTeX")}</span></button>
-                                        <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "apa")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanLocal" /></svg> <span>{t(i18n, "citation.copyAPA")}</span></button>
-                                        <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "mla")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg> <span>{t(i18n, "citation.copyMLA")}</span></button>
+                                        <details class="glean-citation-more" data-keep-popover-open>
+                                            <summary class="glean-btn glean-btn--ghost" data-keep-popover-open>BibTeX / APA / MLA</summary>
+                                            <div class="glean-citation-more__list">
+                                                <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "bibtex")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArchive" /></svg> <span>{t(i18n, "citation.copyBibTeX")}</span></button>
+                                                <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "apa")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanLocal" /></svg> <span>{t(i18n, "citation.copyAPA")}</span></button>
+                                                <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "mla")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg> <span>{t(i18n, "citation.copyMLA")}</span></button>
+                                            </div>
+                                        </details>
                                     </ActionPopover>
                                     <button
                                         class="glean-op-btn"

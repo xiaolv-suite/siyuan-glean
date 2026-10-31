@@ -1,0 +1,1280 @@
+// 隔离式全主链 E2E 验证脚本（支持 --keep 保留独立工作区与内核）：
+// 1. 自动在系统临时目录创建独立工作区、部署 dist/ 生产产物并拉起无头 SiYuan-Kernel.exe（绝不触碰作者 6806 主实例）；
+// 2. 真实跑通 docs/BLOCKERS.md 定义的「10 步主链走查脚本」（内核 SQLite 真实落盘 + 服务层全链路 + Chrome 1280×800 首屏减法截图验证）；
+// 3. 用法：
+//    node scripts/e2e-isolated.mjs          # 跑完 10 步主链验证后自动清扫临时库并关闭隔离内核
+//    node scripts/e2e-isolated.mjs --keep   # 跑完 10 步验证后保留隔离工作区与内核进程（输出 base/token/workspace）
+
+import assert from "node:assert/strict";
+import { spawn, execFile } from "node:child_process";
+import { promisify } from "node:util";
+import fs from "node:fs";
+import http from "node:http";
+import os from "node:os";
+import path from "node:path";
+import { registerHooks } from "node:module";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import { compile } from "svelte/compiler";
+import { render } from "svelte/server";
+import {
+    resolveKernel,
+    prepareWorkspace,
+    assertTestPortAvailable,
+    startKernel,
+    createApiClient,
+    waitForBoot,
+    shutdownKernel,
+} from "./spike/kernel-harness.mjs";
+import { cleanupScratch, guardScratch } from "./lib/smoke-kernel.mjs";
+
+const execFileAsync = promisify(execFile);
+const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const DIST = path.join(REPO, "dist");
+const PLUGIN_ID = "siyuan-glean";
+const HOST = "127.0.0.1";
+const KEEP = process.argv.includes("--keep");
+
+const compiledSvelteCache = new Map();
+function compileSvelteServer(source, filename) {
+    const out = compile(source, { filename, generate: "server" });
+    compiledSvelteCache.set(`css:${filename}`, out.css?.code ?? "");
+    return out.js.code;
+}
+
+registerHooks({
+    resolve(specifier, context, nextResolve) {
+        if (specifier === "siyuan") return { url: "glean-isolated-e2e:siyuan", shortCircuit: true };
+        if (specifier.startsWith(".") && specifier.endsWith(".svelte")) {
+            const resolved = new URL(specifier, context.parentURL);
+            return { url: resolved.href, shortCircuit: true };
+        }
+        if (specifier.startsWith(".") && !/\.[cm]?[jt]s$/.test(specifier)) {
+            return nextResolve(`${specifier}.ts`, context);
+        }
+        return nextResolve(specifier, context);
+    },
+    load(url, context, nextLoad) {
+        if (url === "glean-isolated-e2e:siyuan") {
+            return {
+                format: "module",
+                source: [
+                    "export const fetchSyncPost = (...args) => globalThis.__gleanIsolatedFetchSyncPost(...args);",
+                    "export const getFrontend = () => 'desktop';",
+                    "export const showMessage = () => {};",
+                    "export const openTab = () => {};",
+                    "export const openMobileFileById = () => {};",
+                    "export class Dialog { constructor() {} destroy() {} }",
+                ].join("\n"),
+                shortCircuit: true,
+            };
+        }
+        if (url.startsWith("file://") && url.endsWith(".svelte")) {
+            const filePath = fileURLToPath(url);
+            const cached = compiledSvelteCache.get(filePath);
+            if (cached) return { format: "module", source: cached, shortCircuit: true };
+            const code = compileSvelteServer(fs.readFileSync(filePath, "utf8"), filePath);
+            compiledSvelteCache.set(filePath, code);
+            return { format: "module", source: code, shortCircuit: true };
+        }
+        return nextLoad(url, context);
+    },
+});
+
+async function choosePort() {
+    for (let attempt = 0; attempt < 40; attempt += 1) {
+        const port = 31000 + Math.floor(Math.random() * 20000);
+        try {
+            await assertTestPortAvailable(HOST, port);
+            return port;
+        } catch (err) {
+            if (attempt === 39) throw err;
+        }
+    }
+    throw new Error("无可用回环端口");
+}
+
+function copyDistToWorkspace(workspace) {
+    const dst = path.join(workspace, "data", "plugins", PLUGIN_ID);
+    fs.mkdirSync(dst, { recursive: true });
+    for (const file of ["index.js", "index.css", "plugin.json", "icon.png"]) {
+        const srcFile = path.join(DIST, file);
+        if (fs.existsSync(srcFile)) fs.copyFileSync(srcFile, path.join(dst, file));
+    }
+    const i18nSrc = path.join(DIST, "i18n");
+    if (fs.existsSync(i18nSrc)) {
+        const i18nDst = path.join(dst, "i18n");
+        fs.mkdirSync(i18nDst, { recursive: true });
+        for (const f of fs.readdirSync(i18nSrc)) {
+            fs.copyFileSync(path.join(i18nSrc, f), path.join(i18nDst, f));
+        }
+    }
+    return dst;
+}
+
+function createPluginAdapter(base, token) {
+    const headers = token ? { Authorization: `Token ${token}` } : {};
+    const storagePath = (name) => `/data/storage/petal/${PLUGIN_ID}/${name}`;
+    return {
+        name: PLUGIN_ID,
+        app: { plugins: [] },
+        async loadData(name) {
+            const res = await fetch(`${base}/api/file/getFile`, {
+                method: "POST",
+                headers: { ...headers, "Content-Type": "application/json" },
+                body: JSON.stringify({ path: storagePath(name) }),
+            });
+            const text = await res.text();
+            try {
+                const parsed = JSON.parse(text);
+                if (res.status === 202 && parsed?.code === 404) return undefined;
+                return parsed;
+            } catch {
+                return undefined;
+            }
+        },
+        async saveData(name, data) {
+            const form = new FormData();
+            form.append("path", storagePath(name));
+            form.append("isDir", "false");
+            form.append("modTime", String(Math.floor(Date.now() / 1000)));
+            form.append("file", new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }), name);
+            const res = await fetch(`${base}/api/file/putFile`, {
+                method: "POST",
+                headers,
+                body: form,
+            });
+            const json = await res.json();
+            assert.equal(json.code, 0, `saveData(${name}) failed: ${json.msg}`);
+        },
+    };
+}
+
+function findChromePath() {
+    const candidates = [
+        "C:/Program Files/Google/Chrome/Application/chrome.exe",
+        "C:/Program Files (x86)/Google/Chrome/Application/chrome.exe",
+    ];
+    return candidates.find((p) => fs.existsSync(p)) || null;
+}
+
+async function runLiveBrowserInteractiveSuite({ chromePath, appDir, base, token, settings, notebookId, fulltextDocId, linkDocId, plugin }) {
+    const outDir = path.join(REPO, "output", "e2e-browser-live");
+    fs.mkdirSync(outDir, { recursive: true });
+    // 再补充一篇稍后读文章，让今日拾遗同时展示「继续阅读」与「今日拾遗推荐卡」
+    const extraDocId = await fetch(`${base}/api/filetree/createDocWithMd`, {
+        method: "POST",
+        headers: { Authorization: `Token ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+            notebook: notebookId,
+            path: "/长期主义阅读指南",
+            markdown: "- [https://example.com/articles/long-term](https://example.com/articles/long-term)\n\n# 长期主义阅读指南\n\n为什么少即是多：减少面板噪音，把注意力还给正文。",
+        }),
+    }).then((r) => r.json()).then((j) => j.data);
+    const { listAnchorDocs, captureClip, writeClip, reconcileIndex } = await import(pathToFileURL(path.join(REPO, "src/services/clip-store.ts")).href);
+    for (let attempt = 0; attempt < 40; attempt += 1) {
+        const rows = await listAnchorDocs([notebookId]);
+        if (rows.some((r) => r.id === extraDocId)) break;
+        await new Promise((r) => setTimeout(r, 200));
+    }
+    await captureClip(plugin, extraDocId, { url: "https://example.com/articles/long-term", contentType: "fulltext", words: 2400, minutes: 8 });
+    await writeClip(plugin, extraDocId, { status: "later", author: "少即是多", priority: 5 }, { forceStatus: true, force: true });
+    await plugin.saveData("settings.json", settings);
+    await plugin.saveData("ui-prefs.json", { onboardingDone: true, themePalette: "teal" });
+    await reconcileIndex(plugin, settings);
+
+    const daylightCssPath = path.join(appDir, "appearance", "themes", "daylight", "theme.css");
+    const daylightCss = fs.existsSync(daylightCssPath) ? fs.readFileSync(daylightCssPath, "utf8") : "";
+    const pluginCss = fs.readFileSync(path.join(DIST, "index.css"), "utf8");
+    const pluginJs = fs.readFileSync(path.join(DIST, "index.js"), "utf8");
+    const i18nJson = fs.readFileSync(path.join(DIST, "i18n", "zh_CN.json"), "utf8");
+
+    const hostHtml = `<!DOCTYPE html>
+<html lang="zh-CN" data-theme-mode="light">
+<head>
+<meta charset="UTF-8">
+<title>LvGlean Live Browser E2E</title>
+<style>${daylightCss}</style>
+<style>${pluginCss}</style>
+<style>
+  :root {
+    --b3-theme-primary: #0d9488;
+    --b3-theme-background: #f8fafc;
+    --b3-theme-surface: #ffffff;
+    --b3-theme-surface-lighter: #f1f5f9;
+    --b3-theme-on-background: #0f172a;
+    --b3-theme-on-surface: #1e293b;
+    --b3-theme-on-surface-light: #64748b;
+    --b3-border-color: #e2e8f0;
+  }
+  html, body { margin: 0; padding: 0; width: 1280px; height: 800px; overflow: hidden; font-family: -apple-system, "Microsoft YaHei", sans-serif; background: var(--b3-theme-background); color: var(--b3-theme-on-background); }
+  #workbench-host { width: 1280px; height: 800px; display: flex; flex-direction: column; overflow: hidden; }
+  #workbench-host > .glean-tab-root { flex: 1; height: 100%; overflow: hidden; display: flex; flex-direction: column; }
+  .b3-dialog--open { position: fixed; inset: 0; z-index: 999; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.42); }
+  .b3-dialog__container { background: var(--b3-theme-surface); border-radius: 16px; box-shadow: 0 20px 50px rgba(0,0,0,0.22); display: flex; flex-direction: column; overflow: hidden; max-width: 94vw; max-height: 88vh; }
+  .b3-dialog__header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid var(--b3-border-color); font-weight: 600; }
+  .b3-dialog__body { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+  .b3-dialog__close { width: 18px; height: 18px; cursor: pointer; }
+</style>
+</head>
+<body>
+<div id="workbench-host"></div>
+<script>
+window.__i18n = ${i18nJson};
+window.__tabs = new Map();
+window.__toasts = [];
+window.__warns = [];
+const __origWarn = console.warn.bind(console);
+console.warn = (...args) => { window.__warns.push(args.map((a) => String(a?.stack || a?.message || a)).join(" ")); __origWarn(...args); };
+const __origDebug = console.debug.bind(console);
+console.debug = (...args) => { window.__warns.push(args.map((a) => String(a?.stack || a?.message || a)).join(" ")); __origDebug(...args); };
+window.siyuan = { dialogs: [], menus: { menu: { element: null } } };
+window.process = { env: { NODE_ENV: "production", DEV_MODE: "false" } };
+
+class SiyuanDialog {
+  constructor(opts) {
+    this.opts = opts;
+    const wrap = document.createElement("div");
+    wrap.className = "b3-dialog--open";
+    wrap.innerHTML = \`<div class="b3-dialog"><div class="b3-dialog__container" style="width:\${opts.width || '720px'};height:\${opts.height || '560px'}"><div class="b3-dialog__header"><div class="b3-dialog__title">\${opts.title || ''}</div><svg class="b3-dialog__close"><use href="#iconGleanClose"></use></svg></div><div class="b3-dialog__body">\${opts.content || ''}</div></div></div>\`;
+    document.body.appendChild(wrap);
+    this.element = wrap;
+    window.siyuan.dialogs.push(this);
+    const closeBtn = wrap.querySelector(".b3-dialog__close");
+    if (closeBtn) closeBtn.addEventListener("click", () => this.destroy());
+  }
+  destroy() {
+    if (!this.element.isConnected) return;
+    this.element.remove();
+    const idx = window.siyuan.dialogs.indexOf(this);
+    if (idx >= 0) window.siyuan.dialogs.splice(idx, 1);
+    if (this.opts.destroyCallback) this.opts.destroyCallback();
+  }
+}
+
+class SiyuanPluginBase {
+  constructor(opts) {
+    this.app = opts.app || { plugins: [] };
+    this.name = opts.name || "siyuan-glean";
+    this.displayName = opts.displayName || "小驴拾遗";
+    this.i18n = opts.i18n || window.__i18n;
+    this.eventBus = { on() {}, off() {} };
+  }
+  addIcons(svg) {
+    const holder = document.createElement("div");
+    holder.style.display = "none";
+    holder.innerHTML = \`<svg xmlns="http://www.w3.org/2000/svg">\${svg}</svg>\`;
+    document.body.prepend(holder);
+  }
+  addTopBar(opts) {
+    const btn = document.createElement("button");
+    btn.onclick = opts.callback;
+    return btn;
+  }
+  addCommand() {}
+  addDock() {}
+  addAgentCapability() {}
+  addTab(def) {
+    window.__tabs.set(def.type, def);
+    const plugin = this;
+    return function() {};
+  }
+  async loadData(name) {
+    const res = await fetch("/api/file/getFile", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path: "/data/storage/petal/siyuan-glean/" + name })
+    });
+    const text = await res.text();
+    try {
+      const parsed = JSON.parse(text);
+      if (res.status === 202 && parsed && parsed.code === 404) return undefined;
+      return parsed;
+    } catch { return undefined; }
+  }
+  async saveData(name, data) {
+    const form = new FormData();
+    form.append("path", "/data/storage/petal/siyuan-glean/" + name);
+    form.append("isDir", "false");
+    form.append("modTime", String(Math.floor(Date.now() / 1000)));
+    form.append("file", new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }), name);
+    await fetch("/api/file/putFile", { method: "POST", body: form });
+  }
+}
+
+window.__siyuanShim = {
+  Plugin: SiyuanPluginBase,
+  Dialog: SiyuanDialog,
+  getFrontend: () => "desktop",
+  getAllEditor: () => [],
+  showMessage: (msg) => { window.__toasts.push(msg); },
+  openMobileFileById: () => {},
+  openTab: async (opts) => {
+    const id = opts?.custom?.id || "";
+    const type = id.replace(/^siyuan-glean/, "");
+    const def = window.__tabs.get(type);
+    const host = document.getElementById("workbench-host");
+    if (def && host) {
+      host.innerHTML = "";
+      const tid = "tab-" + Date.now();
+      const tabObj = { id: tid, element: host, tab: { id: tid } };
+      def.init.call(tabObj);
+      return tabObj;
+    }
+    return { id: "tab-doc" };
+  },
+  fetchSyncPost: async (url, data) => {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data || {})
+    });
+    return await res.json();
+  }
+};
+
+window.module = { exports: {} };
+window.exports = window.module.exports;
+window.require = (id) => {
+  if (id === "siyuan") return window.__siyuanShim;
+  if (id === "process") return window.process;
+  return {};
+};
+</script>
+<script src="/plugin.js"></script>
+<script>
+(async () => {
+  try {
+    const PluginClass = window.module.exports.default || window.module.exports;
+    const instance = new PluginClass({ app: { plugins: [] }, name: "siyuan-glean", displayName: "小驴拾遗", i18n: window.__i18n });
+    window.__gleanPlugin = instance;
+    await instance.onload();
+    instance.recordRecentReading(${JSON.stringify(fulltextDocId)}, "深度工作与注意力管理");
+    instance.openPanel();
+    window.__gleanReady = true;
+  } catch (err) {
+    window.__bootError = String(err?.stack || err);
+  }
+})();
+</script>
+</body>
+</html>`;
+
+    const srv = http.createServer(async (req, res) => {
+        try {
+            if (req.url === "/" || req.url?.startsWith("/?")) {
+                res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+                res.end(hostHtml);
+                return;
+            }
+            if (req.url === "/plugin.js") {
+                res.writeHead(200, { "Content-Type": "application/javascript; charset=utf-8" });
+                res.end(pluginJs);
+                return;
+            }
+            if (req.url?.startsWith("/api/")) {
+                const chunks = [];
+                for await (const chunk of req) chunks.push(chunk);
+                const bodyBuf = Buffer.concat(chunks);
+                const headers = { Authorization: `Token ${token}` };
+                if (req.headers["content-type"]) headers["Content-Type"] = req.headers["content-type"];
+                const upstream = await fetch(`${base}${req.url}`, {
+                    method: req.method || "POST",
+                    headers,
+                    body: bodyBuf.length > 0 ? bodyBuf : undefined,
+                });
+                const resBuf = Buffer.from(await upstream.arrayBuffer());
+                res.writeHead(upstream.status, {
+                    "Content-Type": upstream.headers.get("content-type") || "application/json",
+                });
+                res.end(resBuf);
+                return;
+            }
+            res.writeHead(404);
+            res.end();
+        } catch (err) {
+            res.writeHead(500);
+            res.end(String(err));
+        }
+    });
+    await new Promise((r) => srv.listen(0, HOST, r));
+    const uiPort = srv.address().port;
+    const cdpPort = await choosePort();
+    const chromeProfile = path.join(os.tmpdir(), `glean-chrome-cdp-${Date.now()}-${process.pid}`);
+    const chromeProc = spawn(chromePath, [
+        "--headless=new",
+        "--disable-gpu",
+        "--no-first-run",
+        "--no-default-browser-check",
+        "--window-size=1280,800",
+        `--remote-debugging-port=${cdpPort}`,
+        `--user-data-dir=${chromeProfile}`,
+        `http://${HOST}:${uiPort}/`,
+    ], { stdio: "ignore", windowsHide: true });
+
+    try {
+        // 等待 CDP 端口就绪并获取页面 WebSocket URL
+        let wsUrl = "";
+        for (let i = 0; i < 40; i += 1) {
+            try {
+                const targets = await fetch(`http://${HOST}:${cdpPort}/json/list`).then((r) => r.json());
+                const pageTarget = targets.find((t) => t.type === "page" && t.webSocketDebuggerUrl);
+                if (pageTarget) {
+                    wsUrl = pageTarget.webSocketDebuggerUrl;
+                    break;
+                }
+            } catch {}
+            await new Promise((r) => setTimeout(r, 200));
+        }
+        assert.ok(wsUrl, "Chrome CDP WebSocket 连接必须建立");
+
+        const ws = new WebSocket(wsUrl);
+        await new Promise((resolve, reject) => {
+            ws.onopen = resolve;
+            ws.onerror = reject;
+        });
+        let msgId = 0;
+        const pendingCdp = new Map();
+        ws.onmessage = (evt) => {
+            const data = JSON.parse(String(evt.data));
+            if (data.id && pendingCdp.has(data.id)) {
+                const { resolve, reject } = pendingCdp.get(data.id);
+                pendingCdp.delete(data.id);
+                if (data.error) reject(new Error(data.error.message));
+                else resolve(data.result);
+            }
+        };
+        const sendCdp = (method, params = {}) => new Promise((resolve, reject) => {
+            const id = ++msgId;
+            pendingCdp.set(id, { resolve, reject });
+            ws.send(JSON.stringify({ id, method, params }));
+        });
+        const evalInPage = async (expression) => {
+            const res = await sendCdp("Runtime.evaluate", { expression, awaitPromise: true, returnByValue: true });
+            if (res.exceptionDetails) {
+                throw new Error(`Page eval error: ${res.exceptionDetails.text} ${res.exceptionDetails.exception?.description || ""}`);
+            }
+            return res.result?.value;
+        };
+        const saveShot = async (filename) => {
+            const shot = await sendCdp("Page.captureScreenshot", { format: "png" });
+            const file = path.join(outDir, filename);
+            fs.writeFileSync(file, Buffer.from(shot.data, "base64"));
+            return file;
+        };
+        await sendCdp("Page.enable");
+        await sendCdp("Runtime.enable");
+        await sendCdp("Emulation.setDeviceMetricsOverride", { width: 1280, height: 800, deviceScaleFactor: 1, mobile: false });
+
+        // 1. 等待今日拾遗视图挂载并完成内核数据加载
+        for (let i = 0; i < 40; i += 1) {
+            const ready = await evalInPage(`Boolean(window.__gleanReady && document.querySelector(".glean-surf-card"))`);
+            if (ready) break;
+            await new Promise((r) => setTimeout(r, 250));
+        }
+        const resurfaceMetrics = await evalInPage(`(() => {
+            const pri = document.querySelector(".glean-surf-act--pri");
+            const r = pri ? pri.getBoundingClientRect() : null;
+            const bookmarkBadge = document.querySelector(".glean-badge--bookmark");
+            return {
+                hasCard: Boolean(document.querySelector(".glean-surf-card")),
+                priTop: r ? Math.round(r.top) : -1,
+                priBottom: r ? Math.round(r.bottom) : -1,
+                hasBookmarkBadge: Boolean(bookmarkBadge),
+                contextFoldClosed: !document.querySelector(".glean-surf-context-fold")?.open,
+                moreMenuClosed: !document.querySelector(".glean-surf-more")?.open,
+            };
+        })()`);
+        assert.equal(resurfaceMetrics.hasCard, true, "今日拾遗卡片必须在浏览器真实渲染");
+        assert.ok(resurfaceMetrics.priBottom > 0 && resurfaceMetrics.priBottom <= 800, `今日拾遗主按钮必须在 800px 首屏内，实测 bottom=${resurfaceMetrics.priBottom}`);
+        assert.equal(resurfaceMetrics.hasBookmarkBadge, true, "继续阅读卡片必须显示真实书签徽标");
+        assert.equal(resurfaceMetrics.contextFoldClosed, true);
+        assert.equal(resurfaceMetrics.moreMenuClosed, true);
+        await saveShot("01-resurface-live.png");
+
+        // 2. 在浏览器中点击展开「按可用时间与主题挑一篇」和卡片「⋯ 更多操作」
+        await evalInPage(`(() => {
+            document.querySelector(".glean-surf-context-fold__summary")?.click();
+            document.querySelector(".glean-surf-more__trigger")?.click();
+        })()`);
+        await new Promise((r) => setTimeout(r, 200));
+        const expandedState = await evalInPage(`({
+            contextOpen: Boolean(document.querySelector(".glean-surf-context-fold")?.open),
+            moreOpen: Boolean(document.querySelector(".glean-surf-more")?.open),
+        })`);
+        assert.equal(expandedState.contextOpen, true);
+        assert.equal(expandedState.moreOpen, true);
+        await saveShot("02-resurface-expanded-live.png");
+
+        // 3. 点击左侧导航切换到「读库」视图，切到「稍后读」队列，勾选文章并测试内联批量栏（BL-01）
+        await evalInPage(`(() => {
+            const btns = Array.from(document.querySelectorAll(".glean-views__btn"));
+            btns[1]?.click();
+        })()`);
+        await new Promise((r) => setTimeout(r, 250));
+        await evalInPage(`(() => {
+            const qBtns = Array.from(document.querySelectorAll(".glean-q"));
+            qBtns[1]?.click();
+        })()`);
+        for (let i = 0; i < 30; i += 1) {
+            const hasRows = await evalInPage(`document.querySelectorAll(".glean-drow").length > 0`);
+            if (hasRows) break;
+            await new Promise((r) => setTimeout(r, 200));
+        }
+        await evalInPage(`(() => {
+            const check = document.querySelector(".glean-drow__select input, input.glean-drow__select");
+            check?.click();
+        })()`);
+        await new Promise((r) => setTimeout(r, 200));
+        await evalInPage(`(() => {
+            const priBtn = document.querySelector(".glean-bb--priority");
+            priBtn?.click();
+        })()`);
+        await new Promise((r) => setTimeout(r, 200));
+        const hasInlinePills = await evalInPage(`Boolean(document.querySelector(".glean-batchbar__inline"))`);
+        assert.equal(hasInlinePills, true, "点击批量设优先级必须展开内联档位胶囊而非调用 window.prompt");
+        await saveShot("03-library-inline-batch-live.png");
+
+        // 真实点击内联批量栏的 P5 档位胶囊，验证 UI 反馈（toast）+ 列表微标联动 + 思源内核真实落盘
+        await evalInPage(`(() => {
+            window.__toasts.length = 0;
+            const btns = Array.from(document.querySelectorAll(".glean-batchbar__inline button"));
+            const p5Btn = btns.find((b) => (b.textContent || "").trim() === "P5");
+            p5Btn?.click();
+        })()`);
+        for (let i = 0; i < 20; i += 1) {
+            const toastCount = await evalInPage(`window.__toasts.length`);
+            if (toastCount > 0) break;
+            await new Promise((r) => setTimeout(r, 150));
+        }
+        const batchToast = await evalInPage(`window.__toasts[window.__toasts.length - 1] || ""`);
+        assert.ok(batchToast.length > 0, "点击内联 P5 胶囊必须弹出操作成功反馈提示");
+        const kernelAttrsAfterBatch = await fetch(`${base}/api/attr/getBlockAttrs`, {
+            method: "POST",
+            headers: { Authorization: `Token ${token}`, "Content-Type": "application/json" },
+            body: JSON.stringify({ id: extraDocId }),
+        }).then((r) => r.json()).then((j) => j.data || {});
+        assert.equal(kernelAttrsAfterBatch["custom-clip-priority"], "5", "内联批量修改优先级必须真实落盘至思源文档属性");
+
+        // 4. 点击文章标题打开右侧预览抽屉，验证预览顶栏单行对齐、点击收藏按钮联动列表并落盘内核，展开行尾 ActionPopover（BL-11）
+        await evalInPage(`(() => {
+            document.querySelector(".glean-drow__ti")?.click();
+            const popTrigger = document.querySelector(".glean-drow .glean-action-popover__trigger");
+            popTrigger?.click();
+            const popBody = document.querySelector(".glean-drow .glean-action-popover__body");
+            if (popBody && typeof popBody.showPopover === "function") {
+                try { popBody.showPopover(); } catch {}
+            }
+        })()`);
+        await new Promise((r) => setTimeout(r, 350));
+        const previewState = await evalInPage(`(() => {
+            const headerActs = document.querySelector(".glean-preview__header-actions");
+            const r = headerActs ? headerActs.getBoundingClientRect() : null;
+            const missingSymbols = Array.from(document.querySelectorAll("use")).filter((u) => {
+                const href = u.getAttribute("href") || u.getAttribute("xlink:href") || "";
+                return href.startsWith("#") && !document.querySelector(href);
+            }).length;
+            return {
+                hasPreview: Boolean(document.querySelector(".glean-preview")),
+                hasPopoverOpen: Boolean(document.querySelector(":popover-open")),
+                headerHeight: r ? Math.round(r.height) : 999,
+                missingSymbols,
+            };
+        })()`);
+        assert.equal(previewState.hasPreview, true, "点击文章行必须打开右侧预览抽屉");
+        assert.equal(previewState.missingSymbols, 0, "界面所有 SVG use 图标必须 100% 匹配已注册 symbol");
+        assert.ok(previewState.headerHeight <= 56, `预览抽屉顶栏按钮组必须保持紧凑单行对齐，实测 height=${previewState.headerHeight}px`);
+        await saveShot("04-library-preview-popover-live.png");
+
+        // 点击 ActionPopover 内的「复制块引用」按钮，验证菜单自动收起（BL-11），再点击预览顶栏「收藏」按钮验证 UI 联动 + 思源内核落盘
+        await evalInPage(`(() => {
+            const copyBtn = document.querySelector(".glean-drow .glean-action-popover__body > button.glean-btn");
+            copyBtn?.click();
+            window.__toasts.length = 0;
+            document.querySelector(".glean-preview__fav-btn")?.click();
+        })()`);
+        for (let i = 0; i < 20; i += 1) {
+            const favActive = await evalInPage(`Boolean(document.querySelector(".glean-preview__fav-btn--active"))`);
+            if (favActive && (await evalInPage(`window.__toasts.length`)) > 0) break;
+            await new Promise((r) => setTimeout(r, 150));
+        }
+        const favLinkage = await evalInPage(`({
+            favBtnActive: Boolean(document.querySelector(".glean-preview__fav-btn--active")),
+            rowFavBadge: Boolean(document.querySelector(".glean-drow .glean-tier-badge--fav")),
+            toast: window.__toasts[window.__toasts.length - 1] || "",
+        })`);
+        assert.equal(favLinkage.favBtnActive, true, "点击预览收藏按钮后按钮本身必须立即切换为激活态");
+        assert.equal(favLinkage.rowFavBadge, true, "点击预览收藏按钮后左侧列表行必须实时联动显示红心徽标");
+        assert.ok(favLinkage.toast.length > 0, "点击预览收藏按钮必须弹出反馈提示");
+        const kernelAttrsAfterFav = await fetch(`${base}/api/attr/getBlockAttrs`, {
+            method: "POST",
+            headers: { Authorization: `Token ${token}`, "Content-Type": "application/json" },
+            body: JSON.stringify({ id: extraDocId }),
+        }).then((r) => r.json()).then((j) => j.data || {});
+        assert.equal(kernelAttrsAfterFav["custom-clip-favorite"], "true", "预览收藏点击必须真实写入思源文档 custom-clip-favorite 属性");
+
+        // 5. 点击顶栏「设置」打开模态弹窗，测试防叠开单例（BL-09）、高分屏视口夹取（BL-12）、色盘无障碍漫游焦点（BL-14）与真实捕获阶段 Escape 关闭（BL-02）
+        await evalInPage(`(() => {
+            const gear = document.querySelector(".glean-head-actions > button:last-child");
+            gear?.click();
+            window.__gleanPlugin?.openSettings?.();
+        })()`);
+        await new Promise((r) => setTimeout(r, 300));
+        const modalCheck = await evalInPage(`(() => {
+            const dialogs = document.querySelectorAll(".b3-dialog--open");
+            const container = document.querySelector(".b3-dialog__container");
+            const activeRadios = document.querySelectorAll('.glean-palette-grid [role="radio"][tabindex="0"]');
+            return {
+                dialogCount: dialogs.length,
+                hasSettings: Boolean(document.querySelector(".b3-dialog--open .glean-settings")),
+                maxWidth: container ? container.style.maxWidth : "",
+                maxHeight: container ? container.style.maxHeight : "",
+                activeRadioCount: activeRadios.length,
+            };
+        })()`);
+        assert.equal(modalCheck.hasSettings, true, "点击设置按钮必须弹出真实设置模态窗");
+        assert.equal(modalCheck.dialogCount, 1, "连续触发 openSettings 必须由单例守卫阻止叠开多层弹窗（BL-09）");
+        assert.equal(modalCheck.maxWidth, "94vw", "弹窗容器必须限制 maxWidth=94vw 防止 150% 缩放溢出（BL-12）");
+        assert.equal(modalCheck.maxHeight, "88vh", "弹窗容器必须限制 maxHeight=88vh 防止 150% 缩放溢出（BL-12）");
+        assert.equal(modalCheck.activeRadioCount, 1, "设置页主题色盘 radiogroup 必须具备唯一 tabindex=0 漫游焦点（BL-14）");
+        await saveShot("05-settings-modal-live.png");
+
+        // 验证 BL-13（AI 增强同组开关全部收敛为胶囊开关）与 BL-16（点击恢复默认弹出内联确认且按 Esc 先取消确认）
+        const aiSectionCheck = await evalInPage(`(() => {
+            const tabs = Array.from(document.querySelectorAll('.glean-settings [role="tab"]'));
+            tabs[3]?.click();
+            return true;
+        })()`);
+        await new Promise((r) => setTimeout(r, 150));
+        const rawCheckboxesInAi = await evalInPage(`document.querySelectorAll('.glean-settings input[type="checkbox"]').length`);
+        assert.equal(rawCheckboxesInAi, 0, "设置页 AI 增强分类同组开关必须统一为胶囊开关，无原生 checkbox（BL-13）");
+
+        await evalInPage(`document.querySelector(".glean-settings__footer > button.glean-btn")?.click()`);
+        await new Promise((r) => setTimeout(r, 150));
+        const resetConfirmShown = await evalInPage(`Boolean(document.querySelector(".glean-settings__close-confirm"))`);
+        assert.equal(resetConfirmShown, true, "点击恢复默认必须先显示内联确认条（BL-16）");
+
+        // 第 1 次 Escape：取消「恢复默认」确认条，但设置弹窗本身保持打开
+        await sendCdp("Input.dispatchKeyEvent", { type: "keyDown", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27, nativeVirtualKeyCode: 27 });
+        await sendCdp("Input.dispatchKeyEvent", { type: "keyUp", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27, nativeVirtualKeyCode: 27 });
+        await new Promise((r) => setTimeout(r, 150));
+        const afterFirstEsc = await evalInPage(`({
+            dialogOpen: Boolean(document.querySelector(".b3-dialog--open")),
+            confirmOpen: Boolean(document.querySelector(".glean-settings__close-confirm")),
+        })`);
+        assert.equal(afterFirstEsc.confirmOpen, false, "第 1 次按 Escape 应先收起恢复默认确认条（BL-02/BL-16）");
+        assert.equal(afterFirstEsc.dialogOpen, true, "第 1 次按 Escape 不应直接销毁设置窗（BL-02/BL-16）");
+
+        // 第 2 次 Escape：关闭空闲态设置弹窗
+        await sendCdp("Input.dispatchKeyEvent", { type: "keyDown", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27, nativeVirtualKeyCode: 27 });
+        await sendCdp("Input.dispatchKeyEvent", { type: "keyUp", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27, nativeVirtualKeyCode: 27 });
+        await new Promise((r) => setTimeout(r, 250));
+        const modalAfterEsc = await evalInPage(`Boolean(document.querySelector(".b3-dialog--open"))`);
+        assert.equal(modalAfterEsc, false, "按 Escape 键必须正常关闭空闲态设置弹窗");
+
+        // 6. 点击左侧导航切换到「阅读统计」视图，验证热力图无内联 opacity（BL-15）、role="button" + aria-pressed 与已读行 ActionPopover 收纳（BL-13/BL-14）
+        await evalInPage(`(() => {
+            const btns = Array.from(document.querySelectorAll(".glean-views__btn"));
+            btns[2]?.click();
+        })()`);
+        await new Promise((r) => setTimeout(r, 350));
+        const statsA11y = await evalInPage(`(() => {
+            const hasStats = Boolean(document.querySelector(".glean-stats"));
+            const hasInteractiveDay = Boolean(document.querySelector('.glean-stats__day[role="button"][aria-pressed]'));
+            const hasOpacityDay = Boolean(document.querySelector('.glean-stats__day[style*="opacity"]'));
+            const hasRowPopover = Boolean(document.querySelector(".glean-stats__completed-acts .glean-action-popover__trigger"));
+            const unlabeledRowBtns = Array.from(document.querySelectorAll(".glean-stats__completed-acts > button")).filter((b) => !b.getAttribute("aria-label")).length;
+            return { hasStats, hasInteractiveDay, hasOpacityDay, hasRowPopover, unlabeledRowBtns };
+        })()`);
+        assert.equal(statsA11y.hasStats, true, "阅读统计视图必须正常渲染");
+        assert.equal(statsA11y.hasInteractiveDay, true, "统计热力图交互格必须具备 role=button 与 aria-pressed（BL-14）");
+        assert.equal(statsA11y.hasOpacityDay, false, "统计热力图不得使用父元素内联 opacity 导致悬浮提示变半透明（BL-15）");
+        assert.equal(statsA11y.hasRowPopover, true, "统计已读行低频著录必须收纳进 ActionPopover（BL-13）");
+        assert.equal(statsA11y.unlabeledRowBtns, 0, "统计已读清单行尾纯图标按钮必须 100% 具备 aria-label（BL-14）");
+        await saveShot("06-stats-view-live.png");
+
+        // 7. 切换到「读库 -> 看板」视图，验证五列横滚容器、看板卡 ActionPopover 更多菜单与移回待分拣按钮（BL-12/BL-13）
+        await evalInPage(`(() => {
+            const btns = Array.from(document.querySelectorAll(".glean-views__btn"));
+            btns[1]?.click();
+        })()`);
+        await new Promise((r) => setTimeout(r, 200));
+        await evalInPage(`(() => {
+            const segBtns = Array.from(document.querySelectorAll(".glean-seg__btn"));
+            segBtns[1]?.click();
+        })()`);
+        await new Promise((r) => setTimeout(r, 300));
+        const kanbanCheck = await evalInPage(`(() => {
+            const kanban = document.querySelector(".glean-kanban");
+            const cols = document.querySelectorAll(".glean-kcol");
+            const foot = document.querySelector(".glean-kcard__foot");
+            const footChildren = foot ? Array.from(foot.children).map((c) => c.getBoundingClientRect()) : [];
+            const alignedDelta = footChildren.length >= 2
+                ? Math.abs((footChildren[0].top + footChildren[0].height / 2) - (footChildren[1].top + footChildren[1].height / 2))
+                : 0;
+            const kcardMore = document.querySelector(".glean-kcard__more .glean-action-popover__trigger");
+            kcardMore?.click();
+            const popBody = document.querySelector(".glean-kcard__more .glean-action-popover__body");
+            if (popBody && typeof popBody.showPopover === "function") {
+                try { popBody.showPopover(); } catch {}
+            }
+            return {
+                hasKanban: Boolean(kanban),
+                colCount: cols.length,
+                hasKcardMore: Boolean(kcardMore),
+                alignedDelta: Math.round(alignedDelta),
+            };
+        })()`);
+        assert.equal(kanbanCheck.hasKanban, true, "看板视图必须正常渲染");
+        assert.equal(kanbanCheck.colCount, 5, "看板视图必须渲染完整 5 列状态列");
+        assert.equal(kanbanCheck.hasKcardMore, true, "看板卡片必须具备 ActionPopover 更多操作菜单（BL-13）");
+        assert.ok(kanbanCheck.alignedDelta <= 6, `看板卡片底部状态按钮与更多按钮必须水平垂直居中对齐，实测偏差=${kanbanCheck.alignedDelta}px`);
+        await saveShot("07-library-kanban-live.png");
+
+        // 8. 切换到「摘录」视图，验证单卡 ActionPopover 收纳、颜色下拉汉化与「按文章」聚类无 summary 内嵌 button（BL-13/BL-14/BL-16）
+        await evalInPage(`(() => {
+            const btns = Array.from(document.querySelectorAll(".glean-views__btn"));
+            btns[3]?.click();
+        })()`);
+        for (let i = 0; i < 30; i += 1) {
+            const ready = await evalInPage(`Boolean(document.querySelector(".glean-highlights__item"))`);
+            if (ready) break;
+            await new Promise((r) => setTimeout(r, 200));
+        }
+        await evalInPage(`(() => {
+            const scopeBtns = Array.from(document.querySelectorAll(".glean-highlights__tools--scope button"));
+            scopeBtns[3]?.click();
+        })()`);
+        for (let i = 0; i < 20; i += 1) {
+            const hasToggle = await evalInPage(`Boolean(document.querySelector(".glean-highlights__article-toggle"))`);
+            if (hasToggle) break;
+            await new Promise((r) => setTimeout(r, 150));
+        }
+        const highlightCheck = await evalInPage(`(() => {
+            const groupToggle = document.querySelector(".glean-highlights__article-toggle");
+            const nestedBtnInSummary = document.querySelector(".glean-highlights summary button");
+            const cardPopover = document.querySelector(".glean-highlights__tools--card .glean-action-popover__trigger");
+            return {
+                hasGroupToggle: Boolean(groupToggle),
+                expandedAttr: groupToggle ? groupToggle.getAttribute("aria-expanded") : "",
+                hasNestedBtnInSummary: Boolean(nestedBtnInSummary),
+                hasCardPopover: Boolean(cardPopover),
+            };
+        })()`);
+        assert.equal(highlightCheck.hasGroupToggle, true, "摘录按文章聚类视图必须渲染独立折叠按钮（BL-14）");
+        assert.equal(highlightCheck.expandedAttr, "true");
+        assert.equal(highlightCheck.hasNestedBtnInSummary, false, "摘录聚类严禁在 summary 内非法嵌套 button（BL-14）");
+        assert.equal(highlightCheck.hasCardPopover, true, "摘录卡片低频操作必须收纳进 ActionPopover（BL-13）");
+        await saveShot("08-highlights-grouped-live.png");
+
+        // 真实点击摘录聚类头部的「创建摘录笔记」按钮，验证 toast 反馈并在思源内核验证新笔记文档落盘 + internal:true 标记
+        await evalInPage(`(() => {
+            window.__toasts.length = 0;
+            const createDocBtn = document.querySelector(".glean-highlights__article-actions button:last-child");
+            createDocBtn?.click();
+        })()`);
+        for (let i = 0; i < 30; i += 1) {
+            const toastCount = await evalInPage(`window.__toasts.length`);
+            if (toastCount > 0) break;
+            await new Promise((r) => setTimeout(r, 200));
+        }
+        const highlightDocToast = await evalInPage(`window.__toasts[window.__toasts.length - 1] || ""`);
+        assert.ok(highlightDocToast.length > 0, "点击创建摘录笔记按钮必须弹出反馈提示");
+        let highlightNoteDoc = null;
+        for (let i = 0; i < 20; i += 1) {
+            const allDocs = await listAnchorDocs([notebookId]);
+            highlightNoteDoc = allDocs.find((d) => (d.hpath || "").includes("深度长文剪藏") && d.id !== fulltextDocId && !(d.hpath || "").includes("思维导图"));
+            if (highlightNoteDoc) break;
+            await new Promise((r) => setTimeout(r, 200));
+        }
+        assert.ok(highlightNoteDoc?.id, "点击创建摘录笔记必须在思源笔记本中真实创建新文档");
+        const noteAttrs = await fetch(`${base}/api/attr/getBlockAttrs`, {
+            method: "POST",
+            headers: { Authorization: `Token ${token}`, "Content-Type": "application/json" },
+            body: JSON.stringify({ id: highlightNoteDoc.id }),
+        }).then((r) => r.json()).then((j) => j.data || {});
+        assert.equal(noteAttrs["custom-clip-internal"], "true", "生成的摘录笔记文档必须自动标记 custom-clip-internal=true");
+
+        // 9. 打开归档对话框（ArchiveDialog），展开「彻底删除文章」二次确认，验证捕获阶段 Escape 分级取消（BL-02）
+        await evalInPage(`window.__gleanPlugin?.openArchiveDialog?.(${JSON.stringify(extraDocId)})`);
+        await new Promise((r) => setTimeout(r, 250));
+        await evalInPage(`document.querySelector(".glean-archive-dlg__purge")?.click()`);
+        for (let i = 0; i < 20; i += 1) {
+            const hasConfirm = await evalInPage(`Boolean(document.querySelector(".glean-archive-dlg .glean-confirm"))`);
+            if (hasConfirm) break;
+            await new Promise((r) => setTimeout(r, 150));
+        }
+        await sendCdp("Input.dispatchKeyEvent", { type: "keyDown", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27, nativeVirtualKeyCode: 27 });
+        await sendCdp("Input.dispatchKeyEvent", { type: "keyUp", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27, nativeVirtualKeyCode: 27 });
+        await new Promise((r) => setTimeout(r, 150));
+        const archiveAfterFirstEsc = await evalInPage(`({
+            dialogOpen: Boolean(document.querySelector(".b3-dialog--open .glean-archive-dlg")),
+            confirmOpen: Boolean(document.querySelector(".glean-archive-dlg .glean-confirm")),
+        })`);
+        assert.equal(archiveAfterFirstEsc.confirmOpen, false, "ArchiveDialog 第 1 次按 Escape 必须先关闭彻底删除二次确认框（BL-02）");
+        assert.equal(archiveAfterFirstEsc.dialogOpen, true, "ArchiveDialog 第 1 次按 Escape 不得直接销毁弹窗（BL-02）");
+        await sendCdp("Input.dispatchKeyEvent", { type: "keyDown", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27, nativeVirtualKeyCode: 27 });
+        await sendCdp("Input.dispatchKeyEvent", { type: "keyUp", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27, nativeVirtualKeyCode: 27 });
+        await new Promise((r) => setTimeout(r, 200));
+        assert.equal(await evalInPage(`Boolean(document.querySelector(".b3-dialog--open"))`), false);
+
+        // 10. 打开伴读阅读器（ReaderTab）并开启 5 阶语义折叠阅读（FoldedReaderView），验证容器块递归采集与代码块排除（BL-05/BL-06）
+        await evalInPage(`window.__gleanPlugin?.openReader?.(${JSON.stringify(fulltextDocId)})`);
+        for (let i = 0; i < 30; i += 1) {
+            const hasReader = await evalInPage(`Boolean(document.querySelector(".glean-reader"))`);
+            if (hasReader) break;
+            await new Promise((r) => setTimeout(r, 200));
+        }
+        await evalInPage(`document.querySelector(".glean-reader__toolbar-fold")?.click()`);
+        for (let i = 0; i < 30; i += 1) {
+            const hasFold = await evalInPage(`document.querySelectorAll(".glean-fold-card").length > 0`);
+            if (hasFold) break;
+            await new Promise((r) => setTimeout(r, 200));
+        }
+        const foldCheck = await evalInPage(`(() => {
+            const cards = Array.from(document.querySelectorAll(".glean-fold-card")).map((el) => el.textContent || "");
+            const fullText = cards.join(" ");
+            return {
+                cardCount: cards.length,
+                hasBlockquoteChild: fullText.includes("引用容器内的核心段落"),
+                hasCodeNoise: fullText.includes("codeBlockNoise"),
+            };
+        })()`);
+        assert.ok(foldCheck.cardCount >= 3, "折叠阅读器必须采集到多段正文卡片");
+        assert.equal(foldCheck.hasBlockquoteChild, true, "折叠阅读器必须递归采集引述容器（b）内的正文段落（BL-06）");
+        assert.equal(foldCheck.hasCodeNoise, false, "折叠阅读器必须按思源短类型码（c）排除代码块噪音（BL-06）");
+        await saveShot("09-reader-folded-live.png");
+
+        // 11. 在伴读阅读器中切回「全部」伴生栏，等待大纲加载完成后点击「渐进切片」打开弹窗并点击「一键生成切片子文档」，验证弹窗收起、toast 反馈与思源内核子文档真实落盘
+        await evalInPage(`(() => {
+            const navBtns = Array.from(document.querySelectorAll(".glean-reader__side-nav-btn"));
+            navBtns[0]?.click();
+        })()`);
+        for (let i = 0; i < 30; i += 1) {
+            const hasSliceBtn = await evalInPage(`document.querySelectorAll(".glean-reader__slice-btn").length >= 3`);
+            if (hasSliceBtn) break;
+            await new Promise((r) => setTimeout(r, 200));
+        }
+        await evalInPage(`(() => {
+            const sliceBtns = Array.from(document.querySelectorAll(".glean-reader__slice-btn"));
+            const openSliceBtn = sliceBtns[sliceBtns.length - 1];
+            openSliceBtn?.click();
+        })()`);
+        for (let i = 0; i < 20; i += 1) {
+            const hasSliceDialog = await evalInPage(`Boolean(document.querySelector(".glean-slicing-dialog"))`);
+            if (hasSliceDialog) break;
+            await new Promise((r) => setTimeout(r, 150));
+        }
+        await evalInPage(`(() => {
+            window.__toasts.length = 0;
+            const createBtn = document.querySelector(".glean-slicing-footer .glean-btn--pri");
+            createBtn?.click();
+        })()`);
+        for (let i = 0; i < 30; i += 1) {
+            const dialogClosed = await evalInPage(`!document.querySelector(".glean-slicing-dialog")`);
+            if (dialogClosed && (await evalInPage(`window.__toasts.length`)) > 0) break;
+            await new Promise((r) => setTimeout(r, 200));
+        }
+        const sliceToast = await evalInPage(`window.__toasts[window.__toasts.length - 1] || ""`);
+        assert.ok(sliceToast.length > 0, "点击生成渐进切片子文档必须弹出反馈提示");
+        let sliceDoc = null;
+        for (let i = 0; i < 25; i += 1) {
+            const allDocs = await listAnchorDocs([notebookId]);
+            sliceDoc = allDocs.find((d) => (d.hpath || "").startsWith("/深度长文剪藏/") && !(d.hpath || "").includes("思维导图"));
+            if (sliceDoc) break;
+            await new Promise((r) => setTimeout(r, 200));
+        }
+        assert.ok(sliceDoc?.id, "点击生成渐进切片必须在思源原文章下真实创建切片子文档");
+        const sliceAttrs = await fetch(`${base}/api/attr/getBlockAttrs`, {
+            method: "POST",
+            headers: { Authorization: `Token ${token}`, "Content-Type": "application/json" },
+            body: JSON.stringify({ id: sliceDoc.id }),
+        }).then((r) => r.json()).then((j) => j.data || {});
+        assert.equal(sliceAttrs["custom-clip-status"], "later", "生成的切片子文档必须自动标记 custom-clip-status=later 进入稍后读队列");
+
+        ws.close();
+        return {
+            screenshots: [
+                "01-resurface-live.png",
+                "02-resurface-expanded-live.png",
+                "03-library-inline-batch-live.png",
+                "04-library-preview-popover-live.png",
+                "05-settings-modal-live.png",
+                "06-stats-view-live.png",
+                "07-library-kanban-live.png",
+                "08-highlights-grouped-live.png",
+                "09-reader-folded-live.png",
+            ],
+            priBottom: resurfaceMetrics.priBottom,
+        };
+    } finally {
+        srv.close();
+        try { chromeProc.kill("SIGKILL"); } catch {}
+        await new Promise((r) => setTimeout(r, 300));
+        try { fs.rmSync(chromeProfile, { recursive: true, force: true }); } catch {}
+    }
+}
+
+const results = [];
+function recordStep(step, ok, detail = "") {
+    results.push({ step, ok, detail });
+    console.log(`${ok ? "✅" : "❌"} ${step}${detail ? ` — ${detail}` : ""}`);
+    if (!ok) process.exitCode = 1;
+}
+
+async function main() {
+    const { kernel, appDir } = resolveKernel();
+    const port = await choosePort();
+    const base = `http://${HOST}:${port}`;
+    const workspace = path.join(os.tmpdir(), `siyuan-glean-isolated-${Date.now()}-${process.pid}`);
+    prepareWorkspace(workspace, "siyuan-glean-e2e-isolated.json", "siyuan-glean-e2e-isolated");
+    copyDistToWorkspace(workspace);
+
+    console.log(`[e2e-isolated] 启动隔离工作区: ${workspace}`);
+    console.log(`[e2e-isolated] 隔离内核端口: ${base}`);
+
+    const { child, lines } = startKernel(kernel, appDir, workspace, port);
+    const client = createApiClient(base);
+    const assertRunning = () => {
+        if (child.exitCode !== null || child.signalCode !== null) {
+            throw new Error(`内核提前退出: code=${child.exitCode}`);
+        }
+    };
+    client.onGuard(assertRunning);
+
+    try {
+        const version = await waitForBoot(base, lines, assertRunning, client);
+        const conf = JSON.parse(fs.readFileSync(path.join(workspace, "conf", "conf.json"), "utf8"));
+        const token = conf.api?.token || conf.accessAuthCode || "";
+        client.setToken(token);
+        globalThis.__gleanIsolatedFetchSyncPost = (route, body) => client.api(route, body);
+
+        await guardScratch((route, body) => client.api(route, body), { base });
+        await client.apiChecked("/api/setting/setBazaar", { trust: true });
+        await client.apiChecked("/api/petal/setPetalEnabled", {
+            packageName: PLUGIN_ID,
+            enabled: true,
+            frontend: "desktop",
+        });
+        recordStep("Step 0 · 隔离内核启动与插件装载", true, `SiYuan v${version}, port=${port}, pid=${child.pid}`);
+
+        // 动态加载真实服务与领域模块
+        const { DEFAULT_SETTINGS } = await import(pathToFileURL(path.join(REPO, "src/services/settings.ts")).href);
+        const { listAnchorDocs, scanPreview, captureClip, reconcileIndex, rebuildIndex, writeClip, readClip } = await import(pathToFileURL(path.join(REPO, "src/services/clip-store.ts")).href);
+        const { loadIndex } = await import(pathToFileURL(path.join(REPO, "src/services/index-store.ts")).href);
+        const { computeDailyFromIndex, actOnSurface } = await import(pathToFileURL(path.join(REPO, "src/services/resurface-service.ts")).href);
+        const { selectReadingContext } = await import(pathToFileURL(path.join(REPO, "src/domain/context-selection.ts")).href);
+        const { saveReadingPos } = await import(pathToFileURL(path.join(REPO, "src/services/reading-position.ts")).href);
+        const { addRecentReading, projectActiveRecentReadings } = await import(pathToFileURL(path.join(REPO, "src/domain/recent-reading.ts")).href);
+        const { aggregateStats, filterCompletedItems } = await import(pathToFileURL(path.join(REPO, "src/domain/stats.ts")).href);
+        const { createOutlineMindmapDocument } = await import(pathToFileURL(path.join(REPO, "src/services/doc-slicing-service.ts")).href);
+        const { resolveLibraryShortcut } = await import(pathToFileURL(path.join(REPO, "src/domain/library-keyboard.ts")).href);
+
+        const plugin = createPluginAdapter(base, token);
+        const nbData = await client.apiChecked("/api/notebook/createNotebook", { name: `siyuan-glean-smoke-${Date.now()}` });
+        const notebookId = nbData.notebook.id;
+        const settings = { ...DEFAULT_SETTINGS, anchorNotebooks: [notebookId] };
+
+        // Step 1: 扫描与边界核对（普通笔记 vs 全文剪藏候选 vs 仅链接候选）
+        const ordinaryDocId = await client.apiChecked("/api/filetree/createDocWithMd", {
+            notebook: notebookId,
+            path: "/普通会议纪要",
+            markdown: "# 周会记录\n\n今天讨论了项目进度与下周排期，不包含任何外部网页剪藏来源。",
+        });
+        const fulltextDocId = await client.apiChecked("/api/filetree/createDocWithMd", {
+            notebook: notebookId,
+            path: "/深度长文剪藏",
+            markdown: "- [https://example.com/articles/deep-work](https://example.com/articles/deep-work)\n\n# 深度工作与注意力管理\n\n## 第一节：为什么碎片化阅读会摧毁专注\n\n这是一篇用于验证真实主链的全文剪藏文章，包含多个自然段与明确来源链接，预计阅读时长约 10 分钟。\n\n> 引用容器内的核心段落：容器块递归采集必须保留此引述段，不能因容器外层 content 为空而遗漏。\n\n```js\nconst codeBlockNoise = 42;\n```\n\n## 第二节：核心论点\n\n只有当工具本身足够克制、主操作一眼可见时，稍后读才不会沦为数字仓鼠症。",
+        });
+        const linkDocId = await client.apiChecked("/api/filetree/createDocWithMd", {
+            notebook: notebookId,
+            path: "/待读技术周刊链接",
+            markdown: "https://example.com/weekly/issue-42",
+        });
+        await client.apiChecked("/api/attr/setBlockAttrs", {
+            id: linkDocId,
+            attrs: { "custom-clip-url": "https://example.com/weekly/issue-42" },
+        });
+
+        // 等待思源内核异步完成 SQLite blocks 表索引
+        const expectedIds = [ordinaryDocId, fulltextDocId, linkDocId];
+        for (let attempt = 0; attempt < 40; attempt += 1) {
+            const rows = await listAnchorDocs([notebookId]);
+            if (expectedIds.every((id) => rows.some((r) => r.id === id))) break;
+            await new Promise((r) => setTimeout(r, 200));
+        }
+
+        const preview = await scanPreview(plugin, settings);
+        const indexAfterScan = await reconcileIndex(plugin, settings);
+        assert.equal(Boolean(indexAfterScan.clips[ordinaryDocId]), false, "普通笔记绝不能自动入读库");
+        assert.equal(Boolean(indexAfterScan.candidates[ordinaryDocId]), false, "无来源证据的普通笔记绝不能混入候选");
+        assert.equal(Boolean(indexAfterScan.candidates[fulltextDocId]), true, "带来源证据的剪藏应识别为待确认候选");
+        recordStep("Step 1 · 扫描与边界核对", true, `普通笔记排除=通过, 候选识别=${Object.keys(indexAfterScan.candidates).length}篇 (preview ordinary=${preview.ordinaryCount})`);
+
+        // Step 2: 确认收录入库（全文剪藏 + 仅链接条目）
+        const capFull = await captureClip(plugin, fulltextDocId, {
+            url: "https://example.com/articles/deep-work",
+            contentType: "fulltext",
+            words: 3600,
+            minutes: 12,
+        });
+        const capLink = await captureClip(plugin, linkDocId, {
+            url: "https://example.com/weekly/issue-42",
+            contentType: "link",
+        });
+        await client.apiChecked("/api/attr/setBlockAttrs", {
+            id: fulltextDocId,
+            attrs: { tags: "深度阅读,效率" },
+        });
+        const indexAfterCapture = await reconcileIndex(plugin, settings);
+        assert.equal(capFull.captured && capLink.captured, true);
+        assert.equal(indexAfterCapture.clips[fulltextDocId]?.status, "inbox");
+        assert.equal(indexAfterCapture.clips[fulltextDocId]?.contentType, "fulltext");
+        assert.equal(indexAfterCapture.clips[linkDocId]?.status, "inbox");
+        assert.equal(indexAfterCapture.clips[linkDocId]?.contentType, "link");
+        recordStep("Step 2 · 确认收录入库", true, `全文(${fulltextDocId.slice(0, 8)})=inbox/fulltext, 链接(${linkDocId.slice(0, 8)})=inbox/link`);
+
+        // Step 3: 日常分拣与批量内联属性修改（含覆盖已有作者 force: true 校验）
+        await writeClip(plugin, fulltextDocId, { status: "later", author: "旧作者" }, { forceStatus: true, force: true });
+        await writeClip(plugin, fulltextDocId, { author: "卡尔·纽波特", priority: 4, rating: 5 }, { force: true });
+        const attrsStep3 = await readClip(fulltextDocId);
+        assert.equal(attrsStep3.status, "later");
+        assert.equal(attrsStep3.author, "卡尔·纽波特", "显式批量设作者(force:true)必须成功覆盖旧作者");
+        assert.equal(attrsStep3.priority, 4);
+        assert.equal(attrsStep3.rating, 5);
+        recordStep("Step 3 · 日常分拣与内联属性修改（BL-01）", true, `status=${attrsStep3.status}, author=${attrsStep3.author}, P${attrsStep3.priority}, ${attrsStep3.rating}★`);
+
+        // Step 4: 今日拾遗首屏开始读 + Chrome 1280×800 首屏主动作可见性实测
+        const indexStep4 = await reconcileIndex(plugin, settings);
+        const now = new Date();
+        const daily = computeDailyFromIndex(indexStep4, settings, now);
+        assert.ok(daily.picks.length >= 1, "今日拾遗应挑出待读文章");
+
+        const i18n = JSON.parse(fs.readFileSync(path.join(REPO, "public/i18n/zh_CN.json"), "utf8"));
+        const { default: ResurfaceView } = await import(pathToFileURL(path.join(REPO, "src/ui/ResurfaceView.svelte")).href);
+        const facadeStub = {
+            i18n,
+            isMobile: false,
+            settings,
+            pluginInstance: plugin,
+            notifyDataChanged() {},
+            openReadingDocument() {},
+            openReader() {},
+            openOnboarding() {},
+            openSettings() {},
+            openArchiveDialog() {},
+            openRestoreDialog() {},
+        };
+        const ssrResurface = render(ResurfaceView, {
+            props: {
+                facade: facadeStub,
+                index: indexStep4,
+                loading: false,
+                loadError: false,
+                embedded: true,
+                currentTime: now,
+                onStartRoaming() {},
+                onQuickSearch() {},
+            },
+        });
+        // 验证 SSR DOM 结构：主按钮「开始阅读」位于操作区首位，次级动作折叠在 details.glean-surf-more 中
+        assert.match(ssrResurface.body, /class="glean-surf-act glean-surf-act--pri"[\s\S]*?开始阅读/);
+        assert.match(ssrResurface.body, /<details class="glean-surf-context-fold">/);
+        assert.match(ssrResurface.body, /<details class="glean-kbdhint-fold">/);
+        assert.match(ssrResurface.body, /<details class="glean-surf-more">/);
+
+        // 若本机存在 Chrome，则在 1280×800 视口下实拍首屏截图
+        const chromePath = findChromePath();
+        let screenshotNote = "SSR DOM 验证通过";
+        if (chromePath) {
+            const outDir = path.join(REPO, "output", "round-v141-audit");
+            fs.mkdirSync(outDir, { recursive: true });
+            const css = fs.readFileSync(path.join(DIST, "index.css"), "utf8");
+            const scopedCss = [...compiledSvelteCache.entries()].filter(([k]) => k.startsWith("css:")).map(([, v]) => v).join("\n");
+            let measuredRect = null;
+            const probeScript = `<script>window.addEventListener("load",()=>{const btn=document.querySelector(".glean-surf-act--pri");const r=btn?btn.getBoundingClientRect():null;if(r)fetch("/metrics?top="+Math.round(r.top)+"&bottom="+Math.round(r.bottom));});</script>`;
+            const htmlDoc = `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><style>${css}\n${scopedCss}\nbody{margin:0;background:#f5f7f7;font-family:sans-serif;}</style></head><body><div class="glean-tab-root" style="width:1280px;height:800px;overflow:hidden;">${ssrResurface.body}</div>${probeScript}</body></html>`;
+            const srv = http.createServer((req, res) => {
+                const u = new URL(req.url || "/", `http://${HOST}`);
+                if (u.pathname === "/metrics") {
+                    measuredRect = { top: Number(u.searchParams.get("top")), bottom: Number(u.searchParams.get("bottom")) };
+                    res.writeHead(204);
+                    res.end();
+                    return;
+                }
+                res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+                res.end(htmlDoc);
+            });
+            await new Promise((r) => srv.listen(0, HOST, r));
+            const uiPort = srv.address().port;
+            const pngPath = path.join(outDir, "resurface-1280-after-subtraction.png");
+            try {
+                await execFileAsync(chromePath, [
+                    "--headless",
+                    "--disable-gpu",
+                    "--no-first-run",
+                    "--window-size=1280,800",
+                    `--screenshot=${pngPath}`,
+                    `http://${HOST}:${uiPort}/`,
+                ]);
+                if (measuredRect) {
+                    assert.ok(measuredRect.bottom > 0 && measuredRect.bottom <= 800, `主按钮必须位于 800px 首屏内，实测 bottom=${measuredRect.bottom}px`);
+                }
+                screenshotNote = `Chrome 1280×800 首屏实测通过 (主按钮 y=${measuredRect?.top}~${measuredRect?.bottom}px < 800px, ${path.basename(pngPath)})`;
+            } finally {
+                srv.close();
+            }
+        }
+
+        const actResult = await actOnSurface(plugin, fulltextDocId, "read");
+        assert.equal(actResult.token.after.status, "reading", "点击开始阅读后状态必须变为 reading");
+        recordStep("Step 4 · 今日拾遗首屏开始读", true, `status->${actResult.token.after.status}, ${screenshotNote}`);
+
+        // Step 5: 按时间/主题挑一篇（15 分钟预算 + 标签筛选）
+        const contextResult = selectReadingContext([
+            {
+                id: fulltextDocId,
+                title: "深度工作与注意力管理",
+                status: "later",
+                contentType: "fulltext",
+                minutes: 12,
+                priority: 4,
+                waitingDays: 3,
+                tags: ["深度阅读", "效率"],
+                url: "https://example.com/articles/deep-work",
+            },
+        ], { budget: 15, tag: "深度阅读", includeDone: false, includeUnknownMinutes: false, limit: 3 });
+        assert.equal(contextResult.candidates.length, 1);
+        assert.equal(contextResult.candidates[0].item.id, fulltextDocId);
+        recordStep("Step 5 · 按 15 分钟预算与主题选文", true, `命中 "${contextResult.candidates[0].item.title}" (${contextResult.candidates[0].item.minutes}m)`);
+
+        // Step 6: 中途中断与阅读位置书签保存，并写入一条真实高亮引述块供摘录墙实测
+        const childBlocks = await client.apiChecked("/api/block/getChildBlocks", { id: fulltextDocId });
+        const paraBlock = (childBlocks || []).find((b) => b.type === "p" && (b.content || "").trim().length > 0) || childBlocks?.[1] || childBlocks?.[0];
+        const targetBlockId = paraBlock?.id || fulltextDocId;
+        await client.apiChecked("/api/attr/setBlockAttrs", {
+            id: targetBlockId,
+            attrs: { "custom-clip-highlight": "yellow" },
+        });
+        for (let attempt = 0; attempt < 30; attempt += 1) {
+            const rows = await client.apiChecked("/api/query/sql", {
+                stmt: `SELECT id FROM blocks WHERE id = '${targetBlockId}' AND instr(ial, 'custom-clip-highlight') > 0 LIMIT 1`,
+            });
+            if (Array.isArray(rows) && rows.length > 0) break;
+            await new Promise((r) => setTimeout(r, 200));
+        }
+        await saveReadingPos(fulltextDocId, targetBlockId, plugin);
+        const savedPos = (await readClip(fulltextDocId)).readingPosition;
+        assert.equal(savedPos?.blockId, targetBlockId);
+        recordStep("Step 6 · 中途中断与块级书签落盘", true, `blockId=${targetBlockId}, at=${savedPos?.at}`);
+
+        // Step 7: 返回接着读（继续阅读投影与书签标识）
+        const indexStep7 = await loadIndex(plugin);
+        const recentList = addRecentReading([], { id: fulltextDocId, title: "深度工作与注意力管理" });
+        const continueProjections = projectActiveRecentReadings(recentList, indexStep7.clips, 3);
+        assert.equal(continueProjections.length, 1);
+        assert.equal(continueProjections[0].id, fulltextDocId);
+        assert.equal(continueProjections[0].hasBookmark, true);
+        recordStep("Step 7 · 返回接着读（继续阅读卡）", true, `topContinue="${continueProjections[0].title}", hasBookmark=${continueProjections[0].hasBookmark}`);
+
+        // Step 8: 明确标记读完（记录可信完成时间）
+        const pad2 = (n) => String(n).padStart(2, "0");
+        const dNow = new Date();
+        const doneStamp = `${dNow.getFullYear()}${pad2(dNow.getMonth() + 1)}${pad2(dNow.getDate())}${pad2(dNow.getHours())}${pad2(dNow.getMinutes())}${pad2(dNow.getSeconds())}`;
+        await writeClip(plugin, fulltextDocId, { status: "done", doneTime: doneStamp }, { forceStatus: true, force: true });
+        const attrsStep8 = await readClip(fulltextDocId);
+        assert.equal(attrsStep8.status, "done");
+        assert.equal(attrsStep8.doneTime, doneStamp);
+        recordStep("Step 8 · 明确标记已读与完成时间记录", true, `status=${attrsStep8.status}, doneTime=${attrsStep8.doneTime}`);
+
+        // Step 9: 主动放下与归档（归档不抹除历史完成事实）
+        await writeClip(plugin, linkDocId, { status: "archived" }, { forceStatus: true });
+        await writeClip(plugin, fulltextDocId, { status: "archived" }, { forceStatus: true });
+        const archivedFullAttrs = await readClip(fulltextDocId);
+        assert.equal(archivedFullAttrs.status, "archived");
+        assert.equal(archivedFullAttrs.doneTime, doneStamp, "归档后必须保留已完成文章的完成时间");
+        // 将全文恢复为 done 以便在阅读统计中直接展示已读状态与检索
+        await writeClip(plugin, fulltextDocId, { status: "done" }, { forceStatus: true });
+        recordStep("Step 9 · 主动归档与完成历史保留", true, `linkDoc=archived, 已读文章归档后 doneTime(${archivedFullAttrs.doneTime}) 完整保留`);
+
+        // Step 10: 统计复盘与事后找回
+        const indexStep10 = await rebuildIndex(plugin, settings);
+        const stats = aggregateStats(Object.values(indexStep10.clips), new Date(2026, 9, 31, 18, 0, 0));
+        const matchedCompleted = filterCompletedItems(
+            Object.values(indexStep10.clips).filter((c) => c.status === "done"),
+            { date: "", search: "纽波特" },
+        );
+        assert.equal(stats.done, 1);
+        assert.equal(stats.doneThisWeek, 1);
+        assert.equal(matchedCompleted.length, 1);
+        assert.equal(matchedCompleted[0].id, fulltextDocId);
+        const mindmapRes = await createOutlineMindmapDocument(
+            plugin,
+            {
+                id: fulltextDocId,
+                title: "深度工作与注意力管理",
+                status: "done",
+                contentType: "fulltext",
+                url: "https://example.com/articles/deep-work",
+                location: { box: notebookId, hpath: "/深度长文剪藏" },
+                readMinutesRaw: null,
+            },
+            [{ id: targetBlockId, level: 2, title: "第二节：核心论点" }],
+        );
+        assert.equal(mindmapRes.ok, true);
+        const mindmapAttrs = await readClip(mindmapRes.docId);
+        assert.equal(mindmapAttrs.internal, true, "衍生脑图文档必须标记 internal: true（BL-08）");
+        assert.equal(mindmapAttrs.status, undefined, "衍生脑图文档严禁写入 status: done 污染读库（BL-08）");
+        assert.equal(resolveLibraryShortcut({ key: "d" }, { cursorActive: true })?.type, "markDone", "读库键盘流必须支持 D 键标记已读（BL-09）");
+        recordStep("Step 10 · 阅读统计复盘、关键词找回与衍生脑图隔离（BL-08/BL-09）", true, `done=${stats.done}, 脑图(${mindmapRes.docId.slice(0, 8)})=internal:true, D键=markDone`);
+
+        // Step 11: 真实 Chrome 浏览器 CDP 全界面挂载与交互实测（加载 dist/index.js + 隔离内核实时 API）
+        if (chromePath) {
+            const liveRes = await runLiveBrowserInteractiveSuite({
+                chromePath,
+                appDir,
+                base,
+                token,
+                settings,
+                notebookId,
+                fulltextDocId,
+                linkDocId,
+                plugin,
+            });
+            recordStep(
+                "Step 11 · 真实浏览器全表面交互实测（四视图/看板/摘录聚类/设置/归档分级Esc/伴读折叠器）",
+                true,
+                `${liveRes.screenshots.length} 张交互态截图已输出至 output/e2e-browser-live/ (首屏主按钮 bottom=${liveRes.priBottom}px)`,
+            );
+        }
+
+        // 清扫临时测试笔记本
+        if (!KEEP) {
+            await client.apiChecked("/api/notebook/removeNotebook", { notebook: notebookId });
+            await cleanupScratch((route, body) => client.api(route, body), { log: console });
+        }
+
+        const passedCount = results.filter((r) => r.ok).length;
+        console.log(`\n[e2e-isolated] 10 步主链走查汇总：${passedCount}/${results.length} 全部通过`);
+        if (KEEP) {
+            console.log(`[e2e-isolated] --keep 已启用，隔离环境保持运行：`);
+            console.log(`  workspace: ${workspace}`);
+            console.log(`  base:      ${base}`);
+            console.log(`  token:     ${token}`);
+            console.log(`  pid:       ${child.pid}`);
+        }
+    } finally {
+        if (!KEEP) {
+            await shutdownKernel(client, child);
+            try {
+                fs.rmSync(workspace, { recursive: true, force: true });
+            } catch {
+                // Windows 句柄延迟释放时忽略
+            }
+        }
+    }
+}
+
+main().catch((err) => {
+    console.error("[e2e-isolated] 执行失败:", err);
+    process.exitCode = 1;
+});

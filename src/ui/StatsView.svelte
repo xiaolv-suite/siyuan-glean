@@ -9,6 +9,7 @@ import { onDestroy, tick } from "svelte";
 import { showMessage } from "siyuan";
 import type { GleanFacade } from "../types";
 import DistributionList from "./DistributionList.svelte";
+import ActionPopover from "./ActionPopover.svelte";
 import { t } from "../libs/i18n";
 import type { GleanIndex } from "../services/index-store";
 import { buildReadingReview, previewReadingReview, resolveUnknownReadingReview, saveReadingReviewReport, type ReadingReviewSession } from "../services/stats-service";
@@ -348,9 +349,14 @@ function hasBlockingOverlay(): boolean {
     return Array.from(overlays).some((element) => element.getClientRects().length > 0);
 }
 
+let rootEl = $state<HTMLElement | null>(null);
+
 function onWindowKeyDown(event: KeyboardEvent): void {
     if (event.defaultPrevented || event.isComposing || event.keyCode === 229 || event.repeat) return;
     if (hasBlockingOverlay()) return;
+    if (!rootEl || rootEl.getClientRects().length === 0) return;
+    const evtTarget = event.target instanceof Node ? event.target : null;
+    if (!rootEl.contains(evtTarget) && !rootEl.contains(document.activeElement)) return;
     const target = event.target instanceof Element ? event.target : null;
     const textEntry = Boolean(target?.closest("input, textarea, select, [contenteditable]:not([contenteditable='false'])"));
     if ((event.ctrlKey || event.metaKey) && (event.key === "f" || event.key === "F")) {
@@ -420,7 +426,7 @@ function onWindowKeyDown(event: KeyboardEvent): void {
 
 <svelte:window onkeydown={onWindowKeyDown} />
 
-<div class="glean-stats" aria-busy={busy}>
+<div class="glean-stats" bind:this={rootEl} tabindex="-1" aria-busy={busy}>
     {#if loading && !index.updatedAt}
         <div class="glean-stats__load-state" role="status" aria-live="polite" aria-busy="true">
             <div class="glean-empty__art" aria-hidden="true"><svg><use href="#iconGleanSpark" /></svg></div>
@@ -563,9 +569,7 @@ function onWindowKeyDown(event: KeyboardEvent): void {
                 <div class="glean-stats__heatmap">
                     {#each Array.from({ length: heatmapPadding }, (_, index) => index) as padding (padding)}<span></span>{/each}
                     {#each stats.heatmap as day (day.date)}
-                        <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-                        <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-                        <span class="glean-stats__day" role="img" aria-label={t(i18n, "review.heatmapDay", { date: day.date, n: day.count })} class:glean-stats__day--selected={selectedDayDate === day.date} tabindex="0" onclick={() => selectedDayDate = selectedDayDate === day.date ? "" : day.date} onkeydown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); selectedDayDate = selectedDayDate === day.date ? "" : day.date; } }} data-tooltip={`${day.date}: ${day.count}`} title={`${day.date}: ${day.count}`} style={`background:${day.count ? "var(--b3-theme-primary)" : "var(--b3-theme-surface)"};opacity:${day.count ? 0.25 + 0.75 * day.count / maxHeat : 1}`}></span>
+                        <span class="glean-stats__day" role="button" aria-pressed={selectedDayDate === day.date} aria-label={t(i18n, "review.heatmapDay", { date: day.date, n: day.count })} class:glean-stats__day--selected={selectedDayDate === day.date} tabindex="0" onclick={() => selectedDayDate = selectedDayDate === day.date ? "" : day.date} onkeydown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); selectedDayDate = selectedDayDate === day.date ? "" : day.date; } }} data-tooltip={`${day.date}: ${day.count}`} title={`${day.date}: ${day.count}`} style={`background:${day.count ? `color-mix(in srgb, var(--glean-color-data, var(--b3-theme-primary)) ${Math.round(25 + 75 * day.count / maxHeat)}%, var(--b3-theme-surface))` : "var(--b3-theme-surface)"}`}></span>
                     {/each}
                 </div>
                 <div class="glean-stats__heatmap-legend" aria-hidden="true">
@@ -688,21 +692,27 @@ function onWindowKeyDown(event: KeyboardEvent): void {
                         <button class="glean-stats__link" title={item.title || t(i18n, "review.untitled")} onclick={() => facade.openReadingDocument(item.id)}>{item.title || t(i18n, "review.untitled")}</button>
                         <span>{item.doneTime.slice(0, 4)}-{item.doneTime.slice(4, 6)}-{item.doneTime.slice(6, 8)}</span>
                         <div class="glean-stats__completed-acts">
-                            <button type="button" class="glean-btn glean-btn--ghost glean-btn--xs" onclick={() => void copyCompletedBlockRef(item)} title={t(i18n, "action.copyBlockRef")}>
+                            <button type="button" class="glean-btn glean-btn--ghost glean-btn--xs" onclick={() => void copyCompletedBlockRef(item)} title={t(i18n, "action.copyBlockRef")} aria-label={t(i18n, "action.copyBlockRef")}>
                                 <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
                             </button>
-                            <button type="button" class="glean-btn glean-btn--ghost glean-btn--xs" onclick={() => void copyCompletedCitation(item, "gbt")} title={t(i18n, "citation.copyGBT")}>
-                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg>
-                            </button>
-                            <button type="button" class="glean-btn glean-btn--ghost glean-btn--xs" onclick={() => void copyCompletedCitation(item, "bibtex")} title={t(i18n, "citation.copyBibTeX")}>
-                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArchive" /></svg>
-                            </button>
-                            <button type="button" class="glean-btn glean-btn--ghost glean-btn--xs" onclick={() => void copyCompletedCitation(item, "apa")} title={t(i18n, "citation.copyAPA")}>
-                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanLocal" /></svg>
-                            </button>
-                            <button type="button" class="glean-btn glean-btn--ghost glean-btn--xs" onclick={() => void copyCompletedCitation(item, "mla")} title={t(i18n, "citation.copyMLA")}>
-                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg>
-                            </button>
+                            <ActionPopover label={t(i18n, "library.moreActions")} compact>
+                                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCompletedCitation(item, "gbt")} title={t(i18n, "citation.copyGBT")} aria-label={t(i18n, "citation.copyGBT")}>
+                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg>
+                                    <span>{t(i18n, "citation.copyGBT")}</span>
+                                </button>
+                                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCompletedCitation(item, "bibtex")} title={t(i18n, "citation.copyBibTeX")} aria-label={t(i18n, "citation.copyBibTeX")}>
+                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArchive" /></svg>
+                                    <span>BibTeX</span>
+                                </button>
+                                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCompletedCitation(item, "apa")} title={t(i18n, "citation.copyAPA")} aria-label={t(i18n, "citation.copyAPA")}>
+                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanLocal" /></svg>
+                                    <span>APA</span>
+                                </button>
+                                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCompletedCitation(item, "mla")} title={t(i18n, "citation.copyMLA")} aria-label={t(i18n, "citation.copyMLA")}>
+                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg>
+                                    <span>MLA</span>
+                                </button>
+                            </ActionPopover>
                         </div>
                     </li>
                 {:else}
@@ -721,18 +731,21 @@ function onWindowKeyDown(event: KeyboardEvent): void {
         </label>
     {/if}
     {#if !facade.isMobile}
-        <div class="glean-kbdhint">
-            <span class="glean-kbdhint__keys" aria-hidden="true">
-                <kbd>P</kbd> {t(i18n, "review.preview")}
-                <kbd>M</kbd> {t(i18n, "stats.copyReport")}
-                <kbd>Y</kbd> {t(i18n, "action.copyBlockRef")}
-                <kbd>Shift+Y</kbd> {t(i18n, "stats.copyCompletedSummary")}
-                <kbd>C</kbd> {t(i18n, "citation.copyGBT")}
-                <kbd>Shift+C</kbd> BibTeX
-                <kbd>/</kbd> {t(i18n, "action.search")}
-                <kbd>Esc</kbd> {t(i18n, "library.keyboardExit")}
-            </span>
-        </div>
+        <details class="glean-kbdhint-fold">
+            <summary class="glean-kbdhint-fold__summary"><kbd>?</kbd> <span>{t(i18n, "reader.shortcuts")}</span></summary>
+            <div class="glean-kbdhint">
+                <span class="glean-kbdhint__keys" aria-hidden="true">
+                    <kbd>P</kbd> {t(i18n, "review.preview")}
+                    <kbd>M</kbd> {t(i18n, "stats.copyReport")}
+                    <kbd>Y</kbd> {t(i18n, "action.copyBlockRef")}
+                    <kbd>Shift+Y</kbd> {t(i18n, "stats.copyCompletedSummary")}
+                    <kbd>C</kbd> {t(i18n, "citation.copyGBT")}
+                    <kbd>Shift+C</kbd> BibTeX
+                    <kbd>/</kbd> {t(i18n, "action.search")}
+                    <kbd>Esc</kbd> {t(i18n, "library.keyboardExit")}
+                </span>
+            </div>
+        </details>
     {/if}
     {/if}
 </div>

@@ -30,7 +30,15 @@
     let suggestionExpectedAuthor = "";
     let input = $state<HTMLInputElement | null>(null);
     let trigger = $state<HTMLButtonElement | null>(null);
+    let rootEl = $state<HTMLDivElement | null>(null);
     let mounted = false;
+
+    $effect(() => {
+        const el = rootEl;
+        if (!el) return;
+        el.addEventListener("keydown", handleWindowKeydown);
+        return () => el.removeEventListener("keydown", handleWindowKeydown);
+    });
     const requests = createLatestRequestGate();
     const suggestionRequests = createLatestRequestGate();
 
@@ -202,7 +210,7 @@
 
 <svelte:window onkeydown={handleWindowKeydown} />
 
-<div class="glean-author-editor">
+<div class="glean-author-editor" bind:this={rootEl}>
     <button type="button" class="glean-btn glean-btn--ghost" bind:this={trigger} aria-expanded={editing} aria-controls={`glean-author-editor-form-${docId}`} disabled={busy} onclick={(event) => { event.stopPropagation(); if (editing) close(); else void load(); }}>{t(i18n, "author.edit")}</button>
     {#if editing}
         <form id={`glean-author-editor-form-${docId}`} class="glean-author-editor__form" aria-busy={busy} onsubmit={(event) => { event.preventDefault(); void save(); }}>

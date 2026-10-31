@@ -39,7 +39,7 @@
     function openLocalReader(): void {
         onClose?.();
         if (article.id) {
-            facade.openReadingDocument(article.id);
+            (facade.openReader ?? facade.openReadingDocument).call(facade, article.id);
         }
     }
 

@@ -43,6 +43,10 @@
     const filteredSelectedCount = $derived(Math.max(0, selectedCount - hiddenCount));
     let summaryEl = $state<HTMLElement | null>(null);
     let barEl = $state<HTMLElement | null>(null);
+    type InlinePromptMode = "tag" | "author" | "priority" | "rating" | null;
+    let inlineMode = $state<InlinePromptMode>(null);
+    let inlineText = $state("");
+    let inlineInputEl = $state<HTMLInputElement | null>(null);
 
     async function keepFiltered(event: MouseEvent): Promise<void> {
         const origin = event.currentTarget as HTMLButtonElement;
@@ -62,47 +66,71 @@
             if (barEl && document.activeElement && barEl.contains(document.activeElement)) {
                 event.preventDefault();
                 event.stopPropagation();
+                if (inlineMode) {
+                    inlineMode = null;
+                    inlineText = "";
+                    return;
+                }
                 onClear();
             }
         }
     }
 
-    function triggerAddTag(): void {
-        const tag = window.prompt(t(i18n, "library.tagPrompt"));
-        if (tag && tag.trim() && onAddTag) {
-            void onAddTag(tag.trim().replace(/^#/, ""));
+    function openInlineMode(mode: Exclude<InlinePromptMode, null>): void {
+        if (inlineMode === mode) {
+            inlineMode = null;
+            inlineText = "";
+            return;
         }
+        inlineMode = mode;
+        inlineText = "";
+        void tick().then(() => {
+            inlineInputEl?.focus();
+        });
+    }
+
+    function submitInlineText(): void {
+        const val = inlineText.trim();
+        if (!val) return;
+        if (inlineMode === "tag" && onAddTag) {
+            inlineMode = null;
+            inlineText = "";
+            void onAddTag(val.replace(/^#/, ""));
+        } else if (inlineMode === "author" && onSetAuthor) {
+            inlineMode = null;
+            inlineText = "";
+            void onSetAuthor(val);
+        }
+    }
+
+    function selectInlineNumber(num: number): void {
+        if (Number.isNaN(num) || num < 0 || num > 5) {
+            showMessage(t(i18n, "library.batchRangeError"), 2500);
+            return;
+        }
+        const currentMode = inlineMode;
+        inlineMode = null;
+        if (currentMode === "priority" && onBatchPriority) {
+            void onBatchPriority(num);
+        } else if (currentMode === "rating" && onBatchRating) {
+            void onBatchRating(num);
+        }
+    }
+
+    function triggerAddTag(): void {
+        openInlineMode("tag");
     }
 
     function triggerSetAuthor(): void {
-        const author = window.prompt(t(i18n, "library.authorPrompt"));
-        if (author && author.trim() && onSetAuthor) {
-            void onSetAuthor(author.trim());
-        }
+        openInlineMode("author");
     }
 
     function triggerSetPriority(): void {
-        const input = window.prompt(t(i18n, "library.batchPriorityPrompt"));
-        if (input !== null) {
-            const num = parseInt(input.trim(), 10);
-            if (!Number.isNaN(num) && num >= 0 && num <= 5 && onBatchPriority) {
-                void onBatchPriority(num);
-            } else {
-                showMessage(t(i18n, "library.batchRangeError"), 2500);
-            }
-        }
+        openInlineMode("priority");
     }
 
     function triggerSetRating(): void {
-        const input = window.prompt(t(i18n, "library.batchRatingPrompt"));
-        if (input !== null) {
-            const num = parseInt(input.trim(), 10);
-            if (!Number.isNaN(num) && num >= 0 && num <= 5 && onBatchRating) {
-                void onBatchRating(num);
-            } else {
-                showMessage(t(i18n, "library.batchRangeError"), 2500);
-            }
-        }
+        openInlineMode("rating");
     }
 </script>
 
@@ -172,5 +200,34 @@
             {/if}
             <button type="button" class="glean-bb glean-bb--ai" disabled={busy} onclick={onOpenAi}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg> <span>{t(i18n, "aiBatch.title")}</span></button>
         </div>
+        {#if inlineMode === "tag" || inlineMode === "author"}
+            <form class="glean-batchbar__inline" onsubmit={(event) => { event.preventDefault(); submitInlineText(); }}>
+                <input
+                    type="text"
+                    class="b3-text-field glean-batchbar__input"
+                    bind:this={inlineInputEl}
+                    bind:value={inlineText}
+                    disabled={busy}
+                    placeholder={t(i18n, inlineMode === "tag" ? "library.tagPrompt" : "library.authorPrompt")}
+                    aria-label={t(i18n, inlineMode === "tag" ? "library.batchAddTag" : "library.batchSetAuthor")}
+                />
+                <button type="submit" class="glean-bb glean-bb--pri" disabled={busy || !inlineText.trim()}>{t(i18n, "action.save")}</button>
+                <button type="button" class="glean-bb" disabled={busy} onclick={() => { inlineMode = null; inlineText = ""; }}>{t(i18n, "action.cancel")}</button>
+            </form>
+        {:else if inlineMode === "priority" || inlineMode === "rating"}
+            <div class="glean-batchbar__inline" role="group" aria-label={t(i18n, inlineMode === "priority" ? "library.batchSetPriority" : "library.batchSetRating")}>
+                {#each [0, 1, 2, 3, 4, 5] as level}
+                    <button
+                        type="button"
+                        class="glean-bb"
+                        disabled={busy}
+                        onclick={() => selectInlineNumber(level)}
+                    >
+                        {level === 0 ? "—" : inlineMode === "priority" ? `P${level}` : `${level}★`}
+                    </button>
+                {/each}
+                <button type="button" class="glean-bb" disabled={busy} onclick={() => { inlineMode = null; }}>{t(i18n, "action.cancel")}</button>
+            </div>
+        {/if}
     </footer>
 {/if}

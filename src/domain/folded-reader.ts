@@ -125,11 +125,19 @@ export function extractFoldPoints(fullText: string): string[] {
 }
 
 /**
- * 提取段落单行要旨（Level 4 Gist）
+ * 提取段落单行要旨（Level 4 Gist）：与 Level 2 完整首句区分，优先提取精炼结论分句或 48 字内短句
  */
 export function extractGist(fullText: string): string {
-    const brief = extractVerbatimBrief(fullText, 90);
-    return brief;
+    const raw = (fullText || "").trim();
+    if (!raw) return "";
+    const clauses = raw
+        .split(/[。！？!?\n；;]/)
+        .map((c) => c.trim())
+        .filter((c) => c.length >= 6 && c.length <= 54 && isVerbatimSubstring(c, raw));
+    if (clauses.length >= 2) {
+        return clauses[clauses.length - 1];
+    }
+    return extractVerbatimBrief(raw, 48);
 }
 
 /**

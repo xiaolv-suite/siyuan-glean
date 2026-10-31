@@ -3,6 +3,7 @@
     import { showMessage } from "siyuan";
     import type { GleanFacade } from "../types";
     import { t } from "../libs/i18n";
+    import { installEscapeHandler } from "../libs/modal-focus";
     import { missingSnapshotEntries, snapshotCoverage, type SnapshotCoverageEntry } from "../domain/snapshot";
     import { batchSnapshotClips, type SnapshotBatchEntry, type SnapshotBatchFailure } from "../services/snapshot-service";
     import { reconcileIndex } from "../services/clip-store";
@@ -12,6 +13,7 @@
     }
 
     let { facade }: Props = $props();
+    let rootEl = $state<HTMLElement | null>(null);
     const i18n = $derived(facade.i18n);
     let entries = $state<SnapshotCoverageEntry[]>([]);
     const coverage = $derived(snapshotCoverage(entries));
@@ -75,11 +77,19 @@
             event.stopPropagation();
         }
     }
+    $effect(() => {
+        if (!rootEl) return;
+        return installEscapeHandler(rootEl, (event) => {
+            if (!busy && !loading) return false;
+            handleWindowKeydown(event);
+            return true;
+        });
+    });
 </script>
 
 <svelte:window onkeydown={handleWindowKeydown} />
 
-<section class="glean-snapshot-governance" aria-labelledby="glean-snapshot-governance-title" aria-busy={busy || loading}>
+<section class="glean-snapshot-governance" bind:this={rootEl} aria-labelledby="glean-snapshot-governance-title" aria-busy={busy || loading}>
     <header class="glean-snapshot-governance__head">
         <div>
             <h3 id="glean-snapshot-governance-title">{t(i18n, "snapshot.governanceTitle")}</h3>

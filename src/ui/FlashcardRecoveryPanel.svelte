@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import { t } from "../libs/i18n";
+    import { installEscapeHandler } from "../libs/modal-focus";
     import {
         clearFlashcardRecovery, loadFlashcardRecovery, resumeFlashcardRecovery,
         type FlashcardRecoveryResult,
@@ -10,6 +11,7 @@
 
     interface Props { facade: GleanFacade }
     let { facade }: Props = $props();
+    let rootEl = $state<HTMLElement | null>(null);
     const i18n = $derived(facade.i18n);
     let recovery = $state<FlashcardRecovery | null>(null);
     let panelState = $state<"loading" | "empty" | "ready" | "busy" | "missing" | "error">("loading");
@@ -72,11 +74,19 @@
             event.stopPropagation();
         }
     }
+    $effect(() => {
+        if (!rootEl) return;
+        return installEscapeHandler(rootEl, (event) => {
+            if (panelState !== "busy") return false;
+            handleWindowKeydown(event);
+            return true;
+        });
+    });
 </script>
 
 <svelte:window onkeydown={handleWindowKeydown} />
 
-<div class="glean-flashcard-recovery" role="region" aria-labelledby="glean-flashcard-recovery-title" aria-busy={panelState === "loading" || panelState === "busy"}>
+<div class="glean-flashcard-recovery" bind:this={rootEl} role="region" aria-labelledby="glean-flashcard-recovery-title" aria-busy={panelState === "loading" || panelState === "busy"}>
     <div class="glean-set-row">
         <div id="glean-flashcard-recovery-title" class="glean-set-row__lb">
             {t(i18n, "flashcard.recovery.title")}

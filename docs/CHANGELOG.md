@@ -1,5 +1,22 @@
 # 更新日志（CHANGELOG）
 
+## v1.4.2（2026-10-31）
+
+### 首屏减法、键盘与弹窗 Escape 栈统一调度、高分屏适配与隔离浏览器全主链收官
+
+- **修复（Fixed）**：
+  - 修复 `LibraryBatchBar` 在思源桌面端（Electron）依赖 `window.prompt()` 静默失效及 `batchSetAuthor` 漏传 `{ force: true }` 的缺陷，升级为底部内联输入框与 `P0–P5` / `0–5★` 一键档位胶囊；
+  - 修复 `index-store.ts` 的 `applyAttrsToIndex` 漏投影 `readingPosition` 导致「继续阅读」卡片书签徽标无法显示的缺陷；
+  - 修复 `ReadingContext` 与 `WeReadGuideDialog` 点击「在拾遗阅读器打开」在默认配置下未路由至 `facade.openReader` 的缺陷；
+  - 修复 `ResurfaceView`、`HighlightView`、`StatsView`、`WorkbenchPreview` 在后台页签或未获焦侧栏全局抢夺快捷键的缺陷；
+  - 修复 `modal-focus.ts` 捕获阶段 `Escape` 短路绕过 12 个弹窗与子面板分级取消及忙碌锁的缺陷，并统一包裹全弹窗 `createDialogSingleton` 防叠开；
+  - 修复大纲生成「思源脑图」误写 `status: "done"` 污染读库与统计的缺陷，统一改为 `{ internal: true }` 并增加防重入锁。
+
+- **优化与收口（Changed & Polished）**：
+  - **首屏主动作归位**：今日拾遗推荐卡收敛为「开始阅读 / 今天略过 / 归档 / `⋯ 更多操作`」，情境选文与漫游盲盒合并为单行折叠条，22 键提示带收入 `? 快捷键` 折叠胶囊，摘录墙与统计已读行低频引用动作收纳进 `ActionPopover`；
+  - **高分屏与无障碍一致性**：全弹窗施加 `94vw × 88vh` 视口夹取与底栏粘性常驻，看板五列改为 `minmax(220px, 1fr)` 横滚并补齐更多菜单与归档恢复弹窗分流；补齐读库 `D` 键标已读、URL 协议四视图深链、设置页同组胶囊开关统一、「恢复默认」内联二次确认、批注颜色下拉汉化、微信绿对比度与热力图不透明提示；
+  - **一键隔离浏览器实测**：新增 `scripts/e2e-isolated.mjs`（`pnpm e2e:isolated`），在隔离思源 3.8.9 内核 + 真实 Chrome CDP 上自动完成 12 步全主链交互验证与截图输出。
+
 ## v1.4.1（2026-10-31）
 
 ### 全仓盘点、入库分拣与盲盒流转等 5 项缺陷修复、词表防膨胀服务层贯通与三视图令牌收口

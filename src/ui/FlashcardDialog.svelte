@@ -2,6 +2,7 @@
     import { onMount, untrack } from "svelte";
     import { showMessage } from "siyuan";
     import { t } from "../libs/i18n";
+    import { installEscapeHandler } from "../libs/modal-focus";
     import { aiFailureKey } from "../libs/ai-feedback";
     import {
         FLASHCARD_AI_QUOTE_LIMIT, FLASHCARD_BACK_LIMIT, FLASHCARD_FRONT_LIMIT, validateFlashcard,
@@ -12,8 +13,9 @@
     } from "../services/flashcard-service";
     import type { GleanFacade } from "../types";
 
-    interface Props { facade: GleanFacade; source: FlashcardSource; onClose?: () => void }
-    let { facade, source, onClose }: Props = $props();
+    interface Props { facade: GleanFacade; source: FlashcardSource; onClose?: () => void; registerCloseGuard?: (guard: () => boolean) => () => void }
+    let { facade, source, onClose, registerCloseGuard }: Props = $props();
+    let rootEl = $state<HTMLElement | null>(null);
     const session = createFlashcardSession(untrack(() => source));
     const i18n = $derived(facade.i18n);
     let front = $state(session.draft.front);
@@ -88,6 +90,17 @@
             }
         }
     }
+    $effect(() => registerCloseGuard?.(() => !busy));
+    $effect(() => {
+        if (!rootEl) return;
+        return installEscapeHandler(rootEl, (event) => {
+            if (busy) return true;
+            event.preventDefault();
+            event.stopPropagation();
+            onClose?.();
+            return true;
+        });
+    });
 </script>
 
 <svelte:window onkeydown={(e) => {
@@ -99,7 +112,7 @@
     }
 }} />
 
-<div class="glean-flashcard" aria-labelledby="glean-flashcard-title" aria-describedby="glean-flashcard-desc" aria-busy={busy}>
+<div class="glean-flashcard" bind:this={rootEl} aria-labelledby="glean-flashcard-title" aria-describedby="glean-flashcard-desc" aria-busy={busy}>
     <header class="glean-flashcard__head">
         <div>
             <h3 id="glean-flashcard-title">{t(i18n, "flashcard.confirm")}</h3>
@@ -168,6 +181,7 @@
     .glean-flashcard__mode { flex: 0 0 auto; padding: 4px 10px; border: 1px solid color-mix(in srgb, var(--glean-color-action) 24%, var(--glean-border-soft)); border-radius: var(--glean-radius-pill); color: var(--glean-color-action); background: var(--glean-primary-soft); font: 600 var(--glean-text-xs)/1.2 var(--b3-font-family); letter-spacing: .05em; }
     .glean-flashcard__hint { margin: 0; color: var(--b3-theme-on-surface); font-size: var(--glean-text-sm); line-height: 1.6; overflow-wrap: anywhere; }
     .glean-flashcard__source, .glean-flashcard__actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--glean-space-2); overflow-wrap: anywhere; }
+    .glean-flashcard__actions--footer { position: sticky; bottom: calc(-1 * var(--glean-space-5)); z-index: 2; margin-top: auto; padding-top: var(--glean-space-3); padding-bottom: var(--glean-space-2); background: var(--b3-theme-background); border-top: 1px solid var(--glean-border-soft); }
     .glean-flashcard__source {
         justify-content: space-between;
         min-height: 36px;

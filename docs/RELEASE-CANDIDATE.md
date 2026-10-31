@@ -1,23 +1,24 @@
 # 发布候选复核
 
-> **v1.4.1 发布候选（2026-10-31）**：本次发布覆盖存量材料盘点、外部导入自动分拣防污染、漫游盲盒状态流转翻页、全局键盘遮罩隔离、折叠阅读器切文竞态与渐进切片关闭守卫 5 项缺陷修复，补齐 AI 富化既有标签词表防膨胀服务层闭环，并对齐三视图快照健康度徽标与设计令牌。
+> **v1.4.2 发布候选（2026-10-31）**：本次收官发布完成界面首屏减法、读库内联批量操作、继续阅读书签投影修复、全局键盘与弹窗 `Escape` 栈统一调度、125%/150% 缩放适配、衍生文档隔离与跨面板控件统一，并通过 `pnpm e2e:isolated` 隔离内核 + 真实 Chrome CDP 12 步全主链实测。
 >
 > 真实宿主、读屏、移动端和外部能力仍按能力矩阵及 B-0002、B-0004–B-0008 验收。
 
-## 1. 发布产物与门禁核验（v1.4.1）
+## 1. 发布产物与门禁核验（v1.4.2）
 
 | 项目 | 结果 | 证据 |
 |---|---|---|
-| 源版本 | `1.4.1` | `package.json`、`plugin.json`、`README.md` 与 `PLUGIN_VERSION` 一致 |
-| 变更记录 | 已有 `v1.4.1` 条目 | `docs/CHANGELOG.md` |
+| 源版本 | `1.4.2` | `package.json`、`plugin.json`、`README.md` 与 `PLUGIN_VERSION` 一致 |
+| 变更记录 | 已有 `v1.4.2` 条目 | `docs/CHANGELOG.md` |
 | 类型与 Svelte 检查 | 通过，0 错误/0 警告 | `pnpm check` |
-| 全量测试 | 1769/1769 通过；覆盖全套架构、i18n、无障碍与域层回归 | `pnpm test` |
+| 全量测试 | 1770/1770 通过；覆盖全套架构、i18n、无障碍与域层回归 | `pnpm test` |
 | 生产构建 | 通过 | `pnpm build` |
-| 发布产物 | `package.zip` 验证通过（含 `output/release-v1.4.0-rollback/package.zip` 回滚备份） | `pnpm check:release` 通过 |
+| 发布产物 | `package.zip` 验证通过（含 `output/release-v1.4.1-rollback/package.zip` 回滚备份） | `pnpm check:release` 通过 |
+| 隔离主链与浏览器实测 | 12/12 通过（思源 3.8.9 隔离内核 + Chrome CDP 交互截图） | `pnpm e2e:isolated` |
 | 性能门禁 | 通过；10k 合成输入均在预算内 | `pnpm perf:check` |
 | 视觉矩阵 | 登记检查通过；24 个案例等待真实宿主 | `pnpm visual:check` |
 | 任务账本与差异 | 通过 | `pnpm task:ledger -- --check`、`git diff --check` |
-| 本地构建包 | `v1.4.1` 已打包 | `package.zip` (待解封后上传 GitHub) |
+| 本地构建包 | `v1.4.2` 已打包 | `package.zip` (待解封后上传 GitHub) |
 | GitHub 工作流 | 本轮未触发：GitHub 账号封禁期，严格本地构建与提交 | 本轮无任何远程调用；解封后统一推送 |
 
 本轮变更重点在读库过滤热路径：`src/domain/library-view.ts` 的 `searchableText` 引入 WeakMap 按条目对象缓存归一化可搜索文本（标题/摘要/路径/站点/作者/URL/标签/AI 标签），关键词高频击键不再全库重建数组再小写化；`filterAndSortLibrary` 改用装饰-排序-还原预计算排序主键与 id 决胜键，O(n) 次归一化替代比较对内重复计算，升降序与决胜语义逐位等价。条目投影按不可变快照使用，缓存随 GC 回收，无手动失效面。同版并行交付 T-3506 大纲章节块引用复制与过滤框 Escape 重置（`src/ui/ReaderTab.svelte`）。AI 仍默认手动且需要用户配置通道；详细前置条件以[能力矩阵](CAPABILITY-MATRIX.md)为准。

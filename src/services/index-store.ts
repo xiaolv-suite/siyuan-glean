@@ -6,6 +6,7 @@
 import type { Plugin } from "siyuan";
 import { normalizeAuthor } from "../domain/author.ts";
 import { inspectCandidate, type CandidateEvidence, type CandidateMissing, type CandidateProbe } from "../domain/candidate-policy.ts";
+import type { ReadingPosition } from "../domain/reading-position.ts";
 import { parseClipAttrs, parseUserTags, type ClipStatus } from "../domain/schema.ts";
 
 const INDEX_FILE = "glean-index.json";
@@ -44,6 +45,7 @@ export interface ClipIndexEntry {
     timeSource: string;
     updated: string;
     readPoint?: string;
+    readingPosition?: ReadingPosition;
 }
 
 /** 未收录候选：无有效状态；可能已有来源 URL，显式收录时补齐缺失字段。 */
@@ -224,6 +226,7 @@ export function applyAttrsToIndex(
             contentType: attrs.contentType ?? "",
             timeSource: attrs.timeSource ?? "",
             ...(attrs.readPoint ? { readPoint: attrs.readPoint } : {}),
+            ...(attrs.readingPosition ? { readingPosition: attrs.readingPosition } : {}),
             updated: doc.updated,
         };
     } else {

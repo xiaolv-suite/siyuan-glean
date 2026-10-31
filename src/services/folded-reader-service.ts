@@ -20,6 +20,9 @@ export function cleanBlockContent(raw: string): string {
         .trim();
 }
 
+const EXCLUDED_BLOCK_TYPES = new Set(["c", "t", "m", "html", "tb", "NodeCodeBlock", "NodeTable"]);
+const CONTAINER_BLOCK_TYPES = new Set(["b", "l", "i", "s", "callout"]);
+
 /**
  * 从思源内核拉取指定文档的子块并组装为 5 阶折叠节点序列
  */
@@ -32,23 +35,41 @@ export async function loadDocumentFoldNodes(
     }
 
     try {
-        const rows = await listChildBlocks(docId);
-        // 优先筛选正文段落块 (NodeParagraph) 与引用块 (NodeBlockquote) 与标题块 (NodeHeading)
-        const contentRows = rows.filter((r) => {
-            if (!r.content || r.content.trim().length < 3) return false;
-            // 排除表格或代码块内部片段，保留核心行文段落
-            if (r.type === "NodeCodeBlock" || r.type === "NodeTable") return false;
-            return true;
-        });
+        const collected: Array<{ id: string; content: string; type: string; subType?: string }> = [];
+        const seen = new Set<string>([docId]);
+        let requests = 0;
 
-        if (contentRows.length > 0) {
-            const mapped = contentRows.map((r) => ({
-                id: r.id,
-                content: cleanBlockContent(r.content || ""),
-                type: r.type,
-                subType: r.subType,
-            }));
-            return parseBlocksToFoldNodes(mapped, initialLevel);
+        async function collectBlocks(parentId: string, depth: number): Promise<void> {
+            if (++requests > 80 || depth > 12) return;
+            const rows = await listChildBlocks(parentId);
+            for (const r of rows) {
+                if (!r || !r.id || seen.has(r.id)) continue;
+                seen.add(r.id);
+                if (EXCLUDED_BLOCK_TYPES.has(r.type)) continue;
+                const cleaned = cleanBlockContent(r.content || "");
+                if (cleaned.length >= 3 && (r.type === "p" || r.type === "h" || r.type.startsWith("Node"))) {
+                    collected.push({
+                        id: r.id,
+                        content: cleaned,
+                        type: r.type,
+                        subType: r.subType,
+                    });
+                } else if (CONTAINER_BLOCK_TYPES.has(r.type)) {
+                    await collectBlocks(r.id, depth + 1);
+                } else if (cleaned.length >= 3) {
+                    collected.push({
+                        id: r.id,
+                        content: cleaned,
+                        type: r.type,
+                        subType: r.subType,
+                    });
+                }
+            }
+        }
+
+        await collectBlocks(docId, 0);
+        if (collected.length > 0) {
+            return parseBlocksToFoldNodes(collected, initialLevel);
         }
     } catch (err) {
         console.warn("[glean] listChildBlocks 获取折叠段落失败，尝试降级读取 Markdown:", err);

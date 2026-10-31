@@ -1587,5 +1587,7 @@
   "roaming.snapshotSaved": "已快照",
   "roaming.snapshotSavedHint": "已保存离线网页单文件快照",
   "snapshotHealth.scoreBadgeTitle": "${label}: ${desc} (${score})",
-  "highlight.keyboardCursorSelected": "已用键盘选中摘录"
+  "highlight.keyboardCursorSelected": "已用键盘选中摘录",
+  "settings.resetConfirmTitle": "恢复默认设置？",
+  "settings.resetConfirmDescription": "将重置全部 8 个分类的当前草稿（点击“保存”前不会写入磁盘）。"
 }

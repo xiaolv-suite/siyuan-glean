@@ -79,6 +79,8 @@ export const simpleDialog = (args: {
         }
     });
     const modalRoot = dialog.element.querySelector<HTMLElement>(".b3-dialog__container") ?? dialog.element;
+    modalRoot.style.maxWidth = "94vw";
+    modalRoot.style.maxHeight = "88vh";
     modalRoot.setAttribute("role", "dialog");
     modalRoot.setAttribute("aria-modal", "true");
     if (!modalRoot.hasAttribute("aria-labelledby")) modalRoot.setAttribute("aria-label", args.title);

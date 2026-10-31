@@ -14,6 +14,7 @@ export type LibraryKeyboardAction =
     | { type: "activate" }
     | { type: "openDocument" }
     | { type: "startReading" }
+    | { type: "markDone" }
     | { type: "later" }
     | { type: "archive" }
     | { type: "toggleSelect" }
@@ -58,7 +59,7 @@ export interface LibraryKeyboardContext {
 
 /** 长按重复时不重复执行的破坏性动作。 */
 const REPEAT_SENSITIVE = new Set<LibraryKeyboardAction["type"]>([
-    "activate", "openDocument", "startReading", "later", "archive", "toggleSelect",
+    "activate", "openDocument", "startReading", "markDone", "later", "archive", "toggleSelect",
     "selectDisplayed", "keepFiltered", "clearSelection",
     "cyclePriority", "setPriority", "cycleRating", "togglePin", "copyBlockRef", "roaming",
     "toggleFavorite", "copyCitation", "copyBibTeX", "focusSearch",
@@ -115,6 +116,7 @@ export function resolveLibraryShortcut(
     if (lower === "s") return repeatOrNull(event, { type: "selectDisplayed" });
     if (lower === "o") return repeatOrNull(event, { type: "openDocument" });
     if (lower === "r") return repeatOrNull(event, { type: "startReading" });
+    if (lower === "d") return repeatOrNull(event, { type: "markDone" });
     if (lower === "a" || lower === "l") return repeatOrNull(event, { type: "later" });
     if (lower === "e") return repeatOrNull(event, { type: "archive" });
     if (lower === "x") return repeatOrNull(event, { type: "toggleSelect" });

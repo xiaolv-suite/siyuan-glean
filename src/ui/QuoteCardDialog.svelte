@@ -725,7 +725,7 @@
         flex: 1;
         min-height: 280px;
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         justify-content: center;
         overflow-y: auto;
         padding: var(--glean-space-3);
@@ -737,6 +737,7 @@
     .glean-quote-card-preview {
         width: 100%;
         max-width: 520px;
+        margin-block: auto;
         padding: 32px 28px;
         border-radius: 20px;
         box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.25);

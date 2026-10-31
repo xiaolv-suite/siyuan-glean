@@ -15,6 +15,7 @@
     import { confirmPreviewCandidate, excludePreviewCandidate, PreviewActionError, quotePreviewExcerpt, savePreviewCandidateUrl, setPreviewStatus, type PreviewWriteResult } from "../services/workbench-preview";
     import ProtyleHost from "./ProtyleHost.svelte";
     import AuthorEditor from "./AuthorEditor.svelte";
+    import ActionPopover from "./ActionPopover.svelte";
     import { exportArticleMarkdown } from "../services/library-export-service";
     import { formatBibTeX, formatCitation, citationSuccessKey, type CitationFormat } from "../domain/citation";
     import { pickRoamingArticle } from "../domain/roaming";
@@ -374,8 +375,13 @@
         }
     }
 
+    let rootEl = $state<HTMLElement | null>(null);
+
     function onPreviewKeyDown(event: KeyboardEvent): void {
         if (event.repeat) return;
+        if (!rootEl || rootEl.getClientRects().length === 0) return;
+        const evtTarget = event.target instanceof Node ? event.target : null;
+        if (!rootEl.contains(evtTarget) && !rootEl.contains(document.activeElement)) return;
         const target = event.target instanceof Element ? event.target : null;
         const textEntry = Boolean(target?.closest("input, textarea, select, [contenteditable]:not([contenteditable='false'])"));
         if (textEntry || event.isComposing || event.ctrlKey || event.metaKey || event.altKey) return;
@@ -427,7 +433,7 @@
 
 <svelte:window onkeydown={onPreviewKeyDown} />
 
-<section class="glean-preview" aria-labelledby={titleId} aria-describedby={metaId} aria-busy={busy}>
+<section class="glean-preview" bind:this={rootEl} tabindex="-1" aria-labelledby={titleId} aria-describedby={metaId} aria-busy={busy}>
     <div class="glean-preview__header">
         <h2 id={titleId} title={entry.title}>{entry.title || t(i18n, "panel.untitled")}</h2>
         <div class="glean-preview__header-actions" role="group" aria-label={t(i18n, "preview.title")}>
@@ -443,24 +449,26 @@
                     <svg class="glean-icon glean-icon--xs" class:glean-icon--fav={attrs.favorite} aria-hidden="true"><use href={attrs.favorite ? "#iconGleanHeart" : "#iconGleanHeartOutline"} /></svg>
                 </button>
             {/if}
-            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void triggerRoaming()} title={t(i18n, "roaming.buttonHint")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanRefresh" /></svg> <span>{t(i18n, "roaming.button")}</span></button>
-            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation("gbt")} title="{t(i18n, 'citation.copyGBT')} (C)"><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg> <span>GB/T</span></button>
-            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation("bibtex")} title="{t(i18n, 'citation.copyBibTeX')} (Shift+C)"><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArchive" /></svg> <span>BibTeX</span></button>
-            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation("apa")} title={t(i18n, "citation.copyAPA")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanLocal" /></svg> <span>APA</span></button>
-            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation("mla")} title={t(i18n, "citation.copyMLA")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg> <span>MLA</span></button>
-            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyBlockRef()}>{t(i18n, "action.copyBlockRef")}</button>
             <button type="button" class="glean-btn glean-btn--ghost" onclick={() => facade.openReadingDocument(entry.id)}>{t(i18n, "preview.openDocument")}</button>
-            {#if entry.kind === "clip"}<button type="button" class="glean-btn glean-btn--ghost" disabled={busy || exporting} onclick={() => void downloadMarkdown()}>{exporting ? t(i18n, "settings.exporting") : t(i18n, "export.markdown")}</button>{/if}
-            {#if entry.kind === "clip"}
-                <button
-                    type="button"
-                    class="glean-btn glean-btn--ghost glean-preview__snapshot-btn"
-                    title={attrs?.snapshot ? t(i18n, "snapshot.open") : t(i18n, "snapshot.take") + " (S)"}
-                    onclick={() => void openOrTakeSnapshot()}
-                >
-                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCamera" /></svg> <span>{attrs?.snapshot ? t(i18n, "snapshot.open") : t(i18n, "snapshot.take")}</span>
-                </button>
-            {/if}
+            <ActionPopover label={t(i18n, "library.moreActions")} compact>
+                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void triggerRoaming()} title={t(i18n, "roaming.buttonHint")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanRefresh" /></svg> <span>{t(i18n, "roaming.button")}</span></button>
+                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyBlockRef()}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg> <span>{t(i18n, "action.copyBlockRef")}</span></button>
+                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation("gbt")} title="{t(i18n, 'citation.copyGBT')} (C)"><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg> <span>GB/T</span></button>
+                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation("bibtex")} title="{t(i18n, 'citation.copyBibTeX')} (Shift+C)"><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArchive" /></svg> <span>BibTeX</span></button>
+                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation("apa")} title={t(i18n, "citation.copyAPA")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanLocal" /></svg> <span>APA</span></button>
+                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation("mla")} title={t(i18n, "citation.copyMLA")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg> <span>MLA</span></button>
+                {#if entry.kind === "clip"}<button type="button" class="glean-btn glean-btn--ghost" disabled={busy || exporting} onclick={() => void downloadMarkdown()}>{exporting ? t(i18n, "settings.exporting") : t(i18n, "export.markdown")}</button>{/if}
+                {#if entry.kind === "clip"}
+                    <button
+                        type="button"
+                        class="glean-btn glean-btn--ghost glean-preview__snapshot-btn"
+                        title={attrs?.snapshot ? t(i18n, "snapshot.open") : t(i18n, "snapshot.take") + " (S)"}
+                        onclick={() => void openOrTakeSnapshot()}
+                    >
+                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCamera" /></svg> <span>{attrs?.snapshot ? t(i18n, "snapshot.open") : t(i18n, "snapshot.take")}</span>
+                    </button>
+                {/if}
+            </ActionPopover>
             <button type="button" class="glean-btn glean-btn--ghost" onclick={onClose}>{t(i18n, "preview.close")}</button>
         </div>
     </div>
@@ -480,7 +488,7 @@
                     type="button"
                     class="glean-preview__source-link glean-preview__source-link--reader"
                     title={t(i18n, "reading.openInReader")}
-                    onclick={() => facade.openReadingDocument(entry.id)}
+                    onclick={() => (facade.openReader ?? facade.openReadingDocument).call(facade, entry.id)}
                 >
                     <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg> <span>{t(i18n, "reading.openInReader")}</span>
                 </button>
@@ -533,19 +541,21 @@
         </div>
     {/if}
     {#if confirmed}
-        {#if safeAuthor}
-            <span class="glean-preview__author">
-                {attrs?.site ? `${attrs.site} · ` : ""}
-                {#if onFilterAuthor}
-                    <button type="button" class="glean-source-author glean-preview__author-btn" onclick={() => onFilterAuthor?.(safeAuthor)} title={safeAuthor}>
+        <div class="glean-preview__author-bar">
+            {#if safeAuthor}
+                <span class="glean-preview__author">
+                    {attrs?.site ? `${attrs.site} · ` : ""}
+                    {#if onFilterAuthor}
+                        <button type="button" class="glean-source-author glean-preview__author-btn" onclick={() => onFilterAuthor?.(safeAuthor)} title={safeAuthor}>
+                            {safeAuthor}
+                        </button>
+                    {:else}
                         {safeAuthor}
-                    </button>
-                {:else}
-                    {safeAuthor}
-                {/if}
-            </span>
-        {/if}
-        <AuthorEditor {facade} docId={entry.id} onSaved={onRefresh} />
+                    {/if}
+                </span>
+            {/if}
+            <AuthorEditor {facade} docId={entry.id} onSaved={onRefresh} />
+        </div>
     {/if}
     <ProtyleHost app={facade.pluginInstance.app} docId={entry.id} mode="preview" {i18n} bind:host onOpenDocument={() => facade.openReadingDocument(entry.id)} />
     {#if excerpt}
@@ -595,12 +605,12 @@
         }
     }
     .glean-preview__source-link--weread {
-        background: color-mix(in srgb, #07c160 10%, var(--b3-theme-surface));
-        color: #07c160;
+        background: color-mix(in srgb, var(--glean-color-wechat, #059669) 12%, var(--b3-theme-surface));
+        color: color-mix(in srgb, var(--glean-color-wechat, #059669) 72%, var(--b3-theme-on-background));
 
         &:hover {
-            background: color-mix(in srgb, #07c160 18%, var(--b3-theme-surface));
-            color: color-mix(in srgb, #07c160 85%, var(--b3-theme-on-surface));
+            background: color-mix(in srgb, var(--glean-color-wechat, #059669) 20%, var(--b3-theme-surface));
+            color: color-mix(in srgb, var(--glean-color-wechat, #059669) 82%, var(--b3-theme-on-background));
         }
     }
     .glean-preview__meta,
@@ -608,5 +618,15 @@
     .glean-preview__author {
         min-width: 0;
         overflow-wrap: anywhere;
+    }
+    .glean-preview__author-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: var(--glean-space-2);
+        padding: var(--glean-space-1-5) var(--glean-space-3);
+        border-bottom: 1px solid var(--glean-border-soft);
+        font-size: var(--glean-text-xs);
     }
 </style>

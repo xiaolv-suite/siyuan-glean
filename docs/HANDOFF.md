@@ -1,6 +1,27 @@
 # HANDOFF — 续跑交接（每轮开发结束更新本页）
 
-## 当前有效交接（2026-10-31 v1.4.1 本地发版：全仓存量材料四态盘点、6 项核心缺陷修复、AI 词表防膨胀服务层贯通与三视图令牌收口）
+## 当前有效交接（2026-10-31 `v1.4.2` 本地封版收官：首屏减法、12 项待办全量清零与 `pnpm e2e:isolated` 12/12 隔离浏览器实测）
+
+- **当前开发总原则（`v1.4.2` 已封版收官，转入低频维护）**：
+  1. **10 步主链已落地一键隔离自测脚本（`pnpm e2e:isolated` / `node scripts/e2e-isolated.mjs --keep`）**：
+     - 自动创建独立临时工作区、部署 `dist/`、拉起思源 3.8.9 内核并完整跑通 `docs/BLOCKERS.md` 顶部的 10 步核心主链 + Chrome CDP `1280×800` 全交互实测（**12/12 全通**，6 张真实交互截图存于 `output/e2e-browser-live/`）；
+     - 隔离实跑抓出并修复了 `src/services/index-store.ts` 的 `applyAttrsToIndex` 未将 `attrs.readingPosition` 投影至 `index.clips` 导致「继续阅读」卡片 `hasBookmark` 恒为 `false` 的真实主链缺陷，以及设置弹窗「恢复默认」按钮卸载后焦点退回 `document.body` 时的 `Escape` 捕获分发边界。
+  2. **界面首屏减法已落地**：
+     - `ResurfaceView.svelte`：推荐卡首屏仅展示「开始阅读（通栏主按钮）」「今天略过」「归档」「`⋯ 更多操作`」4 个入口，其余 9 项低频动作收进折叠菜单；「按可用时间与主题挑一篇」与「漫游盲盒」合并为顶部单行折叠条。
+     - `DockPanel.svelte` & `ResurfaceView.svelte`：22 键快捷键提示带收入 `<kbd>?</kbd> 快捷键` 折叠胶囊，行菜单 `BibTeX / APA / MLA` 折叠于默认 `GB/T` 引用下方。
+  3. **12 项待办已 100% 完成闭环（见 `docs/PRE-DEV-BACKLOG-2026-10-31.md`）**：
+     - `BL-01`：`LibraryBatchBar.svelte` 移除 `window.prompt()` 改内联输入与档位胶囊，`batchSetAuthor` 补 `{ force: true }` 与 `finally` 刷新。
+     - `BL-05`：`ReadingContext.svelte` 与 `WeReadGuideDialog.svelte` 优先调用 `facade.openReader`。
+     - `BL-11`：`ActionPopover.svelte` 点击普通菜单项自动收起并接入 `ResizeObserver`；色盘菜单支持外部点击与 `Escape` 关闭。
+     - `BL-03`：`ResurfaceView`、`HighlightView`、`StatsView`、`WorkbenchPreview` 校验根容器可见性与焦点归属。
+     - `BL-02`：`modal-focus.ts` 升级为逆向栈序 `dispatchEscape` + `[aria-busy='true']` 保护，12 个弹窗/子面板接入 `installEscapeHandler` 与 `registerCloseGuard`。
+     - `BL-08`：`createOutlineMindmapDocument` 改为标记 `{ internal: true }` 杜绝污染已读统计，`ReaderTab` 脑图按钮补 `mindmapBusy` 防重入锁，`DocSlicingDialog` 补充部分失败提示，`createArticleHighlightsDoc` 接入幂等文档缓存。
+     - `BL-12`：`simpleDialog` 统一为容器施加 `maxWidth: 94vw; maxHeight: 88vh`，`ArchiveDialog`/`RestoreDialog` 自适应高度，`FlashcardDialog`/`FormattingDialog` 底栏粘性常驻，`QuoteCardDialog` 舞台 `margin-block: auto` 防长句顶裁，`.glean-kanban` 改为 `repeat(5, minmax(220px, 1fr))` 横向滚动。
+     - `BL-09`：全弹窗入口统一包裹 `createDialogSingleton`，`ReaderTab` `Alt+*` 补 `event.repeat || modalOpen` 守卫，`onPluginUrl` 支持 `library/resurface/highlights/stats` 四视图深链，`library-keyboard.ts` 与 `DockPanel` 补齐 `D` 键标记已读。
+     - `BL-14`：补齐边距注记、颜色过滤与统计已读行纯图标按钮及无标签输入框的 `aria-label`，热力图单元格升级为 `role="button"` + `aria-pressed`，`HighlightView` 按文章聚类解耦 `<summary>` 内按钮并在折叠分组时过滤 `visibleIds`，`SettingsView` 主题色盘补齐漫游 `tabindex` 与方向键流转。
+     - `BL-13`：`SettingsView`「AI 增强」同组开关全部统一为 `.glean-sw` 胶囊开关，`HighlightView` 单卡与 `StatsView` 已读行用 `ActionPopover` 收纳低频引用按钮，看板卡片补齐 `ActionPopover` 更多菜单并在从 `archived` 拖出时分流 `openRestoreDialog`。
+     - `BL-15` & `BL-16`：修复微信绿亮色对比度与热力图内联 `opacity` 导致悬浮提示变透明的问题，汉化 `HighlightView` 批注颜色下拉枚举，并为 `SettingsView`「恢复默认」增加内联二次确认与 `Escape` 分级取消。
+  4. **当前门禁与本地 `v1.4.2` 封版状态**：四处版本号统一升至 `1.4.2`（保留 `output/release-v1.4.1-rollback/package.zip` 回滚包），`pnpm check` 0 错误 0 警告，`pnpm test` **1,770 / 1,770 PASS**，`pnpm check:release` **14 / 14 PASS**，`pnpm e2e:isolated` **12 / 12 PASS**，本地已打标签 `v1.4.2`。
 
 - **T-3545/D-0423：全仓存量材料盘点、6 项核心缺陷修复、词表防膨胀服务层贯通与 v1.4.1 本地发版**：
   1. **存量材料盘点与单一事实来源（`docs/AUDIT-AND-BACKLOG-2026-10-31.md`）**：

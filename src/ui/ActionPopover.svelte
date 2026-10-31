@@ -26,7 +26,14 @@
     $effect(() => {
         const element = root;
         if (!element) return;
-        const stopClick = (event: Event) => event.stopPropagation();
+        const stopClick = (event: Event) => {
+            event.stopPropagation();
+            const target = event.target instanceof Element ? event.target : null;
+            const btn = target?.closest("button");
+            if (btn && element.contains(btn) && !btn.closest(".glean-author-editor, [data-keep-popover-open]")) {
+                queueMicrotask(() => close());
+            }
+        };
         const onKey = (event: KeyboardEvent) => {
             if (!open || event.key !== "Escape" || event.defaultPrevented || event.isComposing || event.keyCode === 229 || event.repeat) return;
             event.preventDefault();
@@ -53,10 +60,13 @@
         const element = root;
         const onScroll = (event: Event) => { if (event.target instanceof Node && !element.contains(event.target)) close(); };
         const onBlur = () => close();
+        const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(() => position()) : null;
+        ro?.observe(element);
         document.addEventListener("scroll", onScroll, true);
         window.addEventListener("resize", position);
         window.addEventListener("blur", onBlur);
         return () => {
+            ro?.disconnect();
             document.removeEventListener("scroll", onScroll, true);
             window.removeEventListener("resize", position);
             window.removeEventListener("blur", onBlur);

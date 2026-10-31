@@ -240,7 +240,6 @@
                             </div>
                         {:else if effectiveLevel === 5}
                             <div class="glean-fold-card__concept-view">
-                                <span class="glean-tier-badge">{node.concept}</span>
                                 <span>{node.gist || node.brief}</span>
                             </div>
                         {/if}

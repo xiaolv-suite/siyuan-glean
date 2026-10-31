@@ -239,7 +239,7 @@ test("stats uses per-instance section names and readable daily heatmap labels", 
     assert.match(source, /const idFor = \(part: string\) => `\$\{idPrefix\}-\$\{part\}`;/);
     assert.match(source, /aria-labelledby=\{idFor\("activity-title"\)\}/);
     assert.match(source, /role="group" aria-label=\{t\(i18n, "review\.heatmap"/);
-    assert.match(source, /class="glean-stats__day" role="img" aria-label=\{t\(i18n, "review\.heatmapDay", \{ date: day\.date, n: day\.count \}\)\}/);
+    assert.match(source, /class="glean-stats__day" role="(?:button|img)"(?: aria-pressed=\{selectedDayDate === day\.date\})? aria-label=\{t\(i18n, "review\.heatmapDay", \{ date: day\.date, n: day\.count \}\)\}/);
     assert.match(source, /i18n, "review\.heatmapDay"/);
     assert.doesNotMatch(source, /id="glean-stats-(?:overview|activity|breakdown|completed)-title"/);
 });

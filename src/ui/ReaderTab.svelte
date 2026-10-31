@@ -511,6 +511,10 @@ import { aiFailureKey } from "../libs/ai-feedback";
             outline = next;
         } catch (error) {
             if (generation !== outlineGeneration || docId !== id) return;
+            if (String(error).includes("已过期")) {
+                void loadOutline(id);
+                return;
+            }
             console.debug("[glean] 阅读大纲读取失败:", error);
             outline = [];
             outlineError = true;
@@ -532,17 +536,36 @@ import { aiFailureKey } from "../libs/ai-feedback";
         if (docId) void openTab({ app: facade.pluginInstance.app, doc: { id: item.id }, keepCursor: false });
     }
 
-    function openSlicing(): void {
-        if (!context || !docId) return;
-        openDocSlicingDialog(facade, context, outline, (blockId) => {
+    async function openSlicing(): Promise<void> {
+        if (!docId) return;
+        let currentCtx = context;
+        if (!currentCtx) {
+            try {
+                currentCtx = await readClipContext(docId);
+                if (currentCtx && mounted) context = currentCtx;
+            } catch {}
+        }
+        if (!currentCtx) return;
+        openDocSlicingDialog(facade, currentCtx, outline, (blockId) => {
             scrollToHighlight(blockId);
         });
     }
 
+    let mindmapBusy = $state(false);
+
     async function createMindmapDoc(): Promise<void> {
-        if (!context || !docId || !outline.length) return;
+        if (mindmapBusy || !docId || !outline.length) return;
+        let currentCtx = context;
+        if (!currentCtx) {
+            try {
+                currentCtx = await readClipContext(docId);
+                if (currentCtx && mounted) context = currentCtx;
+            } catch {}
+        }
+        if (!currentCtx) return;
+        mindmapBusy = true;
         try {
-            const res = await createOutlineMindmapDocument(facade.pluginInstance, context, outline);
+            const res = await createOutlineMindmapDocument(facade.pluginInstance, currentCtx, outline);
             if (res.ok && res.docId) {
                 showMessage(t(i18n, "reader.mindmapCreated"), 2500);
                 void openTab({ app: facade.pluginInstance.app, doc: { id: res.docId } });
@@ -553,6 +576,8 @@ import { aiFailureKey } from "../libs/ai-feedback";
         } catch (error) {
             console.warn("[glean] 创建脑图失败:", error);
             showMessage(t(i18n, "msg.actionFailed"), 3000);
+        } finally {
+            mindmapBusy = false;
         }
     }
 
@@ -592,6 +617,28 @@ import { aiFailureKey } from "../libs/ai-feedback";
             console.warn("[glean] 保存主题色彩失败:", error);
         }
     }
+
+    $effect(() => {
+        if (!paletteMenuOpen) return;
+        const onPointerDown = (event: PointerEvent) => {
+            const target = event.target instanceof Element ? event.target : null;
+            if (target?.closest(".glean-reader__palette-picker")) return;
+            paletteMenuOpen = false;
+        };
+        const onKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape" && !event.defaultPrevented) {
+                event.preventDefault();
+                event.stopPropagation();
+                paletteMenuOpen = false;
+            }
+        };
+        document.addEventListener("pointerdown", onPointerDown, true);
+        document.addEventListener("keydown", onKeyDown, true);
+        return () => {
+            document.removeEventListener("pointerdown", onPointerDown, true);
+            document.removeEventListener("keydown", onKeyDown, true);
+        };
+    });
 
     async function loadDocHighlights(id: string): Promise<void> {
         highlightsLoading = true;
@@ -855,6 +902,9 @@ import { aiFailureKey } from "../libs/ai-feedback";
                 showMessage(t(i18n, "wechat.purifyDone", { count: result.words ?? 0 }), 3000);
                 await loadContext(docId);
                 facade.notifyDataChanged();
+                if (result.modified) {
+                    openFormattingDialog(facade, docId);
+                }
             } else {
                 showMessage(t(i18n, "msg.actionFailed"), 3000);
             }
@@ -1009,6 +1059,9 @@ import { aiFailureKey } from "../libs/ai-feedback";
     }
 
     function onReaderKey(event: KeyboardEvent): void {
+        const modalOpen = Array.from(document.querySelectorAll<HTMLElement>('.b3-dialog, .b3-menu, [role="dialog"], [aria-modal="true"]'))
+            .some((element) => element.getClientRects().length > 0);
+        if (event.altKey && (event.repeat || modalOpen)) return;
         if (event.altKey && (event.key === "e" || event.key === "E")) {
             event.preventDefault();
             event.stopPropagation();
@@ -1087,8 +1140,6 @@ import { aiFailureKey } from "../libs/ai-feedback";
         const target = event.target instanceof Element ? event.target : null;
         const active = document.activeElement;
         const blockedTarget = target?.closest('input, textarea, select, button, a, [role="textbox"], [role="combobox"], [role="menu"], [role="menuitem"], [role="dialog"], [contenteditable]:not([contenteditable="false"])');
-        const modalOpen = Array.from(document.querySelectorAll<HTMLElement>('.b3-dialog, .b3-menu, [role="dialog"], [aria-modal="true"]'))
-            .some((element) => element.getClientRects().length > 0);
         if (event.key === "Escape") {
             if (searchOpen) {
                 event.preventDefault();
@@ -2103,6 +2154,8 @@ import { aiFailureKey } from "../libs/ai-feedback";
                     class="glean-btn glean-btn--ghost glean-reader__toolbar-palette"
                     title={t(i18n, "settings.themePalette")}
                     aria-label={t(i18n, "settings.themePalette")}
+                    aria-expanded={paletteMenuOpen}
+                    aria-haspopup="menu"
                     onclick={() => { paletteMenuOpen = !paletteMenuOpen; }}
                 >
                     <span class="glean-palette-preview-dot"></span>
@@ -2112,6 +2165,8 @@ import { aiFailureKey } from "../libs/ai-feedback";
                         {#each THEME_PALETTES as p}
                             <button
                                 type="button"
+                                role="menuitemradio"
+                                aria-checked={currentThemePalette === p.id}
                                 class="glean-reader__palette-opt"
                                 class:glean-reader__palette-opt--active={currentThemePalette === p.id}
                                 title={t(i18n, p.nameKey)}
@@ -2238,6 +2293,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
                                 class="glean-mini-input glean-reader__selection-memo-input"
                                 bind:value={memoDraft}
                                 placeholder={t(i18n, "reader.memoPlaceholder")}
+                                aria-label={t(i18n, "reader.memoPlaceholder")}
                                 onkeydown={handleMemoKeyDown}
                             />
                             <button type="button" class="glean-btn glean-btn--pri glean-reader__selection-btn" disabled={excerptBusy || !memoDraft.trim()} title={t(i18n, "action.save")} aria-label={t(i18n, "action.save")} onclick={() => void submitMemo()}>
@@ -2373,6 +2429,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
                                     type="button"
                                     class="glean-margin-note-card__btn"
                                     title={t(i18n, "action.copyBlockRef")}
+                                    aria-label={t(i18n, "action.copyBlockRef")}
                                     onclick={(e) => { e.stopPropagation(); void copyHighlightBlockRef(hl); }}
                                 >
                                     <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
@@ -2381,6 +2438,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
                                     type="button"
                                     class="glean-margin-note-card__btn"
                                     title={t(i18n, "quoteCard.action")}
+                                    aria-label={t(i18n, "quoteCard.action")}
                                     onclick={(e) => { e.stopPropagation(); quoteCardFromHighlight(hl); }}
                                 >
                                     <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg>
@@ -2389,6 +2447,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
                                     type="button"
                                     class="glean-margin-note-card__btn"
                                     title={t(i18n, "highlight.copyShare")}
+                                    aria-label={t(i18n, "highlight.copyShare")}
                                     onclick={(e) => { e.stopPropagation(); void copyHighlightQuote(hl); }}
                                 >
                                     <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
@@ -2698,7 +2757,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
                                     type="button"
                                     class="glean-btn glean-btn--ghost glean-btn--xs glean-reader__slice-btn"
                                     title={t(i18n, "reader.copyOutlineHint")}
-                                    onclick={(e) => { e.stopPropagation(); void copyOutlineMarkdown(); }}
+                                    onclick={(e) => { e.preventDefault(); e.stopPropagation(); void copyOutlineMarkdown(); }}
                                 >
                                     <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
                                     <span>{t(i18n, "reader.copyOutline")}</span>
@@ -2707,7 +2766,9 @@ import { aiFailureKey } from "../libs/ai-feedback";
                                     type="button"
                                     class="glean-btn glean-btn--ghost glean-btn--xs glean-reader__slice-btn"
                                     title={t(i18n, "reader.createMindmapHint")}
-                                    onclick={(e) => { e.stopPropagation(); void createMindmapDoc(); }}
+                                    disabled={mindmapBusy}
+                                    aria-busy={mindmapBusy}
+                                    onclick={(e) => { e.preventDefault(); e.stopPropagation(); void createMindmapDoc(); }}
                                 >
                                     <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg>
                                     <span>{t(i18n, "reader.createMindmap")}</span>
@@ -2716,7 +2777,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
                                     type="button"
                                     class="glean-btn glean-btn--ghost glean-btn--xs glean-reader__slice-btn"
                                     title={t(i18n, "docSlicing.actionBtnHint")}
-                                    onclick={(e) => { e.stopPropagation(); openSlicing(); }}
+                                    onclick={(e) => { e.preventDefault(); e.stopPropagation(); openSlicing(); }}
                                 >
                                     {t(i18n, "docSlicing.actionBtn")}
                                 </button>
@@ -2859,7 +2920,8 @@ import { aiFailureKey } from "../libs/ai-feedback";
                                             class="glean-reader__color-filter-btn glean-reader__color-filter-btn--dot"
                                             class:glean-reader__color-filter-btn--active={highlightColorFilter === c}
                                             onclick={() => highlightColorFilter = highlightColorFilter === c ? "" : c}
-                                            title={t(i18n, "reader.filterColorItem", { color: c })}
+                                            title={t(i18n, "reader.filterColorItem", { color: t(i18n, `reader.color.${c}`) })}
+                                            aria-label={t(i18n, "reader.filterColorItem", { color: t(i18n, `reader.color.${c}`) })}
                                         >
                                             <span class="glean-reader__highlight-dot glean-reader__highlight-dot--{c}" aria-hidden="true"></span>
                                         </button>
@@ -2875,6 +2937,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
                                             type="button"
                                             class="glean-reader__highlight-dot-btn"
                                             title={t(i18n, "reader.cycleColorHint")}
+                                            aria-label={t(i18n, "reader.cycleColorHint")}
                                             onclick={(e) => { e.stopPropagation(); void cycleHighlightColor(hl); }}
                                         >
                                             <span class="glean-reader__highlight-dot glean-reader__highlight-dot--{hl.color || 'yellow'}" aria-hidden="true"></span>

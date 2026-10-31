@@ -1,6 +1,6 @@
 {
   "name": "siyuan-glean",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "type": "module",
   "description": "小驴拾遗 (Lv Glean)：把思源里剪藏/导入后吃灰的文章，变成有生命周期、能被消化的阅读库——属性规范、状态分拣、AI 富化、每日重浮，数据全本地",
   "repository": "https://github.com/ai68298100/siyuan-glean",
@@ -28,6 +28,7 @@
     "perf:baseline": "node scripts/perf/benchmark.mjs",
     "perf:check": "node scripts/perf/benchmark.mjs --check",
     "spike": "node scripts/spike/glean-spike.mjs",
+    "e2e:isolated": "node scripts/e2e-isolated.mjs",
     "e2e:ui": "node scripts/e2e/launch-e2e.mjs",
     "e2e:background": "node scripts/e2e/manage-e2e.mjs",
     "e2e:acceptance": "node scripts/e2e/acceptance-session.mjs",

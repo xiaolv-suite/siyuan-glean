@@ -8,6 +8,7 @@
     import { onMount } from "svelte";
     import type { GleanFacade } from "../types";
     import { t } from "../libs/i18n";
+    import { installEscapeHandler } from "../libs/modal-focus";
     import { writeClip } from "../services/clip-store";
     import { docHostContext, moveDocOutOfHost, type DocHostContext } from "../services/lifecycle-service";
 
@@ -16,9 +17,11 @@
         docId: string;
         /** svelteDialog 注入的关闭回调 */
         onClose: () => void;
+        registerCloseGuard?: (guard: () => boolean) => () => void;
     }
 
-    let { facade, docId, onClose }: Props = $props();
+    let { facade, docId, onClose, registerCloseGuard }: Props = $props();
+    let rootEl = $state<HTMLElement | null>(null);
     const i18n = $derived(facade.i18n);
     let pending = $state(false);
     let contextLoading = $state(true);
@@ -76,11 +79,19 @@
             onClose();
         }
     }
+    $effect(() => registerCloseGuard?.(() => !pending));
+    $effect(() => {
+        if (!rootEl) return;
+        return installEscapeHandler(rootEl, (event) => {
+            handleWindowKeydown(event);
+            return true;
+        });
+    });
 </script>
 
 <svelte:window onkeydown={handleWindowKeydown} />
 
-<div class="glean-archive-dlg" aria-busy={pending || contextLoading}>
+<div class="glean-archive-dlg" bind:this={rootEl} aria-busy={pending || contextLoading}>
     <div class="glean-archive-dlg__hint">{t(i18n, "restore.hint")}</div>
     {#if contextLoading}<p class="glean-load-error" role="status" aria-live="polite">{t(i18n, "panel.loading")}</p>{/if}
     {#if contextError}<div class="glean-load-error" role="alert" aria-live="assertive"><span>{t(i18n, "msg.actionFailed")}</span><button class="glean-btn" disabled={contextLoading} onclick={() => void loadContext()}>{t(i18n, "action.retry")}</button></div>{/if}

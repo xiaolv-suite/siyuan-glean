@@ -114,7 +114,7 @@ export function createApiClient(baseUrl) {
     const apiChecked = async (route, body = {}) => {
         for (let attempt = 0; attempt < 12; attempt += 1) {
             const payload = await api(route, body);
-            if (payload.code !== 0 && /document metadata is not ready/i.test(String(payload.msg ?? "")) && attempt < 11) {
+            if (payload.code !== 0 && /(?:document metadata is not ready|Access is denied|indexing)/i.test(String(payload.msg ?? "")) && attempt < 11) {
                 if (route === "/api/filetree/createDocWithMd" && body?.notebook) {
                     await ensureBoxAndParents(body.notebook, body.path);
                 }

@@ -2,11 +2,13 @@
     import { onMount } from "svelte";
     import type { GleanFacade } from "../types";
     import { t } from "../libs/i18n";
+    import { installEscapeHandler } from "../libs/modal-focus";
     import { aiBatchCounts, aiBatchHasUnresolved, type AiBatchRow } from "../domain/ai-batch.ts";
     import { AiBatchError, discardAiBatch, loadAiBatch, previewAiBatchResume, previewNewAiBatch, runAiBatch, stopAiBatchAfterCurrent, subscribeAiBatch, type AiBatchPreview, type AiBatchState } from "../services/ai-batch-service";
 
     interface Props { facade: GleanFacade; open?: boolean; docIds?: string[] }
     let { facade, open = $bindable(false), docIds = [] }: Props = $props();
+    let rootEl = $state<HTMLElement | null>(null);
     const i18n = $derived(facade.i18n);
     let task = $state.raw<AiBatchState>({ journal: null, busy: "", stopRequested: false, error: null, journalSignature: null });
     let preview = $state.raw<AiBatchPreview | null>(null);
@@ -180,12 +182,19 @@
             close();
         }
     }
+    $effect(() => {
+        if (!rootEl || !open) return;
+        return installEscapeHandler(rootEl, (event) => {
+            handleWindowKeydown(event);
+            return true;
+        });
+    });
 </script>
 
 <svelte:window onkeydown={handleWindowKeydown} />
 
 {#if open}
-    <section class="glean-ai-batch" class:glean-ai-batch--busy={busy} aria-labelledby="glean-ai-batch-title" aria-busy={busy}>
+    <section class="glean-ai-batch" bind:this={rootEl} class:glean-ai-batch--busy={busy} aria-labelledby="glean-ai-batch-title" aria-busy={busy}>
         <header class="glean-ai-batch__head">
             <div class="glean-ai-batch__heading">
                 <span class="glean-ai-batch__eyebrow"><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg> AI</span>

@@ -15,11 +15,15 @@ const escapeHandlers: Array<{ root: HTMLElement; handle: (event: KeyboardEvent) 
 
 function dispatchEscape(event: KeyboardEvent, container?: HTMLElement): boolean {
     if (event.key !== "Escape" || event.defaultPrevented || event.isComposing || event.keyCode === 229 || event.repeat) return false;
-    const scope = [...escapeHandlers].reverse().find((item) =>
-        (!container || container.contains(item.root)) && item.root.contains(event.target as Node) && visible(item.root) && !externalOverlay(item.root)
-    );
-    if (!scope || scope.root.querySelector(":popover-open")) return false;
-    return scope.handle(event);
+    for (const scope of [...escapeHandlers].reverse()) {
+        if (container && !container.contains(scope.root)) continue;
+        const target = event.target as Node | null;
+        if (!scope.root.contains(target) && !(container && (target === container || target === document.body))) continue;
+        if (!visible(scope.root) || externalOverlay(scope.root)) continue;
+        if (scope.root.querySelector(":popover-open")) return false;
+        if (scope.handle(event)) return true;
+    }
+    return false;
 }
 
 export function installEscapeHandler(root: HTMLElement, handle: (event: KeyboardEvent) => boolean): () => void {
@@ -91,6 +95,11 @@ export function installModalFocus(root: HTMLElement, options: ModalFocusOptions)
             if (event.repeat) return;
             if (root.querySelector(":popover-open")) return;
             if (dispatchEscape(event, root)) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                return;
+            }
+            if (root.querySelector("[aria-busy='true']")) {
                 event.preventDefault();
                 event.stopImmediatePropagation();
                 return;

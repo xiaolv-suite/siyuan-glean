@@ -566,8 +566,12 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
      * - 顶栏图标/命令 = 工作台 tab（桌面画布：rail+表格/看板，全宽完整功能）
      * - Dock 侧栏图标 = 窄侧栏速览（toggleModel 切换）
      */
-    openPanel(): void {
-        void this.openLibraryTab();
+    openPanel(targetView?: string): void {
+        void this.openLibraryTab().then(() => {
+            if (targetView) {
+                document.dispatchEvent(new CustomEvent("glean:switch-view", { detail: { view: targetView } }));
+            }
+        });
     }
 
     /** 打开/聚焦 Dock 窄侧栏（保留给轻量速览场景）。 */
@@ -710,8 +714,8 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
             closeLabel: t(this.i18n, "action.close"),
             component: ArchiveDialog,
             props: { facade: this, docId },
-            width: "440px",
-            height: "360px",
+            width: "min(440px, 94vw)",
+            height: "auto",
             callback: () => { this.openDialogDocIds.delete(docId); },
         });
     }
@@ -740,8 +744,8 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
                     closeLabel: t(this.i18n, "action.close"),
                     component: RestoreDialog,
                     props: { facade: this, docId },
-                    width: "440px",
-                    height: "300px",
+                    width: "min(440px, 94vw)",
+                    height: "auto",
                     callback: () => { this.openDialogDocIds.delete(docId); },
                 });
                 dialogOpened = true;
@@ -871,8 +875,8 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
         try {
             const parsed = new URL(raw);
             const action = parsed.searchParams.get("action");
-            if (action === "workbench" || action === "library" || action === "resurface" || action === "highlights") {
-                this.openPanel();
+            if (action === "workbench" || action === "library" || action === "resurface" || action === "highlights" || action === "stats") {
+                this.openPanel(action === "workbench" ? undefined : action);
             } else if (action === "settings") {
                 this.openSettings();
             } else if (action === "open") {
@@ -1109,26 +1113,32 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
 
     /* ---------- 弹窗 ---------- */
 
+    private openMigrateSingleton?: (args: undefined) => ReturnType<typeof svelteDialog>;
+    private openImportSingleton?: (args: undefined) => ReturnType<typeof svelteDialog>;
+    private openSettingsSingleton?: (args: undefined) => ReturnType<typeof svelteDialog>;
+
     openMigrate(): void {
-        svelteDialog({
+        (this.openMigrateSingleton ??= createDialogSingleton((_args, onClose) => svelteDialog({
             title: t(this.i18n, "migrate.title"),
             closeLabel: t(this.i18n, "action.close"),
             component: MigrateDialog,
             props: { facade: this },
             width: "720px",
             height: "560px",
-        });
+            callback: onClose,
+        })))(undefined);
     }
 
     openImport(): void {
-        svelteDialog({
+        (this.openImportSingleton ??= createDialogSingleton((_args, onClose) => svelteDialog({
             title: t(this.i18n, "import.title"),
             closeLabel: t(this.i18n, "action.close"),
             component: ImportDialog,
             props: { facade: this },
             width: "720px",
             height: "560px",
-        });
+            callback: onClose,
+        })))(undefined);
     }
 
     /** 思源"设置→插件"齿轮调用的是基类 openSetting（单数）；转发到本插件的设置浮窗。 */
@@ -1137,7 +1147,7 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
     }
 
     openSettings(): void {
-        svelteDialog({
+        (this.openSettingsSingleton ??= createDialogSingleton((_args, onClose) => svelteDialog({
             title: t(this.i18n, "settings.title"),
             closeLabel: t(this.i18n, "action.close"),
             component: SettingsView,
@@ -1145,6 +1155,7 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
             // 现代化大设置面板：提供充足横向展示宽度，避免选项拥挤与提示截断
             width: "920px",
             height: "720px",
-        });
+            callback: onClose,
+        })))(undefined);
     }
 }

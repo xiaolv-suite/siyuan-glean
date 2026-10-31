@@ -2,6 +2,7 @@
     import { onMount } from "svelte";
     import { showMessage } from "siyuan";
     import { t } from "../libs/i18n";
+    import { installEscapeHandler } from "../libs/modal-focus";
     import { aiFailureKey } from "../libs/ai-feedback";
     import { isWechatUrl } from "../domain/wechat";
     import { formattingCandidates, renderFormatting, type FormattingPlan } from "../domain/formatting";
@@ -13,9 +14,11 @@
         facade: GleanFacade;
         docId: string;
         onClose?: () => void;
+        registerCloseGuard?: (guard: () => boolean) => () => void;
     }
 
-    let { facade, docId, onClose }: Props = $props();
+    let { facade, docId, onClose, registerCloseGuard }: Props = $props();
+    let rootEl = $state<HTMLElement | null>(null);
     const i18n = $derived(facade.i18n);
     let session = $state.raw<FormattingSession | null>(null);
     let plan = $state<FormattingPlan>({ headings: [], cleanup: [] });
@@ -135,11 +138,19 @@
             }
         }
     }
+    $effect(() => registerCloseGuard?.(() => !busy));
+    $effect(() => {
+        if (!rootEl) return;
+        return installEscapeHandler(rootEl, (event) => {
+            handleKeydown(event);
+            return true;
+        });
+    });
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
 
-<div class="glean-formatting" aria-labelledby="glean-formatting-title" aria-describedby="glean-formatting-desc" aria-busy={busy}>
+<div class="glean-formatting" bind:this={rootEl} aria-labelledby="glean-formatting-title" aria-describedby="glean-formatting-desc" aria-busy={busy}>
     <header class="glean-formatting__head">
         <div>
             <h3 id="glean-formatting-title">{t(i18n, "formatting.open")}</h3>
@@ -221,6 +232,7 @@
     .glean-formatting__toolbar { display: flex; flex-wrap: wrap; gap: var(--glean-space-2); }
     .glean-formatting__toolbar .glean-btn { border-radius: var(--glean-radius-pill); padding: var(--glean-space-1-5) var(--glean-space-3-5); }
     .glean-formatting__toolbar--top { padding-bottom: var(--glean-space-2); border-bottom: 1px solid var(--glean-border-soft); }
+    .glean-formatting__toolbar--footer { position: sticky; bottom: calc(-1 * var(--glean-space-4)); z-index: 2; margin-top: auto; padding-top: var(--glean-space-3); padding-bottom: var(--glean-space-2); background: var(--b3-theme-background); border-top: 1px solid var(--glean-border-soft); }
     .glean-formatting__status { display: flex; align-items: center; min-height: 32px; margin: var(--glean-space-2) 0; padding: 0 var(--glean-space-3); border-radius: var(--glean-radius-pill); overflow-wrap: anywhere; color: var(--b3-theme-on-surface); font-size: var(--glean-text-sm); }
     .glean-formatting__status--busy { color: var(--glean-color-action); background: var(--glean-primary-soft); }
     .glean-formatting__status--message { border: 1px solid var(--glean-border-soft); background: var(--glean-status-surface); }

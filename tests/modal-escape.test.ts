@@ -108,6 +108,43 @@ test("原生Popover与宿主外部弹窗优先，不连带关闭预览或外层�
     disposeModal();
 });
 
+test("嵌套Esc栈：内层子面板有局部状态时优先拦截，空闲返回false后逐层回退至外层弹窗", () => {
+    const current = harness();
+    const modal = new FakeElement();
+    const outerPanel = new FakeElement(modal);
+    const innerPanel = new FakeElement(outerPanel);
+    let modalClosed = 0;
+    let outerHandled = 0;
+    let innerActive = true;
+    let outerActive = true;
+    const disposeModal = installModalFocus(modal as unknown as HTMLElement, { onClose: () => { modalClosed += 1; } });
+    const disposeOuter = installEscapeHandler(outerPanel as unknown as HTMLElement, () => {
+        if (!outerActive) return false;
+        outerActive = false;
+        outerHandled += 1;
+        return true;
+    });
+    const disposeInner = installEscapeHandler(innerPanel as unknown as HTMLElement, () => {
+        if (!innerActive) return false;
+        innerActive = false;
+        return true;
+    });
+    current.press(innerPanel);
+    assert.equal(innerActive, false);
+    assert.equal(outerHandled, 0);
+    assert.equal(modalClosed, 0);
+
+    current.press(innerPanel);
+    assert.equal(outerHandled, 1);
+    assert.equal(modalClosed, 0);
+
+    current.press(innerPanel);
+    assert.equal(modalClosed, 1);
+    disposeInner();
+    disposeOuter();
+    disposeModal();
+});
+
 test("工作台弹窗只复用仍连接的实例，并且旧实例关闭回调不释放新实例", () => {
     type Handle = { dialog: { element: HTMLElement }; id: number };
     const elements: Array<{ isConnected: boolean; focusCount: number }> = [];

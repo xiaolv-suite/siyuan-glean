@@ -11,6 +11,7 @@
     import { onMount, tick } from "svelte";
     import type { GleanFacade } from "../types";
     import { t } from "../libs/i18n";
+    import { installEscapeHandler } from "../libs/modal-focus";
     import { writeClip } from "../services/clip-store";
     import { archiveMoveDoc, buildDocPurgeInfo, docHostContext, purgeDoc, recycleDoc, type DocHostContext } from "../services/lifecycle-service";
 
@@ -19,9 +20,11 @@
         docId: string;
         /** svelteDialog 注入的关闭回调 */
         onClose: () => void;
+        registerCloseGuard?: (guard: () => boolean) => () => void;
     }
 
-    let { facade, docId, onClose }: Props = $props();
+    let { facade, docId, onClose, registerCloseGuard }: Props = $props();
+    let rootEl = $state<HTMLElement | null>(null);
     const i18n = $derived(facade.i18n);
     const instanceId = $props.id();
     const idPrefix = `glean-archive-${instanceId}`;
@@ -119,11 +122,19 @@
             onClose();
         }
     }
+    $effect(() => registerCloseGuard?.(() => !pending));
+    $effect(() => {
+        if (!rootEl) return;
+        return installEscapeHandler(rootEl, (event) => {
+            handleWindowKeydown(event);
+            return true;
+        });
+    });
 </script>
 
 <svelte:window onkeydown={handleWindowKeydown} />
 
-<div class="glean-archive-dlg">
+<div class="glean-archive-dlg" bind:this={rootEl}>
     <div class="glean-archive-dlg__hint">
         {t(i18n, "archive.hint")}
         {#if ctx?.hostKind === "archive" || ctx?.hostKind === "recycle"}

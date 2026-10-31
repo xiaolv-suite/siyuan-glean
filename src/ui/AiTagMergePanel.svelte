@@ -1,10 +1,12 @@
 <script lang="ts">
     import { t } from "../libs/i18n";
+    import { installEscapeHandler } from "../libs/modal-focus";
     import { applyAiTagMerge, suggestAiTagMerges, type AiTagMergePlan } from "../services/ai-tag-service";
     import type { GleanFacade } from "../types";
 
     interface Props { facade: GleanFacade }
     let { facade }: Props = $props();
+    let rootEl = $state<HTMLElement | null>(null);
     const i18n = $derived(facade.i18n);
     const instanceId = $props.id();
     const titleId = `glean-ai-tag-merge-title-${instanceId}`;
@@ -94,11 +96,19 @@
             confirmKey = "";
         }
     }
+    $effect(() => {
+        if (!rootEl) return;
+        return installEscapeHandler(rootEl, (event) => {
+            if (!confirmKey && !busy) return false;
+            handleWindowKeydown(event);
+            return true;
+        });
+    });
 </script>
 
 <svelte:window onkeydown={handleWindowKeydown} />
 
-<section class="glean-ai-tag-merge" aria-labelledby={titleId} aria-busy={Boolean(busy)}>
+<section class="glean-ai-tag-merge" bind:this={rootEl} aria-labelledby={titleId} aria-busy={Boolean(busy)}>
     <div class="glean-ai-tag-merge__head">
         <div>
             <h3 id={titleId}>{t(i18n, "aiTagMerge.title")}</h3>

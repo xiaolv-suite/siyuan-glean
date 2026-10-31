@@ -170,19 +170,16 @@ In just 3 minutes, transform scattered clippings into structured knowledge asset
 - **Real-Environment Acceptance**:
   - Automated tests and architectural gates pass 100%. Device-specific touch behaviors, external AI integrations, and real-environment acceptance boundaries are detailed in the [capability matrix](docs/CAPABILITY-MATRIX.md) and [known blockers](docs/BLOCKERS.md).
 
-## v1.4.1 update (2026-10-31)
+## v1.4.2 update (2026-10-31)
 
-This release completes the repository-wide inventory audit, fixes 5 defects across import auto-triage, roaming blind-box navigation, keyboard overlay isolation, folded reader race conditions, and progressive doc slicing, wires AI tag vocabulary alignment end-to-end in `enrich-service.ts`, and aligns snapshot health badges and design tokens across all views.
+This wrap-up release focuses on first-fold UI decluttering, unified keyboard scope and modal `Escape` stack dispatching, HiDPI scaling adaptation, and live isolated Chrome + SiYuan kernel end-to-end verification.
 
-**Fixes, completions & improvements:**
+**Key fixes & polish:**
 
-- **Fix Import Auto-Triage Unknown Duration False-Positive**: Fixes `matchesAutoTriageRule` so rules requiring `minMinutes`/`maxMinutes` or `minWords`/`maxWords` no longer falsely match imported bookmarks lacking word/duration metadata;
-- **Fix Roaming Blind-Box Stuck After Later/Archive**: Fixes `markCurrentLater` and `markCurrentArchive` in `RoamingDrawerDialog` where the `loading` guard prevented `nextPick()` from advancing to the next article;
-- **Fix Global Keyboard Interception & Focus Conflicts**: Preserves native `Enter`/`Space` activation when a button is focused in `RoamingDrawerDialog`, and upgrades modal overlay (`.b3-dialog` / `[aria-modal="true"]`) and host visibility guards in `WorkbenchPreview` and `FoldedReaderView`;
-- **Fix Folded Reader Async Race & Block Jump Fallback**: Guards `refreshFoldNodes` in `ReaderTab` with target document and session generation checks, refreshes folded nodes on document changes, and falls back to `openTab` when a valid block is outside the current DOM viewport;
-- **Fix Doc Slicing Modal Preview & Busy Close Guard**: Automatically closes `DocSlicingDialog` when jumping to a section or after creating slice sub-documents, and blocks `Escape` while creation is in progress;
-- **Wire AI Tag Vocabulary Alignment in Service Layer**: Connects `loadExistingTagVocabulary` from `glean-index.json` into `parseEnrichResponse` inside `enrich-service.ts`;
-- **Cross-View Badge & Token Consistency**: Adds `.glean-snap-badge` to compact/mobile library cards (`.glean-card`), localizes remaining hardcoded strings in `FoldedReaderView`, `RoamingDrawerDialog`, `DocSlicingDialog`, and `HighlightView`, and declares `--glean-radius-20` and `--glean-badge-bg` in `:root`.
+- **First-Fold CTA Restoration & UI Subtraction**: Streamlines Today's Resurface cards to 4 primary controls (`Start Reading`, `Later`, `Archive`, `⋯ More Actions`) so the primary CTA stays visible in the `1280×800` first fold without scrolling; unifies context time-budget selection and Roaming Blind-Box into a single collapsible bar, tucks the 22-key shortcut banner into `? Shortcuts`, and groups secondary citation actions into `ActionPopover` across Highlight and Stats views;
+- **Inline Batch Controls & Continue-Reading Bookmark Fix**: Replaces Electron-unsupported `window.prompt()` in `LibraryBatchBar` with inline text inputs and 1-click `P0–P5` / `0–5★` pills, adds `{ force: true }` to batch author updates, and fixes `applyAttrsToIndex` in `index-store.ts` so `readingPosition` bookmarks appear accurately on the Continue Reading card;
+- **Unified Keyboard Scope & Modal `Escape` Stack**: Scopes global keyboard listeners in `ResurfaceView`, `HighlightView`, `StatsView`, and `WorkbenchPreview` to visible focused containers, upgrades `modal-focus.ts` with reverse-stack `Escape` delegation and `[aria-busy='true']` guards across 12 dialogs/sub-panels, and wraps all modal openers in `createDialogSingleton`;
+- **HiDPI Scaling, Derived-Doc Isolation & Consistency Polish**: Clamps modal containers to `94vw × 88vh` with sticky footers in Flashcard/Formatting dialogs, enables `minmax(220px, 1fr)` horizontal scrolling plus `ActionPopover` and `RestoreDialog` routing on Kanban cards, marks generated outline mindmaps `internal: true` so they never pollute completed stats, adds `D` mark-done shortcut, URL scheme deep links, inline confirmation for Reset Defaults, accessible WeChat green contrast, and crisp non-transparent heatmap tooltips.
 
 ## The Lv plugin family
 
@@ -201,6 +198,20 @@ QQ group: **871707735** for bug reports, feature requests, and discussion.
 
 <details>
 <summary>Historical release notes (click to expand)</summary>
+
+## v1.4.1 update (2026-10-31)
+
+This release completes the repository-wide inventory audit, fixes 5 defects across import auto-triage, roaming blind-box navigation, keyboard overlay isolation, folded reader race conditions, and progressive doc slicing, wires AI tag vocabulary alignment end-to-end in `enrich-service.ts`, and aligns snapshot health badges and design tokens across all views.
+
+**Fixes, completions & improvements:**
+
+- **Fix Import Auto-Triage Unknown Duration False-Positive**: Fixes `matchesAutoTriageRule` so rules requiring `minMinutes`/`maxMinutes` or `minWords`/`maxWords` no longer falsely match imported bookmarks lacking word/duration metadata;
+- **Fix Roaming Blind-Box Stuck After Later/Archive**: Fixes `markCurrentLater` and `markCurrentArchive` in `RoamingDrawerDialog` where the `loading` guard prevented `nextPick()` from advancing to the next article;
+- **Fix Global Keyboard Interception & Focus Conflicts**: Preserves native `Enter`/`Space` activation when a button is focused in `RoamingDrawerDialog`, and upgrades modal overlay (`.b3-dialog` / `[aria-modal="true"]`) and host visibility guards in `WorkbenchPreview` and `FoldedReaderView`;
+- **Fix Folded Reader Async Race & Block Jump Fallback**: Guards `refreshFoldNodes` in `ReaderTab` with target document and session generation checks, refreshes folded nodes on document changes, and falls back to `openTab` when a valid block is outside the current DOM viewport;
+- **Fix Doc Slicing Modal Preview & Busy Close Guard**: Automatically closes `DocSlicingDialog` when jumping to a section or after creating slice sub-documents, and blocks `Escape` while creation is in progress;
+- **Wire AI Tag Vocabulary Alignment in Service Layer**: Connects `loadExistingTagVocabulary` from `glean-index.json` into `parseEnrichResponse` inside `enrich-service.ts`;
+- **Cross-View Badge & Token Consistency**: Adds `.glean-snap-badge` to compact/mobile library cards (`.glean-card`), localizes remaining hardcoded strings in `FoldedReaderView`, `RoamingDrawerDialog`, `DocSlicingDialog`, and `HighlightView`, and declares `--glean-radius-20` and `--glean-badge-bg` in `:root`.
 
 ## v1.4.0 update (2026-10-29)
 

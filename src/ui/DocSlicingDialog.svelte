@@ -48,7 +48,8 @@
         try {
             const result = await createSliceSubDocuments(facade.pluginInstance, context, plan);
             if (result.ok) {
-                showMessage(t(i18n, "docSlicing.createdSuccess", { count: result.createdCount }), 3500);
+                const msg = t(i18n, "docSlicing.createdSuccess", { count: result.createdCount });
+                showMessage(result.failedCount > 0 ? `${msg} (${result.errors[0]})` : msg, 3500);
                 facade.notifyDataChanged();
                 onClose?.();
             } else {

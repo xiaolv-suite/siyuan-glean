@@ -1587,5 +1587,7 @@
   "roaming.snapshotSaved": "Snapshot",
   "roaming.snapshotSavedHint": "Offline HTML snapshot saved",
   "snapshotHealth.scoreBadgeTitle": "${label}: ${desc} (${score})",
-  "highlight.keyboardCursorSelected": "Highlight selected via keyboard"
+  "highlight.keyboardCursorSelected": "Highlight selected via keyboard",
+  "settings.resetConfirmTitle": "Restore default settings?",
+  "settings.resetConfirmDescription": "This resets the draft across all 8 categories (not saved until you click Save)."
 }

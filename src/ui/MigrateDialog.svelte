@@ -4,6 +4,7 @@ import { onMount, tick } from "svelte";
 import { openTab, showMessage } from "siyuan";
 import type { GleanFacade } from "../types";
 import { t } from "../libs/i18n";
+import { installEscapeHandler } from "../libs/modal-focus";
 import {
     buildDryRunReport,
     clearMigrateProgress,
@@ -23,9 +24,11 @@ import {
 interface Props {
     facade: GleanFacade;
     onClose: () => void;
+    registerCloseGuard?: (guard: () => boolean) => () => void;
 }
 
-let { facade, onClose }: Props = $props();
+let { facade, onClose, registerCloseGuard }: Props = $props();
+let rootEl = $state<HTMLElement | null>(null);
 
 const i18n = $derived(facade.i18n);
 const instanceId = $props.id();
@@ -411,11 +414,19 @@ function handleWindowKeydown(event: KeyboardEvent): void {
         onClose();
     }
 }
+$effect(() => registerCloseGuard?.(() => phase !== "running" && !discardBusy && !rowBusyId));
+$effect(() => {
+    if (!rootEl) return;
+    return installEscapeHandler(rootEl, (event) => {
+        handleWindowKeydown(event);
+        return true;
+    });
+});
 </script>
 
 <svelte:window onkeydown={handleWindowKeydown} />
 
-<div class="glean-migrate" data-phase={phase} aria-labelledby={titleId} aria-describedby={descId} aria-busy={progressLoadState === "loading" || phase === "scanning" || phase === "running"}>
+<div class="glean-migrate" bind:this={rootEl} data-phase={phase} aria-labelledby={titleId} aria-describedby={descId} aria-busy={progressLoadState === "loading" || phase === "scanning" || phase === "running"}>
     <div class="glean-dlg-head">
         <div class="glean-brand__mark glean-dlg-head__mark">
             <svg aria-hidden="true"><use href="#iconGleanWheat" /></svg>

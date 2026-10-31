@@ -7,7 +7,7 @@
 import { normalizeAuthor } from "./author.ts";
 import { parseReadingPosition, serializeReadingPosition, type ReadingPosition } from "./reading-position.ts";
 
-export const PLUGIN_VERSION = "1.4.1" as const;
+export const PLUGIN_VERSION = "1.4.2" as const;
 
 export const CLIP_STATUSES = ["inbox", "later", "reading", "done", "archived"] as const;
 export type ClipStatus = (typeof CLIP_STATUSES)[number];

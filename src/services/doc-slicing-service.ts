@@ -3,6 +3,7 @@ import { createDocWithMd } from "../api/client.ts";
 import { formatSliceMarkdown, buildOutlineMindmapMarkdown, type DocSlicePlan } from "../domain/doc-slicing.ts";
 import type { OutlineItem } from "../domain/outline.ts";
 import { writeClip, type ReadingClipContext } from "./clip-store.ts";
+import { loadIndex } from "./index-store.ts";
 
 export interface CreateSliceDocsResult {
     ok: boolean;
@@ -21,8 +22,18 @@ export async function createSliceSubDocuments(
     context: ReadingClipContext,
     plan: DocSlicePlan,
 ): Promise<CreateSliceDocsResult> {
-    const box = context.location?.box;
-    const parentHpath = context.location?.hpath;
+    let box = context.location?.box;
+    let parentHpath = context.location?.hpath;
+    if ((!box || !parentHpath) && context.id && typeof plugin?.loadData === "function") {
+        try {
+            const idx = await loadIndex(plugin);
+            const clip = idx.clips[context.id];
+            if (clip) {
+                box = box || clip.box;
+                parentHpath = parentHpath || clip.hpath;
+            }
+        } catch {}
+    }
     if (!box || !parentHpath) {
         return {
             ok: false,
@@ -111,7 +122,7 @@ export async function createOutlineMindmapDocument(
             throw new Error("创建脑图文档返回的 ID 非法");
         }
         await writeClip(plugin, docId, {
-            status: "done",
+            internal: true,
             aiTags: ["思维导图", "大纲脑图"],
             summary: `从长文《${context.title}》提取的原生思维导图`,
         }, { force: true });

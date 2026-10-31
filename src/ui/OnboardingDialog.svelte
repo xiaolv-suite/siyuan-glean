@@ -4,6 +4,7 @@
 import { onDestroy, onMount } from "svelte";
 import { listNotebooks, type NotebookMeta } from "../api/client";
 import { t } from "../libs/i18n";
+import { installEscapeHandler } from "../libs/modal-focus";
 import type { GleanFacade } from "../types";
 import { loadUiPrefs, saveUiPrefs, type OnboardingStep } from "../services/prefs";
 import { scanPreview, type ScanPreview } from "../services/clip-store";
@@ -11,9 +12,11 @@ import { scanPreview, type ScanPreview } from "../services/clip-store";
 interface Props {
     facade: GleanFacade;
     onClose: () => void;
+    registerCloseGuard?: (guard: () => boolean) => () => void;
 }
 
-let { facade, onClose }: Props = $props();
+let { facade, onClose, registerCloseGuard }: Props = $props();
+let rootEl = $state<HTMLElement | null>(null);
 
 const i18n = $derived(facade.i18n);
 const instanceId = $props.id();
@@ -259,11 +262,19 @@ function handleWindowKeydown(event: KeyboardEvent): void {
         continueLater();
     }
 }
+$effect(() => registerCloseGuard?.(() => !actionBusy && !scanning));
+$effect(() => {
+    if (!rootEl) return;
+    return installEscapeHandler(rootEl, (event) => {
+        handleWindowKeydown(event);
+        return true;
+    });
+});
 </script>
 
 <svelte:window onkeydown={handleWindowKeydown} />
 
-<div class="glean-migrate glean-onboarding" class:glean-onboarding--scanning={scanning} aria-labelledby={titleId} aria-describedby={descId} aria-busy={scanning || actionBusy}>
+<div class="glean-migrate glean-onboarding" bind:this={rootEl} class:glean-onboarding--scanning={scanning} aria-labelledby={titleId} aria-describedby={descId} aria-busy={scanning || actionBusy}>
     <div class="glean-dlg-head">
         <div class="glean-brand__mark glean-dlg-head__mark">
             <svg aria-hidden="true"><use href="#iconGleanWheat" /></svg>

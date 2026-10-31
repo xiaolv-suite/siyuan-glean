@@ -3,6 +3,7 @@
     import { showMessage } from "siyuan";
     import type { GleanFacade } from "../types";
     import { t } from "../libs/i18n";
+    import { installEscapeHandler } from "../libs/modal-focus";
     import { createLatestRequestGate } from "../libs/latest-request";
     import { MAX_BACKUP_BYTES, generateBackupFilename } from "../domain/backup";
     import { ATTR } from "../domain/schema";
@@ -10,6 +11,7 @@
 
     interface Props { facade: GleanFacade; settingsDirty?: boolean; settingsBusy?: boolean; onPreferencesRestored?: () => void }
     let { facade, settingsDirty = false, settingsBusy = false, onPreferencesRestored }: Props = $props();
+    let rootEl = $state<HTMLElement | null>(null);
     const i18n = $derived(facade.i18n);
     const instanceId = $props.id();
     const titleId = `glean-backup-title-${instanceId}`;
@@ -162,11 +164,19 @@
             }
         }
     }
+    $effect(() => {
+        if (!rootEl) return;
+        return installEscapeHandler(rootEl, (event) => {
+            if (!busy && !session) return false;
+            handleWindowKeydown(event);
+            return true;
+        });
+    });
 </script>
 
 <svelte:window onkeydown={handleWindowKeydown} />
 
-<section class="glean-backup" aria-labelledby={titleId} aria-busy={Boolean(busy)}>
+<section class="glean-backup" bind:this={rootEl} aria-labelledby={titleId} aria-busy={Boolean(busy)}>
     <header class="glean-backup__head">
         <div>
             <h3 id={titleId}>{t(i18n, "backup.title")}</h3>

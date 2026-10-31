@@ -14,6 +14,7 @@ import {
 } from "../services/import-service";
 import type { ImportFormat } from "../domain/importers";
 import { t } from "../libs/i18n";
+import { installEscapeHandler } from "../libs/modal-focus";
 import type { GleanFacade } from "../types";
 import { ImportProgressError, summarizeImportProgress, type ImportProgress } from "../domain/import-progress";
 import { discardImportProgress, fingerprintImportSource, loadImportProgress } from "../services/import-progress";
@@ -25,9 +26,11 @@ const MAX_IMPORT_BYTES = 32 * 1024 * 1024;
 interface Props {
     facade: GleanFacade;
     onClose: () => void;
+    registerCloseGuard?: (guard: () => boolean) => () => void;
 }
 
-let { facade, onClose }: Props = $props();
+let { facade, onClose, registerCloseGuard }: Props = $props();
+let rootEl = $state<HTMLElement | null>(null);
 
 const i18n = $derived(facade.i18n);
 const instanceId = $props.id();
@@ -323,11 +326,19 @@ function handleWindowKeydown(event: KeyboardEvent): void {
         onClose();
     }
 }
+$effect(() => registerCloseGuard?.(() => phase !== "importing" && !busy && !stopping && !progressLoading));
+$effect(() => {
+    if (!rootEl) return;
+    return installEscapeHandler(rootEl, (event) => {
+        handleWindowKeydown(event);
+        return true;
+    });
+});
 </script>
 
 <svelte:window onkeydown={handleWindowKeydown} />
 
-<div class="glean-migrate glean-import" class:glean-import--busy={busy} data-phase={phase} aria-labelledby={titleId} aria-describedby={descId} aria-busy={busy}>
+<div class="glean-migrate glean-import" bind:this={rootEl} class:glean-import--busy={busy} data-phase={phase} aria-labelledby={titleId} aria-describedby={descId} aria-busy={busy}>
     <!-- 保持同一文件控件：导入/完成/暂停切换不能遗留被卸载的绑定或失去下一次选择。 -->
     <input bind:this={fileInput} type="file" accept=".html,.htm,.csv,.json,.txt" class="glean-hidden-file-input" disabled={busy} onchange={(event) => void onFileChosen(event)} />
     <div class="glean-dlg-head glean-import__head">

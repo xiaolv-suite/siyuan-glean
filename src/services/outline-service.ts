@@ -15,7 +15,13 @@ export async function loadReadingOutline(rootId: string, isCurrent: () => boolea
         if (!Array.isArray(page) || page.length > PAGE_SIZE || page.some((row) => !row || row.root_id !== rootId || row.type !== "h"
             || !/^\d{14}-[0-9a-z]{7}$/.test(row.id) || !/^h[1-6]$/.test(row.subtype ?? "")
             || !Number.isSafeInteger(row.sort) || row.sort < 0 || typeof row.content !== "string")) throw new Error("Invalid outline page");
-        rows.push(...page);
+        const seenInPage = new Set<string>();
+        for (const r of page) {
+            if (!seenInPage.has(r.id)) {
+                seenInPage.add(r.id);
+                rows.push(r);
+            }
+        }
         if (page.length < PAGE_SIZE) break;
         const last = page[page.length - 1];
         if (!last || last.sort < afterSort || (last.sort === afterSort && last.id <= afterId)) throw new Error("Outline cursor did not advance");
@@ -25,7 +31,7 @@ export async function loadReadingOutline(rootId: string, isCurrent: () => boolea
     const items = buildOutline(rows, rootId);
     if (!rows.length) return [];
     const headings = new Map(rows.map((row) => [row.id, row]));
-    if (headings.size !== rows.length) throw new Error("Duplicate outline heading");
+    if (headings.size !== rows.length) throw new Error("Duplicate outline heading: cursor did not advance");
     const displayIds = new Set(items.map((item) => item.id));
     const ordered: string[] = [];
     const seen = new Set<string>([rootId]);

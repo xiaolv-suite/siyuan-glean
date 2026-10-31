@@ -147,6 +147,7 @@ function clearAnchorNotebooks(): void {
 
 function canCloseSettings(): boolean {
     if (saveBusy) return false;
+    if (confirmResetOpen) return false;
     if (confirmDiscardOpen) return false;
     if (draftDirty) {
         confirmDiscardOpen = true;
@@ -155,6 +156,9 @@ function canCloseSettings(): boolean {
     }
     return true;
 }
+
+let confirmResetOpen = $state(false);
+let cancelResetButton = $state<HTMLButtonElement | null>(null);
 
 function keepEditing(): void {
     confirmDiscardOpen = false;
@@ -234,6 +238,10 @@ $effect(() => {
     const root = settingsRoot;
     if (!root) return;
     const onEscape = (_event: KeyboardEvent) => {
+        if (confirmResetOpen) {
+            confirmResetOpen = false;
+            return true;
+        }
         if (confirmDiscardOpen) {
             keepEditing();
             return true;
@@ -481,6 +489,7 @@ function cancel() {
 
 function resetDefaults() {
     loadDraft(cloneSettings(DEFAULT_SETTINGS));
+    confirmResetOpen = false;
 }
 
 function toggleAi(key: "dedup" | "related" | "actions") {
@@ -688,14 +697,25 @@ async function doMountBoard() {
                 </div>
             </div>
             <div class="glean-palette-grid" role="radiogroup" aria-label={t(i18n, "settings.themePalette")}>
-                {#each THEME_PALETTES as palette (palette.id)}
+                {#each THEME_PALETTES as palette, idx (palette.id)}
                     <button
                         type="button"
                         class="glean-palette-card"
                         class:glean-palette-card--active={currentThemePalette === palette.id}
                         role="radio"
                         aria-checked={currentThemePalette === palette.id}
+                        tabindex={currentThemePalette === palette.id ? 0 : -1}
                         onclick={() => void selectThemePalette(palette.id)}
+                        onkeydown={(e) => {
+                            if (e.key !== "ArrowRight" && e.key !== "ArrowDown" && e.key !== "ArrowLeft" && e.key !== "ArrowUp") return;
+                            e.preventDefault();
+                            const delta = e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : -1;
+                            const nextIdx = (idx + delta + THEME_PALETTES.length) % THEME_PALETTES.length;
+                            const nextPalette = THEME_PALETTES[nextIdx];
+                            void selectThemePalette(nextPalette.id);
+                            const cards = (e.currentTarget as HTMLElement).parentElement?.querySelectorAll<HTMLButtonElement>('[role="radio"]');
+                            cards?.[nextIdx]?.focus();
+                        }}
                     >
                         <div class="glean-palette-preview" style="background: linear-gradient(135deg, {palette.brand} 0%, {palette.brandHover} 100%);">
                             <span class="glean-palette-dot" style="background: {palette.accentWheat};"></span>
@@ -852,27 +872,27 @@ async function doMountBoard() {
                 <div class="glean-set-row__lb">{t(i18n, "settings.aiSummaryActions")}</div>
                 <button class="glean-sw" class:glean-sw--on={aiActions} aria-label={t(i18n, "settings.aiSummaryActions")} aria-pressed={aiActions} onclick={() => void toggleAi("actions")}></button>
             </div>
-            <label class="glean-set-row glean-settings__ai-toggle">
-                <span class="glean-set-row__lb">
+            <div class="glean-set-row">
+                <div class="glean-set-row__lb">
                     {t(i18n, "author.suggestion.enable")}
-                    <span class="glean-set-row__desc">{t(i18n, "author.suggestion.enableHint")}</span>
-                </span>
-                <input type="checkbox" bind:checked={aiAuthorSuggestion} />
-            </label>
-            <label class="glean-set-row glean-settings__ai-toggle">
-                <span class="glean-set-row__lb">
+                    <div class="glean-set-row__desc">{t(i18n, "author.suggestion.enableHint")}</div>
+                </div>
+                <button type="button" role="switch" class="glean-sw" class:glean-sw--on={aiAuthorSuggestion} aria-label={t(i18n, "author.suggestion.enable")} aria-checked={aiAuthorSuggestion} onclick={() => { aiAuthorSuggestion = !aiAuthorSuggestion; }}></button>
+            </div>
+            <div class="glean-set-row">
+                <div class="glean-set-row__lb">
                     {t(i18n, "flashcard.aiEnable")}
-                    <span class="glean-set-row__desc">{t(i18n, "flashcard.aiEnableHint")}</span>
-                </span>
-                <input type="checkbox" bind:checked={aiQuestionCard} />
-            </label>
-            <label class="glean-set-row glean-settings__ai-toggle">
-                <span class="glean-set-row__lb">
+                    <div class="glean-set-row__desc">{t(i18n, "flashcard.aiEnableHint")}</div>
+                </div>
+                <button type="button" role="switch" class="glean-sw" class:glean-sw--on={aiQuestionCard} aria-label={t(i18n, "flashcard.aiEnable")} aria-checked={aiQuestionCard} onclick={() => { aiQuestionCard = !aiQuestionCard; }}></button>
+            </div>
+            <div class="glean-set-row">
+                <div class="glean-set-row__lb">
                     {t(i18n, "reader.articleQuestion.enable")}
-                    <span class="glean-set-row__desc">{t(i18n, "reader.articleQuestion.enableHint")}</span>
-                </span>
-                <input type="checkbox" bind:checked={aiArticleQuestion} />
-            </label>
+                    <div class="glean-set-row__desc">{t(i18n, "reader.articleQuestion.enableHint")}</div>
+                </div>
+                <button type="button" role="switch" class="glean-sw" class:glean-sw--on={aiArticleQuestion} aria-label={t(i18n, "reader.articleQuestion.enable")} aria-checked={aiArticleQuestion} onclick={() => { aiArticleQuestion = !aiArticleQuestion; }}></button>
+            </div>
         </div>
     </div>
 
@@ -1182,11 +1202,20 @@ async function doMountBoard() {
                     <button class="glean-btn glean-btn--danger" bind:this={discardButton} onclick={discardAndClose}>{t(i18n, "settings.discardAndClose")}</button>
                 </div>
             </div>
+        {:else if confirmResetOpen}
+            <div class="glean-settings__close-confirm" role="group" aria-live="assertive" aria-labelledby={`${idPrefix}-reset-title`} aria-describedby={`${idPrefix}-reset-description`}>
+                <strong id={`${idPrefix}-reset-title`}>{t(i18n, "settings.resetConfirmTitle")}</strong>
+                <span id={`${idPrefix}-reset-description`}>{t(i18n, "settings.resetConfirmDescription")}</span>
+                <div class="glean-settings__close-confirm-actions">
+                    <button class="glean-btn glean-btn--ghost" bind:this={cancelResetButton} onclick={() => { confirmResetOpen = false; }}>{t(i18n, "action.cancel")}</button>
+                    <button class="glean-btn glean-btn--danger" onclick={resetDefaults}>{t(i18n, "settings.resetDefaults")}</button>
+                </div>
+            </div>
         {:else}
             <div class="glean-settings__status" class:glean-settings__status--dirty={draftDirty} aria-live="polite">
                 {#if draftDirty}{t(i18n, "settings.unsavedChanges")}{:else}{t(i18n, "settings.saved")}{/if}
             </div>
-            <button class="glean-btn" disabled={saveBusy} onclick={resetDefaults}>
+            <button class="glean-btn" disabled={saveBusy} onclick={() => { confirmResetOpen = true; void tick().then(() => cancelResetButton?.focus()); }}>
                 {t(i18n, "settings.resetDefaults")}
             </button>
             <button class="glean-btn" disabled={saveBusy} onclick={cancel}>
@@ -1576,56 +1605,6 @@ async function doMountBoard() {
         box-shadow: none;
     }
 
-    .glean-settings__ai-toggle input[type="checkbox"] {
-        appearance: none;
-        position: relative;
-        box-sizing: border-box;
-        width: 40px;
-        height: 24px;
-        margin: 0;
-        flex: 0 0 auto;
-        border: 1px solid color-mix(in srgb, var(--b3-border-color) 50%, transparent);
-        border-radius: var(--glean-radius-pill);
-        background: var(--glean-inset-surface);
-        box-shadow: none;
-        cursor: pointer;
-        transition: background-color var(--glean-duration-fast) var(--glean-ease-enter), border-color var(--glean-duration-fast) var(--glean-ease-enter);
-    }
-
-    .glean-settings__ai-toggle input[type="checkbox"]::after {
-        content: "";
-        position: absolute;
-        top: 3px;
-        left: 3px;
-        width: 16px;
-        height: 16px;
-        border-radius: 50%;
-        background: var(--b3-theme-on-surface);
-        box-shadow: var(--glean-shadow-control);
-        transition: transform var(--glean-duration-fast) var(--glean-ease-enter), background-color var(--glean-duration-fast) var(--glean-ease-enter);
-    }
-
-    .glean-settings__ai-toggle input[type="checkbox"]:checked {
-        border-color: var(--glean-color-action);
-        background: var(--glean-color-action);
-        box-shadow: none;
-    }
-
-    .glean-settings__ai-toggle input[type="checkbox"]:checked::after {
-        transform: translateX(16px);
-        background: var(--b3-theme-on-primary);
-    }
-
-    .glean-settings__ai-toggle input[type="checkbox"]:focus-visible {
-        outline: none;
-        box-shadow: var(--glean-shadow-focus);
-    }
-
-    .glean-settings__ai-toggle input[type="checkbox"]:disabled {
-        cursor: default;
-        opacity: 0.5;
-    }
-
     .glean-settings .glean-nb.glean-nb--on {
         border-color: color-mix(in srgb, var(--b3-theme-primary) 52%, var(--glean-border-soft));
         background: var(--glean-primary-soft);
@@ -1738,20 +1717,6 @@ async function doMountBoard() {
         .glean-nb-search__clear {
             min-width: 44px;
         }
-
-        .glean-settings__ai-toggle input[type="checkbox"] {
-            width: 44px;
-            height: 26px;
-        }
-
-        .glean-settings__ai-toggle input[type="checkbox"]::after {
-            width: 18px;
-            height: 18px;
-        }
-
-        .glean-settings__ai-toggle input[type="checkbox"]:checked::after {
-            transform: translateX(17px);
-        }
     }
 
     @media (forced-colors: active) {
@@ -1771,9 +1736,7 @@ async function doMountBoard() {
     @media (prefers-reduced-motion: reduce) {
         .glean-settings__tab,
         .glean-palette-card,
-        .glean-settings .glean-nb,
-        .glean-settings__ai-toggle input[type="checkbox"],
-        .glean-settings__ai-toggle input[type="checkbox"]::after {
+        .glean-settings .glean-nb {
             transition: none !important;
             transform: none !important;
         }

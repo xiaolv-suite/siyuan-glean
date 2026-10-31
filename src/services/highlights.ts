@@ -42,7 +42,11 @@ interface QualifiedRoot {
     qualified: boolean;
 }
 
-async function readRoots(ids: readonly string[], requireClipAttrs = true): Promise<Map<string, QualifiedRoot>> {
+async function readRoots(
+    ids: readonly string[],
+    requireClipAttrs = true,
+    fallbackClips?: Record<string, { title?: string; box?: string; hpath?: string }>,
+): Promise<Map<string, QualifiedRoot>> {
     if (ids.some((id) => !isHighlightId(id))) throw new HighlightExportError("invalid");
     const roots = new Map<string, QualifiedRoot>();
     for (let offset = 0; offset < ids.length; offset += 200) {
@@ -50,12 +54,16 @@ async function readRoots(ids: readonly string[], requireClipAttrs = true): Promi
         const [documents, pairs] = await Promise.all([listHighlightDocuments(batch), batchReadClipAttrs([...batch])]);
         const attributes = new Map(pairs.map((pair) => [pair.id, pair.attrs]));
         for (const id of batch) {
-            const document = documents.find((row) => row.id === id);
+            const docRow = documents.find((row) => row.id === id);
+            const fallback = fallbackClips?.[id];
+            const box = docRow?.box || fallback?.box || "";
+            const hpath = docRow?.hpath || fallback?.hpath || "";
+            const title = docRow?.content || fallback?.title || "";
             const ial = attributes.get(id);
-            if (!document?.box || !document.hpath || (requireClipAttrs && !ial)) throw new HighlightExportError("readFailed");
+            if (!box || !hpath || (requireClipAttrs && !ial)) throw new HighlightExportError("readFailed");
             const attrs = parseClipAttrs(ial ?? {});
             roots.set(id, {
-                root: { id, title: document.content || "", box: document.box, hpath: document.hpath, site: attrs.site ?? "", tags: parseUserTags(ial?.tags), aiTags: attrs.aiTags, url: attrs.url ?? "" },
+                root: { id, title, box, hpath, site: attrs.site ?? "", tags: parseUserTags(ial?.tags), aiTags: attrs.aiTags, url: attrs.url ?? "" },
                 qualified: Boolean(attrs.status) && !attrs.internal,
             });
         }
@@ -81,10 +89,14 @@ async function collectHighlights(roots: Map<string, QualifiedRoot>): Promise<Hig
         const allowed = new Set(batch);
         let cursor = "";
         while (true) {
+            const pageStartCursor = cursor;
             const page = await listHighlightBlocks(batch, cursor, 500);
             if (page.length > 500) throw new HighlightExportError("readFailed");
             for (const row of page) {
-                if (!isHighlightId(row.id) || row.id <= cursor || !allowed.has(row.root_id)) throw new HighlightExportError("readFailed");
+                if (!isHighlightId(row.id) || row.id < cursor || (pageStartCursor && row.id <= pageStartCursor) || !allowed.has(row.root_id)) {
+                    throw new HighlightExportError("readFailed");
+                }
+                if (row.id === cursor) continue;
                 cursor = row.id;
                 const item = toHighlight(row, roots.get(row.root_id)!.root);
                 if (item) items.push(item);
@@ -172,7 +184,7 @@ export async function listDocHighlights(rootDocId: string): Promise<HighlightIte
 export async function listLibraryHighlights(plugin: Plugin, settings: GleanSettings): Promise<HighlightItem[]> {
     const index = await reconcileIndex(plugin, settings);
     const ids = Object.values(index.clips).filter((entry) => CLIP_STATUSES.some((status) => status === entry.status)).map((entry) => entry.id);
-    const roots = await readRoots([...new Set(ids)]);
+    const roots = await readRoots([...new Set(ids)], true, index.clips);
     for (const [id, value] of roots) if (!value.qualified) roots.delete(id);
     return collectHighlights(roots);
 }
@@ -275,6 +287,8 @@ export async function saveHighlightDraft(plugin: Plugin, session: HighlightExpor
     }
 }
 
+const articleHighlightDraftCache = new Map<string, { docId: string; box: string; hpath: string }>();
+
 /**
  * 将整篇文章的所有摘录直接沉淀为思源笔记文档（知识回流闭环）。
  * 文档标为 internal 避免被误入读库候选，严格遵守数据主权。
@@ -304,12 +318,25 @@ export async function createArticleHighlightsDoc(
     const lastSlash = (hpath || "").lastIndexOf("/");
     const parent = lastSlash > 0 ? hpath.slice(0, lastSlash) : "";
     const safeTitle = (group.title || "未命名").replace(/[\\/\u0000-\u001f]/g, " ").trim().slice(0, 100);
-    const targetHpath = `${parent}/[${labels.title}] ${safeTitle} ${newNodeId()}`;
-    const markdown = renderArticleHighlightsMarkdown(group, labels);
 
     try {
-        const docId = await createDocWithMd(box, targetHpath, markdown);
-        if (!isHighlightId(docId)) return { ok: false, reason: "createFailed" };
+        let docId = "";
+        let targetHpath = "";
+        const cached = articleHighlightDraftCache.get(group.rootId);
+        if (cached && cached.box === box) {
+            const docs = await listHighlightDocuments([cached.docId]).catch(() => []);
+            if (docs[0]?.id === cached.docId) {
+                docId = cached.docId;
+                targetHpath = cached.hpath;
+            }
+        }
+        if (!docId) {
+            targetHpath = `${parent}/[${labels.title}] ${safeTitle} ${newNodeId()}`;
+            const markdown = renderArticleHighlightsMarkdown(group, labels);
+            docId = await createDocWithMd(box, targetHpath, markdown);
+            if (!isHighlightId(docId)) return { ok: false, reason: "createFailed" };
+            articleHighlightDraftCache.set(group.rootId, { docId, box, hpath: targetHpath });
+        }
         await writeClip(plugin, docId, { internal: true });
         return { ok: true, docId };
     } catch (error) {
