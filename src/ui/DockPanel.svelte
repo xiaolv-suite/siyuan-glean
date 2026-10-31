@@ -3151,30 +3151,6 @@ function metaLine(entry: Row): string {
     {/if}
 
     {#if view === "library"}
-        {#if !isTabCanvas}
-            <div class="glean-stat-strip" role="region" aria-label={t(i18n, "stats.total")}>
-                <button type="button" class="glean-stat-strip__item" onclick={() => selectQueue("inbox")}>
-                    <span class="glean-stat-strip__val">{totalClips}</span>
-                    <span class="glean-stat-strip__lbl">{t(i18n, "stats.total")}</span>
-                </button>
-                <div class="glean-stat-strip__divider" aria-hidden="true"></div>
-                <button type="button" class="glean-stat-strip__item" class:glean-stat-strip__item--active={activeQueue === "inbox"} onclick={() => selectQueue("inbox")}>
-                    <span class="glean-stat-strip__val">{queueStats.counts.inbox}</span>
-                    <span class="glean-stat-strip__lbl">{t(i18n, "status.inbox")}</span>
-                </button>
-                <div class="glean-stat-strip__divider" aria-hidden="true"></div>
-                <button type="button" class="glean-stat-strip__item" class:glean-stat-strip__item--active={activeQueue === "reading"} onclick={() => selectQueue("reading")}>
-                    <span class="glean-stat-strip__val">{queueStats.counts.reading}</span>
-                    <span class="glean-stat-strip__lbl">{t(i18n, "status.reading")}</span>
-                </button>
-                <div class="glean-stat-strip__divider" aria-hidden="true"></div>
-                <button type="button" class="glean-stat-strip__item glean-stat-strip__item--done" class:glean-stat-strip__item--active={activeQueue === "done"} onclick={() => selectQueue("done")}>
-                    <span class="glean-stat-strip__val">{queueStats.counts.done}</span>
-                    <span class="glean-stat-strip__lbl">{t(i18n, "status.done")}</span>
-                </button>
-            </div>
-        {/if}
-
         <InboxSection {facade} onMutated={() => void reload()} />
         <AiBatchPanel {facade} bind:open={aiBatchOpen} docIds={aiBatchIds} />
 
@@ -3192,7 +3168,7 @@ function metaLine(entry: Row): string {
             {/each}
         </nav>
 
-        {#if !facade.isMobile}
+        {#if !facade.isMobile && isTabCanvas}
             <details class="glean-kbdhint-fold">
                 <summary class="glean-kbdhint-fold__summary"><kbd>?</kbd> <span>{t(i18n, "reader.shortcuts")}</span></summary>
                 <div class="glean-kbdhint" class:glean-kbdhint--active={Boolean(keyboardEntry)}>
@@ -3241,7 +3217,18 @@ function metaLine(entry: Row): string {
                 <span class="glean-mobile-filter-results" role="status" aria-live="polite">{t(i18n, "library.resultCount", { n: rows.length })}</span>
             </div>
         {:else if !isTabCanvas}
-            <LibraryFilters {i18n} {facets} {tagAliases} onManageTagAliases={openTagAliasManager} bind:site={selectedSite} bind:author={selectedAuthor} bind:tag={selectedTag} bind:aiTag={selectedAiTag} bind:source={selectedSource} bind:timeSource={selectedTimeSource} bind:contentType={selectedContentType} bind:readingTimeTier={selectedReadingTimeTier} bind:favoriteOnly={selectedFavoriteOnly} bind:sortBy bind:direction={sortDirection} {hasFilters} onClear={clearUserFilters} {sourceLabel} {facetLabel} />
+            <details class="glean-saved-views-fold glean-filters-fold" class:glean-filters-fold--active={hasFilters}>
+                <summary class="glean-saved-views-fold__summary">
+                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSearch" /></svg>
+                    <span>{hasFilters ? `${t(i18n, "library.filters")} (${t(i18n, "library.activeFilters")})` : t(i18n, "library.filters")}</span>
+                    {#if hasFilters}
+                        <button type="button" class="glean-mini-tag glean-mini-tag--clear" onclick={(e) => { e.preventDefault(); e.stopPropagation(); clearUserFilters(); }}>{t(i18n, "library.clearFilters")}</button>
+                    {/if}
+                </summary>
+                <div class="glean-filters-fold__content">
+                    <LibraryFilters {i18n} {facets} {tagAliases} onManageTagAliases={openTagAliasManager} bind:site={selectedSite} bind:author={selectedAuthor} bind:tag={selectedTag} bind:aiTag={selectedAiTag} bind:source={selectedSource} bind:timeSource={selectedTimeSource} bind:contentType={selectedContentType} bind:readingTimeTier={selectedReadingTimeTier} bind:favoriteOnly={selectedFavoriteOnly} bind:sortBy bind:direction={sortDirection} {hasFilters} onClear={clearUserFilters} {sourceLabel} {facetLabel} />
+                </div>
+            </details>
         {/if}
 
         {#if isTabCanvas}
