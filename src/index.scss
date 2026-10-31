@@ -3013,12 +3013,32 @@ mark.glean-search-highlight {
     }
 }
 
+.glean-saved-views-fold {
+    border-bottom: 1px solid var(--glean-border-soft);
+    background: var(--glean-section-surface);
+
+    &__summary {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 12px;
+        font-size: var(--glean-text-xs);
+        color: var(--b3-theme-on-surface);
+        cursor: pointer;
+        user-select: none;
+
+        &:hover {
+            color: var(--b3-theme-primary);
+        }
+    }
+}
+
 .glean-saved-views {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
     gap: var(--glean-space-1-5);
-    padding: var(--glean-space-1-25) var(--glean-space-2-5);
+    padding: var(--glean-space-1) var(--glean-space-2-5);
     border-bottom: 1px solid var(--glean-border-soft);
 }
 
@@ -6333,6 +6353,25 @@ mark.glean-search-highlight {
     }
 }
 
+/* 导读档案卡片紧凑排版，大幅压缩纵向高度并释放正文空间 */
+[custom-glean-slot="meta-callout"],
+.protyle-wysiwyg [custom-glean-slot="meta-callout"],
+.b3-typography [custom-glean-slot="meta-callout"] {
+    margin-block: 6px 12px !important;
+    padding: 8px 14px !important;
+    font-size: 0.88em !important;
+    line-height: 1.42 !important;
+    background: color-mix(in srgb, var(--b3-theme-primary) 5%, var(--b3-theme-surface)) !important;
+    border-left: 3px solid var(--b3-theme-primary) !important;
+    border-radius: var(--glean-radius-sm) !important;
+    overflow-wrap: break-word;
+
+    p, .p, div {
+        margin-block: 2px !important;
+        line-height: 1.42 !important;
+    }
+}
+
 /* 三档画布宽幅适配：Dock、Tab、独立浮窗统一由 glean-workbench 容器驱动 */
 @container glean-workbench (min-width: 600px) {
     .glean-list {
@@ -6368,7 +6407,48 @@ mark.glean-search-highlight {
 .glean-drow--preview { outline: none; box-shadow: inset 3px 0 0 var(--b3-theme-primary); background: var(--glean-selection-surface); }
 .glean-preview { display: flex; flex: 1; min-width: 0; min-height: 0; flex-direction: column; background: transparent; color: var(--b3-theme-on-background); }
 .glean-preview__header, .glean-preview__actions, .glean-preview__url, .glean-preview__excerpt { display: flex; flex-wrap: wrap; align-items: center; gap: var(--glean-space-1-5); padding: var(--glean-space-2); border-bottom: 1px solid var(--glean-border-soft); }
-.glean-preview__header { position: sticky; top: 0; z-index: var(--glean-z-sticky); padding: 10px 12px; background: color-mix(in srgb, var(--b3-theme-surface) 90%, transparent); backdrop-filter: blur(12px); }
+.glean-preview__header { position: sticky; top: 0; z-index: var(--glean-z-sticky); padding: 6px 12px; min-height: 38px; background: color-mix(in srgb, var(--b3-theme-surface) 90%, transparent); backdrop-filter: blur(12px); }
+.glean-preview__toolbar {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    flex-wrap: wrap !important;
+    padding: 6px 12px !important;
+    gap: var(--glean-space-2) !important;
+    min-height: 34px !important;
+    border-bottom: 1px solid var(--glean-border-soft);
+    background: var(--glean-inset-surface);
+}
+.glean-preview__meta-left {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.glean-preview__status-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+.glean-preview__actions--compact {
+    padding: 0 !important;
+    border-bottom: none !important;
+    background: transparent !important;
+    gap: 4px !important;
+}
+.glean-btn--sm {
+    height: 24px !important;
+    min-height: 24px !important;
+    padding: 0 8px !important;
+    font-size: 11px !important;
+    border-radius: var(--glean-radius-sm) !important;
+}
 .glean-preview__header strong { flex: 1 1 160px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; line-height: 1.35; }
 .glean-preview__header .glean-btn { min-height: var(--glean-btn-height-sm); }
 .glean-preview__actions { padding: 8px 12px; background: var(--glean-inset-surface); }

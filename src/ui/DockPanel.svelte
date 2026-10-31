@@ -3151,33 +3151,33 @@ function metaLine(entry: Row): string {
     {/if}
 
     {#if view === "library"}
-        <div class="glean-stat-strip" role="region" aria-label={t(i18n, "stats.total")}>
-            <button type="button" class="glean-stat-strip__item" onclick={() => selectQueue("inbox")}>
-                <span class="glean-stat-strip__val">{totalClips}</span>
-                <span class="glean-stat-strip__lbl">{t(i18n, "stats.total")}</span>
-            </button>
-            <div class="glean-stat-strip__divider" aria-hidden="true"></div>
-            <button type="button" class="glean-stat-strip__item" class:glean-stat-strip__item--active={activeQueue === "inbox"} onclick={() => selectQueue("inbox")}>
-                <span class="glean-stat-strip__val">{queueStats.counts.inbox}</span>
-                <span class="glean-stat-strip__lbl">{t(i18n, "status.inbox")}</span>
-            </button>
-            <div class="glean-stat-strip__divider" aria-hidden="true"></div>
-            <button type="button" class="glean-stat-strip__item" class:glean-stat-strip__item--active={activeQueue === "reading"} onclick={() => selectQueue("reading")}>
-                <span class="glean-stat-strip__val">{queueStats.counts.reading}</span>
-                <span class="glean-stat-strip__lbl">{t(i18n, "status.reading")}</span>
-            </button>
-            <div class="glean-stat-strip__divider" aria-hidden="true"></div>
-            <button type="button" class="glean-stat-strip__item glean-stat-strip__item--done" class:glean-stat-strip__item--active={activeQueue === "done"} onclick={() => selectQueue("done")}>
-                <span class="glean-stat-strip__val">{queueStats.counts.done}</span>
-                <span class="glean-stat-strip__lbl">{t(i18n, "status.done")}</span>
-            </button>
-        </div>
+        {#if !isTabCanvas}
+            <div class="glean-stat-strip" role="region" aria-label={t(i18n, "stats.total")}>
+                <button type="button" class="glean-stat-strip__item" onclick={() => selectQueue("inbox")}>
+                    <span class="glean-stat-strip__val">{totalClips}</span>
+                    <span class="glean-stat-strip__lbl">{t(i18n, "stats.total")}</span>
+                </button>
+                <div class="glean-stat-strip__divider" aria-hidden="true"></div>
+                <button type="button" class="glean-stat-strip__item" class:glean-stat-strip__item--active={activeQueue === "inbox"} onclick={() => selectQueue("inbox")}>
+                    <span class="glean-stat-strip__val">{queueStats.counts.inbox}</span>
+                    <span class="glean-stat-strip__lbl">{t(i18n, "status.inbox")}</span>
+                </button>
+                <div class="glean-stat-strip__divider" aria-hidden="true"></div>
+                <button type="button" class="glean-stat-strip__item" class:glean-stat-strip__item--active={activeQueue === "reading"} onclick={() => selectQueue("reading")}>
+                    <span class="glean-stat-strip__val">{queueStats.counts.reading}</span>
+                    <span class="glean-stat-strip__lbl">{t(i18n, "status.reading")}</span>
+                </button>
+                <div class="glean-stat-strip__divider" aria-hidden="true"></div>
+                <button type="button" class="glean-stat-strip__item glean-stat-strip__item--done" class:glean-stat-strip__item--active={activeQueue === "done"} onclick={() => selectQueue("done")}>
+                    <span class="glean-stat-strip__val">{queueStats.counts.done}</span>
+                    <span class="glean-stat-strip__lbl">{t(i18n, "status.done")}</span>
+                </button>
+            </div>
+        {/if}
 
         <InboxSection {facade} onMutated={() => void reload()} />
         <AiBatchPanel {facade} bind:open={aiBatchOpen} docIds={aiBatchIds} />
-    {/if}
 
-    {#if view === "library"}
         <nav class="glean-queues" aria-label={t(i18n, "view.library")}>
             {#each queues as queue (queue)}
                 <button
@@ -3288,22 +3288,28 @@ function metaLine(entry: Row): string {
         {/if}
 
         {#if view === "library" && !facade.isMobile}
-            <div class="glean-saved-views" aria-label={t(i18n, "library.savedViews")}>
-                <select class="b3-select" aria-label={t(i18n, "library.savedViews")} value={savedViewId} onchange={(event) => applySavedViewState((event.currentTarget as HTMLSelectElement).value)}>
-                    <option value="">{t(i18n, "library.savedViews")}</option>
-                    {#each savedViews as saved (saved.id)}<option value={saved.id}>{saved.name}</option>{/each}
-                </select>
-                <input class="b3-text-field" maxlength="40" value={savedViewName} placeholder={t(i18n, "library.savedViewName")} aria-label={t(i18n, "library.savedViewName")} oninput={(event) => (savedViewName = (event.currentTarget as HTMLInputElement).value)} onkeydown={(event) => { if (event.key === "Enter" && !event.isComposing) { event.preventDefault(); saveCurrentView(); } }} />
-                <button class="glean-btn" disabled={!savedViewName.trim() || savedViews.length >= 20} onclick={saveCurrentView}>{t(i18n, "library.savedViewSave")}</button>
-                <button class="glean-btn glean-btn--ghost" disabled={!savedViewId} onclick={makeDefaultSavedView}>{t(i18n, "library.savedViewDefault")}</button>
-                <button class="glean-btn glean-btn--ghost" disabled={!savedViewId} onclick={removeSavedView}>{t(i18n, "library.savedViewDelete")}</button>
-                <select class="b3-select glean-saved-views__smart" aria-label={t(i18n, "library.smartPresets")} value="" disabled={savedViews.length >= 20} onchange={(event) => { const key = (event.currentTarget as HTMLSelectElement).value; if (key) void createSmartPresetView(key); (event.currentTarget as HTMLSelectElement).value = ""; }}>
-                    <option value="" disabled selected>{t(i18n, "library.smartPresets")}</option>
-                    {#each SMART_VIEW_PRESETS as preset (preset.key)}
-                        <option value={preset.key}>+ {t(i18n, preset.nameKey)}</option>
-                    {/each}
-                </select>
-            </div>
+            <details class="glean-saved-views-fold" class:glean-saved-views-fold--has-active={Boolean(savedViewId)}>
+                <summary class="glean-saved-views-fold__summary">
+                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanBookmark" /></svg>
+                    <span>{savedViewId ? `${t(i18n, "library.savedViews")}: ${savedViews.find(v => v.id === savedViewId)?.name || ""}` : t(i18n, "library.savedViews")}</span>
+                </summary>
+                <div class="glean-saved-views" aria-label={t(i18n, "library.savedViews")}>
+                    <select class="b3-select" aria-label={t(i18n, "library.savedViews")} value={savedViewId} onchange={(event) => applySavedViewState((event.currentTarget as HTMLSelectElement).value)}>
+                        <option value="">{t(i18n, "library.savedViews")}</option>
+                        {#each savedViews as saved (saved.id)}<option value={saved.id}>{saved.name}</option>{/each}
+                    </select>
+                    <input class="b3-text-field" maxlength="40" value={savedViewName} placeholder={t(i18n, "library.savedViewName")} aria-label={t(i18n, "library.savedViewName")} oninput={(event) => (savedViewName = (event.currentTarget as HTMLInputElement).value)} onkeydown={(event) => { if (event.key === "Enter" && !event.isComposing) { event.preventDefault(); saveCurrentView(); } }} />
+                    <button class="glean-btn" disabled={!savedViewName.trim() || savedViews.length >= 20} onclick={saveCurrentView}>{t(i18n, "library.savedViewSave")}</button>
+                    <button class="glean-btn glean-btn--ghost" disabled={!savedViewId} onclick={makeDefaultSavedView}>{t(i18n, "library.savedViewDefault")}</button>
+                    <button class="glean-btn glean-btn--ghost" disabled={!savedViewId} onclick={removeSavedView}>{t(i18n, "library.savedViewDelete")}</button>
+                    <select class="b3-select glean-saved-views__smart" aria-label={t(i18n, "library.smartPresets")} value="" disabled={savedViews.length >= 20} onchange={(event) => { const key = (event.currentTarget as HTMLSelectElement).value; if (key) void createSmartPresetView(key); (event.currentTarget as HTMLSelectElement).value = ""; }}>
+                        <option value="" disabled selected>{t(i18n, "library.smartPresets")}</option>
+                        {#each SMART_VIEW_PRESETS as preset (preset.key)}
+                            <option value={preset.key}>+ {t(i18n, preset.nameKey)}</option>
+                        {/each}
+                    </select>
+                </div>
+            </details>
         {/if}
 
         {#if filterChips.length > 0}

@@ -487,79 +487,10 @@
             <button type="button" class="glean-btn glean-btn--ghost" onclick={onClose}>{t(i18n, "preview.close")}</button>
         </div>
     </div>
-    <div id={metaId} class="glean-preview__meta">
-        <span class="glean-preview__readonly-tag"><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg> <span>{t(i18n, "preview.readonly")}</span></span>
-        {#if normalizeUrl(sourceUrl)}
-            <a href={sourceUrl} target="_blank" rel="noopener noreferrer" class="glean-preview__source-link" title={sourceUrl}>
-                {#if wechatAvatar}
-                    <img class="glean-preview__avatar" src={wechatAvatar} alt="" referrerpolicy="no-referrer" />
-                {:else}
-                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanExternal" /></svg>
-                {/if}
-                <span>{previewSourceLabel()}</span>
-            </a>
-            {#if isWechatUrl(sourceUrl)}
-                <button
-                    type="button"
-                    class="glean-preview__source-link glean-preview__source-link--reader"
-                    title={t(i18n, "reading.openInReader")}
-                    onclick={() => (facade.openReader ?? facade.openReadingDocument).call(facade, entry.id)}
-                >
-                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg> <span>{t(i18n, "reading.openInReader")}</span>
-                </button>
-                <button
-                    type="button"
-                    class="glean-preview__source-link glean-preview__source-link--weread"
-                    title={t(i18n, "wechat.wereadGuide")}
-                    onclick={handleOpenWeread}
-                >
-                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanExternal" /></svg> <span>{t(i18n, "wechat.openInWeread")}</span>
-                </button>
-            {/if}
-        {:else if sourceUrl}
-            <span class="glean-preview__source-link">{previewSourceLabel()}</span>
-        {/if}
-        {#if entry.kind === "candidate"}
-            <div class="glean-preview__evidence" aria-label={t(i18n, "candidate.evidenceLabel")}>
-                <span class="glean-preview__evidence-chip glean-preview__evidence-chip--signal">{t(i18n, "candidate.evidenceLabel")}: {entry.evidence.map((value) => t(i18n, `candidate.evidence.${value}`)).join(" · ")}</span>
-                {#if entry.missing.filter((value) => value !== "status").length > 0}
-                    <span class="glean-preview__evidence-chip glean-preview__evidence-chip--missing">{entry.missing.filter((value) => value !== "status").map((value) => t(i18n, `candidate.missing.${value}`)).join(" · ")}</span>
-                {/if}
-            </div>
-        {/if}
-    </div>
-    <div class="glean-preview__actions" role="group" aria-label={t(i18n, "preview.title")} aria-busy={busy}>
-        {#if loadFailed}
-            <span class="glean-preview__state glean-preview__state--error" role="alert">{t(i18n, "preview.changed")}</span>
-            <button type="button" class="glean-btn" onclick={() => void load()}>{t(i18n, "action.retry")}</button>
-        {:else if !attrs}
-            <span class="glean-preview__state glean-preview__state--loading" role="status" aria-live="polite">{t(i18n, "panel.loading")}</span>
-        {:else if candidate}
-            <button type="button" class="glean-btn" disabled={busy || !normalizeUrl(sourceUrl)} onclick={() => confirm()}>{t(i18n, "action.addToInbox")}</button>
-            {#if !sourceUrl}<button type="button" class="glean-btn" disabled={busy} onclick={() => confirm(true)}>{t(i18n, "candidate.captureLocal")}</button>{/if}
-            <button type="button" class="glean-btn glean-btn--ghost" disabled={busy} onclick={editUrl}>{t(i18n, "candidate.fixUrl")}</button>
-            <button type="button" class="glean-btn glean-btn--ghost" disabled={busy} onclick={() => { const id = entry.id; void process(() => excludePreviewCandidate(facade.pluginInstance, id), "msg.candidateExcluded"); }}>{t(i18n, "candidate.exclude")}</button>
-        {:else if confirmed}
-            {#each statuses as status}
-                <button type="button" class="glean-btn glean-btn--ghost" aria-pressed={attrs.status === status} disabled={busy || attrs.status === status} onclick={() => statusAction(status)}>{t(i18n, `queue.${status}`)}</button>
-            {/each}
-        {:else}
-            <span class="glean-preview__state glean-preview__state--error" role="alert">{t(i18n, "preview.changed")}</span>
-            <button type="button" class="glean-btn glean-btn--ghost" disabled={busy} onclick={() => void load()}>{t(i18n, "action.retry")}</button>
-        {/if}
-    </div>
-    {#if editingUrl && candidate}
-        <div class="glean-preview__url">
-            <input class="b3-text-field" type="url" bind:value={urlDraft} disabled={busy} placeholder={t(i18n, "candidate.urlPlaceholder")} aria-label={t(i18n, "candidate.urlPlaceholder")} onkeydown={(event) => { if (event.key === "Enter") { event.preventDefault(); saveUrl(); } else if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); editingUrl = false; } }} />
-            <button type="button" class="glean-btn" disabled={busy} onclick={saveUrl}>{t(i18n, "action.save")}</button>
-            <button type="button" class="glean-btn glean-btn--ghost" disabled={busy} onclick={() => editingUrl = false}>{t(i18n, "action.cancel")}</button>
-        </div>
-    {/if}
-    {#if confirmed}
-        <div class="glean-preview__author-bar">
+    <div id={metaId} class="glean-preview__meta glean-preview__toolbar">
+        <div class="glean-preview__meta-left">
             {#if safeAuthor}
                 <span class="glean-preview__author">
-                    {attrs?.site ? `${attrs.site} · ` : ""}
                     {#if onFilterAuthor}
                         <button type="button" class="glean-source-author glean-preview__author-btn" onclick={() => onFilterAuthor?.(safeAuthor)} title={safeAuthor}>
                             {safeAuthor}
@@ -569,7 +500,76 @@
                     {/if}
                 </span>
             {/if}
-            <AuthorEditor {facade} docId={entry.id} onSaved={onRefresh} />
+            {#if normalizeUrl(sourceUrl)}
+                <a href={sourceUrl} target="_blank" rel="noopener noreferrer" class="glean-preview__source-link" title={sourceUrl}>
+                    {#if wechatAvatar}
+                        <img class="glean-preview__avatar" src={wechatAvatar} alt="" referrerpolicy="no-referrer" />
+                    {:else}
+                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanExternal" /></svg>
+                    {/if}
+                    <span>{previewSourceLabel()}</span>
+                </a>
+                <button
+                    type="button"
+                    class="glean-preview__source-link glean-preview__source-link--reader"
+                    title={t(i18n, "reading.openInReader")}
+                    onclick={() => (facade.openReader ?? facade.openReadingDocument).call(facade, entry.id)}
+                >
+                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg> <span>{t(i18n, "reading.openInReader")}</span>
+                </button>
+                {#if isWechatUrl(sourceUrl)}
+                    <button
+                        type="button"
+                        class="glean-preview__source-link glean-preview__source-link--weread"
+                        title={t(i18n, "wechat.wereadGuide")}
+                        onclick={handleOpenWeread}
+                    >
+                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanExternal" /></svg> <span>{t(i18n, "wechat.openInWeread")}</span>
+                    </button>
+                {/if}
+            {:else if sourceUrl}
+                <span class="glean-preview__source-link">{previewSourceLabel()}</span>
+            {/if}
+            {#if confirmed}
+                <AuthorEditor {facade} docId={entry.id} onSaved={onRefresh} />
+            {/if}
+            {#if entry.kind === "candidate"}
+                <div class="glean-preview__evidence" aria-label={t(i18n, "candidate.evidenceLabel")}>
+                    <span class="glean-preview__evidence-chip glean-preview__evidence-chip--signal">{t(i18n, "candidate.evidenceLabel")}: {entry.evidence.map((value) => t(i18n, `candidate.evidence.${value}`)).join(" · ")}</span>
+                    {#if entry.missing.filter((value) => value !== "status").length > 0}
+                        <span class="glean-preview__evidence-chip glean-preview__evidence-chip--missing">{entry.missing.filter((value) => value !== "status").map((value) => t(i18n, `candidate.missing.${value}`)).join(" · ")}</span>
+                    {/if}
+                </div>
+            {/if}
+        </div>
+        <div class="glean-preview__actions glean-preview__actions--compact" role="group" aria-label={t(i18n, "preview.title")} aria-busy={busy}>
+            {#if loadFailed}
+                <span class="glean-preview__state glean-preview__state--error" role="alert">{t(i18n, "preview.changed")}</span>
+                <button type="button" class="glean-btn glean-btn--sm" onclick={() => void load()}>{t(i18n, "action.retry")}</button>
+            {:else if !attrs}
+                <span class="glean-preview__state glean-preview__state--loading" role="status" aria-live="polite">{t(i18n, "panel.loading")}</span>
+            {:else if candidate}
+                <button type="button" class="glean-btn glean-btn--sm" disabled={busy || !normalizeUrl(sourceUrl)} onclick={() => confirm()}>{t(i18n, "action.addToInbox")}</button>
+                {#if !sourceUrl}<button type="button" class="glean-btn glean-btn--sm" disabled={busy} onclick={() => confirm(true)}>{t(i18n, "candidate.captureLocal")}</button>{/if}
+                <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm" disabled={busy} onclick={editUrl}>{t(i18n, "candidate.fixUrl")}</button>
+                <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm" disabled={busy} onclick={() => { const id = entry.id; void process(() => excludePreviewCandidate(facade.pluginInstance, id), "msg.candidateExcluded"); }}>{t(i18n, "candidate.exclude")}</button>
+            {:else if confirmed}
+                <div class="glean-preview__status-group" role="group" aria-label="状态流转">
+                    {#each statuses as status}
+                        <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm" class:glean-btn--active={attrs.status === status} aria-pressed={attrs.status === status} disabled={busy || attrs.status === status} onclick={() => statusAction(status)}>{t(i18n, `queue.${status}`)}</button>
+                    {/each}
+                </div>
+            {:else}
+                <span class="glean-preview__state glean-preview__state--error" role="alert">{t(i18n, "preview.changed")}</span>
+                <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm" disabled={busy} onclick={() => void load()}>{t(i18n, "action.retry")}</button>
+            {/if}
+        </div>
+    </div>
+    {#if editingUrl && candidate}
+        <div class="glean-preview__url">
+            <input class="b3-text-field" type="url" bind:value={urlDraft} disabled={busy} placeholder={t(i18n, "candidate.urlPlaceholder")} aria-label={t(i18n, "candidate.urlPlaceholder")} onkeydown={(event) => { if (event.key === "Enter") { event.preventDefault(); saveUrl(); } else if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); editingUrl = false; } }} />
+            <button type="button" class="glean-btn" disabled={busy} onclick={saveUrl}>{t(i18n, "action.save")}</button>
+            <button type="button" class="glean-btn glean-btn--ghost" disabled={busy} onclick={() => editingUrl = false}>{t(i18n, "action.cancel")}</button>
         </div>
     {/if}
     <ProtyleHost app={facade.pluginInstance.app} docId={entry.id} mode="preview" {i18n} bind:host onOpenDocument={() => facade.openReadingDocument(entry.id)} />
@@ -595,9 +595,6 @@
         color: var(--b3-theme-on-surface);
         background: color-mix(in srgb, var(--b3-theme-surface) 95%, transparent);
         border-bottom: 1px solid var(--glean-border-soft);
-    }
-    .glean-preview__readonly-tag {
-        opacity: 0.8;
     }
     .glean-preview__source-link {
         display: inline-flex;
@@ -629,19 +626,9 @@
         }
     }
     .glean-preview__meta,
-    .glean-preview__meta > span,
     .glean-preview__author {
         min-width: 0;
         overflow-wrap: anywhere;
-    }
-    .glean-preview__author-bar {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: var(--glean-space-2);
-        padding: var(--glean-space-1-5) var(--glean-space-3);
-        border-bottom: 1px solid var(--glean-border-soft);
         font-size: var(--glean-text-xs);
     }
 </style>

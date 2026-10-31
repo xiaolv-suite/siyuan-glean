@@ -92,11 +92,7 @@ export function buildMetaCalloutMarkdown(
 ): string {
     const lines: string[] = [];
 
-    // 标题条
-    lines.push(`> 📌 **${escapeMetaCalloutText(labels.title)}**`);
-    lines.push(">");
-
-    // 来源与作者
+    // Line 1: 标题 + 来源 + 作者
     const siteRaw = article.site?.trim() || "";
     const urlRaw = article.url?.trim() || "";
     let sourceSegment = "";
@@ -113,24 +109,21 @@ export function buildMetaCalloutMarkdown(
 
     const authorText = article.author?.trim() ? escapeMetaCalloutText(article.author.trim()) : "";
     const authorSegment = authorText ? ` · ✍️ **${escapeMetaCalloutText(labels.author)}**：${authorText}` : "";
-    lines.push(`> 🌐 **${escapeMetaCalloutText(labels.source)}**：${sourceSegment}${authorSegment}`);
+    lines.push(`> 📌 **${escapeMetaCalloutText(labels.title)}** · 🌐 **${escapeMetaCalloutText(labels.source)}**：${sourceSegment}${authorSegment}`);
 
-    // 状态、优先级、评分
+    // Line 2: 状态 + 优先级 + 评分 + 字数体量与时长（单行紧凑聚合）
     const statusText = formatStatusLabel(article.status);
     const priorityLevel = Math.max(1, Math.min(5, Math.round(article.priority ?? 3)));
     const ratingStars = formatMetaStars(article.rating);
     const ratingSegment = article.rating && article.rating > 0 ? ` · ⭐ **${escapeMetaCalloutText(labels.rating)}**：${ratingStars}` : "";
-    lines.push(`> 📊 **${escapeMetaCalloutText(labels.status)}**：${statusText} · 🎯 **${escapeMetaCalloutText(labels.priority)}**：P${priorityLevel}${ratingSegment}`);
-
-    // 字数体量与阅读时长
     const wordsCount = Number.isSafeInteger(article.words) && (article.words ?? 0) > 0 ? (article.words ?? 0) : 0;
     const minutesCount = Number.isSafeInteger(article.minutes) && (article.minutes ?? 0) > 0 ? (article.minutes ?? 0) : Math.max(1, Math.round(wordsCount / 400));
     const wordsSegment = wordsCount > 0 ? `约 ${wordsCount.toLocaleString()} 字` : escapeMetaCalloutText(labels.unknown);
     const readMinutesCount = Number.isSafeInteger(article.readMinutes) && (article.readMinutes ?? 0) > 0 ? (article.readMinutes ?? 0) : 0;
-    const readMinutesSegment = readMinutesCount > 0 ? `（${escapeMetaCalloutText(labels.readMinutes)} ${readMinutesCount} 分钟）` : "";
-    lines.push(`> ⏱️ **${escapeMetaCalloutText(labels.words)}**：${wordsSegment} · ${escapeMetaCalloutText(labels.minutes)} 约 ${minutesCount} 分钟${readMinutesSegment}`);
+    const readMinutesSegment = readMinutesCount > 0 ? ` · ${escapeMetaCalloutText(labels.readMinutes)} ${readMinutesCount} 分钟` : "";
+    lines.push(`> 📊 **${escapeMetaCalloutText(labels.status)}**：${statusText} · 🎯 **${escapeMetaCalloutText(labels.priority)}**：P${priorityLevel}${ratingSegment} · ⏱️ **${escapeMetaCalloutText(labels.words)}**：${wordsSegment} · ${escapeMetaCalloutText(labels.minutes)} 约 ${minutesCount} 分钟${readMinutesSegment}`);
 
-    // 标签聚合（用户标签与 AI 标签）
+    // Line 3: 标签聚合（仅当有标签时）
     const allTags = [
         ...(article.tags ?? []).map((t) => t.trim()),
         ...(article.aiTags ?? []).map((t) => t.trim()),
@@ -141,16 +134,14 @@ export function buildMetaCalloutMarkdown(
         lines.push(`> 🏷️ **${escapeMetaCalloutText(labels.tags)}**：${tagTokens.join(" ")}`);
     }
 
-    // AI 核心摘要（进入思源正文块全文索引）
+    // Line 4: AI 核心导读（紧凑单行，消除空行）
     if (article.summary?.trim()) {
         const cleanSummary = article.summary.trim().replace(/[\r\n]+/g, " ");
-        lines.push(">");
         lines.push(`> 💡 **${escapeMetaCalloutText(labels.summary)}**：${cleanSummary}`);
     }
 
-    // 续读断点
+    // Line 5: 续读断点（仅当存在时）
     if (article.readingPosition?.blockId && /^\d{14}-[0-9a-z]{7}$/.test(article.readingPosition.blockId)) {
-        lines.push(">");
         lines.push(`> 🔖 **${escapeMetaCalloutText(labels.bookmark)}**：(( ${article.readingPosition.blockId} '${escapeMetaCalloutText(labels.clickToResume)}' ))`);
     }
 
