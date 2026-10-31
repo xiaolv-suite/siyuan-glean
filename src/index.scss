@@ -3654,6 +3654,61 @@ mark.glean-search-highlight {
             border-radius: var(--glean-radius-sm) !important;
         }
     }
+
+    .glean-card {
+        padding: 8px 10px !important;
+        gap: 4px !important;
+        border-radius: var(--glean-radius-sm) !important;
+        margin-bottom: 6px !important;
+    }
+
+    .glean-card__title {
+        font-size: 13px !important;
+        line-height: 1.35 !important;
+        margin-bottom: 2px !important;
+        display: -webkit-box !important;
+        -webkit-line-clamp: 2 !important;
+        -webkit-box-orient: vertical !important;
+        overflow: hidden !important;
+    }
+
+    .glean-card__meta {
+        font-size: 11px !important;
+        gap: 3px 6px !important;
+        line-height: 1.2 !important;
+    }
+
+    .glean-card__foot {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 6px !important;
+        margin-top: 4px !important;
+        padding-top: 4px !important;
+        border-top: 1px solid color-mix(in srgb, var(--b3-border-color) 20%, transparent) !important;
+    }
+
+    .glean-card__foot-left {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 4px !important;
+        flex-wrap: wrap !important;
+    }
+
+    .glean-card__foot-right {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 4px !important;
+        margin-left: auto !important;
+
+        .glean-btn {
+            height: 24px !important;
+            min-height: 24px !important;
+            padding: 0 8px !important;
+            font-size: 11px !important;
+            border-radius: var(--glean-radius-sm) !important;
+        }
+    }
 }
 
 @container glean-workbench (max-width: 759px) {

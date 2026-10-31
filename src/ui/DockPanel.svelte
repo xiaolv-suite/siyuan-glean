@@ -43,7 +43,6 @@ import { openRoamingDialog } from "./roaming-dialog";
 import { formatAPA, formatBibTeX, formatGBT7714, formatMLA, type CitationFormat, type CitationItem } from "../domain/citation";
 import { batchRecognizeWechatAuthors, scanAndFillWechatAuthor, purifyWechatArticle } from "../services/wechat-service";
 import ClipStatusActions from "./ClipStatusActions.svelte";
-import ClipRankControls from "./ClipRankControls.svelte";
 import { installMobileViewportVars } from "../libs/mobile-viewport";
 import { installEscapeHandler, installModalFocus } from "../libs/modal-focus";
 import { createRefreshQueue } from "../libs/refresh-queue";
@@ -2850,7 +2849,6 @@ async function takeSnapshot(entry: ClipIndexEntry) {
 function metaLine(entry: Row): string {
     const parts: string[] = [];
     if (entry.kind === "clip") {
-        parts.push(clipType(entry));
         if (entry.minutes > 0) parts.push(t(i18n, "panel.minutes", { n: entry.minutes }));
         parts.push(timeSource(entry));
     }
@@ -4174,23 +4172,49 @@ function metaLine(entry: Row): string {
                                          <span class="glean-source-missing">{t(i18n, "clip.sourceMissing")}</span>
                                      {/if}
                                 </div>
-                                <ClipRankControls
-                                    {i18n}
-                                    priority={entry.priority}
-                                    rating={entry.rating}
-                                    disabled={Boolean(statusActionId)}
-                                    onPriority={(value) => void setPriority(entry, value)}
-                                    onRating={(value) => void setRating(entry, value)}
-                                />
-                                <ClipStatusActions
-                                    {i18n}
-                                    status={entry.status || "inbox"}
-                                    disabled={Boolean(statusActionId)}
-                                    onStartReading={() => void startReading(entry)}
-                                    onSetStatus={(status) => void setStatus(entry, status)}
-                                    onArchive={() => facade.openArchiveDialog(entry.id)}
-                                    onRestore={() => facade.openRestoreDialog(entry.id)}
-                                />
+                                <div class="glean-card__foot">
+                                    <div class="glean-card__foot-left">
+                                        {#if entry.priority && entry.priority > 0}
+                                            <span class="glean-tier-badge" title={t(i18n, "library.keyboardPriority")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanBolt" /></svg> <span>P{entry.priority}</span></span>
+                                        {/if}
+                                        {#if entry.rating && entry.rating > 0}
+                                            <span class="glean-tier-badge" title={t(i18n, "library.keyboardRating")}><svg class="glean-icon glean-icon--xs glean-icon--star" aria-hidden="true"><use href="#iconGleanStar" /></svg> <span>{entry.rating}★</span></span>
+                                        {/if}
+                                        <span class="glean-st-badge glean-st-badge--{entry.status}">{queueLabel(entry.status)}</span>
+                                    </div>
+                                    <div class="glean-card__foot-right">
+                                        {#if entry.status === "archived"}
+                                            <button class="glean-btn glean-btn--ghost glean-btn--sm" disabled={Boolean(statusActionId)} onclick={(event) => { event.stopPropagation(); facade.openRestoreDialog(entry.id); }}>{t(i18n, "action.restore")}</button>
+                                        {:else}
+                                            <button class="glean-btn glean-btn--pri glean-btn--sm" disabled={Boolean(statusActionId)} onclick={(event) => { event.stopPropagation(); void startReading(entry); }}>{t(i18n, entry.status === "reading" ? "action.continueReading" : entry.status === "done" ? "action.readAgain" : "action.startReading")}</button>
+                                        {/if}
+                                        <ActionPopover label={t(i18n, "library.moreActions")} compact>
+                                            <AuthorEditor {facade} docId={entry.id} onSaved={reload} />
+                                            <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryBlockRef(entry)}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg> <span>{t(i18n, "action.copyBlockRef")}</span></button>
+                                            <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "gbt")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg> <span>{t(i18n, "citation.copyGBT")}</span></button>
+                                            <details class="glean-citation-more" data-keep-popover-open>
+                                                <summary class="glean-btn glean-btn--ghost" data-keep-popover-open>BibTeX / APA / MLA</summary>
+                                                <div class="glean-citation-more__list">
+                                                    <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "bibtex")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArchive" /></svg> <span>{t(i18n, "citation.copyBibTeX")}</span></button>
+                                                    <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "apa")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanLocal" /></svg> <span>{t(i18n, "citation.copyAPA")}</span></button>
+                                                    <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "mla")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg> <span>{t(i18n, "citation.copyMLA")}</span></button>
+                                                </div>
+                                            </details>
+                                            {#if entry.status !== "archived"}
+                                                <button class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId) || entry.status === "later"} onclick={() => void setStatus(entry, "later")}>{t(i18n, "action.moveToLater")}</button>
+                                                <button class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId) || entry.status === "done"} onclick={() => void setStatus(entry, "done")}>{t(i18n, "action.markDone")}</button>
+                                                <button class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId)} onclick={() => facade.openArchiveDialog(entry.id)}>{t(i18n, "action.archive")}</button>
+                                            {/if}
+                                            <button class="glean-btn glean-btn--ghost" disabled={snappingId === entry.id} onclick={() => void takeSnapshot(entry)}>{snapshotLabel(entry)}</button>
+                                            <button class="glean-btn glean-btn--ghost" disabled={Boolean(exportingMarkdownId)} aria-busy={exportingMarkdownId === entry.id} onclick={() => void exportMarkdown(entry)}>{t(i18n, "export.markdown")}</button>
+                                            <button class="glean-btn glean-btn--ghost" disabled={enrichingId === entry.id} onclick={() => void enrich(entry)}>{t(i18n, "ai.actionEnrich")}</button>
+                                            <button class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId)} aria-pressed={isPinnedToday(entry)} onclick={() => void toggleSurfacePin(entry)}>{surfacePinLabel(entry)}</button>
+                                            {#if hasSourceAction(entry.contentType, entry.url)}
+                                                <button class="glean-btn glean-btn--ghost" onclick={() => openSource(entry)}>{t(i18n, "clip.openSource")}</button>
+                                            {/if}
+                                        </ActionPopover>
+                                    </div>
+                                </div>
                             {/if}
                             {#if entry.kind === "clip"}
                                 <label class="glean-card__check" title={t(i18n, "library.selectArticle")}>
