@@ -72,12 +72,17 @@ async function readRoots(
 }
 
 function toHighlight(row: BlockRow, root: HighlightRoot): HighlightItem | null {
-    const highlight = highlightMarker(row.ial ?? "");
-    if (row.type === "d" || (row.type !== "b" && !highlight.trim())) return null;
+    const ial = row.ial ?? "";
+    const highlight = highlightMarker(ial);
+    const isSiyuanComment = ial.includes('custom-siyuan-comment="true"') || ial.includes("custom-siyuan-comment=true");
+    const ialMemo = /memo="([^"]*)"/.exec(ial)?.[1]?.trim() || "";
+    const isMemoBlock = Boolean(ialMemo) && !ial.includes('custom-glean-slot=');
+
+    if (row.type === "d" || (row.type !== "b" && !highlight.trim() && !isSiyuanComment && !isMemoBlock)) return null;
     if (!isHighlightId(row.id) || row.root_id !== root.id || row.box !== root.box || typeof row.content !== "string" || typeof row.markdown !== "string") throw new HighlightExportError("readFailed");
 
     // 排除系统导读档案卡与元数据插槽
-    if (row.ial && row.ial.includes('custom-glean-slot="meta-callout"')) return null;
+    if (ial.includes('custom-glean-slot="meta-callout"')) return null;
     if (row.content.includes("小驴拾遗 · 导读档案") || row.markdown.includes("小驴拾遗 · 导读档案")) return null;
 
     // 排除纯剪藏来源行（如 > 来源：https://... 或 > 🌐 来源：...）
@@ -88,23 +93,39 @@ function toHighlight(row: BlockRow, root: HighlightRoot): HighlightItem | null {
         return null;
     }
 
-    const text = cleanHighlightText(row.content);
-    if (!text) return null;
-
-    // 提取思考批注（memo）
-    let quoteText = text;
+    let quoteText = cleanHighlightText(row.content);
     let memoText = "";
-    const memoSplit = text.split(/(?:\r?\n)+\s*💡\s*/);
-    if (memoSplit.length > 1) {
-        quoteText = memoSplit[0].trim();
-        memoText = memoSplit.slice(1).join("\n").trim();
-    }
-    const ialMemo = /memo="([^"]*)"/.exec(row.ial ?? "")?.[1];
-    if (!memoText && ialMemo) {
-        memoText = ialMemo.trim();
+    let sourceBlockId = row.id;
+    let annotationKind: "glean" | "siyuan-comment" | "native-memo" = "glean";
+    let annotationTag: string | undefined = undefined;
+    let color = highlightColor(ial);
+
+    if (isSiyuanComment) {
+        annotationKind = "siyuan-comment";
+        const commentTextAttr = /custom-comment-text="([^"]*)"/.exec(ial)?.[1]?.trim() || "";
+        const sourceAttr = /custom-comment-source="([^"]*)"/.exec(ial)?.[1]?.trim() || "";
+        const tagAttr = /custom-comment-tag="([^"]*)"/.exec(ial)?.[1]?.trim() || "";
+        const customColor = /custom-comment-highlight-custom-color="([^"]*)"/.exec(ial)?.[1]?.trim() || "";
+        if (commentTextAttr) quoteText = commentTextAttr;
+        memoText = cleanHighlightText(row.content);
+        if (sourceAttr) sourceBlockId = sourceAttr;
+        if (tagAttr) annotationTag = tagAttr;
+        if (customColor) color = customColor;
+    } else if (isMemoBlock) {
+        annotationKind = "native-memo";
+        memoText = ialMemo;
+    } else {
+        const memoSplit = quoteText.split(/(?:\r?\n)+\s*💡\s*/);
+        if (memoSplit.length > 1) {
+            quoteText = memoSplit[0].trim();
+            memoText = memoSplit.slice(1).join("\n").trim();
+        } else if (ialMemo) {
+            memoText = ialMemo;
+        }
     }
 
-    const color = highlightColor(row.ial ?? "");
+    if (!quoteText) return null;
+
     return {
         ...root,
         color: color || undefined,
@@ -114,6 +135,9 @@ function toHighlight(row: BlockRow, root: HighlightRoot): HighlightItem | null {
         rootId: root.id,
         text: quoteText,
         memo: memoText || undefined,
+        sourceBlockId,
+        annotationKind,
+        annotationTag,
         markdown: row.markdown,
         source: { content: row.content, markdown: row.markdown, type: row.type, highlight },
     };

@@ -651,7 +651,9 @@ export async function listHighlightBlocks(rootDocIds: readonly string[], afterId
     return highlightQuery<BlockRow>(
         `SELECT id, content, markdown, type, root_id, box, ial FROM blocks
          WHERE root_id IN (${roots}) AND type <> 'd'
-         AND (type = 'b' OR (instr(ial, '${marker}') > 0 AND trim(substr(${tail}, 1, instr(${tail}, '"') - 1)) <> ''))
+         AND (type = 'b' OR (instr(ial, '${marker}') > 0 AND trim(substr(${tail}, 1, instr(${tail}, '"') - 1)) <> '')
+              OR instr(ial, 'custom-siyuan-comment="') > 0 OR instr(ial, 'custom-siyuan-comment=') > 0
+              OR (instr(ial, 'memo="') > 0 AND instr(ial, 'custom-glean-slot=') = 0))
          ${afterId ? `AND id > '${afterId}'` : ""}
          ORDER BY id ASC LIMIT ${pageSize}`
     );

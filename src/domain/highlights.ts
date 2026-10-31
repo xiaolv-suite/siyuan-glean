@@ -11,12 +11,18 @@ export interface HighlightRoot {
     url: string;
 }
 
+export type AnnotationKind = "glean" | "siyuan-comment" | "native-memo";
+export type AnnotationTag = "pinned" | "important" | "reading" | "todo" | "question";
+
 export interface HighlightItem extends HighlightRoot {
     rootId: string;
     text: string;
     markdown: string;
     color?: string;
     memo?: string;
+    sourceBlockId?: string;
+    annotationKind?: AnnotationKind;
+    annotationTag?: AnnotationTag | string;
     source: { content: string; markdown: string; type: string; highlight: string };
 }
 
@@ -26,6 +32,7 @@ export interface HighlightFilter {
     tag?: string;
     aiTag?: string;
     color?: string;
+    annotationTag?: string;
     sort?: "id" | "title" | "site";
     direction?: "asc" | "desc";
 }
@@ -65,7 +72,8 @@ export function filterHighlights(items: readonly HighlightItem[], filter: Highli
         if (filter.tag && !(item.tags || []).includes(filter.tag)) return false;
         if (filter.aiTag && !(item.aiTags || []).includes(filter.aiTag)) return false;
         if (filter.color && (item.color || "yellow") !== filter.color) return false;
-        const searchable = [item.text, item.title, item.site, item.url, ...(item.tags || []), ...(item.aiTags || [])].join("\n").toLowerCase();
+        if (filter.annotationTag && item.annotationTag !== filter.annotationTag) return false;
+        const searchable = [item.text, item.memo || "", item.title, item.site, item.url, ...(item.tags || []), ...(item.aiTags || [])].join("\n").toLowerCase();
         return terms.every((term) => searchable.includes(term));
     });
     const field = filter.sort ?? "id";
@@ -73,12 +81,13 @@ export function filterHighlights(items: readonly HighlightItem[], filter: Highli
     return result.sort((left, right) => direction * compareText(left[field], right[field]) || compareText(left.id, right.id));
 }
 
-export function highlightFacets(items: readonly HighlightItem[]): { sites: string[]; tags: string[]; aiTags: string[] } {
+export function highlightFacets(items: readonly HighlightItem[]): { sites: string[]; tags: string[]; aiTags: string[]; annotationTags: string[] } {
     const unique = (values: string[]) => [...new Set(values.filter(Boolean))].sort(compareText);
     return {
         sites: unique(items.map((item) => item.site)),
         tags: unique(items.flatMap((item) => item.tags || [])),
         aiTags: unique(items.flatMap((item) => item.aiTags || [])),
+        annotationTags: unique(items.map((item) => item.annotationTag ?? "")),
     };
 }
 

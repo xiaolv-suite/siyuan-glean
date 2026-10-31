@@ -29,7 +29,11 @@ test("搜索覆盖摘录及文章元数据，站点和两种标签独立精确�
     assert.equal(filterHighlights(items, { color: "yellow" }).length, 0);
     assert.equal(filterHighlights(items, { tag: "用" }).length, 0);
     assert.equal(filterHighlights(items, { search: "no-match" }).length, 0);
-    assert.deepEqual(highlightFacets(items), { sites: ["example.test", "other.test"], tags: ["模型", "用户"], aiTags: ["模型", "用户"] });
+    assert.deepEqual(highlightFacets(items), { sites: ["example.test", "other.test"], tags: ["模型", "用户"], aiTags: ["模型", "用户"], annotationTags: [] });
+    // 支持按批注思考 (memo) 搜索与按 annotationTag 筛选
+    const itemWithMemo = item(3, { memo: "深度学习注意力机制瓶颈", annotationTag: "important", annotationKind: "siyuan-comment" });
+    assert.deepEqual(filterHighlights([...items, itemWithMemo], { search: "注意力机制" }).map((v) => v.id), [itemWithMemo.id]);
+    assert.deepEqual(filterHighlights([...items, itemWithMemo], { annotationTag: "important" }).map((v) => v.id), [itemWithMemo.id]);
 });
 
 test("稳定排序用块 ID 打破相同标题，纯投影不改变输入", () => {
@@ -225,4 +229,12 @@ test("HighlightView 接线：支持平铺与按文章聚类双视图切换（T-3
     assert.match(view, /exportArticleQuotes\(group\)/);
     assert.match(view, /createDocFromArticleQuotes\(group\)/);
     assert.match(view, /\{t\(i18n, "highlight\.createArticleDoc"\)\}/);
+});
+
+test("HighlightView 兼容显示 siyuan-comment 鲸鱼批注与思源原生块备注", () => {
+    const view = readFileSync(new URL("../src/ui/HighlightView.svelte", import.meta.url), "utf8");
+    assert.match(view, /class="glean-annotation-tag glean-annotation-tag--\{item\.annotationTag\}"/);
+    assert.match(view, /class="glean-annotation-kind"/);
+    assert.match(view, /openDoc\(item\.rootId, item\.sourceBlockId \|\| item\.id\)/);
+    assert.match(view, /openDoc\(group\.rootId, item\.sourceBlockId \|\| item\.id\)/);
 });

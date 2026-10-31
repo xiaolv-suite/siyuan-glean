@@ -839,6 +839,21 @@ function focusHighlightRow(id: string): void {
                         <div class="glean-highlights__item-head">
                             <span class="glean-reader__highlight-dot glean-reader__highlight-dot--{item.color || 'yellow'}" aria-hidden="true"></span>
                             <span class="glean-highlights__item-label">{t(i18n, "highlight.quoteTag")}</span>
+                            {#if item.annotationTag}
+                                <span class="glean-annotation-tag glean-annotation-tag--{item.annotationTag}">
+                                    {#if item.annotationTag === "pinned"}📌 置顶
+                                    {:else if item.annotationTag === "important"}⭐ 重要
+                                    {:else if item.annotationTag === "reading"}📖 阅读
+                                    {:else if item.annotationTag === "todo"}✔️ 待办
+                                    {:else if item.annotationTag === "question"}❓ 存疑
+                                    {:else}🏷️ {item.annotationTag}{/if}
+                                </span>
+                            {/if}
+                            {#if item.annotationKind === "siyuan-comment"}
+                                <span class="glean-annotation-kind" title="来自鲸鱼快速批注">💬 鲸鱼批注</span>
+                            {:else if item.annotationKind === "native-memo"}
+                                <span class="glean-annotation-kind" title="来自思源原生备注">📝 块备注</span>
+                            {/if}
                             <span class="glean-highlights__item-index">{(visible.page - 1) * highlightPageSize + visible.items.indexOf(item) + 1}</span>
                         </div>
                         <label class="glean-highlights__quote"><input type="checkbox" checked={selected.includes(item.id)} disabled={exportBusy} onchange={() => toggle(item.id)} aria-label={`${t(i18n, "highlight.quoteTag")} ${(visible.page - 1) * highlightPageSize + visible.items.indexOf(item) + 1}: ${item.text.slice(0, 120)}`} /><span>{item.text}</span></label>
@@ -855,7 +870,7 @@ function focusHighlightRow(id: string): void {
                         {#if item.tags.length}<p class="glean-highlights__meta glean-highlights__tags"><span>{t(i18n, "library.filterTag")}</span>{#each (expandedTags[item.id] ? item.tags : item.tags.slice(0, 3)) as value}<span class="glean-highlights__tag">{value}</span>{/each}{#if item.tags.length > 3 && !expandedTags[item.id]}<button type="button" class="glean-highlights__tag glean-highlights__tag--more" onclick={() => expandedTags[item.id] = true}>+{item.tags.length - 3}</button>{/if}</p>{/if}
                         {#if item.aiTags.length}<p class="glean-highlights__meta glean-highlights__tags glean-highlights__tags--ai"><span>{t(i18n, "library.filterAiTag")}</span>{#each (expandedAiTags[item.id] ? item.aiTags : item.aiTags.slice(0, 3)) as value}<span class="glean-highlights__tag">{value}</span>{/each}{#if item.aiTags.length > 3 && !expandedAiTags[item.id]}<button type="button" class="glean-highlights__tag glean-highlights__tag--more" onclick={() => expandedAiTags[item.id] = true}>+{item.aiTags.length - 3}</button>{/if}</p>{/if}
                         <div class="glean-highlights__tools glean-highlights__tools--card">
-                            <button type="button" onclick={() => openDoc(item.rootId, item.id)}>{t(i18n, "highlight.original")}</button>
+                            <button type="button" onclick={() => openDoc(item.rootId, item.sourceBlockId || item.id)}>{t(i18n, "highlight.original")}</button>
                             <button type="button" onclick={() => quoteCard(item)} title={t(i18n, "quoteCard.action")} aria-label={t(i18n, "quoteCard.action")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg> <span>{t(i18n, "quoteCard.action")}</span></button>
                             <button type="button" aria-busy={copyingId === item.id} disabled={Boolean(copyingId)} onclick={() => void copyQuote(item)} title={t(i18n, "highlight.copyShare")}>
                                 <svg class="glean-icon" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
@@ -937,6 +952,21 @@ function focusHighlightRow(id: string): void {
                                     <div class="glean-highlights__item-head">
                                         <span class="glean-reader__highlight-dot glean-reader__highlight-dot--{item.color || 'yellow'}" aria-hidden="true"></span>
                                         <span class="glean-highlights__item-label">{t(i18n, "highlight.quoteTag")}</span>
+                                        {#if item.annotationTag}
+                                            <span class="glean-annotation-tag glean-annotation-tag--{item.annotationTag}">
+                                                {#if item.annotationTag === "pinned"}📌 置顶
+                                                {:else if item.annotationTag === "important"}⭐ 重要
+                                                {:else if item.annotationTag === "reading"}📖 阅读
+                                                {:else if item.annotationTag === "todo"}✔️ 待办
+                                                {:else if item.annotationTag === "question"}❓ 存疑
+                                                {:else}🏷️ {item.annotationTag}{/if}
+                                            </span>
+                                        {/if}
+                                        {#if item.annotationKind === "siyuan-comment"}
+                                            <span class="glean-annotation-kind" title="来自鲸鱼快速批注">💬 鲸鱼批注</span>
+                                        {:else if item.annotationKind === "native-memo"}
+                                            <span class="glean-annotation-kind" title="来自思源原生备注">📝 块备注</span>
+                                        {/if}
                                         <span class="glean-highlights__item-index">{itemIndex + 1}</span>
                                     </div>
                                     <label class="glean-highlights__quote"><input type="checkbox" checked={selected.includes(item.id)} disabled={exportBusy} onchange={() => toggle(item.id)} aria-label={`${t(i18n, "highlight.quoteTag")} ${itemIndex + 1}: ${item.text.slice(0, 120)}`} /><span>{item.text}</span></label>
@@ -948,7 +978,7 @@ function focusHighlightRow(id: string): void {
                                     {/if}
                                     {#if formatHighlightTime(item.id)}<p class="glean-highlights__meta"><span class="glean-highlights__time">{formatHighlightTime(item.id)}</span></p>{/if}
                                     <div class="glean-highlights__tools glean-highlights__tools--card">
-                                        <button type="button" onclick={() => openDoc(group.rootId, item.id)}>{t(i18n, "highlight.original")}</button>
+                                        <button type="button" onclick={() => openDoc(group.rootId, item.sourceBlockId || item.id)}>{t(i18n, "highlight.original")}</button>
                                         <button type="button" onclick={() => quoteCard(item)} title={t(i18n, "quoteCard.action")} aria-label={t(i18n, "quoteCard.action")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg> <span>{t(i18n, "quoteCard.action")}</span></button>
                                         <button type="button" aria-busy={copyingId === item.id} disabled={Boolean(copyingId)} onclick={() => void copyQuote(item)} title={t(i18n, "highlight.copyShare")}>
                                             <svg class="glean-icon" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
