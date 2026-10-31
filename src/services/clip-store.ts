@@ -38,6 +38,7 @@ import { canonicalUrlKey, normalizeUrl } from "../domain/url";
 import { normalizeAuthor } from "../domain/author";
 import { parseReadingPosition, serializeReadingPosition, type ReadingPosition } from "../domain/reading-position";
 import { META_CALLOUT_SLOT_KEY, META_CALLOUT_SLOT_VALUE } from "../domain/meta-callout";
+import { DAILY_NOTE_SLOT_KEY } from "../domain/daily-note";
 import {
     applyAttrsToIndex,
     confirmIndexRebuilt,
@@ -166,6 +167,12 @@ export async function clearReadingBookmark(blockId: string): Promise<void> {
 export async function setMetaCalloutSlotAttr(blockId: string): Promise<void> {
     if (!/^\d{14}-[0-9a-z]{7}$/.test(blockId)) return;
     await setBlockAttrs(blockId, { [META_CALLOUT_SLOT_KEY]: META_CALLOUT_SLOT_VALUE });
+}
+
+/** 为日记阅读记录块挂载 custom-glean-reading-doc 属性，由 clip-store 统一封装保障数据主权 */
+export async function setDailyNoteSlotAttr(blockId: string, docId: string): Promise<void> {
+    if (!/^\d{14}-[0-9a-z]{7}$/.test(blockId)) return;
+    await setBlockAttrs(blockId, { [DAILY_NOTE_SLOT_KEY]: docId });
 }
 
 export async function readClipDocument(docId: string, exportOptions: ExportMarkdownOptions = {}): Promise<{ meta: DocMeta; attrs: ClipAttrs; markdown: string }> {

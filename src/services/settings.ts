@@ -51,6 +51,7 @@ export interface GleanSettings {
         checkinEnabled: boolean;
         checkinItemId: string;
         bridgeWriteEnabled: boolean;
+        dailyNoteEnabled: boolean;
     };
     /** 阅读页签（D-0029/T-1730）：内嵌 Protyle 的插件内阅读视图 */
     reader: {
@@ -84,7 +85,7 @@ export const DEFAULT_SETTINGS: GleanSettings = {
     inboxQuota: 50,
     staleDays: 90,
     migrateBatchSize: DEFAULT_MIGRATE_BATCH_SIZE,
-    integration: { checkinEnabled: false, checkinItemId: "", bridgeWriteEnabled: false },
+    integration: { checkinEnabled: false, checkinItemId: "", bridgeWriteEnabled: false, dailyNoteEnabled: false },
     reader: { openInTab: false, defaultMode: "read" },
 };
 
@@ -151,6 +152,7 @@ export function normalizeSettings(raw: unknown): GleanSettings {
             checkinEnabled: typeof integration.checkinEnabled === "boolean" ? integration.checkinEnabled : DEFAULT_SETTINGS.integration.checkinEnabled,
             checkinItemId: typeof integration.checkinItemId === "string" ? integration.checkinItemId : "",
             bridgeWriteEnabled: typeof integration.bridgeWriteEnabled === "boolean" ? integration.bridgeWriteEnabled : false,
+            dailyNoteEnabled: typeof integration.dailyNoteEnabled === "boolean" ? integration.dailyNoteEnabled : false,
         },
         reader: normalizeReader(input.reader),
     };

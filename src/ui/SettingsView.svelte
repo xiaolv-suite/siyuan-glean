@@ -84,6 +84,7 @@ let testBusy = $state(false);
 let checkinEnabled = $state(DEFAULT_SETTINGS.integration.checkinEnabled);
 let checkinItemId = $state(DEFAULT_SETTINGS.integration.checkinItemId);
 let bridgeWriteEnabled = $state(DEFAULT_SETTINGS.integration.bridgeWriteEnabled);
+let dailyNoteEnabled = $state(DEFAULT_SETTINGS.integration.dailyNoteEnabled);
 let checkinItems = $state<CheckinItemOption[]>([]);
 let checkinLoadError = $state(false);
 let checkinLoading = $state(false);
@@ -366,6 +367,7 @@ function loadDraft(settings: GleanSettings) {
     checkinEnabled = settings.integration.checkinEnabled;
     checkinItemId = settings.integration.checkinItemId;
     bridgeWriteEnabled = settings.integration.bridgeWriteEnabled;
+    dailyNoteEnabled = settings.integration.dailyNoteEnabled;
     readerOpenInTab = settings.reader.openInTab;
     readerMode = settings.reader.defaultMode;
 }
@@ -421,7 +423,7 @@ function buildDraftSettings(): GleanSettings {
         inboxQuota,
         staleDays,
         // migrateBatchSize 改在迁移器内调整（UX 审计 #7），不经设置草稿编辑。
-        integration: { checkinEnabled, checkinItemId, bridgeWriteEnabled },
+        integration: { checkinEnabled, checkinItemId, bridgeWriteEnabled, dailyNoteEnabled },
         reader: { openInTab: readerOpenInTab, defaultMode: readerMode },
     });
 }
@@ -1081,6 +1083,13 @@ async function doMountBoard() {
                     <div class="glean-set-row__desc">{t(i18n, "settings.bridgeWriteEnableDesc")}</div>
                 </div>
                 <button class="glean-sw" class:glean-sw--on={bridgeWriteEnabled} aria-label={t(i18n, "settings.bridgeWriteEnable")} aria-pressed={bridgeWriteEnabled} onclick={() => { bridgeWriteEnabled = !bridgeWriteEnabled; }}></button>
+            </div>
+            <div class="glean-set-row">
+                <div class="glean-set-row__lb">
+                    {t(i18n, "settings.dailyNoteEnable")}
+                    <div class="glean-set-row__desc">{t(i18n, "settings.dailyNoteEnableDesc")}</div>
+                </div>
+                <button class="glean-sw" class:glean-sw--on={dailyNoteEnabled} aria-label={t(i18n, "settings.dailyNoteEnable")} aria-pressed={dailyNoteEnabled} onclick={() => { dailyNoteEnabled = !dailyNoteEnabled; }}></button>
             </div>
             {#if checkinEnabled}
                 <div class="glean-set-row">

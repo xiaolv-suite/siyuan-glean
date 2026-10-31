@@ -1895,6 +1895,31 @@ import { aiFailureKey } from "../libs/ai-feedback";
         }
     }
 
+    let recordingDailyNote = $state(false);
+
+    async function handleRecordDailyNote(): Promise<void> {
+        if (!docId || recordingDailyNote || statusBusy) return;
+        const notebookId = facade.settings.anchorNotebooks?.[0];
+        if (!notebookId) {
+            showMessage(t(i18n, "settings.notebookHint"), 3000);
+            return;
+        }
+        recordingDailyNote = true;
+        try {
+            const { recordDailyNoteReading } = await import("../services/daily-note-service");
+            const res = await recordDailyNoteReading(notebookId, docId);
+            if (res.ok) {
+                showMessage(t(i18n, res.updated ? "dailyNote.entryUpdated" : "dailyNote.entryCreated"), 3000);
+            } else {
+                showMessage(t(i18n, "dailyNote.failed") + (res.error ? `: ${res.error}` : ""), 3000);
+            }
+        } catch {
+            showMessage(t(i18n, "dailyNote.failed"), 3000);
+        } finally {
+            recordingDailyNote = false;
+        }
+    }
+
     async function insertQuestionCallout(): Promise<void> {
         if (!docId || !questionResult || insertingCallout) return;
         insertingCallout = true;
@@ -1984,6 +2009,14 @@ import { aiFailureKey } from "../libs/ai-feedback";
             if (status === "done") await flushReadingMinutes(current.id, generation);
             if (status === "done" && facade.settings.integration.checkinEnabled && facade.settings.integration.checkinItemId) {
                 void recordReadingDone(facade.settings.integration.checkinItemId, current.id, current.title);
+            }
+            if (status === "done" && facade.settings.integration.dailyNoteEnabled && facade.settings.anchorNotebooks?.[0]) {
+                const notebookId = facade.settings.anchorNotebooks[0];
+                const targetDocId = current.id;
+                void (async () => {
+                    const { recordDailyNoteReading } = await import("../services/daily-note-service");
+                    await recordDailyNoteReading(notebookId, targetDocId);
+                })().catch(() => undefined);
             }
             if (currentSession(current.id, generation)) {
                 contextRequests.invalidate();
@@ -2747,6 +2780,17 @@ import { aiFailureKey } from "../libs/ai-feedback";
                     >
                         <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanPin" /></svg>
                         <span>{syncingMetaCallout ? t(i18n, "reading.syncingMetaCallout") : t(i18n, "reading.syncMetaCallout")}</span>
+                    </button>
+                    <button
+                        type="button"
+                        class="glean-btn glean-btn--ghost glean-btn--full"
+                        style="margin-top: var(--glean-space-1);"
+                        title={t(i18n, "dailyNote.recordAction")}
+                        disabled={recordingDailyNote || statusBusy}
+                        onclick={() => void handleRecordDailyNote()}
+                    >
+                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg>
+                        <span>{recordingDailyNote ? t(i18n, "dailyNote.recording") : t(i18n, "dailyNote.recordAction")}</span>
                     </button>
                 </div>
                 {#if context.id === docId}

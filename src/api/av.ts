@@ -168,6 +168,16 @@ export async function setCellSelect(avId: string, keyId: string, itemId: string,
     });
 }
 
+/** url 写值 */
+export async function setCellUrl(avId: string, keyId: string, itemId: string, content: string): Promise<void> {
+    await kernelPost("/api/av/setAttributeViewBlockAttr", {
+        avID: avId,
+        keyID: keyId,
+        itemID: itemId,
+        value: { url: { content } },
+    });
+}
+
 /* ---------- 找回已有读库数据库（续建幂等） ---------- */
 
 /** 从数据库块 markdown 还原 avId（块 IAL 不含 avId，唯一还原通道） */

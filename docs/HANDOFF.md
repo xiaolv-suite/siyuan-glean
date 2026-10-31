@@ -1,20 +1,30 @@
 # HANDOFF — 续跑交接（每轮开发结束更新本页）
 
-## 当前有效交接（2026-10-31 思源笔记原生文档深度联动 P0 落地：正文导读卡幂等落盘、全链路原生反链网络与 `pnpm e2e:isolated` 12/12 隔离内核实测）
+## 当前有效交接（2026-10-31 原生文档深度联动 P0+P1 落地、D盘独立靶场 http://127.0.0.1:46919/stage/build/desktop/ 启动与 `pnpm e2e:isolated` 12/12 隔离内核实测）
 
-- **思源笔记原生文档深度联动（P0）落地详情**：
-  1. **全链路原生 `((blockId '锚文本'))` 块引用反向链接网络**：
+- **D盘独立实机靶场（已启动运行）**：
+  - **网页直达入口**：[http://127.0.0.1:46919/stage/build/desktop/](http://127.0.0.1:46919/stage/build/desktop/)
+  - **独立工作区目录**：`D:\SiYuan-Glean-Stage`（完全放在 D 盘，绝对不污染或干扰作者日常 6806 主笔记）；
+  - **独立端口**：`46919`（PID `46488`，与小驴管家 `43919` 严格区隔）；
+  - **管理命令**：`pnpm stage:start`（启动或热同步代码）、`pnpm stage:stop`（停止内核）。
+
+- **思源笔记原生文档深度联动（P0 + P1）落地详情**：
+  1. **全链路原生 `((blockId '锚文本'))` 块引用反向链接网络（P0）**：
      - `src/domain/highlights.ts`（单篇读书笔记与合集导出）、`src/domain/quotes.ts`（全库摘录导出）、`src/domain/stats.ts`（读库周报/月报导出）、`src/domain/doc-slicing.ts`（长文切片与思维导图）、`src/services/flashcard-service.ts`（拾遗闪卡）全面接入思源一等公民块引用 `(( docId '《标题》' ))` 与 `(( blockId '📍 原文定位' ))`，打通原文章的反向链接面板（Backlinks）与图谱网络。
-  2. **原生块属性互通（`bookmark` 与 `memo`）**：
+  2. **原生块属性互通（`bookmark` 与 `memo` · P0）**：
      - `src/services/clip-store.ts` 封装 `writeBlockMemo`、`syncReadingBookmark`、`clearReadingBookmark`，打通思源原生书签面板与块备注（Memo）系统。
-  3. **文档顶部幂等「拾遗导读卡（Meta Callout Block）」**：
+  3. **文档顶部幂等「拾遗导读卡（Meta Callout Block · P0）」**：
      - `src/domain/meta-callout.ts`：纯函数生成包含来源、作者、状态、优先级、星级评分、体量时长、双系标签、AI 核心导读与续读断点的 Blockquote 导读卡，尾部挂载受控 IAL 锚点 `{: custom-glean-slot="meta-callout" }`；
      - `src/services/meta-callout-service.ts`：严格幂等同步（已有则原地 `updateBlock`，未有则正文首块 `prependBlock`），使 AI 摘要、作者、评分进入思源正文块全文索引，`Ctrl+F` 秒级检索；
      - `src/ui/ReadingContext.svelte` 与 `src/ui/ReaderTab.svelte`：分别在上下文条与伴生栏接入「📌 同步导读卡」按钮与操作微反馈。
-  4. **门禁与自动化实测**：
-     - 新增 `tests/meta-callout.test.ts`，单元与契约测试全量通过；
+  4. **Daily Note（今日日记）阅读日志幂等联动（P1）**：
+     - `src/domain/daily-note.ts` & `src/services/daily-note-service.ts`：自动检测/创建今日日记文档，在 `## 📖 今日阅读` 锚点下追加带有原生块引用的已读记录与一句话心得；挂载 `{: custom-glean-reading-doc="${docId}" }` 属性，实现原地无感刷新，绝不产生重复条目。
+  5. **《读库数据库》多维表（AV）9 列扩充（P1）**：
+     - `src/domain/library-db.ts` & `src/services/library-db.ts`：扩充支持 `author`（作者）、`priority`（优先级）、`rating`（评分）、`readMinutes`（实读时长）、`summary`（AI摘要）等字段对齐。
+  6. **门禁与自动化实测**：
+     - 新增 `tests/meta-callout.test.ts`、`tests/daily-note.test.ts`、`tests/library-db-extended.test.ts`，单元与契约测试全量通过；
      - `pnpm check` 0 错误 0 警告，`pnpm check:release` 14/14 PASS；
-     - `scripts/e2e-isolated.mjs` Step 10 新增导读卡 SQLite 真实落盘与原地更新断言，`pnpm e2e:isolated` **12/12 PASS**。
+     - `scripts/e2e-isolated.mjs` Step 10 新增导读卡、Daily Note 与 AV 扩列真实落盘与原地更新断言，`pnpm e2e:isolated` **12/12 PASS**。
 
 - **前期基线交接（`v1.4.2` 本地封版收官）**：
 

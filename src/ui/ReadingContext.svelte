@@ -192,6 +192,14 @@
             if (status === "done" && facade.settings.integration.checkinEnabled && facade.settings.integration.checkinItemId) {
                 void recordReadingDone(facade.settings.integration.checkinItemId, current.id, current.title);
             }
+            if (status === "done" && facade.settings.integration.dailyNoteEnabled && facade.settings.anchorNotebooks?.[0]) {
+                const notebookId = facade.settings.anchorNotebooks[0];
+                const docId = current.id;
+                void (async () => {
+                    const { recordDailyNoteReading } = await import("../services/daily-note-service");
+                    await recordDailyNoteReading(notebookId, docId);
+                })().catch(() => undefined);
+            }
             // 对账可能在写入期间完成；保留最新标题/来源，只覆盖刚刚成功的状态。
             context = { ...(context?.id === current.id ? context : current), status };
             facade.notifyDataChanged();
@@ -268,6 +276,31 @@
             showMessage(t(i18n, "reading.metaCalloutFailed"), 3000);
         } finally {
             syncingCallout = false;
+        }
+    }
+
+    let recordingDailyNote = $state(false);
+
+    async function handleRecordDailyNote(): Promise<void> {
+        if (!context || recordingDailyNote || busy) return;
+        const notebookId = facade.settings.anchorNotebooks?.[0];
+        if (!notebookId) {
+            showMessage(t(i18n, "settings.notebookHint"), 3000);
+            return;
+        }
+        recordingDailyNote = true;
+        try {
+            const { recordDailyNoteReading } = await import("../services/daily-note-service");
+            const res = await recordDailyNoteReading(notebookId, context.id);
+            if (res.ok) {
+                showMessage(t(i18n, res.updated ? "dailyNote.entryUpdated" : "dailyNote.entryCreated"), 3000);
+            } else {
+                showMessage(t(i18n, "dailyNote.failed") + (res.error ? `: ${res.error}` : ""), 3000);
+            }
+        } catch {
+            showMessage(t(i18n, "dailyNote.failed"), 3000);
+        } finally {
+            recordingDailyNote = false;
         }
     }
 </script>
@@ -373,6 +406,16 @@
                     ><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanSearch" /></svg>{t(i18n, "clip.bodyCheck")}</button>
                 {/if}
                 <button type="button" class="glean-reading-context__source-btn" onclick={() => openFormattingDialog(facade, context!.id)}>{t(i18n, "formatting.open")}</button>
+                <button
+                    type="button"
+                    class="glean-reading-context__source-btn"
+                    disabled={recordingDailyNote || busy}
+                    title={t(i18n, "dailyNote.recordAction")}
+                    onclick={() => void handleRecordDailyNote()}
+                >
+                    <svg class="glean-icon" aria-hidden="true"><use href="#iconGleanNews" /></svg>
+                    <span>{recordingDailyNote ? t(i18n, "dailyNote.recording") : t(i18n, "dailyNote.recordAction")}</span>
+                </button>
             </details>
         </div>
     </aside>

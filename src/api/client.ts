@@ -200,6 +200,7 @@ function invalidateAfterSuccessfulKernelWrite(route: string, body: Record<string
             break;
         }
         case "/api/filetree/createDocWithMd":
+        case "/api/filetree/createDailyNote":
         case "/api/filetree/moveDocs":
             invalidateSqlReads();
             break;
@@ -208,6 +209,7 @@ function invalidateAfterSuccessfulKernelWrite(route: string, body: Record<string
             break;
         case "/api/block/insertBlock":
         case "/api/block/prependBlock":
+        case "/api/block/appendBlock":
         case "/api/block/updateBlock":
         case "/api/block/deleteBlock": {
             invalidateSqlReads();
@@ -821,6 +823,28 @@ export async function updateBlock(id: string, data: string, dataType: 'markdown'
         data,
         dataType,
     });
+}
+
+/** 向父块末尾追加块（返回首个节点 ID）。 */
+export async function appendBlock(parentBlockId: string, data: string, dataType: 'markdown' | 'dom' = 'markdown'): Promise<string> {
+    const res = await kernelPost<unknown>('/api/block/appendBlock', {
+        dataType,
+        parentID: parentBlockId,
+        data,
+    });
+    const ids = extractInsertBlockIds(res);
+    if (ids.length === 0) throw new Error('appendBlock 未返回节点 ID');
+    return ids[0];
+}
+
+/** 创建或获取今日 Daily Note（返回文档 ID）。 */
+export async function createDailyNote(notebookId: string): Promise<string> {
+    const data = await kernelPost<{ id?: string }>("/api/filetree/createDailyNote", { notebook: notebookId });
+    const id = data?.id;
+    if (typeof id !== "string" || !/^\d{14}-[0-9a-z]{7}$/.test(id)) {
+        throw new Error("createDailyNote 未返回有效文档 ID");
+    }
+    return id;
 }
 
 /** 删除指定块。 */

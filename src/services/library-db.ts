@@ -12,23 +12,31 @@ import {
     findDocByTitle,
     mapBoundDocIds,
     renderView,
+    setCellNumber,
     setCellSelect,
+    setCellText,
+    setCellUrl,
     type AvRef,
 } from "../api/av";
 import { readClipAttributeSnapshot, reconcileIndex, writeClip } from "./clip-store";
 import { parseClipAttrs } from "../domain/schema";
 import type { GleanSettings } from "./settings";
 
+import {
+    EXTENDED_LIBRARY_FIELDS,
+    LIBRARY_FIELDS,
+    type LibraryFieldDef,
+} from "../domain/library-db.ts";
+
+export { EXTENDED_LIBRARY_FIELDS, LIBRARY_FIELDS, type LibraryFieldDef };
+
 export const LIBRARY_DOC_TITLE = "读库数据库";
 const AV_DISCOVERY_ATTEMPTS = 6;
 const AV_DISCOVERY_DELAY_MS = 300;
 
-const LIBRARY_FIELDS: Array<{ key: string; name: string; type: "select" | "number" | "url" }> = [
-    { key: "status", name: "状态", type: "select" },
-    { key: "words", name: "字数", type: "number" },
-    { key: "minutes", name: "时长", type: "number" },
-    { key: "url", name: "来源", type: "url" },
-];
+export interface EnsureFieldsOptions {
+    extended?: boolean;
+}
 
 export interface LibraryAnchor {
     notebookId: string;
@@ -51,7 +59,7 @@ async function findAvWithRetry(hostDocId: string): Promise<AvRef | null> {
 }
 
 /** 找回或创建读库库锚点（幂等）。 */
-export async function ensureLibraryAnchor(settings: GleanSettings, plugin: Plugin): Promise<LibraryAnchor> {
+export async function ensureLibraryAnchor(settings: GleanSettings, plugin: Plugin, options: EnsureFieldsOptions = {}): Promise<LibraryAnchor> {
     const notebookId = settings.anchorNotebooks[0];
     if (!notebookId) throw new Error("请先设置读库笔记本");
     let hostDoc = await findDocByTitle(notebookId, LIBRARY_DOC_TITLE);
@@ -66,18 +74,19 @@ export async function ensureLibraryAnchor(settings: GleanSettings, plugin: Plugi
     if (!av) {
         av = await createDatabaseInDoc(hostDoc.id);
     }
-    const fieldMap = await ensureFields(av);
+    const fieldMap = await ensureFields(av, options);
     return { notebookId, hostDocId: hostDoc.id, av, fieldMap };
 }
 
 /** 对账补字段：按列名找回 keyID，缺的补建（返回 fieldMap）。 */
-async function ensureFields(av: AvRef): Promise<Record<string, string>> {
+async function ensureFields(av: AvRef, options: EnsureFieldsOptions = {}): Promise<Record<string, string>> {
+    const fields = options.extended ? EXTENDED_LIBRARY_FIELDS : LIBRARY_FIELDS;
     const rendered = await renderWithRetry(av.avId, av.dbBlockId, 3);
     const columns = rendered?.view?.columns;
     if (!Array.isArray(columns)) throw new Error("Database columns unavailable");
     const fieldMap: Record<string, string> = {};
     let previousKeyId = columns.length > 0 ? columns[columns.length - 1].id : "";
-    for (const field of LIBRARY_FIELDS) {
+    for (const field of fields) {
         const found = columns.find((column) => column.name === field.name);
         if (found) {
             fieldMap[field.key] = found.id;
@@ -113,17 +122,17 @@ export interface BindResult {
 /** 把索引里全部收录文档挂入库（跳过已绑定的），并把状态列对齐。 */
 const bindingPlugins = new WeakSet<Plugin>();
 
-export async function bindAllClipsToLibrary(plugin: Plugin, settings: GleanSettings): Promise<BindResult> {
+export async function bindAllClipsToLibrary(plugin: Plugin, settings: GleanSettings, options: EnsureFieldsOptions = {}): Promise<BindResult> {
     if (bindingPlugins.has(plugin)) throw new Error("Database refresh already running");
     bindingPlugins.add(plugin);
-    try { return await bindClipsToLibrary(plugin, settings); }
+    try { return await bindClipsToLibrary(plugin, settings, options); }
     finally { bindingPlugins.delete(plugin); }
 }
 
-async function bindClipsToLibrary(plugin: Plugin, settings: GleanSettings): Promise<BindResult> {
+async function bindClipsToLibrary(plugin: Plugin, settings: GleanSettings, options: EnsureFieldsOptions = {}): Promise<BindResult> {
     const index = await reconcileIndex(plugin, settings);
     const clips = Object.values(index.clips).filter((clip) => clip.status && !clip.internal);
-    const anchor = await ensureLibraryAnchor(settings, plugin);
+    const anchor = await ensureLibraryAnchor(settings, plugin, options);
 
     const rendered = await renderWithRetry(anchor.av.avId, anchor.av.dbBlockId, 5, clips.length > 0 ? 1 : 0);
     const rows = rendered?.view?.rows ?? [];
@@ -162,15 +171,47 @@ async function bindClipsToLibrary(plugin: Plugin, settings: GleanSettings): Prom
         const itemId = idMap[clip.id];
         if (!itemId) { failures.push({ docId: clip.id, reason: bindingErrors.has(clip.id) ? "write" : "unbound" }); continue; }
         let status: string;
+        let currentAttrs: ReturnType<typeof parseClipAttrs> | null = null;
         try {
             const current = parseClipAttrs((await readClipAttributeSnapshot(clip.id)).attrs);
             if (!current.status || current.internal) { failures.push({ docId: clip.id, reason: "changed" }); continue; }
             status = current.status;
+            currentAttrs = current;
         } catch { failures.push({ docId: clip.id, reason: "unavailable" }); continue; }
         let writeFailed = false;
         try {
             await setCellSelect(anchor.av.avId, anchor.fieldMap.status, itemId, status);
         } catch { writeFailed = true; }
+        if (options.extended && !writeFailed && currentAttrs) {
+            try {
+                if (anchor.fieldMap.author && currentAttrs.author) {
+                    await setCellText(anchor.av.avId, anchor.fieldMap.author, itemId, currentAttrs.author);
+                }
+                if (anchor.fieldMap.priority && currentAttrs.priority !== undefined) {
+                    await setCellNumber(anchor.av.avId, anchor.fieldMap.priority, itemId, currentAttrs.priority);
+                }
+                if (anchor.fieldMap.rating && currentAttrs.rating !== undefined) {
+                    await setCellNumber(anchor.av.avId, anchor.fieldMap.rating, itemId, currentAttrs.rating);
+                }
+                if (anchor.fieldMap.words && currentAttrs.words !== undefined) {
+                    await setCellNumber(anchor.av.avId, anchor.fieldMap.words, itemId, currentAttrs.words);
+                }
+                if (anchor.fieldMap.minutes && currentAttrs.minutes !== undefined) {
+                    await setCellNumber(anchor.av.avId, anchor.fieldMap.minutes, itemId, currentAttrs.minutes);
+                }
+                if (anchor.fieldMap.readMinutes && currentAttrs.readMinutes !== undefined) {
+                    await setCellNumber(anchor.av.avId, anchor.fieldMap.readMinutes, itemId, currentAttrs.readMinutes);
+                }
+                if (anchor.fieldMap.summary && currentAttrs.summary) {
+                    await setCellText(anchor.av.avId, anchor.fieldMap.summary, itemId, currentAttrs.summary);
+                }
+                if (anchor.fieldMap.url && currentAttrs.url) {
+                    await setCellUrl(anchor.av.avId, anchor.fieldMap.url, itemId, currentAttrs.url);
+                }
+            } catch (extErr) {
+                console.debug("[glean] AV 扩展字段同步降级:", extErr);
+            }
+        }
         attempted.push({ docId: clip.id, itemId, status, writeFailed });
     }
 

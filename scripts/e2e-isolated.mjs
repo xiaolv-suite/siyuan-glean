@@ -1264,7 +1264,40 @@ async function main() {
         assert.ok(updatedCardRows[0].markdown.includes("⭐⭐⭐⭐⭐"), "导读卡必须在正文中更新为 5 星评分");
         assert.ok(updatedCardRows[0].markdown.includes("深度专注力"), "导读卡必须将 AI 摘要写入正文块中供全局检索");
 
-        recordStep("Step 10 · 阅读统计复盘、关键词找回、衍生脑图隔离与文档顶部导读卡幂等落盘（P0/BL-08/BL-09）", true, `done=${stats.done}, 脑图=internal:true, 导读卡=idempotent:true`);
+        // P1-1 闭环查验：Daily Note (日记) 阅读日志幂等联动测试
+        const { recordDailyNoteReading } = await import(pathToFileURL(path.join(REPO, "src/services/daily-note-service.ts")).href);
+        const dailyRes1 = await recordDailyNoteReading(notebookId, fulltextDocId);
+        assert.equal(dailyRes1.ok, true, "首次记入今日日记必须成功");
+        assert.equal(dailyRes1.updated, false, "首次记入必须为追加模式 (updated: false)");
+        assert.ok(dailyRes1.dailyDocId, "必须返回今日日记文档 ID");
+        assert.ok(dailyRes1.blockId, "必须返回新记录块 ID");
+
+        // 内核查验：日记中包含文章反链与 custom-glean-reading-doc
+        let dailyRows = [];
+        for (let i = 0; i < 30; i += 1) {
+            dailyRows = await client.apiChecked("/api/query/sql", {
+                stmt: `SELECT markdown, ial FROM blocks WHERE id = '${dailyRes1.blockId}' LIMIT 1`,
+            });
+            if (dailyRows && dailyRows.length > 0 && dailyRows[0].markdown) break;
+            await new Promise((r) => setTimeout(r, 150));
+        }
+        assert.ok(dailyRows && dailyRows.length > 0, "日记记录块必须在 SQLite blocks 表中真实落盘");
+        assert.ok(dailyRows[0].markdown.includes(fulltextDocId), "日记记录块必须包含文章原生块引用反链");
+        assert.ok(dailyRows[0].markdown.includes("深度长文剪藏"), "日记记录块必须包含文章标题");
+
+        // 幂等重复记入：必须在原块上原地更新，不产生重复条目
+        const dailyRes2 = await recordDailyNoteReading(notebookId, fulltextDocId);
+        assert.equal(dailyRes2.ok, true, "二次记入今日日记必须成功");
+        assert.equal(dailyRes2.updated, true, "二次记入必须为原地更新 (updated: true)");
+        assert.equal(dailyRes2.blockId, dailyRes1.blockId, "二次记入必须保持完全相同块 ID，不得刷屏重复追加");
+
+        // P1-2 闭环查验：《读库数据库》原生多维表 (AV) 扩列同步测试
+        const { bindAllClipsToLibrary, EXTENDED_LIBRARY_FIELDS } = await import(pathToFileURL(path.join(REPO, "src/services/library-db.ts")).href);
+        assert.equal(EXTENDED_LIBRARY_FIELDS.length, 9, "AV 扩展字段必须包含 9 大核心字段");
+        const avSyncRes = await bindAllClipsToLibrary(plugin, settings, { extended: true });
+        assert.ok(avSyncRes.synced >= 1, "扩展多维表同步必须至少成功对齐 1 篇");
+
+        recordStep("Step 10 · 阅读统计复盘、关键词找回、衍生脑图隔离、正文导读卡、Daily Note日记联动与AV扩列（P0/P1/BL-08/BL-09）", true, `done=${stats.done}, 导读卡=idempotent:true, 日记联动=idempotent:true, AV扩列=9列`);
 
         // Step 11: 真实 Chrome 浏览器 CDP 全界面挂载与交互实测（加载 dist/index.js + 隔离内核实时 API）
         if (chromePath) {

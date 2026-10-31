@@ -2,12 +2,16 @@
 
 ## v1.4.2（2026-10-31）
 
-### 思源笔记原生文档深度联动（P0）、首屏减法、键盘与弹窗 Escape 栈统一调度、高分屏适配与隔离浏览器全主链收官
+### 思源笔记原生文档深度联动（P0 + P1）、独立靶场实机环境、首屏减法与全主链收官
 
-- **思源笔记深度联动（Native Document Integration）**：
+- **思源笔记深度联动（Native Document Integration · P0 & P1）**：
   - **正文顶部幂等「拾遗导读卡」**：在 `ReadingContext` 与 `ReaderTab` 支持一键将来源链接、作者、阅读状态、优先级、星级评分、体量时长、标签、AI 核心摘要与续读断点同步为正文顶部的 Blockquote 导读卡，挂载 `{: custom-glean-slot="meta-callout" }` 确保原地幂等更新且不累加重复块，使 AI 摘要与作者信息进入思源正文块全文索引（`Ctrl+F` 秒搜）；
   - **全链路原生 `((块引用))` 反链网络**：读书笔记导出、全库摘录导出、读库周报/月报、长文渐进切片、思维导图与闪卡来源行全面接入原生块引用 `(( docId '《标题》' ))` 与 `(( blockId '📍 原文定位' ))`，打通原文章的反向链接面板与知识图谱；
-  - **原生块属性互通**：支持原生 `bookmark`（书签一等公民）与 `memo`（块备注一等公民）属性互通。
+  - **原生块属性互通**：支持原生 `bookmark`（书签一等公民）与 `memo`（块备注一等公民）属性互通；
+  - **Daily Note（今日日记）幂等联动**：支持已读/评分或手动将文章记录至今日日记的 `## 📖 今日阅读` 小节，挂载 `{: custom-glean-reading-doc="${docId}" }` 保持严格原地刷新不刷屏；
+  - **《读库数据库》多维表（AV）9 列扩充**：扩充支持 `author`（作者）、`priority`（优先级）、`rating`（评分）、`readMinutes`（实读时长）、`summary`（AI摘要）等字段对齐。
+- **独立靶场实机环境（Stage Environment）**：
+  - 新增 `scripts/launch-stage.mjs`（`pnpm stage:start` / `pnpm stage:stop`），在 D 盘建立独立工作区（`D:\SiYuan-Glean-Stage`）与独立端口（`46919`），提供完整思源桌面端网页入口 `http://127.0.0.1:46919/stage/build/desktop/` 供随时真机浏览器走查。
 
 - **修复（Fixed）**：
   - 修复 `LibraryBatchBar` 在思源桌面端（Electron）依赖 `window.prompt()` 静默失效及 `batchSetAuthor` 漏传 `{ force: true }` 的缺陷，升级为底部内联输入框与 `P0–P5` / `0–5★` 一键档位胶囊；
