@@ -437,7 +437,9 @@ export function buildReadingReviewMarkdown(review: ReadingReview, labels: Readin
     if (review.completedItems.length === 0) lines.push(escapeReviewMarkdown(labels.noCompleted));
     for (const item of review.completedItems) {
         const title = escapeReviewMarkdown(item.title || labels.untitled);
-        const link = /^\d{14}-[0-9a-z]{7}$/.test(item.id) ? `[${title}](siyuan://blocks/${item.id})` : title;
+        const link = /^\d{14}-[0-9a-z]{7}$/.test(item.id)
+            ? `(( ${item.id} '${title}' )) [${title}](siyuan://blocks/${item.id})`
+            : title;
         lines.push(`- ${displayReviewDate(item.doneTime.slice(0, 8))} · ${link}${item.site ? ` · ${escapeReviewMarkdown(item.site)}` : ""}${item.author ? ` · ${escapeReviewMarkdown(item.author)}` : ""}${item.rating > 0 ? ` · ⭐${item.rating}` : ""}`);
     }
     for (const [label, counts] of [[labels.bySite, stats.periodBySite], [labels.byAuthor, stats.periodByAuthor], [labels.byUserTag, stats.periodByUserTag], [labels.byAiTag, stats.periodByAiTag]] as const) {

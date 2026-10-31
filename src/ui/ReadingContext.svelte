@@ -17,6 +17,7 @@
     import { isWechatUrl, displayWechatAuthor } from "../domain/wechat";
     import ClipStatusActions from "./ClipStatusActions.svelte";
     import { openFormattingDialog } from "./formatting-dialog";
+    import { syncMetaCalloutToDocument } from "../services/meta-callout-service";
 
     interface Props {
         facade: GleanFacade;
@@ -233,6 +234,42 @@
     function backToLibrary(): void {
         if (context) void facade.openLibraryArticle(context.id);
     }
+
+    let syncingCallout = $state(false);
+
+    async function handleSyncMetaCallout(): Promise<void> {
+        if (!context || syncingCallout || busy) return;
+        syncingCallout = true;
+        try {
+            const labels = {
+                title: t(i18n, "metaCallout.title"),
+                source: t(i18n, "metaCallout.source"),
+                author: t(i18n, "metaCallout.author"),
+                status: t(i18n, "metaCallout.status"),
+                priority: t(i18n, "metaCallout.priority"),
+                rating: t(i18n, "metaCallout.rating"),
+                words: t(i18n, "metaCallout.words"),
+                minutes: t(i18n, "metaCallout.minutes"),
+                readMinutes: t(i18n, "metaCallout.readMinutes"),
+                tags: t(i18n, "metaCallout.tags"),
+                summary: t(i18n, "metaCallout.summary"),
+                bookmark: t(i18n, "metaCallout.bookmark"),
+                unknown: t(i18n, "metaCallout.unknown"),
+                untitled: t(i18n, "panel.untitled"),
+                clickToResume: t(i18n, "metaCallout.clickToResume"),
+            };
+            const res = await syncMetaCalloutToDocument(facade.pluginInstance, context.id, labels);
+            if (res.ok) {
+                showMessage(t(i18n, res.created ? "reading.metaCalloutCreated" : "reading.metaCalloutUpdated"), 3000);
+            } else {
+                showMessage(t(i18n, "reading.metaCalloutFailed") + (res.error ? `: ${res.error}` : ""), 3000);
+            }
+        } catch {
+            showMessage(t(i18n, "reading.metaCalloutFailed"), 3000);
+        } finally {
+            syncingCallout = false;
+        }
+    }
 </script>
 
 {#if loading}
@@ -278,6 +315,16 @@
             <button type="button" class="glean-reading-context__source-btn" title={t(i18n, "reading.openInReader")} onclick={() => { if (context) (facade.openReader ?? facade.openReadingDocument).call(facade, context.id); }}>
                 <svg class="glean-icon" aria-hidden="true"><use href="#iconGleanNews" /></svg>
                 <span>{t(i18n, "reading.openInReader")}</span>
+            </button>
+            <button
+                type="button"
+                class="glean-reading-context__source-btn"
+                title={t(i18n, "reading.syncMetaCalloutHint")}
+                disabled={syncingCallout || busy}
+                onclick={() => void handleSyncMetaCallout()}
+            >
+                <svg class="glean-icon" aria-hidden="true"><use href="#iconGleanPin" /></svg>
+                <span>{syncingCallout ? t(i18n, "reading.syncingMetaCallout") : t(i18n, "reading.syncMetaCallout")}</span>
             </button>
             {#if hasSourceAction(context.contentType, context.url)}
                 <button type="button" class="glean-reading-context__source-btn glean-reading-context__source-btn--primary" title={t(i18n, "reading.sourceHint")} onclick={openSource}>

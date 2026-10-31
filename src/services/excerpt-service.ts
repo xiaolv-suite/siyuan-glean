@@ -83,7 +83,8 @@ export async function insertQuoteExcerpt(blockId: string, text: string, memo?: s
     const fullText = trimmedMemo ? `${rawQuote}\n\n💡 ${trimmedMemo}` : rawQuote;
     const dom = buildQuoteBlockDom(fullText, escapeDomText);
     if (!dom) throw new Error("摘录内容为空");
-    return insertBlockAfter(blockId, dom);
+    const newQuoteBlockId = await insertBlockAfter(blockId, dom);
+    return newQuoteBlockId;
 }
 
 /**

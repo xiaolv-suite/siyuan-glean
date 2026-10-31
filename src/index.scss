@@ -3535,6 +3535,31 @@ mark.glean-search-highlight {
     font-size: var(--glean-text-xs);
 }
 
+.glean-reader__meta-callout-action {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    margin-top: calc(var(--glean-space-1) * -0.5);
+    margin-bottom: var(--glean-space-1);
+
+    .glean-btn {
+        width: 100%;
+        min-height: 30px;
+        font-size: var(--glean-text-xs);
+        border: 1px dashed var(--b3-theme-surface-lighter, var(--b3-border-color));
+        border-radius: var(--b3-border-radius);
+        color: var(--b3-theme-on-surface);
+        background: var(--b3-theme-surface);
+        transition: all var(--glean-motion-base) var(--glean-ease-standard);
+
+        &:hover:not(:disabled) {
+            border-color: var(--b3-theme-primary);
+            color: var(--b3-theme-primary);
+            background: color-mix(in srgb, var(--b3-theme-primary) 8%, transparent);
+        }
+    }
+}
+
 /* 阅读时间是状态提示，保持轻量胶囊，不与正文完成动作争夺强调色。 */
 .glean-reader__reading-time {
     display: inline-flex;

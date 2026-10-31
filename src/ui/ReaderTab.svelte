@@ -48,6 +48,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
     import { findRelatedOutcome, type RelatedReason } from "../services/enrich-service";
     import { pickNextUnread } from "../services/resurface-service";
     import { articleQuestionEnabled, clearReaderMarkdownCache, insertAiCalloutToDocument, readerAiEnabled, readerArticleQuestion, readerSummarize, readerTranslate, saveReaderSummary } from "../services/reader-ai";
+    import { syncMetaCalloutToDocument } from "../services/meta-callout-service";
     import ClipStatusActions from "./ClipStatusActions.svelte";
     import ClipRankControls from "./ClipRankControls.svelte";
     import { openFormattingDialog } from "./formatting-dialog";
@@ -1857,6 +1858,43 @@ import { aiFailureKey } from "../libs/ai-feedback";
         }
     }
 
+    let syncingMetaCallout = $state(false);
+
+    async function handleSyncMetaCallout(): Promise<void> {
+        if (!docId || syncingMetaCallout) return;
+        syncingMetaCallout = true;
+        try {
+            const labels = {
+                title: t(i18n, "metaCallout.title"),
+                source: t(i18n, "metaCallout.source"),
+                author: t(i18n, "metaCallout.author"),
+                status: t(i18n, "metaCallout.status"),
+                priority: t(i18n, "metaCallout.priority"),
+                rating: t(i18n, "metaCallout.rating"),
+                words: t(i18n, "metaCallout.words"),
+                minutes: t(i18n, "metaCallout.minutes"),
+                readMinutes: t(i18n, "metaCallout.readMinutes"),
+                tags: t(i18n, "metaCallout.tags"),
+                summary: t(i18n, "metaCallout.summary"),
+                bookmark: t(i18n, "metaCallout.bookmark"),
+                unknown: t(i18n, "metaCallout.unknown"),
+                untitled: t(i18n, "panel.untitled"),
+                clickToResume: t(i18n, "metaCallout.clickToResume"),
+            };
+            const res = await syncMetaCalloutToDocument(facade.pluginInstance, docId, labels);
+            if (res.ok) {
+                showMessage(t(i18n, res.created ? "reading.metaCalloutCreated" : "reading.metaCalloutUpdated"), 3000);
+                facade.notifyDataChanged();
+            } else {
+                showMessage(t(i18n, "reading.metaCalloutFailed") + (res.error ? `: ${res.error}` : ""), 3000);
+            }
+        } catch {
+            showMessage(t(i18n, "reading.metaCalloutFailed"), 3000);
+        } finally {
+            syncingMetaCallout = false;
+        }
+    }
+
     async function insertQuestionCallout(): Promise<void> {
         if (!docId || !questionResult || insertingCallout) return;
         insertingCallout = true;
@@ -2698,6 +2736,18 @@ import { aiFailureKey } from "../libs/ai-feedback";
                         onStartReading={() => void startReading()}
                         onSetStatus={(status) => void writeStatus(status)}
                     />
+                </div>
+                <div class="glean-reader__meta-callout-action">
+                    <button
+                        type="button"
+                        class="glean-btn glean-btn--ghost glean-btn--full"
+                        title={t(i18n, "reading.syncMetaCalloutHint")}
+                        disabled={syncingMetaCallout || statusBusy}
+                        onclick={() => void handleSyncMetaCallout()}
+                    >
+                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanPin" /></svg>
+                        <span>{syncingMetaCallout ? t(i18n, "reading.syncingMetaCallout") : t(i18n, "reading.syncMetaCallout")}</span>
+                    </button>
                 </div>
                 {#if context.id === docId}
                     <ReadingPositionControls

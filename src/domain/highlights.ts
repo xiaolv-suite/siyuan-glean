@@ -123,9 +123,11 @@ export function renderHighlightsMarkdown(items: readonly HighlightItem[], labels
     const sections = items.map((item) => {
         const quote = item.text.split(/\r?\n/).map((line) => `> ${escapeHighlightText(line)}`).join("\n");
         const sourceUrl = safeSourceUrl(item.url);
+        const rootTitle = inlineHighlightText(item.title || item.rootId);
+        const origLabel = inlineHighlightText(labels.original);
         return [
             quote,
-            `[${inlineHighlightText(item.title || item.rootId)}](${highlightBlockLink(item.rootId)}) · [${inlineHighlightText(labels.original)}](${highlightBlockLink(item.id)})`,
+            `(( ${item.rootId} '${rootTitle}' )) [${rootTitle}](${highlightBlockLink(item.rootId)}) · (( ${item.id} '📍 ${origLabel}' )) [${origLabel}](${highlightBlockLink(item.id)})`,
             ...(sourceUrl ? [`${inlineHighlightText(labels.source)}: [${inlineHighlightText(new URL(sourceUrl).host)}](<${sourceUrl}>)`] : []),
         ].join("\n\n");
     });
@@ -224,7 +226,9 @@ export function renderArticleHighlightsMarkdown(
         `# ${inlineHighlightText(title)}`,
         "",
         ...(group.site ? [`*${inlineHighlightText(labels.source)}: ${inlineHighlightText(group.site)}*`, ""] : []),
-        ...(isHighlightId(group.rootId) ? [`[${inlineHighlightText(labels.title)}](${highlightBlockLink(group.rootId)})`] : [inlineHighlightText(labels.title)]),
+        ...(isHighlightId(group.rootId)
+            ? [`(( ${group.rootId} '《${inlineHighlightText(title)}》' )) [${inlineHighlightText(labels.title)}](${highlightBlockLink(group.rootId)})`]
+            : [inlineHighlightText(labels.title)]),
         "",
         "---",
         "",
@@ -232,9 +236,10 @@ export function renderArticleHighlightsMarkdown(
 
     const quotes = group.items.map((item, index) => {
         const quote = item.text.split(/\r?\n/).map((line) => `> ${escapeHighlightText(line)}`).join("\n");
+        const origText = `${inlineHighlightText(labels.original)} #${index + 1}`;
         return [
             quote,
-            `[${inlineHighlightText(labels.original)} #${index + 1}](${highlightBlockLink(item.id)})`,
+            `(( ${item.id} '📍 ${origText}' )) [${origText}](${highlightBlockLink(item.id)})`,
         ].join("\n\n");
     });
 

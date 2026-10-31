@@ -1225,7 +1225,46 @@ async function main() {
         assert.equal(mindmapAttrs.internal, true, "衍生脑图文档必须标记 internal: true（BL-08）");
         assert.equal(mindmapAttrs.status, undefined, "衍生脑图文档严禁写入 status: done 污染读库（BL-08）");
         assert.equal(resolveLibraryShortcut({ key: "d" }, { cursorActive: true })?.type, "markDone", "读库键盘流必须支持 D 键标记已读（BL-09）");
-        recordStep("Step 10 · 阅读统计复盘、关键词找回与衍生脑图隔离（BL-08/BL-09）", true, `done=${stats.done}, 脑图(${mindmapRes.docId.slice(0, 8)})=internal:true, D键=markDone`);
+
+        // P0 闭环查验：文档顶部幂等「拾遗导读卡」创建、SQL 真实落盘与原地更新验证
+        const { syncMetaCalloutToDocument, findMetaCalloutBlockId } = await import(pathToFileURL(path.join(REPO, "src/services/meta-callout-service.ts")).href);
+        const metaRes1 = await syncMetaCalloutToDocument(plugin, fulltextDocId);
+        assert.equal(metaRes1.ok, true, "导读卡首次生成必须成功");
+        assert.equal(metaRes1.created, true, "导读卡首次必须为 created: true");
+        assert.ok(metaRes1.blockId, "导读卡必须返回分配的块 ID");
+
+        const foundCardId = await findMetaCalloutBlockId(fulltextDocId);
+        assert.equal(foundCardId, metaRes1.blockId, "必须通过 custom-glean-slot 属性准确查得导读卡块 ID");
+        let cardRows = [];
+        for (let i = 0; i < 30; i += 1) {
+            cardRows = await client.apiChecked("/api/query/sql", {
+                stmt: `SELECT markdown, ial FROM blocks WHERE id = '${metaRes1.blockId}' LIMIT 1`,
+            });
+            if (cardRows && cardRows.length > 0 && cardRows[0].markdown) break;
+            await new Promise((r) => setTimeout(r, 150));
+        }
+        assert.ok(cardRows && cardRows.length > 0, "导读卡必须在思源 SQLite blocks 表中真实落盘");
+        assert.ok(cardRows[0].markdown.includes("小驴拾遗 · 导读档案"), "导读卡内容必须包含档案标题");
+        assert.ok(cardRows[0].markdown.includes("纽波特"), "导读卡内容必须包含作者名称");
+
+        // 幂等原地更新测试
+        await writeClip(plugin, fulltextDocId, { rating: 5, summary: "这是一篇关于深度专注力的实战论述" }, { force: true });
+        const metaRes2 = await syncMetaCalloutToDocument(plugin, fulltextDocId);
+        assert.equal(metaRes2.ok, true, "导读卡原地刷新必须成功");
+        assert.equal(metaRes2.created, false, "二次同步必须为原地更新而非重复创建");
+        assert.equal(metaRes2.blockId, metaRes1.blockId, "原地更新必须保持相同块 ID，不得累加重复块");
+        let updatedCardRows = [];
+        for (let i = 0; i < 30; i += 1) {
+            updatedCardRows = await client.apiChecked("/api/query/sql", {
+                stmt: `SELECT markdown FROM blocks WHERE id = '${metaRes1.blockId}' LIMIT 1`,
+            });
+            if (updatedCardRows && updatedCardRows[0]?.markdown?.includes("深度专注力")) break;
+            await new Promise((r) => setTimeout(r, 150));
+        }
+        assert.ok(updatedCardRows[0].markdown.includes("⭐⭐⭐⭐⭐"), "导读卡必须在正文中更新为 5 星评分");
+        assert.ok(updatedCardRows[0].markdown.includes("深度专注力"), "导读卡必须将 AI 摘要写入正文块中供全局检索");
+
+        recordStep("Step 10 · 阅读统计复盘、关键词找回、衍生脑图隔离与文档顶部导读卡幂等落盘（P0/BL-08/BL-09）", true, `done=${stats.done}, 脑图=internal:true, 导读卡=idempotent:true`);
 
         // Step 11: 真实 Chrome 浏览器 CDP 全界面挂载与交互实测（加载 dist/index.js + 隔离内核实时 API）
         if (chromePath) {

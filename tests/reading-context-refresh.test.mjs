@@ -9,7 +9,7 @@ registerHooks({
     resolve(specifier, context, nextResolve) {
         if (specifier.startsWith("glean-context-refresh:")) return { url: specifier, shortCircuit: true };
         if (context.parentURL?.startsWith("glean-context-refresh:component-")) {
-            if (specifier === "svelte" || specifier === "siyuan" || specifier.endsWith(".svelte") || specifier === "./formatting-dialog" || specifier === "../services/checkin-bridge" || specifier === "../services/clip-store") {
+            if (specifier === "svelte" || specifier === "siyuan" || specifier.endsWith(".svelte") || specifier === "./formatting-dialog" || specifier === "../services/checkin-bridge" || specifier === "../services/clip-store" || specifier === "../services/meta-callout-service") {
                 return { url: `glean-context-refresh:${specifier}`, shortCircuit: true };
             }
             const qualified = specifier.startsWith(".") && !/\.[cm]?[jt]s$/.test(specifier) ? `${specifier}.ts` : specifier;
@@ -22,10 +22,11 @@ registerHooks({
         if (url === "glean-context-refresh:siyuan") return { format: "module", source: "export const showMessage = () => {};", shortCircuit: true };
         if (url === "glean-context-refresh:../services/clip-store") return {
             format: "module", shortCircuit: true,
-            source: "export const readClipContext = (...args) => globalThis.__gleanContextRefreshRead(...args); export const batchSetStatusDetailed = () => {}; export const measureClipBody = () => {};",
+            source: "export const readClipContext = (...args) => globalThis.__gleanContextRefreshRead(...args); export const batchSetStatusDetailed = () => {}; export const measureClipBody = () => {}; export const syncMetaCalloutToDocument = () => Promise.resolve({ ok: true });",
         };
         if (url === "glean-context-refresh:../services/checkin-bridge") return { format: "module", source: "export const recordReadingDone = () => {};", shortCircuit: true };
         if (url === "glean-context-refresh:./formatting-dialog") return { format: "module", source: "export const openFormattingDialog = () => {};", shortCircuit: true };
+        if (url === "glean-context-refresh:../services/meta-callout-service") return { format: "module", source: "export const syncMetaCalloutToDocument = () => Promise.resolve({ ok: true });", shortCircuit: true };
         if (url.endsWith(".svelte")) return { format: "module", source: "export default {};", shortCircuit: true };
         if (url.startsWith("glean-context-refresh:component-")) {
             const script = readFileSync(componentUrl, "utf8").match(/<script lang="ts">([\s\S]*?)<\/script>/)[1];

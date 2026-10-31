@@ -207,7 +207,9 @@ function invalidateAfterSuccessfulKernelWrite(route: string, body: Record<string
             invalidateAllBlockReads();
             break;
         case "/api/block/insertBlock":
-        case "/api/block/prependBlock": {
+        case "/api/block/prependBlock":
+        case "/api/block/updateBlock":
+        case "/api/block/deleteBlock": {
             invalidateSqlReads();
             const parentId = typeof payload.parentID === "string" ? payload.parentID : "";
             invalidateReadFlights("/api/block/getChildBlocks", (key) => !parentId || key === `child-blocks:${parentId}`);
@@ -798,4 +800,30 @@ export async function prependBlockDomIds(parentBlockId: string, dom: string): Pr
 /** 向父块开头插入 DOM 块（返回首个节点 ID）。 */
 export async function prependBlockDom(parentBlockId: string, dom: string): Promise<string> {
     return (await prependBlockDomIds(parentBlockId, dom))[0];
+}
+
+/** 向父块开头插入 Markdown 块（返回首个节点 ID）。 */
+export async function prependBlockMarkdown(parentBlockId: string, markdown: string): Promise<string> {
+    const data = await kernelPost<unknown>('/api/block/prependBlock', {
+        dataType: 'markdown',
+        parentID: parentBlockId,
+        data: markdown,
+    });
+    const ids = extractInsertBlockIds(data);
+    if (ids.length === 0) throw new Error('prependBlock 未返回节点 ID');
+    return ids[0];
+}
+
+/** 更新指定块的内容与格式。 */
+export async function updateBlock(id: string, data: string, dataType: 'markdown' | 'dom' = 'markdown'): Promise<void> {
+    await kernelPost('/api/block/updateBlock', {
+        id,
+        data,
+        dataType,
+    });
+}
+
+/** 删除指定块。 */
+export async function deleteBlock(id: string): Promise<void> {
+    await kernelPost('/api/block/deleteBlock', { id });
 }

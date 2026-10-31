@@ -101,7 +101,7 @@ function draftMarkdown(session: FormattingSession, markdown: string, labels: For
     const url = formattingSourceLink(source.url);
     return [
         `# ${escapeFormattingLabel(title)}`,
-        `${escapeFormattingLabel(labels.original)}: [${escapeFormattingLabel(source.title || source.id)}](siyuan://blocks/${source.id})`,
+        `${escapeFormattingLabel(labels.original)}: (( ${source.id} '《${escapeFormattingLabel(source.title || source.id)}》' )) [${escapeFormattingLabel(source.title || source.id)}](siyuan://blocks/${source.id})`,
         ...(url ? [`${escapeFormattingLabel(labels.source)}: [${escapeFormattingLabel(new URL(url).host)}](<${url}>)`] : []),
         "---",
         markdown,

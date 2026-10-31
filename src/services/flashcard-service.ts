@@ -234,8 +234,10 @@ export async function draftQuestionCard(
             const draft = parseQuestionCard(outcome.text);
             if (!draft) return { ok: false, reason: "invalid" as const };
             const sourceTitle = session.source.title.trim();
+            const sourceRef = session.source.docId ? `(( ${session.source.docId} '《${sourceTitle || "来源文档"}》' ))` : "";
             const sourceLink = session.source.docId ? `siyuan://blocks/${session.source.docId}` : "";
-            draft.back = [draft.back, sourceTitle ? `《${sourceTitle}》` : "", sourceLink].filter(Boolean).join("\n\n");
+            const refCombined = sourceRef ? `${sourceRef} [↗](${sourceLink})` : sourceLink;
+            draft.back = [draft.back, sourceTitle ? `《${sourceTitle}》` : "", refCombined].filter(Boolean).join("\n\n");
             if (validateFlashcard(draft)) return { ok: false, reason: "invalid" as const };
             session.draft = draft;
             return { ok: true };

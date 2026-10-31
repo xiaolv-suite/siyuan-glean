@@ -154,7 +154,7 @@ export function formatSliceMarkdown(
     const lines: string[] = [];
     lines.push(`# ${slice.title}`);
     lines.push("");
-    lines.push(`> 📖 原文长文：[${articleTitle}](siyuan://blocks/${articleId})`);
+    lines.push(`> 📖 原文长文：(( ${articleId} '${articleTitle}' )) [${articleTitle}](siyuan://blocks/${articleId})`);
     if (slice.startBlockId) {
         lines.push(`> 📍 本节锚点：((${slice.startBlockId} '点击直达正文小节'))`);
     }
@@ -187,7 +187,7 @@ export function buildOutlineMindmapMarkdown(
     const lines: string[] = [];
     lines.push(`# 《${title}》· 思维导图`);
     lines.push("");
-    lines.push(`> 📖 原文长文：[${title}](siyuan://blocks/${articleId})`);
+    lines.push(`> 📖 原文长文：(( ${articleId} '《${title}》' )) [${title}](siyuan://blocks/${articleId})`);
     lines.push("");
     lines.push(`{: custom-sy-list-mindmap="true" }`);
     lines.push(`- 🧠 ${title}`);

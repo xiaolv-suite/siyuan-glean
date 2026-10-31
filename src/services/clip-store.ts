@@ -37,6 +37,7 @@ import { inspectClipMarkdown } from "../domain/content";
 import { canonicalUrlKey, normalizeUrl } from "../domain/url";
 import { normalizeAuthor } from "../domain/author";
 import { parseReadingPosition, serializeReadingPosition, type ReadingPosition } from "../domain/reading-position";
+import { META_CALLOUT_SLOT_KEY, META_CALLOUT_SLOT_VALUE } from "../domain/meta-callout";
 import {
     applyAttrsToIndex,
     confirmIndexRebuilt,
@@ -116,6 +117,55 @@ export async function markGleanHighlight(blockId: string, color?: string): Promi
         patch[ATTR.highlightColor] = color;
     }
     await setBlockAttrs(blockId, patch);
+}
+
+/** 为指定块写入思源原生 memo 属性（备注一等公民） */
+export async function writeBlockMemo(blockId: string, memo: string): Promise<void> {
+    if (!/^\d{14}-[0-9a-z]{7}$/.test(blockId)) return;
+    const trimmed = memo.trim();
+    await setBlockAttrs(blockId, { memo: trimmed ? trimmed : null });
+}
+
+export const GLEAN_READING_BOOKMARK_TEXT = "📖 拾遗续读断点" as const;
+
+/** 同步思源原生 bookmark 属性（书签一等公民），并清理旧断点上的书签 */
+export async function syncReadingBookmark(targetBlockId: string, previousBlockId?: string): Promise<void> {
+    if (!/^\d{14}-[0-9a-z]{7}$/.test(targetBlockId)) return;
+    try {
+        await setBlockAttrs(targetBlockId, { bookmark: GLEAN_READING_BOOKMARK_TEXT });
+        if (previousBlockId && previousBlockId !== targetBlockId && /^\d{14}-[0-9a-z]{7}$/.test(previousBlockId)) {
+            // 获取旧块属性，如果旧块书签确实是拾遗书签，则清理
+            try {
+                const ial = await getBlockAttrs(previousBlockId);
+                if (ial?.bookmark === GLEAN_READING_BOOKMARK_TEXT) {
+                    await setBlockAttrs(previousBlockId, { bookmark: null });
+                }
+            } catch {
+                // 旧块若已被删除则忽略
+            }
+        }
+    } catch (e) {
+        console.debug("[glean] 原生 bookmark 属性同步降级:", e);
+    }
+}
+
+/** 清理块上的拾遗原生书签 */
+export async function clearReadingBookmark(blockId: string): Promise<void> {
+    if (!/^\d{14}-[0-9a-z]{7}$/.test(blockId)) return;
+    try {
+        const ial = await getBlockAttrs(blockId);
+        if (ial?.bookmark === GLEAN_READING_BOOKMARK_TEXT) {
+            await setBlockAttrs(blockId, { bookmark: null });
+        }
+    } catch {
+        // 忽略
+    }
+}
+
+/** 为导读卡片块挂载 custom-glean-slot="meta-callout" 属性，由 clip-store 统一封装保障数据主权 */
+export async function setMetaCalloutSlotAttr(blockId: string): Promise<void> {
+    if (!/^\d{14}-[0-9a-z]{7}$/.test(blockId)) return;
+    await setBlockAttrs(blockId, { [META_CALLOUT_SLOT_KEY]: META_CALLOUT_SLOT_VALUE });
 }
 
 export async function readClipDocument(docId: string, exportOptions: ExportMarkdownOptions = {}): Promise<{ meta: DocMeta; attrs: ClipAttrs; markdown: string }> {
@@ -778,7 +828,7 @@ export async function measureClipBody(plugin: Plugin, docId: string): Promise<Cl
 
 /* ---------- 查询 ---------- */
 
-async function fetchDocMeta(docId: string): Promise<DocMeta> {
+export async function fetchDocMeta(docId: string): Promise<DocMeta> {
     const stmt = `SELECT id, content, hpath, box, updated FROM blocks WHERE id = '${docId.replace(/'/g, "''")}' AND type = 'd' LIMIT 1`;
     let rows: DocRow[];
     try {

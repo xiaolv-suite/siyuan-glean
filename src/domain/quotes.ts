@@ -87,7 +87,7 @@ export function quoteExportMarkdown(entries: QuoteEntry[], rangeLabel: string, g
         const source = entry.site ? `${title}（${entry.site}）` : title;
         const colorTag = entry.color ? `【${entry.color}】` : "";
         lines.push(`- ${colorTag}${entry.text.replace(/\s+/g, " ")}`);
-        lines.push(`  [↩ ${source}](siyuan://blocks/${entry.rootId})`);
+        lines.push(`  (( ${entry.rootId} '↩ ${source}' )) [↩ ${source}](siyuan://blocks/${entry.rootId})`);
     }
     lines.push("");
     return lines.join("\n");
