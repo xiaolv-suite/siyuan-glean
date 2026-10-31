@@ -1519,6 +1519,8 @@ $effect(() => {
     });
 });
 
+let previewWiden = $state(false);
+
 function currentSavedFilter() {
     return {
         status: authorTimeline ? "all" as const : activeQueue,
@@ -3957,9 +3959,9 @@ function metaLine(entry: Row): string {
                 </div>
                 {#if previewEntry && !facade.isMobile}
                     <input type="range" class="glean-preview-separator" min="25" max="65" step="1" value={Math.round(previewRatio * 100)} aria-label={t(i18n, "preview.resize")} oninput={(event) => { previewRatio = normalizePreviewRatio(Number(event.currentTarget.value) / 100); void savePreviewPrefs({ workbenchPreviewRatio: previewRatio }); }} onpointerdown={startPreviewResize} onpointermove={resizePreview} onpointerup={(event) => finishPreviewResize(event)} onpointercancel={(event) => finishPreviewResize(event, true)} onlostpointercapture={(event) => finishPreviewResize(event)} onkeydown={previewResizeKey} />
-                    <div class="glean-preview-pane" style:--glean-preview-ratio={previewRatio}>
+                    <div class="glean-preview-pane" class:glean-preview-pane--widen={previewWiden} style:--glean-preview-ratio={previewRatio}>
                         {#key previewId}
-                            <WorkbenchPreview {facade} entry={previewEntry} onClose={closePreview} onProcessed={processedCallback(previewId, previewRevision)} onRefresh={reload} onFilterAuthor={selectAuthor} />
+                            <WorkbenchPreview {facade} entry={previewEntry} widen={previewWiden} onToggleWiden={() => { previewWiden = !previewWiden; }} onClose={closePreview} onProcessed={processedCallback(previewId, previewRevision)} onRefresh={reload} onFilterAuthor={selectAuthor} />
                         {/key}
                     </div>
                 {/if}

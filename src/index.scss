@@ -2727,6 +2727,25 @@ mark.glean-search-highlight {
     }
 }
 
+.glean-reader__selection-close-btn {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    margin-left: 2px;
+    border: none;
+    background: transparent;
+    border-radius: var(--glean-radius-pill);
+    color: var(--b3-theme-on-surface);
+    display: inline-grid;
+    place-items: center;
+    cursor: pointer;
+
+    &:hover {
+        background: color-mix(in srgb, var(--b3-theme-on-surface) 12%, transparent);
+        color: var(--b3-theme-on-background);
+    }
+}
+
 .glean-reader__selection-colors {
     display: inline-flex;
     align-items: center;
@@ -3547,28 +3566,46 @@ mark.glean-search-highlight {
     font-size: var(--glean-text-xs);
 }
 
-.glean-reader__meta-callout-action {
-    display: flex;
-    align-items: center;
+.glean-reader__quick-sync-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--glean-space-1-5);
     width: 100%;
-    margin-top: calc(var(--glean-space-1) * -0.5);
-    margin-bottom: var(--glean-space-1);
+    margin-block: var(--glean-space-1-5);
+}
 
-    .glean-btn {
-        width: 100%;
-        min-height: 30px;
-        font-size: var(--glean-text-xs);
-        border: 1px dashed var(--b3-theme-surface-lighter, var(--b3-border-color));
-        border-radius: var(--b3-border-radius);
-        color: var(--b3-theme-on-surface);
-        background: var(--b3-theme-surface);
-        transition: all var(--glean-motion-base) var(--glean-ease-standard);
+.glean-reader__sync-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 30px;
+    padding: 0 var(--glean-space-2);
+    font-size: var(--glean-text-xs);
+    font-weight: var(--glean-weight-medium);
+    border: 1px solid var(--glean-border-soft);
+    border-radius: var(--glean-radius-sm);
+    color: var(--b3-theme-on-surface);
+    background: var(--glean-section-surface);
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: all var(--glean-duration-fast) ease;
 
-        &:hover:not(:disabled) {
-            border-color: var(--b3-theme-primary);
-            color: var(--b3-theme-primary);
-            background: color-mix(in srgb, var(--b3-theme-primary) 8%, transparent);
-        }
+    svg {
+        flex-shrink: 0;
+    }
+
+    &:hover:not(:disabled) {
+        border-color: color-mix(in srgb, var(--b3-theme-primary) 40%, var(--glean-border-soft));
+        color: var(--b3-theme-primary);
+        background: color-mix(in srgb, var(--b3-theme-primary) 8%, var(--b3-theme-surface));
+    }
+
+    &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
     }
 }
 
@@ -6319,7 +6356,8 @@ mark.glean-search-highlight {
 
 .glean-lib--preview { container-type: inline-size; }
 .glean-lib--preview .glean-lib__main { min-width: 0; }
-.glean-preview-pane { --glean-preview-rail-width: 216px; flex-basis: calc((100% - var(--glean-preview-rail-width)) * var(--glean-preview-ratio)); flex-grow: 0; flex-shrink: 0; min-width: 240px; min-height: 0; display: flex; }
+.glean-preview-pane { --glean-preview-rail-width: 216px; flex-basis: calc((100% - var(--glean-preview-rail-width)) * var(--glean-preview-ratio)); flex-grow: 0; flex-shrink: 0; min-width: 460px; min-height: 0; display: flex; }
+.glean-preview-pane--widen { flex-basis: 62% !important; flex-grow: 1 !important; min-width: 580px !important; }
 .glean-preview-pane { border-left: 1px solid color-mix(in srgb, var(--b3-border-color) 25%, transparent); background: color-mix(in srgb, var(--glean-app-background) 45%, var(--b3-theme-surface)); }
 .glean-preview-separator { appearance: none; margin: 0; padding: 0; width: 8px; flex: 0 0 8px; cursor: col-resize; touch-action: none; background: color-mix(in srgb, var(--glean-app-background) 55%, var(--b3-theme-surface)); border-inline: 1px solid color-mix(in srgb, var(--b3-border-color) 25%, transparent); }
 .glean-preview-separator::-webkit-slider-thumb { appearance: none; width: 8px; height: 36px; background: var(--b3-theme-primary); }

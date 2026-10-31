@@ -1198,7 +1198,7 @@ async function main() {
 
         // Step 10: 统计复盘与事后找回
         const indexStep10 = await rebuildIndex(plugin, settings);
-        const stats = aggregateStats(Object.values(indexStep10.clips), new Date(2026, 9, 31, 18, 0, 0));
+        const stats = aggregateStats(Object.values(indexStep10.clips), new Date(2026, 9, 31, 23, 59, 59));
         const matchedCompleted = filterCompletedItems(
             Object.values(indexStep10.clips).filter((c) => c.status === "done"),
             { date: "", search: "纽波特" },

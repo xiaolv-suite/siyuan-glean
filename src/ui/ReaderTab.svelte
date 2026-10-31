@@ -51,6 +51,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
     import { syncMetaCalloutToDocument } from "../services/meta-callout-service";
     import ClipStatusActions from "./ClipStatusActions.svelte";
     import ClipRankControls from "./ClipRankControls.svelte";
+    import ActionPopover from "./ActionPopover.svelte";
     import { openFormattingDialog } from "./formatting-dialog";
     import { loadUiPrefs, saveUiPrefs } from "../services/prefs";
     import { normalizeReaderAppearance, type ReaderAppearance } from "../domain/ui-prefs";
@@ -2375,54 +2376,56 @@ import { aiFailureKey } from "../libs/ai-feedback";
                     <button
                         type="button"
                         class="glean-btn glean-btn--ghost glean-reader__selection-btn"
-                        class:glean-ghost-btn={!hasCardsInstalled}
-                        onclick={() => void incrementalExtractToCards()}
-                        title={hasCardsInstalled ? t(i18n, "reader.extractToCardsHint") : t(i18n, "reader.cardGhostHint")}
-                    >
-                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg>
-                        <span>{t(i18n, "reader.extractToCards")}</span>
-                    </button>
-                    <button
-                        type="button"
-                        class="glean-btn glean-btn--ghost glean-reader__selection-btn"
-                        onclick={() => void extractToHorizonTask()}
-                        title={t(i18n, "reader.extractToTaskHint")}
-                    >
-                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCheck" /></svg>
-                        <span>{t(i18n, "reader.extractToTask")}</span>
-                    </button>
-                    <button
-                        type="button"
-                        class="glean-btn glean-btn--ghost glean-reader__selection-btn"
                         onclick={() => void quoteCardFromExcerpt()}
                         title="{t(i18n, 'quoteCard.action')} (Alt+Q)"
                     >
                         <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg>
                         <span>{t(i18n, "quoteCard.action")}</span>
                     </button>
-                    <button
-                        type="button"
-                        class="glean-btn glean-btn--ghost glean-reader__selection-btn"
-                        class:glean-ghost-btn={!hasExamInstalled}
-                        onclick={() => void examFromExcerpt()}
-                        title={hasExamInstalled ? t(i18n, "reader.examMake") : t(i18n, "reader.examGhostHint")}
-                    >
-                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanEdit" /></svg>
-                        <span>{t(i18n, "reader.examMake")}</span>
-                    </button>
-                    {#if speechSupported}
-                        <button type="button" class="glean-btn glean-btn--ghost glean-reader__selection-btn" onclick={() => startSpeech("selection")} title={t(i18n, "reader.speechSelection")}>
-                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg>
-                            <span>{t(i18n, "reader.speechSelection")}</span>
+                    <ActionPopover label={t(i18n, "library.moreActions")} compact>
+                        <button
+                            type="button"
+                            class="glean-btn glean-btn--ghost"
+                            class:glean-ghost-btn={!hasCardsInstalled}
+                            onclick={() => void incrementalExtractToCards()}
+                            title={hasCardsInstalled ? t(i18n, "reader.extractToCardsHint") : t(i18n, "reader.cardGhostHint")}
+                        >
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg>
+                            <span>{t(i18n, "reader.extractToCards")}</span>
                         </button>
-                    {/if}
-                    {#if aiReady}
-                        <button type="button" class="glean-btn glean-btn--ghost glean-reader__selection-btn" disabled={Boolean(aiBusy)} onclick={() => void runTranslate()} title={t(i18n, "reader.aiTranslate")}>
-                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanExternal" /></svg>
-                            <span>{t(i18n, "reader.aiTranslate")}</span>
+                        <button
+                            type="button"
+                            class="glean-btn glean-btn--ghost"
+                            onclick={() => void extractToHorizonTask()}
+                            title={t(i18n, "reader.extractToTaskHint")}
+                        >
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCheck" /></svg>
+                            <span>{t(i18n, "reader.extractToTask")}</span>
                         </button>
-                    {/if}
-                    <button type="button" class="glean-btn glean-btn--ghost glean-reader__selection-btn glean-reader__selection-btn--close" onclick={() => { excerpt = null; memoInputOpen = false; }} title={t(i18n, "action.close")} aria-label={t(i18n, "action.close")}>
+                        <button
+                            type="button"
+                            class="glean-btn glean-btn--ghost"
+                            class:glean-ghost-btn={!hasExamInstalled}
+                            onclick={() => void examFromExcerpt()}
+                            title={hasExamInstalled ? t(i18n, "reader.examMake") : t(i18n, "reader.examGhostHint")}
+                        >
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanEdit" /></svg>
+                            <span>{t(i18n, "reader.examMake")}</span>
+                        </button>
+                        {#if speechSupported}
+                            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => startSpeech("selection")} title={t(i18n, "reader.speechSelection")}>
+                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg>
+                                <span>{t(i18n, "reader.speechSelection")}</span>
+                            </button>
+                        {/if}
+                        {#if aiReady}
+                            <button type="button" class="glean-btn glean-btn--ghost" disabled={Boolean(aiBusy)} onclick={() => void runTranslate()} title={t(i18n, "reader.aiTranslate")}>
+                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanExternal" /></svg>
+                                <span>{t(i18n, "reader.aiTranslate")}</span>
+                            </button>
+                        {/if}
+                    </ActionPopover>
+                    <button type="button" class="glean-icon-btn glean-reader__selection-close-btn" onclick={() => { excerpt = null; memoInputOpen = false; }} title={t(i18n, "action.close")} aria-label={t(i18n, "action.close")}>
                         <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanClose" /></svg>
                     </button>
                 </div>
@@ -2770,10 +2773,10 @@ import { aiFailureKey } from "../libs/ai-feedback";
                         onSetStatus={(status) => void writeStatus(status)}
                     />
                 </div>
-                <div class="glean-reader__meta-callout-action">
+                <div class="glean-reader__quick-sync-grid">
                     <button
                         type="button"
-                        class="glean-btn glean-btn--ghost glean-btn--full"
+                        class="glean-reader__sync-pill"
                         title={t(i18n, "reading.syncMetaCalloutHint")}
                         disabled={syncingMetaCallout || statusBusy}
                         onclick={() => void handleSyncMetaCallout()}
@@ -2783,8 +2786,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
                     </button>
                     <button
                         type="button"
-                        class="glean-btn glean-btn--ghost glean-btn--full"
-                        style="margin-top: var(--glean-space-1);"
+                        class="glean-reader__sync-pill"
                         title={t(i18n, "dailyNote.recordAction")}
                         disabled={recordingDailyNote || statusBusy}
                         onclick={() => void handleRecordDailyNote()}

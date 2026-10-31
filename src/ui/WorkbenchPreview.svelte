@@ -34,8 +34,10 @@
         onProcessed: () => Promise<void>;
         onRefresh: () => Promise<void>;
         onFilterAuthor?: (author: string) => void;
+        widen?: boolean;
+        onToggleWiden?: () => void;
     }
-    let { facade, entry, onClose, onProcessed, onRefresh, onFilterAuthor }: Props = $props();
+    let { facade, entry, onClose, onProcessed, onRefresh, onFilterAuthor, widen = false, onToggleWiden }: Props = $props();
     const instanceId = $props.id();
     const titleId = `glean-preview-title-${instanceId}`;
     const metaId = `glean-preview-meta-${instanceId}`;
@@ -437,6 +439,19 @@
     <div class="glean-preview__header">
         <h2 id={titleId} title={entry.title}>{entry.title || t(i18n, "panel.untitled")}</h2>
         <div class="glean-preview__header-actions" role="group" aria-label={t(i18n, "preview.title")}>
+            {#if onToggleWiden}
+                <button
+                    type="button"
+                    class="glean-btn glean-btn--ghost glean-preview__widen-btn"
+                    title={widen ? "恢复标准宽度" : "加宽预览视口"}
+                    aria-label={widen ? "恢复标准宽度" : "加宽预览视口"}
+                    onclick={() => onToggleWiden?.()}
+                >
+                    <svg class="glean-icon glean-icon--xs" aria-hidden="true">
+                        <use href={widen ? "#iconGleanCollapseAll" : "#iconGleanExpandAll"} />
+                    </svg>
+                </button>
+            {/if}
             {#if entry.kind === "clip" && attrs?.status}
                 <button
                     type="button"
