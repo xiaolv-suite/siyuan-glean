@@ -338,6 +338,150 @@ async function main() {
                     parentID: docId,
                     data: calloutMd,
                 });
+
+                // 写入第 2 篇示范长文（稍后读）
+                const demoDoc2Md = `# 为什么我们需要构建第二大脑
+
+> 🌐 来源：[https://example.com/articles/second-brain](https://example.com/articles/second-brain)
+> ✍️ 作者：蒂亚戈·福特
+
+大脑是用来思考的，而不是用来记事的。通过结构化记录外包记忆，释放无限创造力。
+
+### 第一节：数字时代的认知超载
+每天我们接收的海量信息远超大脑的进化负荷。没有外部知识系统，我们只能陷入收藏夹的死胡同。
+
+### 第二节：CODE 模型闭环
+抓取 (Capture) ➔ 组织 (Organize) ➔ 提炼 (Distill) ➔ 表达 (Express)。
+`;
+                const doc2Res = await requestKernel(base, token, "/api/filetree/createDocWithMd", {
+                    notebook: notebookId,
+                    path: "/为什么我们需要构建第二大脑",
+                    markdown: demoDoc2Md,
+                });
+                const doc2Id = doc2Res?.data;
+                if (doc2Id) {
+                    await requestKernel(base, token, "/api/attr/setBlockAttrs", {
+                        id: doc2Id,
+                        attrs: {
+                            "custom-clip-status": "later",
+                            "custom-clip-url": "https://example.com/articles/second-brain",
+                            "custom-clip-site": "example.com",
+                            "custom-clip-author": "蒂亚戈·福特",
+                            "custom-clip-priority": "5",
+                            "custom-clip-rating": "0",
+                            "custom-clip-words": "2600",
+                            "custom-clip-minutes": "7",
+                            "custom-clip-summary": "介绍 CODE 知识流转模型，通过数字笔记系统建立个人第二大脑，实现从被动收藏到主动创造的飞跃。",
+                            "custom-clip-content-type": "fulltext",
+                            "custom-clip-time": "20261031121000",
+                        },
+                    });
+
+                    const callout2Md = `> 📌 **小驴拾遗 · 导读档案**
+>
+> 🌐 **来源**：[example.com](<https://example.com/articles/second-brain>) · ✍️ **作者**：蒂亚戈·福特
+> 📊 **状态**：稍后读 (later) · 🎯 **优先级**：P5
+> ⏱️ **字数体量**：约 2,600 字 · 预估用时 约 7 分钟
+> 🏷️ **分类标签**：#知识管理# #心智模型#
+>
+> 💡 **AI 核心导读**：介绍 CODE 知识流转模型，通过数字笔记系统建立个人第二大脑，实现从被动收藏到主动创造的飞跃。
+{: custom-glean-slot="meta-callout" }
+`;
+                    await requestKernel(base, token, "/api/block/prependBlock", {
+                        dataType: "markdown",
+                        parentID: doc2Id,
+                        data: callout2Md,
+                    });
+                }
+
+                // 固化设置与索引到靶场存储中
+                const petalStorage = path.join(opts.workspace, "data", "storage", "petal", PLUGIN_ID);
+                fs.mkdirSync(petalStorage, { recursive: true });
+                const defaultSettings = {
+                    version: 1,
+                    anchorNotebooks: [notebookId],
+                    ai: {
+                        enrichMode: "manual",
+                        aiDailyCap: 20,
+                        dedupOnEnrich: false,
+                        relatedWhileReading: false,
+                        formattingEnabled: false,
+                        authorSuggestionEnabled: false,
+                        questionCardEnabled: false,
+                        articleQuestionEnabled: false,
+                        presetActions: false,
+                        channel: "siyuan",
+                        customBaseUrl: "",
+                        customModel: "",
+                        customSecretName: "glean",
+                    },
+                    resurface: { dailyCount: 3, includeDoneHighlights: false },
+                    inboxQuota: 50,
+                    staleDays: 90,
+                    migrateBatchSize: 25,
+                    integration: { checkinEnabled: false, checkinItemId: "", bridgeWriteEnabled: false, dailyNoteEnabled: true },
+                    reader: { openInTab: false, defaultMode: "read" },
+                };
+                fs.writeFileSync(path.join(petalStorage, "settings.json"), JSON.stringify(defaultSettings, null, 2));
+                fs.writeFileSync(path.join(petalStorage, "ui-prefs.json"), JSON.stringify({
+                    onboardingDone: true,
+                    onboardingStep: 1,
+                    onboardingInterrupted: false,
+                    themePalette: "teal",
+                }, null, 2));
+
+                const initialIndex = {
+                    version: 1,
+                    updatedAt: new Date().toISOString(),
+                    clips: {
+                        [docId]: {
+                            id: docId,
+                            title: "深度工作与注意力管理",
+                            hpath: "/深度工作与注意力管理",
+                            box: notebookId,
+                            status: "reading",
+                            url: "https://example.com/articles/deep-work",
+                            site: "example.com",
+                            author: "卡尔·纽波特",
+                            time: "20261031120000",
+                            words: 3200,
+                            minutes: 8,
+                            priority: 4,
+                            rating: 5,
+                            summary: "深入剖析注意力残留对脑力工作的结构性破坏，并提供建立仪式化专注的具体法则。",
+                            contentType: "fulltext",
+                            timeSource: "document",
+                            updated: "20261031120000",
+                            tags: ["深度阅读", "效率"],
+                            aiTags: [],
+                        },
+                        ...(doc2Id ? {
+                            [doc2Id]: {
+                                id: doc2Id,
+                                title: "为什么我们需要构建第二大脑",
+                                hpath: "/为什么我们需要构建第二大脑",
+                                box: notebookId,
+                                status: "later",
+                                url: "https://example.com/articles/second-brain",
+                                site: "example.com",
+                                author: "蒂亚戈·福特",
+                                time: "20261031121000",
+                                words: 2600,
+                                minutes: 7,
+                                priority: 5,
+                                rating: 0,
+                                summary: "介绍 CODE 知识流转模型，通过数字笔记系统建立个人第二大脑，实现从被动收藏到主动创造的飞跃。",
+                                contentType: "fulltext",
+                                timeSource: "document",
+                                updated: "20261031121000",
+                                tags: ["知识管理", "心智模型"],
+                                aiTags: [],
+                            }
+                        } : {}),
+                    },
+                    candidates: {},
+                };
+                fs.writeFileSync(path.join(petalStorage, "glean-index.json"), JSON.stringify(initialIndex, null, 2));
             }
         }
     } catch (e) {

@@ -375,8 +375,7 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
      * 收到多端云同步（sync）或外部窗口覆写（overwrite）时，平滑重新拉取配置与索引并通知 UI 响应式就地刷新。
      */
     async onDataChanged(reason?: "sync" | "overwrite"): Promise<void> {
-        void reason;
-        if (!this.loaded) return;
+        if (!this.loaded || reason === "overwrite") return;
         try {
             this.settings = await loadSettings(this);
             this.notifyDataChanged();

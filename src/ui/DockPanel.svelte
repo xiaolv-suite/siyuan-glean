@@ -744,6 +744,32 @@ function clearUserFilters(): void {
     clearFilters();
 }
 
+let seedingDemoArticles = $state(false);
+
+async function handleSeedDemoArticles(): Promise<void> {
+    if (seedingDemoArticles) return;
+    const notebookId = facade.settings.anchorNotebooks?.[0];
+    if (!notebookId) {
+        facade.openOnboarding();
+        return;
+    }
+    seedingDemoArticles = true;
+    try {
+        const { createStarterArticles } = await import("../services/starter-service");
+        const res = await createStarterArticles(facade.pluginInstance, notebookId);
+        if (res.ok) {
+            showMessage(t(i18n, "dailyNote.entryCreated"), 2500);
+            await reload();
+        } else {
+            showMessage(t(i18n, "msg.actionFailed"), 2500);
+        }
+    } catch {
+        showMessage(t(i18n, "msg.actionFailed"), 2500);
+    } finally {
+        seedingDemoArticles = false;
+    }
+}
+
 const hasFilters = $derived(Boolean(authorTimeline || selectedAuthor || selectedSite || selectedTag || selectedAiTag || selectedSource || selectedTimeSource || selectedContentType || selectedReadingTimeTier !== "all" || selectedFavoriteOnly || keyword.trim()));
 const filterChips = $derived(libraryFilterChips(activeFilter));
 
@@ -1421,7 +1447,7 @@ function staleDays(time: string): number | null {
 }
 
 const reload = createRefreshQueue(async () => {
-    loading = true;
+    if (!index.updatedAt) loading = true;
     try {
         const cached = await loadIndex(facade.pluginInstance);
         if (cached.updatedAt) index = cached;
@@ -1435,7 +1461,7 @@ const reload = createRefreshQueue(async () => {
     }
 });
 
-$effect(() => {
+onMount(() => {
     void reload();
 });
 
@@ -1761,11 +1787,18 @@ async function expandAllGroups(): Promise<void> {
     });
 }
 
-// 插件壳广播的数据变更（迁移完成、右键收录等）触发面板对账
+// 插件壳广播的数据变更（迁移完成、右键收录等）触发面板对账（防抖防重入）
 $effect(() => {
-    const handler = () => void reload();
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const handler = () => {
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(() => void reload(), 200);
+    };
     document.addEventListener("glean:data-changed", handler);
-    return () => document.removeEventListener("glean:data-changed", handler);
+    return () => {
+        if (timer) clearTimeout(timer);
+        document.removeEventListener("glean:data-changed", handler);
+    };
 });
 
 async function focusClipById(id: string, openPreview = false): Promise<void> {
@@ -3727,6 +3760,29 @@ function metaLine(entry: Row): string {
                                 </button>
                                 </div>
                             {:else if !hasFilters && totalClips === 0}
+                                <div class="glean-empty__quick-cards" role="region" aria-label="快速起步">
+                                    <button type="button" class="glean-empty__card" disabled={seedingDemoArticles} onclick={() => void handleSeedDemoArticles()}>
+                                        <div class="glean-empty__card-icon"><svg class="glean-icon"><use href="#iconGleanNews" /></svg></div>
+                                        <div class="glean-empty__card-text">
+                                            <div class="glean-empty__card-title">🌱 预置精读示范文章</div>
+                                            <div class="glean-empty__card-desc">自动放入 2 篇示范长文（含导读档案卡与反链），立即体验</div>
+                                        </div>
+                                    </button>
+                                    <button type="button" class="glean-empty__card" onclick={() => facade.openImport()}>
+                                        <div class="glean-empty__card-icon"><svg class="glean-icon"><use href="#iconGleanDownload" /></svg></div>
+                                        <div class="glean-empty__card-text">
+                                            <div class="glean-empty__card-title">📥 导入外部书签与收藏</div>
+                                            <div class="glean-empty__card-desc">支持 Pocket、Omnivore、Wallabag、微信读书笔记</div>
+                                        </div>
+                                    </button>
+                                    <button type="button" class="glean-empty__card" onclick={() => facade.openOnboarding()}>
+                                        <div class="glean-empty__card-icon"><svg class="glean-icon"><use href="#iconGleanWheat" /></svg></div>
+                                        <div class="glean-empty__card-text">
+                                            <div class="glean-empty__card-title">🧭 查看新手配置向导</div>
+                                            <div class="glean-empty__card-desc">重新检查或切换存放长文剪藏的笔记本范围</div>
+                                        </div>
+                                    </button>
+                                </div>
                                 <div class="glean-empty__actions">
                                     <button class="glean-btn glean-btn--pri" onclick={() => facade.openOnboarding()}>
                                         {t(i18n, "panel.openOnboarding")}
@@ -3929,6 +3985,29 @@ function metaLine(entry: Row): string {
                             </button>
                             </div>
                         {:else if !hasFilters && totalClips === 0}
+                            <div class="glean-empty__quick-cards" role="region" aria-label="快速起步">
+                                <button type="button" class="glean-empty__card" disabled={seedingDemoArticles} onclick={() => void handleSeedDemoArticles()}>
+                                    <div class="glean-empty__card-icon"><svg class="glean-icon"><use href="#iconGleanNews" /></svg></div>
+                                    <div class="glean-empty__card-text">
+                                        <div class="glean-empty__card-title">🌱 预置精读示范文章</div>
+                                        <div class="glean-empty__card-desc">自动放入 2 篇示范长文（含导读档案卡与反链），立即体验</div>
+                                    </div>
+                                </button>
+                                <button type="button" class="glean-empty__card" onclick={() => facade.openImport()}>
+                                    <div class="glean-empty__card-icon"><svg class="glean-icon"><use href="#iconGleanDownload" /></svg></div>
+                                    <div class="glean-empty__card-text">
+                                        <div class="glean-empty__card-title">📥 导入外部书签与收藏</div>
+                                        <div class="glean-empty__card-desc">支持 Pocket、Omnivore、Wallabag、微信读书笔记</div>
+                                    </div>
+                                </button>
+                                <button type="button" class="glean-empty__card" onclick={() => facade.openOnboarding()}>
+                                    <div class="glean-empty__card-icon"><svg class="glean-icon"><use href="#iconGleanWheat" /></svg></div>
+                                    <div class="glean-empty__card-text">
+                                        <div class="glean-empty__card-title">🧭 查看新手配置向导</div>
+                                        <div class="glean-empty__card-desc">重新检查或切换存放长文剪藏的笔记本范围</div>
+                                    </div>
+                                </button>
+                            </div>
                             <div class="glean-empty__actions">
                                 <button class="glean-btn glean-btn--pri glean-empty__action" onclick={() => facade.openOnboarding()}>
                                     {t(i18n, "panel.openOnboarding")}
