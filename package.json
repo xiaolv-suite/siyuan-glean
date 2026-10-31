@@ -12,8 +12,6 @@
     "node": ">=24.0.0"
   },
   "scripts": {
-    "posttest": "node scripts/cleanup-tmp-workspaces.cjs --since-snapshot --quiet",
-    "pretest": "node scripts/cleanup-tmp-workspaces.cjs && node scripts/cleanup-tmp-workspaces.cjs --snapshot",
     "dev": "cross-env NODE_ENV=development VITE_SOURCEMAP=inline vite build --watch",
     "build": "run-s clean build:app",
     "build:app": "cross-env NODE_ENV=production vite build",
