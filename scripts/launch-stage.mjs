@@ -18,6 +18,7 @@ import fs from "node:fs";
 import net from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { buildMetaCalloutMarkdown } from "../src/domain/meta-callout.ts";
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DIST = path.join(REPO, "dist");
@@ -321,18 +322,21 @@ async function main() {
                 });
 
                 // 同步正文导读档案卡
-                const { syncMetaCalloutToDocument } = await import("./meta-callout-service.ts").catch(() => ({}));
-                // 若通过服务层不可直接加载则用标准 API 插入
-                const calloutMd = `> 📌 **小驴拾遗 · 导读档案**
->
-> 🌐 **来源**：[example.com](<https://example.com/articles/deep-work>) · ✍️ **作者**：卡尔·纽波特
-> 📊 **状态**：阅读中 (reading) · 🎯 **优先级**：P4 · ⭐ **评分**：⭐⭐⭐⭐⭐
-> ⏱️ **字数体量**：约 3,200 字 · 预估用时 约 8 分钟
-> 🏷️ **分类标签**：#深度阅读# #效率# #思维模型#
->
-> 💡 **AI 核心导读**：深入剖析注意力残留对脑力工作的结构性破坏，并提供建立仪式化专注的具体法则。
-{: custom-glean-slot="meta-callout" }
-`;
+                const calloutMd = buildMetaCalloutMarkdown({
+                    id: docId,
+                    title: "深度工作与注意力管理",
+                    url: "https://example.com/articles/deep-work",
+                    site: "example.com",
+                    author: "卡尔·纽波特",
+                    status: "reading",
+                    priority: 4,
+                    rating: 5,
+                    words: 3200,
+                    minutes: 8,
+                    tags: ["深度阅读", "效率", "思维模型"],
+                    summary: "深入剖析注意力残留对脑力工作的结构性破坏，并提供建立仪式化专注的具体法则。",
+                });
+
                 await requestKernel(base, token, "/api/block/prependBlock", {
                     dataType: "markdown",
                     parentID: docId,
@@ -341,9 +345,6 @@ async function main() {
 
                 // 写入第 2 篇示范长文（稍后读）
                 const demoDoc2Md = `# 为什么我们需要构建第二大脑
-
-> 🌐 来源：[https://example.com/articles/second-brain](https://example.com/articles/second-brain)
-> ✍️ 作者：蒂亚戈·福特
 
 大脑是用来思考的，而不是用来记事的。通过结构化记录外包记忆，释放无限创造力。
 
@@ -377,16 +378,21 @@ async function main() {
                         },
                     });
 
-                    const callout2Md = `> 📌 **小驴拾遗 · 导读档案**
->
-> 🌐 **来源**：[example.com](<https://example.com/articles/second-brain>) · ✍️ **作者**：蒂亚戈·福特
-> 📊 **状态**：稍后读 (later) · 🎯 **优先级**：P5
-> ⏱️ **字数体量**：约 2,600 字 · 预估用时 约 7 分钟
-> 🏷️ **分类标签**：#知识管理# #心智模型#
->
-> 💡 **AI 核心导读**：介绍 CODE 知识流转模型，通过数字笔记系统建立个人第二大脑，实现从被动收藏到主动创造的飞跃。
-{: custom-glean-slot="meta-callout" }
-`;
+                    const callout2Md = buildMetaCalloutMarkdown({
+                        id: doc2Id,
+                        title: "为什么我们需要构建第二大脑",
+                        url: "https://example.com/articles/second-brain",
+                        site: "example.com",
+                        author: "蒂亚戈·福特",
+                        status: "later",
+                        priority: 5,
+                        rating: 0,
+                        words: 2600,
+                        minutes: 7,
+                        tags: ["知识管理", "心智模型"],
+                        summary: "介绍 CODE 知识流转模型，通过数字笔记系统建立个人第二大脑，实现从被动收藏到主动创造的飞跃。",
+                    });
+
                     await requestKernel(base, token, "/api/block/prependBlock", {
                         dataType: "markdown",
                         parentID: doc2Id,

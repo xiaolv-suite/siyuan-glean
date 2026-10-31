@@ -111,17 +111,20 @@ export function buildMetaCalloutMarkdown(
     const authorSegment = authorText ? ` · ✍️ **${escapeMetaCalloutText(labels.author)}**：${authorText}` : "";
     lines.push(`> 📌 **${escapeMetaCalloutText(labels.title)}** · 🌐 **${escapeMetaCalloutText(labels.source)}**：${sourceSegment}${authorSegment}`);
 
-    // Line 2: 状态 + 优先级 + 评分 + 字数体量与时长（单行紧凑聚合）
+    // Line 2: 状态 + 优先级 + 评分
     const statusText = formatStatusLabel(article.status);
     const priorityLevel = Math.max(1, Math.min(5, Math.round(article.priority ?? 3)));
     const ratingStars = formatMetaStars(article.rating);
     const ratingSegment = article.rating && article.rating > 0 ? ` · ⭐ **${escapeMetaCalloutText(labels.rating)}**：${ratingStars}` : "";
+    lines.push(`> 📊 **${escapeMetaCalloutText(labels.status)}**：${statusText} · 🎯 **${escapeMetaCalloutText(labels.priority)}**：P${priorityLevel}${ratingSegment}`);
+
+    // Line 3: 字数体量与阅读时长（平衡排版，杜绝单行超长挤压断裂）
     const wordsCount = Number.isSafeInteger(article.words) && (article.words ?? 0) > 0 ? (article.words ?? 0) : 0;
     const minutesCount = Number.isSafeInteger(article.minutes) && (article.minutes ?? 0) > 0 ? (article.minutes ?? 0) : Math.max(1, Math.round(wordsCount / 400));
     const wordsSegment = wordsCount > 0 ? `约 ${wordsCount.toLocaleString()} 字` : escapeMetaCalloutText(labels.unknown);
     const readMinutesCount = Number.isSafeInteger(article.readMinutes) && (article.readMinutes ?? 0) > 0 ? (article.readMinutes ?? 0) : 0;
     const readMinutesSegment = readMinutesCount > 0 ? ` · ${escapeMetaCalloutText(labels.readMinutes)} ${readMinutesCount} 分钟` : "";
-    lines.push(`> 📊 **${escapeMetaCalloutText(labels.status)}**：${statusText} · 🎯 **${escapeMetaCalloutText(labels.priority)}**：P${priorityLevel}${ratingSegment} · ⏱️ **${escapeMetaCalloutText(labels.words)}**：${wordsSegment} · ${escapeMetaCalloutText(labels.minutes)} 约 ${minutesCount} 分钟${readMinutesSegment}`);
+    lines.push(`> ⏱️ **${escapeMetaCalloutText(labels.words)}**：${wordsSegment} · ${escapeMetaCalloutText(labels.minutes)} 约 ${minutesCount} 分钟${readMinutesSegment}`);
 
     // Line 3: 标签聚合（仅当有标签时）
     const allTags = [
