@@ -725,3 +725,92 @@
         transform: none !important;
     }
 }
+
+@container glean-workbench (max-width: 640px) {
+    .glean-stats {
+        padding: 8px 10px !important;
+        gap: 8px !important;
+    }
+
+    .glean-stats__metrics {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 6px !important;
+    }
+
+    .glean-stats__metric {
+        padding: 8px !important;
+
+        .glean-stats__value {
+            font-size: 18px !important;
+        }
+
+        .glean-stats__label {
+            font-size: 10px !important;
+        }
+    }
+
+    .glean-stats__completed-header {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 6px !important;
+    }
+
+    .glean-stats__completed-search {
+        width: 100% !important;
+
+        .glean-stats__field {
+            width: 100% !important;
+            min-height: 28px !important;
+            height: 28px !important;
+            font-size: 12px !important;
+        }
+    }
+
+    .glean-stats__completed-acts {
+        width: 100% !important;
+        justify-content: flex-end !important;
+        margin-left: 0 !important;
+
+        .glean-btn {
+            height: 24px !important;
+            min-height: 24px !important;
+            padding: 0 8px !important;
+            font-size: 11px !important;
+        }
+    }
+
+    .glean-stats__toolbar {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 6px !important;
+
+        label {
+            width: 100% !important;
+            font-size: 11px !important;
+        }
+
+        .glean-stats__field {
+            width: 100% !important;
+            height: 28px !important;
+            min-height: 28px !important;
+            font-size: 12px !important;
+        }
+
+        .glean-btn {
+            height: 26px !important;
+            min-height: 26px !important;
+            width: 100% !important;
+            justify-content: center !important;
+            font-size: 11px !important;
+        }
+    }
+
+    .glean-stats__funnel-stages {
+        flex-direction: column !important;
+        gap: 4px !important;
+    }
+
+    .glean-stats__funnel-arrow {
+        transform: rotate(90deg) !important;
+    }
+}

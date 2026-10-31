@@ -3222,7 +3222,7 @@ function metaLine(entry: Row): string {
                     <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSearch" /></svg>
                     <span>{hasFilters ? `${t(i18n, "library.filters")} (${t(i18n, "library.activeFilters")})` : t(i18n, "library.filters")}</span>
                     {#if hasFilters}
-                        <button type="button" class="glean-mini-tag glean-mini-tag--clear" onclick={(e) => { e.preventDefault(); e.stopPropagation(); clearUserFilters(); }}>{t(i18n, "library.clearFilters")}</button>
+                        <span class="glean-badge glean-badge--match">{activeFilterCount}</span>
                     {/if}
                 </summary>
                 <div class="glean-filters-fold__content">

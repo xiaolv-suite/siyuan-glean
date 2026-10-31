@@ -734,31 +734,40 @@ function focusHighlightRow(id: string): void {
         </div>
     </div>
 
-    <div class="glean-highlights__filters" role="search" aria-label={t(i18n, "action.search")}>
-        <div class="glean-highlights__search-wrap">
-            <input bind:this={searchInputEl} type="search" bind:value={search} oninput={() => page = 1} onkeydown={(event) => { if (event.key === "Escape" && search) { event.stopPropagation(); search = ""; page = 1; } }} placeholder={t(i18n, "highlight.searchPlaceholder")} aria-label={t(i18n, "action.search")} />
-            {#if search}
-                <button
-                    type="button"
-                    class="glean-highlights__search-clear"
-                    onclick={() => { search = ""; page = 1; searchInputEl?.focus(); }}
-                    title={t(i18n, "library.clearFilters")}
-                    aria-label={t(i18n, "library.clearFilters")}
-                >
-                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanClose" /></svg>
-                </button>
+    <details class="glean-saved-views-fold glean-highlights__filters-fold" class:glean-filters-fold--active={Boolean(search || site || tag || aiTag || color || sort !== "id" || direction !== "desc")}>
+        <summary class="glean-saved-views-fold__summary">
+            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSearch" /></svg>
+            <span>{t(i18n, "action.search")} / {t(i18n, "library.filters")}{#if search || site || tag || aiTag || color || sort !== "id"} ({t(i18n, "library.activeFilters")}){/if}</span>
+            {#if search || site || tag || aiTag || color || sort !== "id" || direction !== "desc"}
+                <span class="glean-badge glean-badge--match">已过滤</span>
             {/if}
+        </summary>
+        <div class="glean-highlights__filters" role="search" aria-label={t(i18n, "action.search")}>
+            <div class="glean-highlights__search-wrap">
+                <input bind:this={searchInputEl} type="search" bind:value={search} oninput={() => page = 1} onkeydown={(event) => { if (event.key === "Escape" && search) { event.stopPropagation(); search = ""; page = 1; } }} placeholder={t(i18n, "highlight.searchPlaceholder")} aria-label={t(i18n, "action.search")} />
+                {#if search}
+                    <button
+                        type="button"
+                        class="glean-highlights__search-clear"
+                        onclick={() => { search = ""; page = 1; searchInputEl?.focus(); }}
+                        title={t(i18n, "library.clearFilters")}
+                        aria-label={t(i18n, "library.clearFilters")}
+                    >
+                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanClose" /></svg>
+                    </button>
+                {/if}
+            </div>
+            <label>{t(i18n, "library.filterSite")}<select bind:value={site} onchange={() => page = 1}><option value="">{t(i18n, "action.filterAll")}</option>{#each facets.sites as value}<option value={value}>{value}</option>{/each}</select></label>
+            <label>{t(i18n, "library.filterTag")}<select bind:value={tag} onchange={() => page = 1}><option value="">{t(i18n, "action.filterAll")}</option>{#each facets.tags as value}<option value={value}>{displayTagAlias(tagAliases, value)}</option>{/each}</select></label>
+            <label>{t(i18n, "library.filterAiTag")}<select bind:value={aiTag} onchange={() => page = 1}><option value="">{t(i18n, "action.filterAll")}</option>{#each facets.aiTags as value}<option value={value}>{value}</option>{/each}</select></label>
+            {#if availableColors.length > 1}
+                <label>{t(i18n, "reader.filterByColor")}<select bind:value={color} onchange={() => page = 1}><option value="">{t(i18n, "action.filterAll")}</option>{#each availableColors as c}<option value={c}>{t(i18n, `reader.color.${c}`)}</option>{/each}</select></label>
+            {/if}
+            <label>{t(i18n, "library.sort")}<select bind:value={sort} onchange={() => page = 1}><option value="id">{t(i18n, "action.sortTime")}</option><option value="title">{t(i18n, "library.sortTitle")}</option><option value="site">{t(i18n, "library.filterSite")}</option></select></label>
+            <button class="glean-filter-dir" aria-pressed={direction === "asc"} aria-label={`${t(i18n, "library.toggleDirection")}: ${t(i18n, direction === "asc" ? "library.directionAscending" : "library.directionDescending")}`} title={`${t(i18n, "library.toggleDirection")}: ${t(i18n, direction === "asc" ? "library.directionAscending" : "library.directionDescending")}`} onclick={() => { direction = direction === "asc" ? "desc" : "asc"; page = 1; }}><span class="glean-filter-dir__icon" aria-hidden="true"><svg class="glean-icon glean-icon--xs"><use href={direction === "asc" ? "#iconGleanArrowUp" : "#iconGleanArrowDown"} /></svg></span><span class="glean-filter-dir__label">{t(i18n, "library.toggleDirection")}</span></button>
+            <button onclick={clearFilters}>{t(i18n, "library.clearFilters")}</button>
         </div>
-        <label>{t(i18n, "library.filterSite")}<select bind:value={site} onchange={() => page = 1}><option value="">{t(i18n, "action.filterAll")}</option>{#each facets.sites as value}<option value={value}>{value}</option>{/each}</select></label>
-        <label>{t(i18n, "library.filterTag")}<select bind:value={tag} onchange={() => page = 1}><option value="">{t(i18n, "action.filterAll")}</option>{#each facets.tags as value}<option value={value}>{displayTagAlias(tagAliases, value)}</option>{/each}</select></label>
-        <label>{t(i18n, "library.filterAiTag")}<select bind:value={aiTag} onchange={() => page = 1}><option value="">{t(i18n, "action.filterAll")}</option>{#each facets.aiTags as value}<option value={value}>{value}</option>{/each}</select></label>
-        {#if availableColors.length > 1}
-            <label>{t(i18n, "reader.filterByColor")}<select bind:value={color} onchange={() => page = 1}><option value="">{t(i18n, "action.filterAll")}</option>{#each availableColors as c}<option value={c}>{t(i18n, `reader.color.${c}`)}</option>{/each}</select></label>
-        {/if}
-        <label>{t(i18n, "library.sort")}<select bind:value={sort} onchange={() => page = 1}><option value="id">{t(i18n, "action.sortTime")}</option><option value="title">{t(i18n, "library.sortTitle")}</option><option value="site">{t(i18n, "library.filterSite")}</option></select></label>
-        <button class="glean-filter-dir" aria-pressed={direction === "asc"} aria-label={`${t(i18n, "library.toggleDirection")}: ${t(i18n, direction === "asc" ? "library.directionAscending" : "library.directionDescending")}`} title={`${t(i18n, "library.toggleDirection")}: ${t(i18n, direction === "asc" ? "library.directionAscending" : "library.directionDescending")}`} onclick={() => { direction = direction === "asc" ? "desc" : "asc"; page = 1; }}><span class="glean-filter-dir__icon" aria-hidden="true"><svg class="glean-icon glean-icon--xs"><use href={direction === "asc" ? "#iconGleanArrowUp" : "#iconGleanArrowDown"} /></svg></span><span class="glean-filter-dir__label">{t(i18n, "library.toggleDirection")}</span></button>
-        <button onclick={clearFilters}>{t(i18n, "library.clearFilters")}</button>
-    </div>
+    </details>
     {#if loading && items.length === 0}
         <div class="glean-highlights__loading" role="status" aria-live="polite" aria-label={t(i18n, "panel.loading")}>
             {#each [0, 1, 2] as placeholder (placeholder)}

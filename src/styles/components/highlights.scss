@@ -538,3 +538,163 @@
     }
 }
 
+.glean-highlights__filters-fold {
+    margin-inline: 0;
+}
+
+@container glean-workbench (max-width: 640px) {
+    .glean-highlights {
+        gap: var(--glean-space-2) !important;
+        padding-inline: var(--glean-space-1) !important;
+    }
+
+    .glean-highlights__head {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 6px !important;
+        padding: 0 !important;
+    }
+
+    .glean-highlights__title {
+        font-size: 15px !important;
+    }
+
+    .glean-highlights__subtitle {
+        display: none !important;
+    }
+
+    .glean-highlights__tools--scope {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 3px !important;
+        padding: 3px !important;
+
+        button {
+            min-height: 24px !important;
+            padding-inline: 6px !important;
+            font-size: 11px !important;
+            flex: 1 1 auto !important;
+            text-align: center !important;
+        }
+    }
+
+    .glean-stat-strip {
+        padding: 4px 8px !important;
+        gap: 8px !important;
+
+        .glean-stat-strip__val {
+            font-size: 15px !important;
+        }
+
+        .glean-stat-strip__lbl {
+            font-size: 10px !important;
+            margin-top: 0 !important;
+        }
+
+        .glean-stat-strip__divider {
+            height: 14px !important;
+        }
+    }
+
+    .glean-highlights__filters {
+        padding: 8px 10px !important;
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 6px !important;
+        border-radius: var(--glean-radius-sm) !important;
+
+        .glean-highlights__search-wrap {
+            grid-column: 1 / -1 !important;
+            width: 100% !important;
+
+            input[type="search"] {
+                width: 100% !important;
+                height: 28px !important;
+                font-size: 12px !important;
+            }
+        }
+
+        label {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 2px !important;
+            font-size: 10px !important;
+            min-width: 0 !important;
+
+            select {
+                width: 100% !important;
+                height: 26px !important;
+                min-height: 26px !important;
+                padding: 0 4px !important;
+                font-size: 11px !important;
+                border-radius: var(--glean-radius-sm) !important;
+            }
+        }
+
+        .glean-filter-dir {
+            height: 26px !important;
+            min-height: 26px !important;
+            padding: 0 6px !important;
+            font-size: 11px !important;
+            grid-column: 1 / -1 !important;
+            justify-content: center !important;
+        }
+
+        button:last-child {
+            grid-column: 1 / -1 !important;
+            height: 24px !important;
+            min-height: 24px !important;
+            padding: 0 !important;
+            font-size: 11px !important;
+        }
+    }
+
+    .glean-highlights__items:not(.glean-highlights__items--grouped) {
+        padding-left: 14px !important;
+
+        &::before {
+            left: 4px !important;
+        }
+
+        .glean-highlights__item::after {
+            left: -14px !important;
+            top: 14px !important;
+            width: 6px !important;
+            height: 6px !important;
+        }
+    }
+
+    .glean-highlights__card {
+        padding: 8px 10px !important;
+        gap: 6px !important;
+        border-radius: var(--glean-radius-sm) !important;
+    }
+
+    .glean-highlights__quote-text {
+        font-size: 12px !important;
+        line-height: 1.4 !important;
+    }
+
+    .glean-highlights__memo-bubble {
+        padding: 4px 8px !important;
+        font-size: 11px !important;
+        line-height: 1.35 !important;
+    }
+
+    .glean-highlights__meta {
+        font-size: 10px !important;
+        gap: 4px !important;
+    }
+
+    .glean-highlights__actions {
+        gap: 2px !important;
+
+        button {
+            height: 22px !important;
+            min-height: 22px !important;
+            padding: 0 6px !important;
+            font-size: 10px !important;
+        }
+    }
+}
+
