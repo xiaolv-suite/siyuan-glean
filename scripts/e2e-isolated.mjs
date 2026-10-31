@@ -178,6 +178,9 @@ async function runLiveBrowserInteractiveSuite({ chromePath, appDir, base, token,
     }
     await captureClip(plugin, extraDocId, { url: "https://example.com/articles/long-term", contentType: "fulltext", words: 2400, minutes: 8 });
     await writeClip(plugin, extraDocId, { status: "later", author: "少即是多", priority: 5 }, { forceStatus: true, force: true });
+    // 注入全部 7 篇知名微信公众号精读真实文章（涵盖 5 态、4 色高亮、思考批注、导读卡）
+    const { seedRichArticles } = await import(pathToFileURL(path.join(REPO, "scripts/seed-rich-articles.mjs")).href);
+    await seedRichArticles({ base, token, notebookId, verbose: false });
     await plugin.saveData("settings.json", settings);
     await plugin.saveData("ui-prefs.json", { onboardingDone: true, themePalette: "teal" });
     await reconcileIndex(plugin, settings);
@@ -209,6 +212,8 @@ async function runLiveBrowserInteractiveSuite({ chromePath, appDir, base, token,
   html, body { margin: 0; padding: 0; width: 1280px; height: 800px; overflow: hidden; font-family: -apple-system, "Microsoft YaHei", sans-serif; background: var(--b3-theme-background); color: var(--b3-theme-on-background); }
   #workbench-host { width: 1280px; height: 800px; display: flex; flex-direction: column; overflow: hidden; }
   #workbench-host > .glean-tab-root { flex: 1; height: 100%; overflow: hidden; display: flex; flex-direction: column; }
+  #dock-host { width: 360px; height: 800px; display: none; overflow: hidden; background: var(--b3-theme-background); }
+  #dock-host > .glean-dock-root { width: 100%; height: 100%; overflow: hidden; display: flex; flex-direction: column; }
   .b3-dialog--open { position: fixed; inset: 0; z-index: 999; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.42); }
   .b3-dialog__container { background: var(--b3-theme-surface); border-radius: 16px; box-shadow: 0 20px 50px rgba(0,0,0,0.22); display: flex; flex-direction: column; overflow: hidden; max-width: 94vw; max-height: 88vh; }
   .b3-dialog__header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid var(--b3-border-color); font-weight: 600; }
@@ -218,6 +223,7 @@ async function runLiveBrowserInteractiveSuite({ chromePath, appDir, base, token,
 </head>
 <body>
 <div id="workbench-host"></div>
+<div id="dock-host"></div>
 <script>
 window.__i18n = ${i18nJson};
 window.__tabs = new Map();
@@ -271,7 +277,9 @@ class SiyuanPluginBase {
     return btn;
   }
   addCommand() {}
-  addDock() {}
+  addDock(def) {
+    window.__dockDef = def;
+  }
   addAgentCapability() {}
   addTab(def) {
     window.__tabs.set(def.type, def);
@@ -891,6 +899,68 @@ window.require = (id) => {
         }).then((r) => r.json()).then((j) => j.data || {});
         assert.equal(sliceAttrs["custom-clip-status"], "later", "生成的切片子文档必须自动标记 custom-clip-status=later 进入稍后读队列");
 
+        // 12. 切换到 360px 真实思源侧边栏（Dock 模式），走查全插件页面排版、无挤压/无折行断言
+        await evalInPage(`(() => {
+            document.getElementById("workbench-host").style.display = "none";
+            const dockHost = document.getElementById("dock-host");
+            dockHost.style.display = "block";
+            if (window.__dockDef && !dockHost.hasChildNodes()) {
+                window.__dockDef.init.call({ element: dockHost });
+            }
+        })()`);
+        await new Promise((r) => setTimeout(r, 400));
+        
+        // 走查 Dock 读库视图：断言 5 视图单行平铺、筛选折叠条、行级操作不碰撞
+        const dockLibCheck = await evalInPage(`(() => {
+            const viewsBtns = Array.from(document.querySelectorAll("#dock-host .glean-views__btn"));
+            const doneBtn = document.querySelector("#dock-host .glean-drow__done-btn");
+            const filterFold = document.querySelector("#dock-host .glean-filters-fold");
+            const firstRowOps = document.querySelector("#dock-host .glean-drow__ops");
+            return {
+                viewBtnCount: viewsBtns.length,
+                doneBtnHidden: doneBtn ? window.getComputedStyle(doneBtn).display === "none" : true,
+                filterFoldCollapsed: filterFold ? !filterFold.open : true,
+                opsButtonCount: firstRowOps ? firstRowOps.children.length : 0,
+            };
+        })()`);
+        assert.equal(dockLibCheck.viewBtnCount, 5, "Dock 侧边栏必须平铺 5 个视图入口");
+        assert.equal(dockLibCheck.doneBtnHidden, true, "Dock 侧边栏文章卡片必须隐藏直接标记已读，由操作弹窗承载防挤压");
+        assert.equal(dockLibCheck.filterFoldCollapsed, true, "Dock 侧边栏筛选必须默认折叠节省高度");
+        await saveShot("10-dock-library-360px.png");
+
+        // 走查 Dock 高亮摘录墙：断言筛选折叠、卡片无水平溢出
+        await evalInPage(`(() => {
+            const viewsBtns = Array.from(document.querySelectorAll("#dock-host .glean-views__btn"));
+            viewsBtns[3]?.click(); // 切换到「高亮」
+        })()`);
+        await new Promise((r) => setTimeout(r, 350));
+        const dockHlCheck = await evalInPage(`(() => {
+            const hlFold = document.querySelector("#dock-host .glean-highlights__filters-fold");
+            const hlCards = document.querySelectorAll("#dock-host .glean-highlights__card");
+            return {
+                hlFoldCollapsed: hlFold ? !hlFold.open : true,
+                hasCards: hlCards.length > 0,
+            };
+        })()`);
+        assert.equal(dockHlCheck.hlFoldCollapsed, true, "Dock 侧边栏摘录墙筛选必须默认折叠消除 500px 堆叠");
+        await saveShot("11-dock-highlights-360px.png");
+
+        // 走查 Dock 统计视图：断言两列度量平铺与无水平溢出
+        await evalInPage(`(() => {
+            const viewsBtns = Array.from(document.querySelectorAll("#dock-host .glean-views__btn"));
+            viewsBtns[2]?.click(); // 切换到「统计」
+        })()`);
+        await new Promise((r) => setTimeout(r, 350));
+        await saveShot("12-dock-stats-360px.png");
+
+        // 走查 Dock 今日拾遗：断言卡片紧凑排版
+        await evalInPage(`(() => {
+            const viewsBtns = Array.from(document.querySelectorAll("#dock-host .glean-views__btn"));
+            viewsBtns[0]?.click(); // 切换到「今日拾遗」
+        })()`);
+        await new Promise((r) => setTimeout(r, 350));
+        await saveShot("13-dock-resurface-360px.png");
+
         ws.close();
         return {
             screenshots: [
@@ -903,6 +973,10 @@ window.require = (id) => {
                 "07-library-kanban-live.png",
                 "08-highlights-grouped-live.png",
                 "09-reader-folded-live.png",
+                "10-dock-library-360px.png",
+                "11-dock-highlights-360px.png",
+                "12-dock-stats-360px.png",
+                "13-dock-resurface-360px.png",
             ],
             priBottom: resurfaceMetrics.priBottom,
         };

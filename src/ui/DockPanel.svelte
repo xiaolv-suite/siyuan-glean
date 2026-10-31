@@ -3878,7 +3878,7 @@ function metaLine(entry: Row): string {
                                                 <button class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId)} onclick={(event) => { event.stopPropagation(); facade.openRestoreDialog(entry.id); }}>{t(i18n, "action.restore")}</button>
                                             {:else}
                                                 <button class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId)} onclick={(event) => { event.stopPropagation(); void startReading(entry); }}>{t(i18n, entry.status === "reading" ? "action.continueReading" : entry.status === "done" ? "action.readAgain" : "action.startReading")}</button>
-                                                <button class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId) || entry.status === "done"} onclick={(event) => { event.stopPropagation(); void setStatus(entry, "done"); }}>{t(i18n, "action.markDone")}</button>
+                                                <button class="glean-btn glean-btn--ghost glean-drow__done-btn" disabled={Boolean(statusActionId) || entry.status === "done"} onclick={(event) => { event.stopPropagation(); void setStatus(entry, "done"); }}>{t(i18n, "action.markDone")}</button>
                                             {/if}
                                             <ActionPopover label={t(i18n, "library.moreActions")} compact>
                                                 <AuthorEditor {facade} docId={entry.id} onSaved={reload} />

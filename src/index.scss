@@ -3527,7 +3527,7 @@ mark.glean-search-highlight {
     }
 
     .glean-panel--shell:not(.glean-panel--mobile) .glean-views:has(.glean-views__btn--roam) {
-        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-template-columns: 1.4fr 0.9fr 1fr 1fr 1fr;
     }
 
     .glean-panel--shell:not(.glean-panel--mobile) .glean-views__btn {
@@ -3539,6 +3539,9 @@ mark.glean-search-highlight {
         white-space: nowrap !important;
         text-overflow: ellipsis !important;
         overflow: hidden !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
 }
 
@@ -3638,6 +3641,10 @@ mark.glean-search-highlight {
         justify-content: flex-end !important;
         gap: 4px !important;
         opacity: 0.9 !important;
+
+        .glean-drow__done-btn {
+            display: none !important;
+        }
 
         .glean-btn {
             height: 24px !important;

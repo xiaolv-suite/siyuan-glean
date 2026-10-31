@@ -7,37 +7,11 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { buildMetaCalloutMarkdown } from "../src/domain/meta-callout.ts";
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const WORKSPACE = "D:\\SiYuan-Glean-Stage";
-const SESSION_FILE = path.join(WORKSPACE, "stage-session.json");
 
-if (!fs.existsSync(SESSION_FILE)) {
-    console.error("[seed] 未找到靶场会话文件:", SESSION_FILE);
-    process.exit(1);
-}
-
-const session = JSON.parse(fs.readFileSync(SESSION_FILE, "utf8"));
-const { base, token } = session;
-console.log(`[seed] 连接独立靶场: ${base}`);
-
-async function api(route, body = {}) {
-    const res = await fetch(`${base}${route}`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Token ${token}`,
-        },
-        body: JSON.stringify(body),
-    });
-    const json = await res.json();
-    if (json.code !== 0) {
-        throw new Error(`${route} 失败: code=${json.code} msg=${json.msg}`);
-    }
-    return json.data;
-}
-
-const ARTICLES = [
+export const ARTICLES = [
     {
         title: "大模型长上下文与高效注意力机制演进：从 FlashAttention 到 RingAttention",
         url: "https://mp.weixin.qq.com/s/ai-long-context-mechanisms-2026",
@@ -257,20 +231,38 @@ FlashAttention 敏锐地洞察到：计算慢的根源在于 SRAM 与 HBM 之间
     },
 ];
 
-async function main() {
-    // 获取笔记本
-    const ls = await api("/api/notebook/lsNotebooks");
-    let notebookId = ls?.notebooks?.[0]?.id;
-    if (!notebookId) {
-        const createNb = await api("/api/notebook/createNotebook", { name: "📖 拾遗测试工坊" });
-        notebookId = createNb?.notebook?.id;
+export async function seedRichArticles({ base, token, notebookId: targetNbId, workspaceDir, verbose = true }) {
+    async function api(route, body = {}) {
+        const res = await fetch(`${base}${route}`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Token ${token}`,
+            },
+            body: JSON.stringify(body),
+        });
+        const json = await res.json();
+        if (json.code !== 0) {
+            throw new Error(`${route} 失败: code=${json.code} msg=${json.msg}`);
+        }
+        return json.data;
     }
-    console.log(`[seed] 目标笔记本: ${notebookId}`);
+
+    let notebookId = targetNbId;
+    if (!notebookId) {
+        const ls = await api("/api/notebook/lsNotebooks");
+        notebookId = ls?.notebooks?.[0]?.id;
+        if (!notebookId) {
+            const createNb = await api("/api/notebook/createNotebook", { name: "📖 拾遗测试工坊" });
+            notebookId = createNb?.notebook?.id;
+        }
+    }
+    if (verbose) console.log(`[seed] 目标笔记本: ${notebookId}`);
 
     const clipsIndex = {};
 
     for (const art of ARTICLES) {
-        console.log(`[seed] 正在创建文章: 《${art.title}》 (${art.author} / ${art.status})...`);
+        if (verbose) console.log(`[seed] 正在创建文章: 《${art.title}》 (${art.author} / ${art.status})...`);
         const targetPath = `/${art.title.replace(/[\\/\u0000-\u001f]/g, " ").trim().slice(0, 80)}`;
         
         let docId = "";
@@ -282,7 +274,7 @@ async function main() {
             });
             docId = docRes;
         } catch (e) {
-            console.debug(`[seed] 创建文档降级重试:`, e.message);
+            if (verbose) console.debug(`[seed] 创建文档降级重试:`, e.message);
         }
 
         if (!docId) continue;
@@ -306,20 +298,24 @@ async function main() {
         };
         await api("/api/attr/setBlockAttrs", { id: docId, attrs });
 
-        // 插入顶部「导读档案卡」
-        const starsText = art.rating > 0 ? "⭐".repeat(art.rating) : "未评分";
-        const readMinText = art.readMinutes > 0 ? `（实读时长 ${art.readMinutes} 分钟）` : "";
-        const tagTokens = [...art.tags, ...art.aiTags].map((t) => `#${t}#`).join(" ");
-        const calloutMd = `> 📌 **小驴拾遗 · 导读档案**
->
-> 🌐 **来源**：[mp.weixin.qq.com](<${art.url}>) · ✍️ **作者**：${art.author}
-> 📊 **状态**：${art.status} · 🎯 **优先级**：P${art.priority}${art.rating > 0 ? ` · ⭐ **评分**：${starsText}` : ""}
-> ⏱️ **字数体量**：约 ${art.words.toLocaleString()} 字 · 预估用时 约 ${art.minutes} 分钟${readMinText}
-> 🏷️ **分类标签**：${tagTokens}
->
-> 💡 **AI 核心导读**：${art.summary}
-{: custom-glean-slot="meta-callout" }
-`;
+        // 使用纯函数层 buildMetaCalloutMarkdown 构建标准导读档案卡
+        const calloutMd = buildMetaCalloutMarkdown({
+            id: docId,
+            title: art.title,
+            url: art.url,
+            site: "mp.weixin.qq.com",
+            author: art.author,
+            status: art.status,
+            priority: art.priority,
+            rating: art.rating,
+            words: art.words,
+            minutes: art.minutes,
+            readMinutes: art.readMinutes,
+            tags: art.tags,
+            aiTags: art.aiTags,
+            summary: art.summary,
+        });
+
         await api("/api/block/prependBlock", {
             dataType: "markdown",
             parentID: docId,
@@ -346,7 +342,7 @@ async function main() {
                 }
             }
         } catch (e) {
-            console.debug("[seed] 设置引述块属性降级:", e.message);
+            if (verbose) console.debug("[seed] 设置引述块属性降级:", e.message);
         }
 
         // 收集至索引
@@ -374,33 +370,45 @@ async function main() {
         };
     }
 
-    // 固化设置与索引
-    const petalStorage = path.join(WORKSPACE, "data", "storage", "petal", "siyuan-glean");
-    fs.mkdirSync(petalStorage, { recursive: true });
-    
-    // 更新 settings
-    const settingsPath = path.join(petalStorage, "settings.json");
-    let settings = {};
-    try { settings = JSON.parse(fs.readFileSync(settingsPath, "utf8")); } catch {}
-    settings.anchorNotebooks = [notebookId];
-    fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+    if (workspaceDir) {
+        const petalStorage = path.join(workspaceDir, "data", "storage", "petal", "siyuan-glean");
+        fs.mkdirSync(petalStorage, { recursive: true });
+        
+        const settingsPath = path.join(petalStorage, "settings.json");
+        let settings = {};
+        try { settings = JSON.parse(fs.readFileSync(settingsPath, "utf8")); } catch {}
+        settings.anchorNotebooks = [notebookId];
+        fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
 
-    // 更新索引
-    const indexPath = path.join(petalStorage, "glean-index.json");
-    let indexData = { version: 1, updatedAt: new Date().toISOString(), clips: {}, candidates: {} };
-    try { indexData = JSON.parse(fs.readFileSync(indexPath, "utf8")); } catch {}
-    indexData.clips = { ...indexData.clips, ...clipsIndex };
-    fs.writeFileSync(indexPath, JSON.stringify(indexData, null, 2));
+        const indexPath = path.join(petalStorage, "glean-index.json");
+        let indexData = { version: 1, updatedAt: new Date().toISOString(), clips: {}, candidates: {} };
+        try { indexData = JSON.parse(fs.readFileSync(indexPath, "utf8")); } catch {}
+        indexData.clips = { ...indexData.clips, ...clipsIndex };
+        fs.writeFileSync(indexPath, JSON.stringify(indexData, null, 2));
+    }
 
-    console.log(`\n======================================================`);
-    console.log(`🎉 成功为独立靶场注入 ${ARTICLES.length} 篇精读微信公众号文章！`);
-    console.log(`======================================================`);
-    console.log(`👉 请在浏览器中直接按 F5 刷新网页即可体验：`);
-    console.log(`   ${session.appUrl}`);
-    console.log(`======================================================\n`);
+    return { clipsIndex, notebookId };
 }
 
-main().catch((err) => {
-    console.error("[seed] 注入文章失败:", err);
-    process.exit(1);
-});
+if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
+    const WORKSPACE = "D:\\SiYuan-Glean-Stage";
+    const SESSION_FILE = path.join(WORKSPACE, "stage-session.json");
+    if (!fs.existsSync(SESSION_FILE)) {
+        console.error("[seed] 未找到靶场会话文件:", SESSION_FILE);
+        process.exit(1);
+    }
+    const session = JSON.parse(fs.readFileSync(SESSION_FILE, "utf8"));
+    const { base, token } = session;
+    console.log(`[seed] 连接独立靶场: ${base}`);
+    seedRichArticles({ base, token, workspaceDir: WORKSPACE, verbose: true }).then(() => {
+        console.log(`\n======================================================`);
+        console.log(`🎉 成功为独立靶场注入 ${ARTICLES.length} 篇精读微信公众号文章！`);
+        console.log(`======================================================`);
+        console.log(`👉 请在浏览器中直接按 F5 刷新网页即可体验：`);
+        console.log(`   ${session.appUrl}`);
+        console.log(`======================================================\n`);
+    }).catch((err) => {
+        console.error("[seed] 注入文章失败:", err);
+        process.exit(1);
+    });
+}
