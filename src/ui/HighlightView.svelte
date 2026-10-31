@@ -833,6 +833,12 @@ function focusHighlightRow(id: string): void {
                             <span class="glean-highlights__item-index">{(visible.page - 1) * highlightPageSize + visible.items.indexOf(item) + 1}</span>
                         </div>
                         <label class="glean-highlights__quote"><input type="checkbox" checked={selected.includes(item.id)} disabled={exportBusy} onchange={() => toggle(item.id)} aria-label={`${t(i18n, "highlight.quoteTag")} ${(visible.page - 1) * highlightPageSize + visible.items.indexOf(item) + 1}: ${item.text.slice(0, 120)}`} /><span>{item.text}</span></label>
+                        {#if item.memo}
+                            <div class="glean-highlights__memo-bubble" role="note" aria-label="批注思考">
+                                <span class="glean-highlights__memo-icon" aria-hidden="true">💡</span>
+                                <span class="glean-highlights__memo-text">{item.memo}</span>
+                            </div>
+                        {/if}
                         <p class="glean-highlights__meta" title={item.title || t(i18n, "panel.untitled")}>
                             {item.title || t(i18n, "panel.untitled")} {item.site ? ` · ${item.site}` : ""}
                             {#if formatHighlightTime(item.id)}<span class="glean-highlights__time"> · {formatHighlightTime(item.id)}</span>{/if}
@@ -925,6 +931,12 @@ function focusHighlightRow(id: string): void {
                                         <span class="glean-highlights__item-index">{itemIndex + 1}</span>
                                     </div>
                                     <label class="glean-highlights__quote"><input type="checkbox" checked={selected.includes(item.id)} disabled={exportBusy} onchange={() => toggle(item.id)} aria-label={`${t(i18n, "highlight.quoteTag")} ${itemIndex + 1}: ${item.text.slice(0, 120)}`} /><span>{item.text}</span></label>
+                                    {#if item.memo}
+                                        <div class="glean-highlights__memo-bubble" role="note" aria-label="批注思考">
+                                            <span class="glean-highlights__memo-icon" aria-hidden="true">💡</span>
+                                            <span class="glean-highlights__memo-text">{item.memo}</span>
+                                        </div>
+                                    {/if}
                                     {#if formatHighlightTime(item.id)}<p class="glean-highlights__meta"><span class="glean-highlights__time">{formatHighlightTime(item.id)}</span></p>{/if}
                                     <div class="glean-highlights__tools glean-highlights__tools--card">
                                         <button type="button" onclick={() => openDoc(group.rootId, item.id)}>{t(i18n, "highlight.original")}</button>

@@ -75,10 +75,48 @@ function toHighlight(row: BlockRow, root: HighlightRoot): HighlightItem | null {
     const highlight = highlightMarker(row.ial ?? "");
     if (row.type === "d" || (row.type !== "b" && !highlight.trim())) return null;
     if (!isHighlightId(row.id) || row.root_id !== root.id || row.box !== root.box || typeof row.content !== "string" || typeof row.markdown !== "string") throw new HighlightExportError("readFailed");
+
+    // 排除系统导读档案卡与元数据插槽
+    if (row.ial && row.ial.includes('custom-glean-slot="meta-callout"')) return null;
+    if (row.content.includes("小驴拾遗 · 导读档案") || row.markdown.includes("小驴拾遗 · 导读档案")) return null;
+
+    // 排除纯剪藏来源行（如 > 来源：https://... 或 > 🌐 来源：...）
+    const trimmedContent = row.content.trim();
+    const trimmedMd = row.markdown.trim();
+    if (/^(?:🌐\s*)?(?:来源|URL|Link|Source)[：:]\s*(?:\[[^\]]*\]\(|<)?https?:\/\//i.test(trimmedContent)
+        || /^>\s*(?:🌐\s*)?(?:来源|URL|Link|Source)[：:]/i.test(trimmedMd)) {
+        return null;
+    }
+
     const text = cleanHighlightText(row.content);
     if (!text) return null;
+
+    // 提取思考批注（memo）
+    let quoteText = text;
+    let memoText = "";
+    const memoSplit = text.split(/(?:\r?\n)+\s*💡\s*/);
+    if (memoSplit.length > 1) {
+        quoteText = memoSplit[0].trim();
+        memoText = memoSplit.slice(1).join("\n").trim();
+    }
+    const ialMemo = /memo="([^"]*)"/.exec(row.ial ?? "")?.[1];
+    if (!memoText && ialMemo) {
+        memoText = ialMemo.trim();
+    }
+
     const color = highlightColor(row.ial ?? "");
-    return { ...root, color: color || undefined, tags: [...root.tags], aiTags: [...root.aiTags], id: row.id, rootId: root.id, text, markdown: row.markdown, source: { content: row.content, markdown: row.markdown, type: row.type, highlight } };
+    return {
+        ...root,
+        color: color || undefined,
+        tags: [...root.tags],
+        aiTags: [...root.aiTags],
+        id: row.id,
+        rootId: root.id,
+        text: quoteText,
+        memo: memoText || undefined,
+        markdown: row.markdown,
+        source: { content: row.content, markdown: row.markdown, type: row.type, highlight },
+    };
 }
 
 async function collectHighlights(roots: Map<string, QualifiedRoot>): Promise<HighlightItem[]> {
