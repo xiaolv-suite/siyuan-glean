@@ -154,6 +154,8 @@ export interface ContactsBridgeApi {
     getPerson(docId: string): Promise<ContactsPerson | null>;
     ensurePerson(name: string, options?: { ref?: string; docId?: string }): Promise<ContactsPerson & { created: boolean }>;
     recordInteraction(docIds: readonly string[], meta?: { ref?: string; date?: string; place?: string; note?: string }): Promise<ContactsInteractionResult>;
+    appendFact?(personDocId: string, input: { text: string; category?: string; sourceRef?: string }): Promise<unknown>;
+    getFacts?(personDocId: string): Promise<unknown[]>;
 }
 
 // --- ③ 小驴管家 (siyuan-home) ---
@@ -256,6 +258,7 @@ export interface CardsDueSummary {
     unreviewedCount: number;
     unreviewedNewCardCount: number;
     unreviewedOldCardCount: number;
+    todayReviewedCount?: number;
     updatedAt: string;
 }
 
@@ -299,6 +302,13 @@ export interface CardsBridgeApi {
     getDueSummary(): Promise<ActionResult<CardsDueSummary>>;
     openHub?(tab?: string): Promise<ActionResult<boolean>>;
     openReview?(options?: unknown): Promise<ActionResult<boolean>>;
+    receiveExtract?(envelope: {
+        content: string;
+        sourceBlockId: string;
+        sourceDocId?: string;
+        sourceTitle?: string;
+        tags?: string[];
+    }): Promise<ActionResult<{ blockID?: string; enrolled?: boolean }>>;
 }
 
 // --- ⑧ 小驴常用 (xiaolv-common) ---
@@ -320,6 +330,17 @@ export interface CommonBridgeApi {
     get(id: string): Promise<ActionResult<CommonSnippet | null>>;
     recent(): Promise<ActionResult<CommonSnippet[]>>;
     favorites(): Promise<ActionResult<CommonSnippet[]>>;
+    captureQuote?(input: {
+        quote: string;
+        author?: string;
+        sourceDocId?: string;
+        sourceBlockId?: string;
+        sourceTitle?: string;
+        tags?: string[];
+        category?: string;
+        alias?: string;
+        shortcode?: string;
+    }): Promise<ActionResult<{ id?: string }>>;
 }
 
 // --- ⑨ 小驴快门 (siyuan-quickgate) ---
@@ -571,4 +592,180 @@ export function onTaskHorizonCompleted(
     return () => {
         window.removeEventListener("tm:task-completed", handler);
     };
+}
+
+/* ========================================================================= */
+/* 7. 专项生态联邦安全互通工具 (Specialized Interop Helpers)                  */
+/* ========================================================================= */
+
+/**
+ * 安全推送渐进摘录至小驴闪卡（siyuan-lv-cards）
+ * 自动建立双向反链血缘并纳入轻量级渐进学习轮转箱，绝不破坏 FSRS 主队列
+ */
+export async function sendExtractToCardsSafely(envelope: {
+    content: string;
+    sourceBlockId: string;
+    sourceDocId?: string;
+    sourceTitle?: string;
+    tags?: string[];
+}): Promise<{ ok: boolean; message?: string }> {
+    return await callBridge<CardsBridgeApi, { ok: boolean; message?: string }>(
+        "cards",
+        "receiveExtract",
+        async (bridge) => {
+            if (typeof bridge.receiveExtract !== "function") return { ok: false, message: "not-supported" };
+            const res = await bridge.receiveExtract(envelope);
+            return { ok: Boolean(res?.ok), message: res?.message };
+        },
+        () => ({ ok: false, message: "cards-not-available" })
+    );
+}
+
+/**
+ * 安全读取小驴闪卡今日待复习量与已复习量（只读）
+ */
+export async function getCardsDueSummarySafely(): Promise<{ ok: boolean; unreviewedCount: number; todayReviewedCount?: number }> {
+    return await callBridge<CardsBridgeApi, { ok: boolean; unreviewedCount: number; todayReviewedCount?: number }>(
+        "cards",
+        "due",
+        async (bridge) => {
+            if (typeof bridge.getDueSummary !== "function") return { ok: false, unreviewedCount: 0 };
+            const res = await bridge.getDueSummary();
+            if (res?.ok && res.data) {
+                return {
+                    ok: true,
+                    unreviewedCount: (res.data.unreviewedCount ?? 0) + (res.data.unreviewedNewCardCount ?? 0) + (res.data.unreviewedOldCardCount ?? 0),
+                    todayReviewedCount: res.data.todayReviewedCount ?? 0,
+                };
+            }
+            return { ok: false, unreviewedCount: 0 };
+        },
+        () => ({ ok: false, unreviewedCount: 0 })
+    );
+}
+
+/**
+ * 安全唤起小驴闪卡复习界面
+ */
+export async function openCardsReviewSafely(): Promise<boolean> {
+    return await callBridge<CardsBridgeApi, boolean>(
+        "cards",
+        "openReview",
+        async (bridge) => {
+            if (typeof bridge.openReview === "function") {
+                const res = await bridge.openReview();
+                return Boolean(res?.ok);
+            }
+            if (typeof bridge.openHub === "function") {
+                const res = await bridge.openHub();
+                return Boolean(res?.ok);
+            }
+            return false;
+        },
+        () => false
+    );
+}
+
+/**
+ * 安全检索联系人（小驴人脉 siyuan-contacts）
+ */
+export async function searchPersonSafely(keyword: string): Promise<ContactsPerson | null> {
+    const kw = (keyword || "").trim();
+    if (!kw) return null;
+    return await callBridge<ContactsBridgeApi, ContactsPerson | null>(
+        "contacts",
+        "searchPeople",
+        async (bridge) => {
+            const list = await bridge.searchPeople(kw);
+            if (!Array.isArray(list) || list.length === 0) return null;
+            const exact = list.find((p) => p.name === kw);
+            return exact || list[0] || null;
+        },
+        () => null
+    );
+}
+
+/**
+ * 一键安全沉淀联系人至小驴人脉（创建或查找）
+ */
+export async function ensurePersonSafely(name: string, options?: { docId?: string }): Promise<{ ok: boolean; person?: ContactsPerson; created?: boolean }> {
+    const cleanName = (name || "").trim();
+    if (!cleanName) return { ok: false };
+    return await callBridge<ContactsBridgeApi, { ok: boolean; person?: ContactsPerson; created?: boolean }>(
+        "contacts",
+        "ensurePerson",
+        async (bridge) => {
+            const person = await bridge.ensurePerson(cleanName, options);
+            return { ok: Boolean(person?.docId), person, created: Boolean(person?.created) };
+        },
+        () => ({ ok: false })
+    );
+}
+
+/**
+ * 安全向小驴人脉联系人主档案追加事实项（appendFact）
+ */
+export async function appendPersonFactSafely(
+    personDocId: string,
+    fact: { text: string; category?: string; sourceRef?: string }
+): Promise<boolean> {
+    if (!personDocId || !fact.text) return false;
+    return await callBridge<ContactsBridgeApi, boolean>(
+        "contacts",
+        "appendFact",
+        async (bridge) => {
+            if (typeof bridge.appendFact !== "function") return false;
+            await bridge.appendFact(personDocId, fact);
+            return true;
+        },
+        () => false
+    );
+}
+
+/**
+ * 一键安全存入金句/常用片段至小驴常用（xiaolv-common）
+ */
+export async function captureQuoteToCommonSafely(input: {
+    quote: string;
+    author?: string;
+    sourceDocId?: string;
+    sourceBlockId?: string;
+    sourceTitle?: string;
+    tags?: string[];
+    alias?: string;
+    shortcode?: string;
+}): Promise<{ ok: boolean; itemId?: string }> {
+    if (!input.quote) return { ok: false };
+    return await callBridge<CommonBridgeApi, { ok: boolean; itemId?: string }>(
+        "common",
+        "captureQuote",
+        async (bridge) => {
+            if (typeof bridge.captureQuote !== "function") return { ok: false };
+            const res = await bridge.captureQuote({
+                ...input,
+                category: "拾遗金句",
+            });
+            return { ok: Boolean(res?.ok), itemId: res?.data?.id };
+        },
+        () => ({ ok: false })
+    );
+}
+
+/**
+ * 安全读取打卡项目的连续打卡天数（小驴打卡 siyuan-checkin）
+ */
+export async function getCheckinStreaksSafely(itemId?: string): Promise<{ current: number; longest: number } | null> {
+    return await callBridge<CheckinBridgeApi, { current: number; longest: number } | null>(
+        "checkin",
+        "streaks.read",
+        async (bridge) => {
+            if (typeof bridge.getStreaks !== "function") return null;
+            const list = bridge.getStreaks(itemId ? [itemId] : undefined);
+            if (!Array.isArray(list) || list.length === 0) return null;
+            const target = itemId ? list.find((s) => (s as any).itemId === itemId) : list[0];
+            if (!target) return null;
+            return { current: target.current ?? 0, longest: target.longest ?? 0 };
+        },
+        () => null
+    );
 }

@@ -27,6 +27,7 @@
     let timeBudget = $state<RoamingTimeBudget>("all");
     let selectedTag = $state("");
     let favoriteOnly = $state(false);
+    let highRatingPriority = $state(false);
     let availableTags = $state<string[]>([]);
     let loading = $state(false);
     let cachedIndex = $state<GleanIndex | null>(null);
@@ -75,7 +76,7 @@
         try {
             const index = await getIndex();
             const candidates = Object.values(index.clips);
-            const next = pickRoamingArticle(candidates, { timeBudget: budget, tag: selectedTag || undefined, favoriteOnly });
+            const next = pickRoamingArticle(candidates, { timeBudget: budget, tag: selectedTag || undefined, favoriteOnly, highRatingPriority });
             if (next) {
                 history = [next];
                 historyIndex = 0;
@@ -103,7 +104,7 @@
         try {
             const index = await getIndex();
             const candidates = Object.values(index.clips);
-            const next = pickRoamingArticle(candidates, { timeBudget, tag: selectedTag || undefined, favoriteOnly });
+            const next = pickRoamingArticle(candidates, { timeBudget, tag: selectedTag || undefined, favoriteOnly, highRatingPriority });
             if (next) {
                 history = [next];
                 historyIndex = 0;
@@ -131,7 +132,7 @@
         try {
             const index = await getIndex();
             const candidates = Object.values(index.clips);
-            const next = pickRoamingArticle(candidates, { timeBudget, tag: selectedTag || undefined, favoriteOnly: nextFav });
+            const next = pickRoamingArticle(candidates, { timeBudget, tag: selectedTag || undefined, favoriteOnly: nextFav, highRatingPriority });
             if (next) {
                 history = [next];
                 historyIndex = 0;
@@ -145,6 +146,34 @@
         } catch (error) {
             favoriteOnly = !nextFav;
             console.warn("[glean] 切换收藏过滤漫游异常:", error);
+            showMessage(t(i18n, "msg.actionFailed"), 2500);
+        } finally {
+            loading = false;
+        }
+    }
+
+    async function toggleHighRatingPriority(): Promise<void> {
+        if (loading) return;
+        const nextHigh = !highRatingPriority;
+        highRatingPriority = nextHigh;
+        loading = true;
+        try {
+            const index = await getIndex();
+            const candidates = Object.values(index.clips);
+            const next = pickRoamingArticle(candidates, { timeBudget, tag: selectedTag || undefined, favoriteOnly, highRatingPriority: nextHigh });
+            if (next) {
+                history = [next];
+                historyIndex = 0;
+                if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+                    try { navigator.vibrate?.(10); } catch { /* noop */ }
+                }
+            } else {
+                highRatingPriority = !nextHigh;
+                showMessage(t(i18n, "roaming.emptyPool"), 2500);
+            }
+        } catch (error) {
+            highRatingPriority = !nextHigh;
+            console.warn("[glean] 切换高星级过滤漫游异常:", error);
             showMessage(t(i18n, "msg.actionFailed"), 2500);
         } finally {
             loading = false;
@@ -166,7 +195,7 @@
             const excludedIds = new Set(currentList.map((h) => h.item.id));
             const index = await getIndex();
             const candidates = Object.values(index.clips);
-            const next = pickRoamingArticle(candidates, { excludedIds, timeBudget, tag: selectedTag || undefined, favoriteOnly });
+            const next = pickRoamingArticle(candidates, { excludedIds, timeBudget, tag: selectedTag || undefined, favoriteOnly, highRatingPriority });
             if (next) {
                 history = [...currentList, next];
                 historyIndex = history.length - 1;
@@ -508,6 +537,17 @@
             <svg class="glean-icon glean-icon--xs" class:glean-icon--fav={favoriteOnly} aria-hidden="true"><use href={favoriteOnly ? "#iconGleanHeart" : "#iconGleanHeartOutline"} /></svg>
             <span>{t(i18n, "roaming.favoriteOnly")}</span>
         </button>
+
+        <button
+            type="button"
+            class="glean-roaming-budget-btn glean-roaming-rating-filter-btn"
+            class:glean-roaming-budget-btn--active={highRatingPriority}
+            onclick={() => void toggleHighRatingPriority()}
+            title={t(i18n, "roaming.highRatingPriorityHint")}
+        >
+            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanStar" /></svg>
+            <span>{t(i18n, "roaming.highRatingPriority")}</span>
+        </button>
     </div>
 
     <article
@@ -524,7 +564,7 @@
             {#if isWechat}
                 <span class="glean-badge glean-source-wechat">
                     <span class="glean-wechat-dot" aria-hidden="true"></span>
-                    微信{#if safeAuthor} · {safeAuthor}{/if}
+                    {t(i18n, "wechat.name")}{#if safeAuthor} · {safeAuthor}{/if}
                 </span>
             {:else if currentPick.item.site}
                 <span class="glean-badge">{currentPick.item.site}</span>

@@ -32,6 +32,7 @@
         onBatchRating?: (rating: number) => void | Promise<void>;
         allSelectedAreFavorite?: boolean;
         hasWechatSelected?: boolean;
+        computeDiff?: (mode: "tag" | "author", text: string) => { update: number; skip: number };
     }
 
     let {
@@ -39,6 +40,7 @@
         onApply, onOpenAi, onClear, onSelectDisplayed, onKeepFiltered, onAddTag, onSetAuthor,
         onPurifyWechat, onCopyBlockRefs, onCopyCitations, onCopyBibTeX, onCopyAPA, onCopyMLA, onCopySummaryList, onExportCsv, onBatchFavorite,
         onBatchPriority, onBatchRating, allSelectedAreFavorite = false, hasWechatSelected = false,
+        computeDiff,
     }: Props = $props();
     const filteredSelectedCount = $derived(Math.max(0, selectedCount - hiddenCount));
     let summaryEl = $state<HTMLElement | null>(null);
@@ -47,6 +49,13 @@
     let inlineMode = $state<InlinePromptMode>(null);
     let inlineText = $state("");
     let inlineInputEl = $state<HTMLInputElement | null>(null);
+
+    const inlineDiff = $derived.by(() => {
+        if (!computeDiff || !inlineText.trim() || (inlineMode !== "tag" && inlineMode !== "author")) {
+            return null;
+        }
+        return computeDiff(inlineMode, inlineText.trim());
+    });
 
     async function keepFiltered(event: MouseEvent): Promise<void> {
         const origin = event.currentTarget as HTMLButtonElement;
@@ -211,6 +220,9 @@
                     placeholder={t(i18n, inlineMode === "tag" ? "library.tagPrompt" : "library.authorPrompt")}
                     aria-label={t(i18n, inlineMode === "tag" ? "library.batchAddTag" : "library.batchSetAuthor")}
                 />
+                {#if inlineDiff && (inlineDiff.update > 0 || inlineDiff.skip > 0)}
+                    <span class="glean-batchbar__diff-hint">{t(i18n, "library.batchDiffHint", { update: inlineDiff.update, skip: inlineDiff.skip })}</span>
+                {/if}
                 <button type="submit" class="glean-bb glean-bb--pri" disabled={busy || !inlineText.trim()}>{t(i18n, "action.save")}</button>
                 <button type="button" class="glean-bb" disabled={busy} onclick={() => { inlineMode = null; inlineText = ""; }}>{t(i18n, "action.cancel")}</button>
             </form>

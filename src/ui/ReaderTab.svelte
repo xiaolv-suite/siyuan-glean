@@ -59,7 +59,18 @@ import { aiFailureKey } from "../libs/ai-feedback";
     import { listDocHighlights, type HighlightItem } from "../services/highlights";
     import { createArticleHighlightsDoc } from "../services/highlights";
     import { createOutlineMindmapDocument } from "../services/doc-slicing-service";
-    import { formatTaskHorizonItem, type IncrementalExtractPayload, type TaskHorizonActionPayload } from "../libs/ecosystem-bridge-kit";
+    import {
+        appendPersonFactSafely,
+        captureQuoteToCommonSafely,
+        ensurePersonSafely,
+        formatTaskHorizonItem,
+        getBridgeSafely,
+        searchPersonSafely,
+        sendExtractToCardsSafely,
+        type ContactsPerson,
+        type IncrementalExtractPayload,
+        type TaskHorizonActionPayload,
+    } from "../libs/ecosystem-bridge-kit";
     import { createReadPointObserver, scrollAndPulseReadPoint, type ReadPointObserverHandle } from "../libs/read-point-observer";
     import { saveReadPoint } from "../services/clip-store";
     import { pickRoamingArticle } from "../domain/roaming";
@@ -76,7 +87,6 @@ import { aiFailureKey } from "../libs/ai-feedback";
     import { createLatestRequestGate } from "../libs/latest-request";
     import { loadIndex } from "../services/index-store";
     import { resolveReadingTimeTier } from "../domain/library-view";
-    import { getBridgeSafely } from "../libs/ecosystem-bridge-kit";
     import type { RecentReadingEntry } from "../domain/recent-reading";
 
     interface Props {
@@ -116,6 +126,26 @@ import { aiFailureKey } from "../libs/ai-feedback";
     let readerRoot = $state<HTMLDivElement | null>(null);
     let sidebarCollapsed = $state(false);
     let immersive = $state(false);
+    let zenMode = $state(false);
+
+    let prevSidebarCollapsed = false;
+
+    function toggleZenMode(): void {
+        zenMode = !zenMode;
+        if (zenMode) {
+            prevSidebarCollapsed = sidebarCollapsed;
+            sidebarCollapsed = true;
+        } else {
+            sidebarCollapsed = prevSidebarCollapsed;
+        }
+    }
+
+    function exitZenMode(): void {
+        if (zenMode) {
+            zenMode = false;
+            sidebarCollapsed = prevSidebarCollapsed;
+        }
+    }
     let sidebarBusy = $state(false);
     let shortcutHelp = $state(false);
     let moreToolsOpen = $state(false);
@@ -141,6 +171,24 @@ import { aiFailureKey } from "../libs/ai-feedback";
     let highlightsLoading = $state(false);
     let marginNotesOpen = $state(true);
     let highlightsOpen = $state(false);
+    let outlineOpen = $state(true);
+    let isShortViewport = $state(false);
+
+    function onOutlineToggle(event: Event): void {
+        const details = event.currentTarget as HTMLDetailsElement;
+        outlineOpen = details.open;
+        if (isShortViewport && outlineOpen) {
+            highlightsOpen = false;
+        }
+    }
+
+    function onHighlightsToggle(event: Event): void {
+        const details = event.currentTarget as HTMLDetailsElement;
+        highlightsOpen = details.open;
+        if (isShortViewport && highlightsOpen) {
+            outlineOpen = false;
+        }
+    }
     let readingPercentage = $state<number | null>(null);
     let memoInputOpen = $state(false);
     let memoDraft = $state("");
@@ -159,7 +207,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
     let currentBookmarkBlockId = $state<string | null>(null);
     let pendingScrollBlockId = $state<string | null>(null);
     const showBackToTop = $derived((readingPercentage ?? 0) > 12);
-    let companionTab = $state<"all" | "outline" | "notes" | "ai" | "fold">("all");
+    let companionTab = $state<"outline" | "notes" | "ai" | "tools" | "fold" | "all">("outline");
     let foldNodes = $state<FoldNode[]>([]);
     let foldLoading = $state(false);
     let foldGlobalLevel = $state<FoldLevel>(2);
@@ -190,7 +238,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
             sidebarCollapsed = false;
             immersive = false;
         }
-        companionTab = companionTab === "fold" ? "all" : "fold";
+        companionTab = companionTab === "fold" ? "outline" : "fold";
         if (companionTab === "fold" && foldNodes.length === 0) {
             void refreshFoldNodes();
         }
@@ -227,6 +275,20 @@ import { aiFailureKey } from "../libs/ai-feedback";
     const readingTimeTier = $derived(resolveReadingTimeTier(estReadingMinutes));
     const hasCardsInstalled = $derived(typeof window !== "undefined" && Boolean(getBridgeSafely("cards")));
     const hasExamInstalled = $derived(typeof window !== "undefined" && Boolean(getBridgeSafely("exam")));
+    const hasContactsInstalled = $derived(typeof window !== "undefined" && Boolean(getBridgeSafely("contacts")));
+    const hasCommonInstalled = $derived(typeof window !== "undefined" && Boolean(getBridgeSafely("common")));
+    let authorPerson = $state<ContactsPerson | null>(null);
+
+    $effect(() => {
+        const authorName = context?.author?.trim();
+        if (authorName && hasContactsInstalled) {
+            void searchPersonSafely(authorName).then((person) => {
+                authorPerson = person;
+            });
+        } else {
+            authorPerson = null;
+        }
+    });
     let recentReadings = $state<RecentReadingEntry[]>([]);
     let readingTimer = $state<ReadingTimerState>(createReadingTimer());
     let readingTimerDocId = "";
@@ -301,6 +363,14 @@ import { aiFailureKey } from "../libs/ai-feedback";
         }).catch(() => undefined);
         const root = readerRoot;
         root?.addEventListener("keydown", onReaderKey);
+        const checkShortHeight = () => {
+            isShortViewport = typeof window !== "undefined" && window.innerHeight < 600;
+            if (isShortViewport && outlineOpen && highlightsOpen) {
+                highlightsOpen = false;
+            }
+        };
+        checkShortHeight();
+        window.addEventListener("resize", checkShortHeight);
         return () => {
             readingTimer = setReadingTimerActive(readingTimer, false, Date.now());
             mounted = false;
@@ -309,6 +379,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
             readPointHandle?.disconnect();
             readPointHandle = null;
             root?.removeEventListener("keydown", onReaderKey);
+            window.removeEventListener("resize", checkShortHeight);
         };
     });
 
@@ -356,6 +427,30 @@ import { aiFailureKey } from "../libs/ai-feedback";
     let relatedShown = $state(false);
     let relatedReason = $state<RelatedReason | null>(null);
 
+    let activeTtsEl: HTMLElement | null = null;
+
+    function highlightTtsChunk(chunk: string): void {
+        if (!protyleHost || !chunk.trim()) return;
+        clearTtsHighlight();
+        const snippet = chunk.trim().slice(0, 30);
+        const blocks = Array.from(protyleHost.querySelectorAll<HTMLElement>("[data-node-id]"));
+        for (const el of blocks) {
+            if (el.textContent && el.textContent.includes(snippet)) {
+                el.classList.add("glean-tts-reading-pulse");
+                el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                activeTtsEl = el;
+                break;
+            }
+        }
+    }
+
+    function clearTtsHighlight(): void {
+        if (activeTtsEl) {
+            activeTtsEl.classList.remove("glean-tts-reading-pulse");
+            activeTtsEl = null;
+        }
+    }
+
     function speechSynthesis(): SpeechSynthesis | null {
         return speechSupported ? window.speechSynthesis : null;
     }
@@ -363,6 +458,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
     function stopSpeech(): void {
         speechGeneration += 1;
         speechSynthesis()?.cancel();
+        clearTtsHighlight();
         speechState = "idle";
     }
 
@@ -377,6 +473,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
         const chunk = speechChunks[speechChunkIndex];
         if (!api || !chunk) {
             speechState = "idle";
+            clearTtsHighlight();
             return;
         }
 
@@ -388,15 +485,18 @@ import { aiFailureKey } from "../libs/ai-feedback";
             speechChunkIndex += 1;
             if (speechChunkIndex >= speechChunks.length) {
                 speechState = "idle";
+                clearTtsHighlight();
                 return;
             }
             speakCurrent(generation);
         };
         utterance.onerror = (event) => {
+            clearTtsHighlight();
             if (generation !== speechGeneration || event.error === "canceled" || event.error === "interrupted") return;
             speechState = "idle";
             showMessage(t(i18n, "reader.speechFailed"), 3000);
         };
+        highlightTtsChunk(chunk);
         api.speak(utterance);
     }
 
@@ -719,6 +819,82 @@ import { aiFailureKey } from "../libs/ai-feedback";
             docId: context.id,
             blockId: item.id,
         });
+    }
+
+    function openAuthorContactDoc(): void {
+        if (!authorPerson?.docId) return;
+        void openTab({ app: facade.pluginInstance.app, doc: { id: authorPerson.docId }, keepCursor: false });
+    }
+
+    async function enrollAuthorToContacts(): Promise<void> {
+        if (!context?.author) return;
+        const res = await ensurePersonSafely(context.author, { docId: context.id });
+        if (res.ok && res.person) {
+            authorPerson = res.person;
+            showMessage(t(i18n, res.created ? "author.enrolledToContacts" : "author.linkedToContacts"), 2500);
+        } else {
+            showMessage(t(i18n, "msg.actionFailed"), 2500);
+        }
+    }
+
+    async function logAuthorFact(): Promise<void> {
+        if (!authorPerson?.docId || !context) return;
+        const ok = await appendPersonFactSafely(authorPerson.docId, {
+            text: `精读了文章《${context.title}》`,
+            category: "other",
+            sourceRef: context.id,
+        });
+        if (ok) {
+            showMessage(t(i18n, "author.factLogged"), 2500);
+        } else {
+            showMessage(t(i18n, "msg.actionFailed"), 2500);
+        }
+    }
+
+    async function pushHighlightToCards(hl: HighlightItem): Promise<void> {
+        if (!hl.text || !context) return;
+        const res = await sendExtractToCardsSafely({
+            content: hl.text,
+            sourceBlockId: hl.id,
+            sourceDocId: context.id,
+            sourceTitle: context.title,
+            tags: context.tags || [],
+        });
+        if (typeof window !== "undefined") {
+            window.dispatchEvent(new CustomEvent("lv-cards:incremental-extract", {
+                detail: {
+                    text: hl.text,
+                    sourceBlockId: hl.id,
+                    docId: context.id,
+                    docTitle: context.title,
+                    sourceUrl: context.url,
+                    tags: context.tags || [],
+                    createdAt: new Date().toISOString(),
+                }
+            }));
+        }
+        if (res.ok) {
+            showMessage(t(i18n, "reader.extractedToCards"), 2500);
+        } else {
+            void cardFromHighlight(hl);
+        }
+    }
+
+    async function saveHighlightToCommon(hl: HighlightItem): Promise<void> {
+        if (!hl.text || !context) return;
+        const res = await captureQuoteToCommonSafely({
+            quote: hl.text,
+            author: context.author,
+            sourceDocId: context.id,
+            sourceBlockId: hl.id,
+            sourceTitle: context.title,
+            tags: context.tags,
+        });
+        if (res.ok) {
+            showMessage(t(i18n, "quoteCard.savedToCommon"), 2500);
+        } else {
+            showMessage(t(i18n, "msg.actionFailed"), 2500);
+        }
     }
 
     function quoteCardFromExcerpt(): void {
@@ -1063,6 +1239,18 @@ import { aiFailureKey } from "../libs/ai-feedback";
     function onReaderKey(event: KeyboardEvent): void {
         const modalOpen = Array.from(document.querySelectorAll<HTMLElement>('.b3-dialog, .b3-menu, [role="dialog"], [aria-modal="true"]'))
             .some((element) => element.getClientRects().length > 0);
+        if (event.key === "F11") {
+            event.preventDefault();
+            event.stopPropagation();
+            toggleZenMode();
+            return;
+        }
+        if (event.key === "Escape" && zenMode) {
+            event.preventDefault();
+            event.stopPropagation();
+            exitZenMode();
+            return;
+        }
         if (event.altKey && (event.repeat || modalOpen)) return;
         if (event.altKey && (event.key === "e" || event.key === "E")) {
             event.preventDefault();
@@ -1611,6 +1799,13 @@ import { aiFailureKey } from "../libs/ai-feedback";
             createdAt: new Date().toISOString(),
         };
         if (hasCardsInstalled) {
+            void sendExtractToCardsSafely({
+                content: excerpt.text,
+                sourceBlockId: excerpt.blockId || docId,
+                sourceDocId: context.id,
+                sourceTitle: context.title,
+                tags: context.tags || [],
+            });
             if (typeof window !== "undefined") {
                 window.dispatchEvent(new CustomEvent("lv-cards:incremental-extract", { detail: payload }));
             }
@@ -1943,9 +2138,11 @@ import { aiFailureKey } from "../libs/ai-feedback";
     }
 
     function setMode(next: "read" | "edit"): void {
-        if (mode === next || !protyle) return;
+        if (mode === next) return;
         mode = next;
-        protyle.setMode(modeValue(next));
+        if (protyle) {
+            protyle.setMode(modeValue(next));
+        }
         showMessage(t(i18n, next === "edit" ? "reader.editHint" : "reader.readHint"), 2500);
     }
 
@@ -2009,7 +2206,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
             }
             if (status === "done") await flushReadingMinutes(current.id, generation);
             if (status === "done" && facade.settings.integration.checkinEnabled && facade.settings.integration.checkinItemId) {
-                void recordReadingDone(facade.settings.integration.checkinItemId, current.id, current.title);
+                void recordReadingDone(facade.settings.integration.checkinItemId, current.id, current.title, displayedReadMinutes || estReadingMinutes || 1);
             }
             if (status === "done" && facade.settings.integration.dailyNoteEnabled && facade.settings.anchorNotebooks?.[0]) {
                 const notebookId = facade.settings.anchorNotebooks[0];
@@ -2056,7 +2253,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
             }
             await flushReadingMinutes(current.id, generation);
             if (facade.settings.integration.checkinEnabled && facade.settings.integration.checkinItemId) {
-                void recordReadingDone(facade.settings.integration.checkinItemId, current.id, current.title);
+                void recordReadingDone(facade.settings.integration.checkinItemId, current.id, current.title, displayedReadMinutes || estReadingMinutes || 1);
             }
             facade.notifyDataChanged();
             const next = await pickNextUnread(facade.pluginInstance, current.id);
@@ -2164,6 +2361,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
 <div
     class="glean-reader"
     class:glean-reader--immersive={immersive}
+    class:glean-reader--zen={zenMode}
     aria-busy={Boolean(aiBusy || sidebarBusy || statusBusy || appearanceBusy || measuring || snapping || contextLoading || outlineLoading)}
     bind:this={readerRoot}
     role="region"
@@ -2173,119 +2371,225 @@ import { aiFailureKey } from "../libs/ai-feedback";
     data-reader-line-height={readerAppearance.lineHeight}
     data-reader-width={readerAppearance.width}
     data-reader-theme={readerAppearance.theme}
+    data-reader-mode={mode}
     data-reader-immersive={immersive}
+    data-reader-zen={zenMode}
 >
     {#if docId}
         <div class="glean-reader__toolbar" role="group" aria-label={t(i18n, "reader.title")}>
-            <span class="glean-reader__toolbar-heading">
-                <span class="glean-reader__toolbar-title" title={context?.title}>{context?.title || t(i18n, "panel.untitled")}</span>
-                {#if context}
-                    <span class="glean-reader__toolbar-meta">
-                        {carrierLabel(context.contentType)}{#if context.site} · {context.site}{/if} · {t(i18n, `status.${context.status}`)}{#if (context.words ?? 0) > 0} · {t(i18n, "panel.words", { n: context.words ?? 0 })}{/if}{#if estReadingMinutes} · 约 {estReadingMinutes}m{/if}
-                    </span>
-                {/if}
-            </span>
-            <div class="glean-reader__mode" role="group" aria-label={t(i18n, "settings.readerMode")}>
-                <button class="glean-seg__btn" class:glean-seg__btn--on={mode === "read"} aria-pressed={mode === "read"} title="{t(i18n, 'reader.readHint')} (Alt+E)" onclick={() => setMode("read")}>{t(i18n, "reader.modeRead")}</button>
-                <button class="glean-seg__btn" class:glean-seg__btn--on={mode === "edit"} aria-pressed={mode === "edit"} title="{t(i18n, 'reader.editHint')} (Alt+E)" onclick={() => setMode("edit")}>{t(i18n, "reader.modeEdit")}</button>
+            <div class="glean-reader__toolbar-left">
+                <button
+                    type="button"
+                    class="glean-icon-btn glean-reader__toolbar-back"
+                    title="{t(i18n, 'reading.backToLibrary')} (Esc)"
+                    aria-label={t(i18n, "reading.backToLibrary")}
+                    onclick={backToLibrary}
+                >
+                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArrowLeft" /></svg>
+                </button>
+                <div class="glean-reader__toolbar-heading">
+                    <span class="glean-reader__toolbar-title" title={context?.title}>{context?.title || t(i18n, "panel.untitled")}</span>
+                    {#if context}
+                        <span class="glean-reader__toolbar-meta">
+                            {carrierLabel(context.contentType)}{#if context.site} · {context.site}{/if}{#if context.author} · {#if authorPerson}<button type="button" class="glean-linkish glean-reader__author-contact-btn" title="小驴人脉联系人: {authorPerson.name}" onclick={openAuthorContactDoc}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanUser" /></svg> {context.author}</button>{:else}{context.author}{/if}{/if}{#if (context.words ?? 0) > 0} · {t(i18n, "panel.words", { n: context.words ?? 0 })}{/if}{#if estReadingMinutes} · 约 {estReadingMinutes}m{/if}
+                        </span>
+                    {/if}
+                </div>
             </div>
-            <button class="glean-btn glean-btn--ghost glean-reader__toolbar-sidebar" aria-busy={sidebarBusy} disabled={sidebarBusy} aria-expanded={!sidebarCollapsed && !immersive} aria-controls={sidebarId} title={t(i18n, sidebarCollapsed || immersive ? "reader.sidebarShow" : "reader.sidebarHide")} onclick={toggleCompanion}>{t(i18n, sidebarCollapsed || immersive ? "reader.sidebarShow" : "reader.sidebarHide")}</button>
-            <button class="glean-btn glean-btn--ghost glean-reader__toolbar-search" aria-expanded={searchOpen} title={t(i18n, "reader.searchTitle")} aria-label={t(i18n, "reader.searchTitle")} onclick={() => { searchOpen = !searchOpen; }}><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanSearch" /></svg></button>
-            <button
-                type="button"
-                class="glean-btn glean-btn--ghost glean-reader__toolbar-fold"
-                class:glean-btn--active={companionTab === "fold"}
-                title="{t(i18n, 'foldReader.toggleAction')} (Alt+Z)"
-                aria-label={t(i18n, "foldReader.toggleAction")}
-                onclick={toggleFoldReader}
-            >
-                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg>
-                <span>{t(i18n, "foldReader.navTitle")}</span>
-            </button>
-            {#if docHighlights.length > 0 && !facade.isMobile}
+
+            <div class="glean-reader__toolbar-center">
+                <div class="glean-reader__mode glean-seg" role="group" aria-label={t(i18n, "settings.readerMode")}>
+                    <button class="glean-seg__btn" class:glean-seg__btn--on={mode === "read"} aria-pressed={mode === "read"} title="{t(i18n, 'reader.readHint')} (Alt+E)" onclick={() => setMode("read")}>{t(i18n, "reader.modeRead")}</button>
+                    <button class="glean-seg__btn" class:glean-seg__btn--on={mode === "edit"} aria-pressed={mode === "edit"} title="{t(i18n, 'reader.editHint')} (Alt+E)" onclick={() => setMode("edit")}>{t(i18n, "reader.modeEdit")}</button>
+                </div>
+            </div>
+
+            <div class="glean-reader__toolbar-right">
                 <button
                     type="button"
-                    class="glean-btn glean-btn--ghost glean-reader__toolbar-margin-notes"
-                    class:glean-btn--active={marginNotesOpen}
-                    title={t(i18n, "reader.marginNotesToggle")}
-                    aria-label={t(i18n, "reader.marginNotesToggle")}
-                    onclick={() => { marginNotesOpen = !marginNotesOpen; }}
+                    class="glean-icon-btn glean-reader__toolbar-search"
+                    class:glean-icon-btn--active={searchOpen}
+                    aria-expanded={searchOpen}
+                    title="{t(i18n, 'reader.searchTitle')} (Ctrl+F)"
+                    aria-label={t(i18n, "reader.searchTitle")}
+                    onclick={() => { searchOpen = !searchOpen; }}
                 >
-                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg>
-                    <span class="glean-margin-notes__badge">{docHighlights.length}</span>
+                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSearch" /></svg>
                 </button>
-            {/if}
-            <button class="glean-btn glean-btn--ghost glean-reader__toolbar-appearance" aria-expanded={appearanceOpen} aria-controls={appearancePanelId} title={t(i18n, "reader.appearanceTitle")} onclick={toggleAppearance}>{t(i18n, "reader.appearanceTitle")}</button>
-            <button type="button" class="glean-btn glean-btn--ghost glean-reader__toolbar-theme" title="{t(i18n, 'reader.themeToggle')} (Alt+P)" aria-label={t(i18n, "reader.themeToggle")} onclick={cycleTheme}>
-                <span class={`glean-reader__theme-dot glean-reader__theme-dot--${readerAppearance.theme}`} aria-hidden="true"></span>
-                <span>{themeLabel(readerAppearance.theme)}</span>
-            </button>
-            <div class="glean-reader__palette-picker">
+
                 <button
                     type="button"
-                    class="glean-btn glean-btn--ghost glean-reader__toolbar-palette"
-                    title={t(i18n, "settings.themePalette")}
-                    aria-label={t(i18n, "settings.themePalette")}
-                    aria-expanded={paletteMenuOpen}
-                    aria-haspopup="menu"
-                    onclick={() => { paletteMenuOpen = !paletteMenuOpen; }}
+                    class="glean-icon-btn glean-reader__toolbar-fold"
+                    class:glean-icon-btn--active={companionTab === "fold"}
+                    title="{t(i18n, 'foldReader.navTitle')} (Alt+Z)"
+                    aria-label={t(i18n, "foldReader.navTitle")}
+                    onclick={toggleFoldReader}
                 >
-                    <span class="glean-palette-preview-dot"></span>
+                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg>
                 </button>
-                {#if paletteMenuOpen}
-                    <div class="glean-reader__palette-dropdown" role="menu">
-                        {#each THEME_PALETTES as p}
-                            <button
-                                type="button"
-                                role="menuitemradio"
-                                aria-checked={currentThemePalette === p.id}
-                                class="glean-reader__palette-opt"
-                                class:glean-reader__palette-opt--active={currentThemePalette === p.id}
-                                title={t(i18n, p.nameKey)}
-                                onclick={() => void selectPalette(p.id)}
-                            >
-                                <span class="glean-palette-dot-mini" style="background: {p.brand};"></span>
-                                <span>{t(i18n, p.nameKey)}</span>
+
+                <div class="glean-reader__appearance-wrap" style="position: relative;">
+                    <button
+                        type="button"
+                        class="glean-btn glean-btn--ghost glean-reader__toolbar-appearance"
+                        class:glean-btn--active={appearanceOpen}
+                        aria-expanded={appearanceOpen}
+                        aria-controls={appearancePanelId}
+                        title={t(i18n, "reader.appearanceTitle")}
+                        aria-label={t(i18n, "reader.appearanceTitle")}
+                        onclick={toggleAppearance}
+                    >
+                        <span style="font-weight: 700; font-size: 13px; font-family: serif;">Aa</span>
+                    </button>
+                    <details
+                        id={appearancePanelId}
+                        class="glean-reader__appearance-popover"
+                        aria-labelledby={appearanceTitleId}
+                        bind:open={appearanceOpen}
+                    >
+                        <summary id={appearanceTitleId} style="display: none;">{t(i18n, "reader.appearanceTitle")}</summary>
+                        <div class="glean-reader__appearance-row">
+                            <span>{t(i18n, "reader.appearanceFontSize")}</span>
+                            <select class="b3-select" disabled={appearanceBusy} value={readerAppearance.fontSize} onchange={(event) => void updateAppearance("fontSize", (event.currentTarget as HTMLSelectElement).value)}>
+                                <option value="small">{t(i18n, "reader.appearanceSmall")}</option>
+                                <option value="normal">{t(i18n, "reader.appearanceNormal")}</option>
+                                <option value="large">{t(i18n, "reader.appearanceLarge")}</option>
+                            </select>
+                        </div>
+                        <div class="glean-reader__appearance-row">
+                            <span>{t(i18n, "reader.appearanceLineHeight")}</span>
+                            <select class="b3-select" disabled={appearanceBusy} value={readerAppearance.lineHeight} onchange={(event) => void updateAppearance("lineHeight", (event.currentTarget as HTMLSelectElement).value)}>
+                                <option value="compact">{t(i18n, "reader.appearanceCompact")}</option>
+                                <option value="normal">{t(i18n, "reader.appearanceNormal")}</option>
+                                <option value="relaxed">{t(i18n, "reader.appearanceRelaxed")}</option>
+                            </select>
+                        </div>
+                        <div class="glean-reader__appearance-row">
+                            <span>{t(i18n, "reader.appearanceWidth")}</span>
+                            <select class="b3-select" disabled={appearanceBusy} value={readerAppearance.width} onchange={(event) => void updateAppearance("width", (event.currentTarget as HTMLSelectElement).value)}>
+                                <option value="narrow">{t(i18n, "reader.appearanceNarrow")}</option>
+                                <option value="normal">{t(i18n, "reader.appearanceNormal")}</option>
+                                <option value="wide">{t(i18n, "reader.appearanceWide")}</option>
+                            </select>
+                        </div>
+                        <div class="glean-reader__appearance-row">
+                            <span>{t(i18n, "reader.appearanceTheme")}</span>
+                            <button type="button" class="glean-btn glean-btn--ghost glean-reader__toolbar-theme" title="{t(i18n, 'reader.themeToggle')} (Alt+P)" onclick={cycleTheme}>
+                                <span class={`glean-reader__theme-dot glean-reader__theme-dot--${readerAppearance.theme}`} aria-hidden="true"></span>
+                                <span>{themeLabel(readerAppearance.theme)}</span>
                             </button>
-                        {/each}
-                    </div>
+                        </div>
+                        <div class="glean-reader__appearance-row" style="flex-direction: column; align-items: flex-start; gap: 4px;">
+                            <span>{t(i18n, "settings.themePalette")}</span>
+                            <div class="glean-reader__palette-picker" style="display: flex; gap: 6px; flex-wrap: wrap;">
+                                {#each THEME_PALETTES as p}
+                                    <button
+                                        type="button"
+                                        role="menuitemradio"
+                                        aria-checked={currentThemePalette === p.id}
+                                        class="glean-reader__palette-opt"
+                                        class:glean-reader__palette-opt--active={currentThemePalette === p.id}
+                                        style="width: 20px; height: 20px; border-radius: 50%; padding: 0; min-width: 0; background: {p.brand}; border: {currentThemePalette === p.id ? '2px solid var(--b3-theme-primary)' : '1px solid var(--glean-border-soft)'}; cursor: pointer;"
+                                        title={t(i18n, p.nameKey)}
+                                        onclick={() => void selectPalette(p.id)}
+                                    ></button>
+                                {/each}
+                            </div>
+                        </div>
+                    </details>
+                </div>
+
+                <button
+                    type="button"
+                    class="glean-icon-btn glean-reader__toolbar-zen"
+                    class:glean-icon-btn--active={zenMode}
+                    title="{t(i18n, zenMode ? 'reader.zenExit' : 'reader.zenEnter')} (F11)"
+                    aria-label={t(i18n, zenMode ? 'reader.zenExit' : 'reader.zenEnter')}
+                    onclick={toggleZenMode}
+                >
+                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg>
+                </button>
+
+                <button
+                    type="button"
+                    class="glean-icon-btn glean-reader__toolbar-sidebar"
+                    class:glean-icon-btn--active={!sidebarCollapsed && !zenMode}
+                    aria-busy={sidebarBusy}
+                    disabled={sidebarBusy}
+                    aria-expanded={!sidebarCollapsed && !zenMode}
+                    aria-controls={sidebarId}
+                    title={t(i18n, sidebarCollapsed || zenMode ? "reader.sidebarShow" : "reader.sidebarHide")}
+                    aria-label={t(i18n, sidebarCollapsed || zenMode ? "reader.sidebarShow" : "reader.sidebarHide")}
+                    onclick={toggleCompanion}
+                >
+                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg>
+                </button>
+
+                {#if context}
+                    <button
+                        type="button"
+                        class="glean-icon-btn glean-reader__toolbar-fav"
+                        class:glean-reader__toolbar-fav--active={context.favorite}
+                        title={context.favorite ? t(i18n, "roaming.favoriteRemoved") : t(i18n, "roaming.favoriteAction") + " (Alt+F)"}
+                        aria-label={t(i18n, "roaming.favoriteAction")}
+                        onclick={() => void toggleFavorite()}
+                    >
+                        <svg class="glean-icon glean-icon--xs" class:glean-icon--fav={context.favorite} aria-hidden="true"><use href={context.favorite ? "#iconGleanHeart" : "#iconGleanHeartOutline"} /></svg>
+                    </button>
                 {/if}
-            </div>
-            {#if immersive}
-                <button type="button" class="glean-btn glean-btn--ghost glean-reader__toolbar-native" title={t(i18n, "reader.openNative")} onclick={openNativeTab}>{t(i18n, "reader.openNative")}</button>
-                <button type="button" class="glean-btn glean-btn--pri glean-reader__toolbar-exit" onclick={exitImmersive}>{t(i18n, "reader.immersiveExit")}</button>
-            {:else}
-                <button type="button" class="glean-btn glean-btn--ghost glean-reader__toolbar-native" title={t(i18n, "reader.openNative")} onclick={openNativeTab}>{t(i18n, "reader.openNative")}</button>
-                <button type="button" class="glean-btn glean-btn--ghost glean-reader__toolbar-immersive" disabled={mode !== "read" || !docId} title={t(i18n, "reader.immersiveStart")} onclick={enterImmersive}>{t(i18n, "reader.immersiveStart")}</button>
-            {/if}
-            {#if context && hasSourceAction(context.contentType, context.url)}
-                <button class="glean-btn glean-btn--ghost glean-reader__toolbar-source" title={t(i18n, "clip.openSource")} onclick={openSource}>{t(i18n, "clip.openSource")}</button>
-            {/if}
-            {#if context}
-                <button
-                    class="glean-btn glean-btn--pri glean-reader__toolbar-primary"
-                    aria-busy={statusBusy}
-                    disabled={statusBusy}
-                    title={t(i18n, "reader.doneNextHint")}
-                    onclick={() => void doneAndNext()}
-                >✓→ {t(i18n, "reader.doneNext")}</button>
-                <button
-                    type="button"
-                    class="glean-btn glean-btn--ghost glean-reader__toolbar-roam"
-                    title={t(i18n, "roaming.nextArticleHint")}
-                    onclick={() => void roamNext()}
-                ><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanRefresh" /></svg> <span>{t(i18n, "roaming.nextArticle")}</span></button>
-                <button
-                    type="button"
-                    class="glean-btn glean-btn--ghost glean-reader__toolbar-fav"
-                    class:glean-reader__toolbar-fav--active={context.favorite}
-                    title={context.favorite ? t(i18n, "roaming.favoriteRemoved") : t(i18n, "roaming.favoriteAction") + " (Alt+F)"}
-                    onclick={() => void toggleFavorite()}
-                ><svg class="glean-icon glean-icon--xs" class:glean-icon--fav={context.favorite} aria-hidden="true"><use href={context.favorite ? "#iconGleanHeart" : "#iconGleanHeartOutline"} /></svg> <span>{t(i18n, "roaming.favoriteAction")}</span></button>
-            {/if}
-            <div class="glean-reader__toolbar-secondary" role="group" aria-label={t(i18n, "reader.shortcuts")}>
-                <button class="glean-btn glean-btn--ghost glean-reader__toolbar-utility glean-reader__toolbar-focus" disabled={mode !== "read"} title={t(i18n, "reader.keyboardFocus")} onclick={() => readerRoot?.focus({ preventScroll: true })}>{t(i18n, "reader.keyboardFocus")}</button>
-                <button class="glean-btn glean-btn--ghost glean-reader__toolbar-utility glean-reader__toolbar-shortcut" aria-expanded={shortcutHelp} aria-controls={shortcutsId} onclick={() => shortcutHelp = !shortcutHelp}>{t(i18n, "reader.shortcuts")}</button>
+
+                <ActionPopover label={t(i18n, "reader.moreActions")} compact>
+                    {#if context && hasSourceAction(context.contentType, context.url)}
+                        <button type="button" class="glean-btn glean-btn--ghost glean-reader__toolbar-source" onclick={openSource}>
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanExternal" /></svg>
+                            <span>{t(i18n, "clip.openSource")}</span>
+                        </button>
+                    {/if}
+                    <button type="button" class="glean-btn glean-btn--ghost glean-reader__toolbar-native" onclick={openNativeTab}>
+                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanLocal" /></svg>
+                        <span>{t(i18n, "reader.openNative")}</span>
+                    </button>
+                    {#if isWechatArticle}
+                        <button type="button" class="glean-btn glean-btn--ghost" onclick={openWeread}>
+                            <span>{t(i18n, "reader.openWeread")}</span>
+                        </button>
+                    {/if}
+                    <button type="button" class="glean-btn glean-btn--ghost glean-reader__toolbar-roam" onclick={() => void roamNext()}>
+                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanRefresh" /></svg>
+                        <span>{t(i18n, "roaming.nextArticle")}</span>
+                    </button>
+                    {#if docHighlights.length > 0 && !facade.isMobile}
+                        <button type="button" class="glean-btn glean-btn--ghost glean-reader__toolbar-margin-notes" onclick={() => { marginNotesOpen = !marginNotesOpen; }}>
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg>
+                            <span>{t(i18n, "reader.marginNotesToggle")}</span>
+                        </button>
+                    {/if}
+                    <button type="button" class="glean-btn glean-btn--ghost glean-reader__toolbar-focus" disabled={mode !== "read"} onclick={() => readerRoot?.focus({ preventScroll: true })}>
+                        <span>{t(i18n, "reader.keyboardFocus")}</span>
+                    </button>
+                    <button type="button" class="glean-btn glean-btn--ghost glean-reader__toolbar-shortcut" aria-expanded={shortcutHelp} aria-controls={shortcutsId} onclick={() => shortcutHelp = !shortcutHelp}>
+                        <span>{t(i18n, "reader.shortcuts")}</span>
+                    </button>
+                    {#if !immersive}
+                        <button type="button" class="glean-btn glean-btn--ghost glean-reader__toolbar-immersive" disabled={mode !== "read" || !docId} onclick={enterImmersive}>
+                            <span>{t(i18n, "reader.immersiveStart")}</span>
+                        </button>
+                    {:else}
+                        <button type="button" class="glean-btn glean-btn--ghost glean-reader__toolbar-exit" onclick={exitImmersive}>
+                            <span>{t(i18n, "reader.immersiveExit")}</span>
+                        </button>
+                    {/if}
+                </ActionPopover>
+
+                {#if context}
+                    <button
+                        class="glean-btn glean-btn--pri glean-reader__toolbar-primary"
+                        aria-busy={statusBusy}
+                        disabled={statusBusy}
+                        title={t(i18n, "reader.doneNextHint")}
+                        onclick={() => void doneAndNext()}
+                    >✓→ {t(i18n, "reader.doneNext")}</button>
+                {/if}
             </div>
         </div>
         {#if shortcutHelp}
@@ -2545,45 +2849,53 @@ import { aiFailureKey } from "../libs/ai-feedback";
             <div class="glean-reader__side-nav" role="tablist" aria-label={t(i18n, "reader.companionTitle")}>
                 <button
                     type="button"
-                    class="glean-reader__side-nav-btn"
-                    class:glean-reader__side-nav-btn--active={companionTab === "all"}
-                    onclick={() => companionTab = "all"}
-                >{t(i18n, "reader.companionNavAll")}</button>
-                {#if outline.length > 0}
-                    <button
-                        type="button"
-                        class="glean-reader__side-nav-btn"
-                        class:glean-reader__side-nav-btn--active={companionTab === "outline"}
-                        onclick={() => companionTab = "outline"}
-                    >{t(i18n, "reader.companionNavOutline")} ({outline.length})</button>
-                {/if}
-                {#if docHighlights.length > 0}
-                    <button
-                        type="button"
-                        class="glean-reader__side-nav-btn"
-                        class:glean-reader__side-nav-btn--active={companionTab === "notes"}
-                        onclick={() => companionTab = "notes"}
-                    >{t(i18n, "reader.companionNavNotes")} ({docHighlights.length})</button>
-                {/if}
+                    class="glean-reader__side-nav-btn glean-reader__side-nav-btn--outline"
+                    class:glean-reader__side-nav-btn--active={companionTab === "outline"}
+                    onclick={() => { companionTab = "outline"; outlineOpen = true; }}
+                >
+                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg>
+                    <span>{t(i18n, "reader.companionNavOutline")}{#if outline.length > 0} ({outline.length}){/if}</span>
+                </button>
                 <button
                     type="button"
-                    class="glean-reader__side-nav-btn"
+                    class="glean-reader__side-nav-btn glean-reader__side-nav-btn--notes"
+                    class:glean-reader__side-nav-btn--active={companionTab === "notes"}
+                    onclick={() => { companionTab = "notes"; highlightsOpen = true; }}
+                >
+                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanEdit" /></svg>
+                    <span>{t(i18n, "reader.companionNavNotes")}{#if docHighlights.length > 0} ({docHighlights.length}){/if}</span>
+                </button>
+                <button
+                    type="button"
+                    class="glean-reader__side-nav-btn glean-reader__side-nav-btn--fold"
                     class:glean-reader__side-nav-btn--active={companionTab === "fold"}
-                    onclick={() => {
-                        companionTab = "fold";
-                        if (foldNodes.length === 0) void refreshFoldNodes();
-                    }}
-                >{t(i18n, "foldReader.navTitle")}</button>
+                    onclick={() => { companionTab = "fold"; if (foldNodes.length === 0) void refreshFoldNodes(); }}
+                >
+                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg>
+                    <span>{t(i18n, "foldReader.navTitle")}</span>
+                </button>
                 {#if aiOn}
                     <button
                         type="button"
-                        class="glean-reader__side-nav-btn"
+                        class="glean-reader__side-nav-btn glean-reader__side-nav-btn--ai"
                         class:glean-reader__side-nav-btn--active={companionTab === "ai"}
                         onclick={() => companionTab = "ai"}
-                    >{t(i18n, "reader.companionNavAi")}</button>
+                    >
+                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg>
+                        <span>{t(i18n, "reader.companionNavAi")}</span>
+                    </button>
                 {/if}
+                <button
+                    type="button"
+                    class="glean-reader__side-nav-btn glean-reader__side-nav-btn--tools"
+                    class:glean-reader__side-nav-btn--active={companionTab === "tools"}
+                    onclick={() => { companionTab = "tools"; moreToolsOpen = true; }}
+                >
+                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanGear" /></svg>
+                    <span>{t(i18n, "reader.companionNavTools")}</span>
+                </button>
             </div>
-            {#if isWechatArticle}
+            {#if isWechatArticle && (companionTab === "tools" || companionTab === "all")}
                 <div class="glean-wechat-publisher" role="region" aria-label={t(i18n, "wechat.badge")}>
                     <div class="glean-wechat-publisher__head">
                         {#if wechatAvatar}
@@ -2694,7 +3006,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
                         </div>
                     {/if}
                 </div>
-            {:else}
+            {:else if !isWechatArticle && (companionTab === "tools" || companionTab === "all")}
                 <div class="glean-reader__meta">
                     <span class={`glean-carrier-badge glean-carrier-badge--${resolveCarrier(context?.contentType)}`}>
                         {carrierLabel(context?.contentType)}
@@ -2703,7 +3015,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
                     {#if context?.author}<span>{context.author}</span>{/if}
                 </div>
             {/if}
-            {#if context && !contextLoading}
+            {#if (companionTab === "outline" || companionTab === "all") && context && !contextLoading}
                 <div class="glean-reader__metric-capsule" role="region" aria-label={t(i18n, "panel.rankTitle")}>
                     <div class="glean-reader__metric-item">
                         <span class="glean-reader__metric-val">{context.words ? context.words.toLocaleString() : "--"}</span>
@@ -2762,7 +3074,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
             {#if displayedReadMinutes > 0}
                 <div class="glean-reader__hint glean-reader__reading-time" aria-live="polite">{t(i18n, "reader.readMinutes", { n: displayedReadMinutes })}</div>
             {/if}
-            {#if context}
+            {#if (companionTab === "tools" || companionTab === "all") && context}
                 <div class="glean-reader__status-actions">
                     <ClipStatusActions
                         {i18n}
@@ -2794,6 +3106,29 @@ import { aiFailureKey } from "../libs/ai-feedback";
                         <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg>
                         <span>{recordingDailyNote ? t(i18n, "dailyNote.recording") : t(i18n, "dailyNote.recordAction")}</span>
                     </button>
+                    {#if hasContactsInstalled && context?.author}
+                        {#if authorPerson}
+                            <button
+                                type="button"
+                                class="glean-reader__sync-pill"
+                                title={t(i18n, "author.factLoggedHint")}
+                                onclick={() => void logAuthorFact()}
+                            >
+                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanEdit" /></svg>
+                                <span>{t(i18n, "author.recordFact")}</span>
+                            </button>
+                        {:else}
+                            <button
+                                type="button"
+                                class="glean-reader__sync-pill"
+                                title={t(i18n, "author.enrollHint")}
+                                onclick={() => void enrollAuthorToContacts()}
+                            >
+                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanUser" /></svg>
+                                <span>{t(i18n, "author.enrollToContacts")}</span>
+                            </button>
+                        {/if}
+                    {/if}
                 </div>
                 {#if context.id === docId}
                     <ReadingPositionControls
@@ -2844,7 +3179,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
             {/if}
 
             {#if (companionTab === "all" || companionTab === "outline") && (outline.length > 0 || outlineLoading)}
-                <details id={outlineTitleId} class="glean-reader__section glean-reader__section--card glean-reader__fold" aria-labelledby={outlineTitleId} open>
+                <details id={outlineTitleId} class="glean-reader__section glean-reader__section--card glean-reader__fold" aria-labelledby={outlineTitleId} bind:open={outlineOpen} ontoggle={onOutlineToggle}>
                     <summary id={outlineTitleId} class="glean-reader__section-title">
                         <span><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg> {t(i18n, "reader.outlineTitle")} ({outline.length})</span>
                         {#if outline.length > 0}
@@ -2951,7 +3286,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
             {/if}
 
             {#if companionTab === "all" || companionTab === "notes"}
-                <details id={highlightsTitleId} class="glean-reader__section glean-reader__section--card glean-reader__fold" aria-labelledby={highlightsTitleId} bind:open={highlightsOpen}>
+                <details id={highlightsTitleId} class="glean-reader__section glean-reader__section--card glean-reader__fold" aria-labelledby={highlightsTitleId} bind:open={highlightsOpen} ontoggle={onHighlightsToggle}>
                     <summary id={highlightsTitleId} class="glean-reader__section-title">
                         <span><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg> {t(i18n, "reader.highlightsTitle")} ({docHighlights.length})</span>
                         {#if docHighlights.length > 0}
@@ -3051,9 +3386,20 @@ import { aiFailureKey } from "../libs/ai-feedback";
                                         <button class="glean-op-btn" type="button" title={t(i18n, "quoteCard.action")} aria-label={t(i18n, "quoteCard.action")} onclick={(e) => { e.stopPropagation(); quoteCardFromHighlight(hl); }}>
                                             <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg>
                                         </button>
-                                        <button class="glean-op-btn" type="button" class:glean-ghost-btn={!hasCardsInstalled} title={hasCardsInstalled ? t(i18n, "flashcard.make") : t(i18n, "reader.cardGhostHint")} aria-label={t(i18n, "flashcard.make")} onclick={(e) => { e.stopPropagation(); void cardFromHighlight(hl); }}>
-                                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg>
-                                        </button>
+                                        {#if hasCardsInstalled}
+                                            <button class="glean-op-btn glean-reader__push-cards-btn" type="button" title={t(i18n, "quoteCard.pushToCards")} aria-label={t(i18n, "quoteCard.pushToCards")} onclick={(e) => { e.stopPropagation(); void pushHighlightToCards(hl); }}>
+                                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg>
+                                            </button>
+                                        {:else}
+                                            <button class="glean-op-btn glean-ghost-btn" type="button" title={t(i18n, "reader.cardGhostHint")} aria-label={t(i18n, "flashcard.make")} onclick={(e) => { e.stopPropagation(); void cardFromHighlight(hl); }}>
+                                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg>
+                                            </button>
+                                        {/if}
+                                        {#if hasCommonInstalled}
+                                            <button class="glean-op-btn glean-reader__push-common-btn" type="button" title={t(i18n, "quoteCard.saveToCommon")} aria-label={t(i18n, "quoteCard.saveToCommon")} onclick={(e) => { e.stopPropagation(); void saveHighlightToCommon(hl); }}>
+                                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanBookmark" /></svg>
+                                            </button>
+                                        {/if}
                                         <button class="glean-op-btn" type="button" class:glean-ghost-btn={!hasExamInstalled} title={hasExamInstalled ? t(i18n, "reader.examMake") : t(i18n, "reader.examGhostHint")} aria-label={t(i18n, "reader.examMake")} onclick={(e) => { e.stopPropagation(); void examFromHighlight(hl); }}>
                                             <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanEdit" /></svg>
                                         </button>
@@ -3066,7 +3412,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
                 </details>
             {/if}
 
-            {#if companionTab === "all"}
+            {#if companionTab === "all" || companionTab === "tools"}
                 <details id={moreToolsId} class="glean-reader__section glean-reader__section--utility glean-reader__more-tools glean-reader__fold" aria-labelledby={moreToolsTitleId} bind:open={moreToolsOpen}>
                     <summary id={moreToolsTitleId} class="glean-reader__section-title">{t(i18n, "reader.moreTools")}</summary>
                     <div class="glean-reader__more-tools-body">

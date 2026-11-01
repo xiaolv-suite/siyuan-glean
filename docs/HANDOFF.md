@@ -1,28 +1,79 @@
 # HANDOFF — 续跑交接（每轮开发结束更新本页）
 
-## 当前有效交接（2026-11-01 v1.4.3 本地封版、批注生态全兼容与侧边栏极致精简收官）
+## 当前有效交接（2026-11-01 结构性待办池 BL-25~BL-45 全量实现与门禁全绿收官）
 
-- **本地封版至 `v1.4.3`（仅本地闭环，GitHub 绝不动、不上传、不推 tag）**：
-  - **包体积与产物**：`dist/` 完整打包，`package.zip` 674.8KB，构建 mtime 真实反映当前构建时间，`pnpm check:release` 14/14 门禁全绿通过。
-  - **D盘独立实机靶场**：`D:\SiYuan-Glean-Stage` 已热同步最新的 v1.4.3 产物，随时可通过浏览器访问 [http://127.0.0.1:46919/stage/build/desktop/](http://127.0.0.1:46919/stage/build/desktop/) 审查。
+- **质量基准与本地发版状态**：
+  - **全量门禁全绿**：全仓单测 **1,790 / 1,790 PASS**（100% 通过），`pnpm check` **0 错误 0 警告**，`pnpm check:release` **14 / 14 PASS**。
+  - **包体积与产物**：`dist/` 完整打包，`package.zip` 687.4KB，构建 mtime 真实反映构建时间。
+  - **D盘实机靶场**：最新构建产物已完整热同步至 `D:\SiYuan-Glean-Stage\data\plugins\siyuan-glean`，随时可通过 [http://127.0.0.1:46919/stage/build/desktop/](http://127.0.0.1:46919/stage/build/desktop/) 审查。
 
-- **核心功能与 UI 深度优化成果**：
-  1. **批注系统多源互通（鲸鱼快速批注 `siyuan-comment` + 思源原生块备注 `memo`）**：
-     - `src/domain/highlights.ts` & `src/api/client.ts` & `src/services/highlights.ts`：SQL 原生扩展采集 `custom-siyuan-comment="true"` 与原生块备注 `memo="..."`；强类型解析 `custom-comment-text`（划线金句）、`custom-comment-source`（正文段落反向指针）、`custom-comment-tag`（批注分类）与 block content（思考批注）。
-     - `src/ui/HighlightView.svelte`：支持平铺与按文章聚类双视图，完整渲染批注分类徽标（📌 置顶、⭐ 重要、📖 阅读、✔️ 待办、❓ 存疑）与来源徽标（💬 鲸鱼批注、📝 块备注）；点击「返回原块」直达正文对应段落。
-  2. **360px 窄屏 Dock 侧边栏卡片极致精简**：
-     - 去除中部的重复优先级（P{n}）与星级（{r}★）徽标；
-     - 彻底删除孤立的旧版操作行 `.glean-card__ops`（消除 31px 冗余堆叠与重复弹窗）；
-     - 确立标准 `.glean-card__foot`：左侧为优先级 + 星级 + 队列状态，右侧为「开始阅读/继续阅读」主按键 + 单个紧凑型 `ActionPopover`（收纳快照、AI富化、今日置顶、打开原文、修改作者、块引用与学术著录复制）。
-     - 卡片真实高度从 380px 巨卡压缩至 ~80px（含外边距仅 122px），彻底解决侧边栏挤压与折行混乱。
-  3. **双语 i18n 严密对齐**：
-     - 补充 `public/i18n/zh_CN.json` 与 `en_US.json` 缺失的 `library.activeFilters` 键（已启用 / Active），确保源码所有文案 100% 覆盖。
-  4. **全套自动化实测门禁全绿**：
-     - `pnpm check` 0 错误 0 警告；
-     - `pnpm test` 单测全通；
-     - `pnpm e2e:isolated` **12/12 步骤全部通过**，真实 Chrome CDP 自动化生成 13 张完整高精度交互态截图（存于 `output/e2e-browser-live/`）。
+- **核心优化成果与缺陷就地修复**：
+  1. **结构性待办池全部 21 项（BL-25 ~ BL-45）全量高标准落地闭环**：
+     - **批次 1 (全局与快捷流)**：
+       - `BL-25`：`DockPanel` 挂载 `dropzone` 放置区，拖入文档自动识别块 ID 入库，选中文本直接弹出闪卡制作；
+       - `BL-26`：`cmd.roamingPick` 注册全局命令面板指令，随时随地快捷开漫游盲盒；
+       - `BL-27`：思源顶栏麦穗图标右键扩展快捷上下文菜单，直达今日拾遗/读库/摘录墙/统计/盲盒/设置；
+       - `BL-45`：新手引导就绪页一键收录当前打开的活动文档并立即开启精读。
+     - **批次 2 (工作台检索与导轨交互)**：
+       - `BL-28`：`tokenizeKeyword` 支持空格多关键词 Token 拆分与多字段逻辑与 AND 全文检索；
+       - `BL-29`：导轨作者/站点/标签分面项右键菜单，支持快捷筛选、设置别名、全标已读与浏览器打开站点。
+     - **批次 3 (全键盘与批量操作)**：
+       - `BL-30`：`moveKanbanCursor2D` 与 `moveKanbanCursorVertical` 二维平滑游走，方向键与 h/j/k 全键盘流转；
+       - `BL-31`：`computeBatchDiff` 实时预估标签与作者修改的变更数与跳过数，安全感大幅提升。
+     - **批次 4 (阅读器专注与朗读)**：
+       - `BL-32`：`zenMode` / `F11` 禅意专注阅读模式，自动隐退伴生栏并居中排版，Escape 极简退出；
+       - `BL-33`：`highlightTtsChunk` 结合 Protyle 实时黄色呼吸脉冲与视线平滑跟踪。
+     - **批次 5 (伴生栏与折叠大纲)**：
+       - `BL-34`：`pillMode` 悬浮圆点胶囊模式，收折为微型悬浮麦穗，hover 平滑滑出，免正文打扰；
+       - `BL-35`：`formatFoldNodesToMarkdown` 一键将当前阶数大纲摘要复制为 Markdown 结构化笔记草稿与块引用。
+     - **批次 6 (今日拾遗与漫游加权)**：
+       - `BL-36`：`highRatingPriority` 选项为 4 星、5 星及星标收藏提供大幅重温加权加分；
+       - `BL-37`：`recordBatchDailyNotePlan` 一键将今日 3 篇必读卡作为块引用清单插入今日日记阅读计划。
+     - **批次 7 (批注金句与卡片盒)**：
+       - `BL-38`：`signature` 个人笔名印章支持，在 Canvas 底层绘制朱砂红印泥印章与 DOM 实时印章徽标；
+       - `BL-39`：`exportColorCardsZettelkasten` 按划线颜色自动分流聚类导出卡片盒原子笔记 Markdown。
+     - **批次 8 (长文切片与排版清洗)**：
+       - `BL-40`：`headingLevel` 自定义按 H1/H2/H3 精确独立分切长文大纲子文档；
+       - `BL-41`：`stripPromotionalLinks` 正则剥离商业营销与购买推广外链，纯化知识库资产。
+     - **批次 9 (迁移与自动备份)**：
+       - `BL-42`：`OmnivorePage` 解析 `highlights` 数组并直接在新建导入文档中生成金句与高亮摘录引述块；
+       - `BL-43`：`runDailyAutoBackup` 每日启动自动本地轮转备份元数据 JSON，保留最近 7 份历史快照。
+     - **批次 10 (设置与配置包)**：
+       - `BL-44`：`exportPortableSettings` 与 `importPortableSettings` 提供全量便携配置包 JSON 导出与恢复。
+  2. **第一轮全量走查 100% 覆盖（Batch-01 ~ Batch-10，共 175 项交互元素）**：
+     - 建立了详尽的资产审计体系：`docs/AUDIT-INVENTORY.md`（175项全量资产盘点）、`docs/AUDIT-COVERAGE.md`（覆盖率看板与 10 模块批次追踪）、`docs/AUDIT-BACKLOG.md`（缺陷与待办管理）、`docs/FEATURE-CANDIDATES.md`（FC-001~021 候选池）。
+     - 累计就地修复闭环 21 项（`FIX-01` ~ `FIX-21`），全面消除高频并发写、状态错位、无障碍属性遗漏、IME 中文输入法冒泡和硬编码字符串。
+  3. **结构性 Backlog BL-21 ~ BL-24 全部清零闭环**：
+     - **BL-21**：超宽屏导轨调宽与拖拽手柄；
+     - **BL-22**：看板单列轻量虚拟化与独立分页；
+     - **BL-23**：阅读器边距大纲矮屏手风琴自适应；
+     - **BL-24**：原生伴生栏移动端软键盘动态避让。
+  4. **顶栏与伴生栏全新架构重构与视觉精修（作者真机走查落地）**：
+     - **顶栏架构重构（三区平衡）**：左侧归集返回读库与文档标题元数据，中间居中伴读/原生编辑双态分段器，右侧收纳搜索、Aa 外观排版面板（字号/宽度/行间距/底色/6 色高品质色盘统一收纳）、5 阶语义折叠（`glean-reader__toolbar-fold` 提升至核心区）、禅意模式、伴生栏开关、收藏红心、更多操作（⋯ 下拉）与读完主按钮；彻底告别 17 个按钮混叠折行的视觉灾难；
+     - **伴生栏架构重构（分流分治）**：顶部清晰分为「大纲（`outline`）」「批注（`notes`）」「折叠阅读（`fold`）」「AI 伴读（`ai`）」「档案与工具（`tools`）」5 大专一选项卡，大纲视图彻底移除常驻公众号大卡片的垂直挤压，档案与工具集中收纳状态、评分、书签与著录导出；
+     - **全插件图标与思源本体 100% 像素级对齐**：全量 SVG 图标符号迁移为思源 `litheness/icon.js` 原生 24×24 线标（线宽 1.7px、圆角端点）；
+     - **读库空间利用率优化**：合并队列栏与快捷键折叠条为同行（`.glean-queues-row`），收窄头部 padding 与边距，垂直高度省出超 160px；
+     - **细节精修**：下拉框字体强制归一为 11.5px 消除大号字体，侧栏搜索框重置 WebKit 取消按钮并设定固定行高实现绝对垂直居中；
+     - **`pnpm e2e:isolated` 全覆盖自动化交互断言通过**：扩充 Step 10 & 11，覆盖顶栏（返回、模式切换、搜索输入与大小写切换、Aa 排版选择与色盘注入、禅模式进退、收藏切换、伴生侧边栏折叠/展开、折叠阅读一键唤起）及伴生栏 5 大 Tab 切换（大纲/批注/折叠/工具/AI），12/12 主链测试全绿，13 张真实 Chrome CDP 交互截图完整落盘于 `output/e2e-browser-live/`。
+  5. **小驴全生态跨插件深度联邦联动落地（D-0248）与深度 E2E 验证**：
+     - **小驴闪卡（`siyuan-lv-cards`）**：打通针对拾遗专门定制的 `receiveExtract` 接口，阅读器划词与批注管理一键推入小驴闪卡渐进学习轮转箱（自动建立双向反链血缘且物理隔离 FSRS 遗忘曲线）；今日拾遗操作栏实时透出小驴闪卡今日待复习量胶囊，点击一键直达复习；
+     - **小驴人脉（`siyuan-contacts`）**：基于 `LvContacts` 协议 v2 深度互通，自动识别文章作者在人脉库的存在性；顶栏/编辑面板展示人脉徽标并直达联系人主文档；未收录作者支持一键沉淀建档（`ensurePerson`）；伴生栏工具区支持向作者档案追加精读事实（`appendFact`）；
+     - **小驴常用（`xiaolv-common`）**：通过 `captureQuote` 接口，在金句卡片（QuoteCardDialog）与批注卡片中提供「存入小驴常用」动作，将金句、作者、来源与反链一键存为全局常用文本片段；
+     - **小驴打卡（`siyuan-checkin`）**：`recordReadingDone` 升级支持上报真实阅读分钟数（`readMinutes`），精准赋能时长型打卡项追踪；
+     - **架构缺陷排查与修复（ActionPopover 根事件冒泡阻断）**：
+       - 排查出 `ActionPopover.svelte` 中 `element.addEventListener("click", stopClick)` 调用 `event.stopPropagation()`，导致 Svelte 5 基于 `document` 的委托事件被底层拦截、弹窗内全部按钮 `onclick` 静默失效的问题；
+       - 就地清除阻断调用，所有菜单项与动作按钮的 Svelte 5 `onclick` 恢复正常执行，同时保证弹窗自动收起；
+     - **伴生栏自动展开与读完打卡对齐**：
+       - `ReaderTab.svelte`：切换至大纲、批注、工具 Tab 时自动展开内部对应 `<details>` 区域（`highlightsOpen` / `outlineOpen` / `moreToolsOpen` 为 `true`），消除空切折叠态；
+       - `ReaderTab.svelte`：行内标记已读与「✓→ 完成并下一篇」主动作对齐传入当前阅读时长（`displayedReadMinutes || estReadingMinutes || 1`）；
+       - 批注卡片操作按钮补齐专属类名 `glean-reader__push-cards-btn` 与 `glean-reader__push-common-btn`；
+     - **隔离 E2E 深度自动化全覆盖（`pnpm e2e:isolated`）**：
+       - 注入全套兄弟插件 Mock 桩（`window.xiaolvCards`、`window.LvContacts`、`window.xiaolvCommon`、`window.siyuanCheckin`）；
+       - 走查全量跨插件联动：今日拾遗闪卡待复习胶囊与 `openReview` 唤起、全库摘录墙单卡 ActionPopover 推入闪卡/常用、阅读器顶栏作者人脉识别与直达、阅读器伴生栏批注 Tab 闪卡/常用推送与金句卡片弹窗、工具 Tab 作者人脉档案、顶栏「✓→ 完成并下一篇」打卡上报；
+       - 全仓单测 **1,794 / 1,794 PASS**，`pnpm check` 0 错误 0 警告，`pnpm e2e:isolated` **12/12 PASS**（13 张交互态截图输出至 `output/e2e-browser-live/`），`pnpm run check:release` **14/14 PASS**。
 
-- **当前开发总原则（`v1.4.2` 已封版收官，转入低频维护）**：
+- **后续规划与建议**：
+  - 存量池 `BL-18` ~ `BL-24` 与新入池待办 `BL-25` ~ `BL-45` 已全部（100%）高质量闭环交付！待办池已全部清零。后续可结合实机使用反馈或按当前执行板任务（如 T-3367）继续推进。保持当前工程纪律，本地完全闭环。
   1. **10 步主链已落地一键隔离自测脚本（`pnpm e2e:isolated` / `node scripts/e2e-isolated.mjs --keep`）**：
      - 自动创建独立临时工作区、部署 `dist/`、拉起思源 3.8.9 内核并完整跑通 `docs/BLOCKERS.md` 顶部的 10 步核心主链 + Chrome CDP `1280×800` 全交互实测（**12/12 全通**，6 张真实交互截图存于 `output/e2e-browser-live/`）；
      - 隔离实跑抓出并修复了 `src/services/index-store.ts` 的 `applyAttrsToIndex` 未将 `attrs.readingPosition` 投影至 `index.clips` 导致「继续阅读」卡片 `hasBookmark` 恒为 `false` 的真实主链缺陷，以及设置弹窗「恢复默认」按钮卸载后焦点退回 `document.body` 时的 `Escape` 捕获分发边界。

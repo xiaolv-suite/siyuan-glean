@@ -134,3 +134,15 @@ test("pickRoamingArticle 支持 favoriteOnly 仅漫游星标好文（T-3514）",
     const pickNone = pickRoamingArticle([{ id: "doc-1", title: "普通文章", status: "later" }], { favoriteOnly: true });
     assert.equal(pickNone, null);
 });
+
+test("pickRoamingArticle 支持 highRatingPriority 高星级与评分加权高频重浮（BL-36）", () => {
+    const pool: RoamingCandidate[] = [
+        { id: "doc-low", title: "普通文章", status: "later", priority: 3, rating: 2 },
+        { id: "doc-high", title: "五星精读", status: "later", priority: 3, rating: 5 },
+    ];
+    // 开启高星级优先加权时，评分 5 星的文章获得显著加分并被挑中
+    const pick = pickRoamingArticle(pool, { highRatingPriority: true, random: () => 0 });
+    assert.ok(pick);
+    assert.equal(pick.item.id, "doc-high");
+    assert.equal(pick.reason, "💖 高评分重温");
+});

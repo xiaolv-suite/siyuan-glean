@@ -483,6 +483,41 @@ async function dismissNewbieHint() {
     }
 }
 
+function exportPortableSettings(): void {
+    const draft = buildDraftSettings();
+    const json = JSON.stringify(draft, null, 2);
+    const blob = new Blob([json], { type: "application/json;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `glean-settings-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    showMessage(t(i18n, "settings.configExported"), 2500);
+}
+
+function importPortableSettings(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+        try {
+            const parsed = JSON.parse(String(reader.result));
+            const normalized = normalizeSettings(parsed);
+            loadDraft(normalized);
+            showMessage(t(i18n, "settings.configImported"), 3000);
+        } catch {
+            showMessage(t(i18n, "settings.configImportFailed"), 3000);
+        } finally {
+            input.value = "";
+        }
+    };
+    reader.readAsText(file);
+}
+
 function cancel() {
     if (!canCloseSettings()) return;
     loadDraft(originalSettings);
@@ -1045,6 +1080,21 @@ async function doMountBoard() {
                 <button class="glean-btn glean-btn--pri glean-action-btn" onclick={() => facade.openImport()}>
                     {t(i18n, "import.entryAction")}
                 </button>
+            </div>
+            <div class="glean-set-row glean-settings__import-row">
+                <div class="glean-set-row__lb">
+                    {t(i18n, "settings.portableConfig")}
+                    <div class="glean-set-row__desc">{t(i18n, "settings.portableConfigDesc")}</div>
+                </div>
+                <div class="glean-set-row__actions" style="display: flex; gap: 8px;">
+                    <button type="button" class="glean-btn glean-action-btn" onclick={exportPortableSettings}>
+                        {t(i18n, "settings.exportConfig")}
+                    </button>
+                    <label class="glean-btn glean-btn--ghost glean-action-btn" style="cursor: pointer; margin: 0; display: inline-flex; align-items: center;">
+                        {t(i18n, "settings.importConfig")}
+                        <input type="file" accept=".json,application/json" style="display: none;" onchange={importPortableSettings} />
+                    </label>
+                </div>
             </div>
         </div>
     </div>

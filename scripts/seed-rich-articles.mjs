@@ -236,19 +236,33 @@ FlashAttention 敏锐地洞察到：计算慢的根源在于 SRAM 与 HBM 之间
 
 export async function seedRichArticles({ base, token, notebookId: targetNbId, workspaceDir, verbose = true }) {
     async function api(route, body = {}) {
-        const res = await fetch(`${base}${route}`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Token ${token}`,
-            },
-            body: JSON.stringify(body),
-        });
-        const json = await res.json();
-        if (json.code !== 0) {
-            throw new Error(`${route} 失败: code=${json.code} msg=${json.msg}`);
+        for (let attempt = 0; attempt < 4; attempt += 1) {
+            try {
+                const res = await fetch(`${base}${route}`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Token ${token}`,
+                    },
+                    body: JSON.stringify(body),
+                });
+                const json = await res.json();
+                if (json.code !== 0) {
+                    if (attempt < 3 && String(json.msg || "").includes("Access is denied")) {
+                        await new Promise((r) => setTimeout(r, 200 * (attempt + 1)));
+                        continue;
+                    }
+                    throw new Error(`${route} 失败: code=${json.code} msg=${json.msg}`);
+                }
+                return json.data;
+            } catch (err) {
+                if (attempt < 3 && String(err.message || "").includes("Access is denied")) {
+                    await new Promise((r) => setTimeout(r, 200 * (attempt + 1)));
+                    continue;
+                }
+                throw err;
+            }
         }
-        return json.data;
     }
 
     let notebookId = targetNbId;

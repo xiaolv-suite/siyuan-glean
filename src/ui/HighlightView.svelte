@@ -17,7 +17,7 @@ import { makeQuoteCardPreview } from "./flashcard-dialog";
 import { openQuoteCardDialog } from "./quote-card-dialog";
 import type { GleanSettings } from "../services/settings";
 import { loadUiPrefs } from "../services/prefs";
-import { getBridgeSafely } from "../libs/ecosystem-bridge-kit";
+import { captureQuoteToCommonSafely, getBridgeSafely, sendExtractToCardsSafely } from "../libs/ecosystem-bridge-kit";
 import { displayTagAlias, type TagAlias } from "../domain/ui-prefs";
 import { moveLibraryCursor, resolveLibraryShortcut } from "../domain/library-keyboard";
 import { loadIndex } from "../services/index-store";
@@ -36,6 +36,7 @@ const i18n = $derived(facade.i18n);
 const currentDocId = $derived(facade.currentDocId());
 const hasCardsInstalled = $derived(typeof window !== "undefined" && Boolean(getBridgeSafely("cards")));
 const hasExamInstalled = $derived(typeof window !== "undefined" && Boolean(getBridgeSafely("exam")));
+const hasCommonInstalled = $derived(typeof window !== "undefined" && Boolean(getBridgeSafely("common")));
 let scope = $state<"current" | "library">(untrack(() => facade.currentDocId() ? "current" : "library"));
 let viewMode = $state<"timeline" | "article">("timeline");
 let items = $state<HighlightItem[]>([]);
@@ -293,6 +294,66 @@ async function runExport(action: "copy" | "csv" | "markdown" | "preview") {
     }
 }
 
+async function exportColorCardsZettelkasten(): Promise<void> {
+    if (exportBusy || loading || selected.length === 0) return;
+    exportBusy = true;
+    exportError = "";
+    exportStatus = "";
+
+    const selectedHighlights = items.filter((it) => selected.includes(it.id));
+    if (selectedHighlights.length === 0) {
+        exportBusy = false;
+        return;
+    }
+
+    const colorGroups = new Map<string, typeof selectedHighlights>();
+    for (const h of selectedHighlights) {
+        const c = h.color || "yellow";
+        const list = colorGroups.get(c) ?? [];
+        list.push(h);
+        colorGroups.set(c, list);
+    }
+
+    const colorNameMap: Record<string, string> = {
+        yellow: t(i18n, "reader.color.yellow"),
+        red: t(i18n, "reader.color.red"),
+        green: t(i18n, "reader.color.green"),
+        blue: t(i18n, "reader.color.blue"),
+    };
+
+    const lines: string[] = [`# 🗃️ ${t(i18n, "highlight.zettelHeading")}\n`];
+    for (const [color, groupItems] of colorGroups.entries()) {
+        const colorTitle = colorNameMap[color] || color;
+        lines.push(`## ${colorTitle} (${groupItems.length})\n`);
+        for (const item of groupItems) {
+            const docTitle = item.title || t(i18n, "panel.untitled");
+            lines.push(`### 💡 ${item.text.slice(0, 30)}...`);
+            lines.push(`> ${item.text}`);
+            if (item.memo) {
+                lines.push(`\n**${t(i18n, "highlight.memoThought")}:** ${item.memo}`);
+            }
+            if (item.rootId) {
+                lines.push(`\n- 来源：((${item.rootId} '《${docTitle}》'))`);
+            }
+            if (item.id) {
+                lines.push(`- 锚点：((${item.id} '*'))`);
+            }
+            lines.push("");
+        }
+    }
+
+    const markdownText = lines.join("\n");
+    try {
+        await navigator.clipboard.writeText(markdownText);
+        exportStatus = t(i18n, "highlight.zettelCopied", { n: selectedHighlights.length, groups: colorGroups.size });
+        showMessage(exportStatus, 3000);
+    } catch {
+        exportError = t(i18n, "msg.actionFailed");
+    } finally {
+        exportBusy = false;
+    }
+}
+
 async function save() {
     if (!session || exportBusy) return;
     exportBusy = true;
@@ -330,6 +391,48 @@ async function card(item: HighlightItem) {
         showMessage(t(i18n, "msg.actionFailed"), 3000);
     } finally {
         cardingKey = "";
+    }
+}
+
+async function pushToCards(item: HighlightItem): Promise<void> {
+    if (cardingKey) return;
+    cardingKey = item.id;
+    try {
+        const res = await sendExtractToCardsSafely({
+            content: item.text,
+            sourceBlockId: item.sourceBlockId || item.id,
+            sourceDocId: item.rootId,
+            sourceTitle: item.title || docTitle,
+            tags: item.tags,
+        });
+        if (res.ok) {
+            showMessage(t(i18n, "reader.extractedToCards"), 2500);
+        } else {
+            void card(item);
+        }
+    } catch {
+        void card(item);
+    } finally {
+        cardingKey = "";
+    }
+}
+
+async function saveToCommon(item: HighlightItem): Promise<void> {
+    try {
+        const res = await captureQuoteToCommonSafely({
+            quote: item.text,
+            sourceDocId: item.rootId,
+            sourceBlockId: item.sourceBlockId || item.id,
+            sourceTitle: item.title || docTitle,
+            tags: item.tags,
+        });
+        if (res.ok) {
+            showMessage(t(i18n, "quoteCard.savedToCommon"), 2500);
+        } else {
+            showMessage(t(i18n, "msg.actionFailed"), 2500);
+        }
+    } catch {
+        showMessage(t(i18n, "msg.actionFailed"), 2500);
     }
 }
 
@@ -472,7 +575,7 @@ async function copySelectedHighlightBlockRefs(): Promise<void> {
     const selectedItems = selectHighlights(items, selected);
     const lines = selectedItems.map((item) => {
         const snippet = item.text.replace(/[\r\n]+/g, " ").trim().slice(0, 30);
-        return `- ((${item.id} '${snippet}')) · 《${item.title || "未命名"}》`;
+        return `- ((${item.id} '${snippet}')) · 《${item.title || t(i18n, "panel.untitled")}》`;
     });
     try {
         if (navigator?.clipboard?.writeText) {
@@ -739,7 +842,7 @@ function focusHighlightRow(id: string): void {
             <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSearch" /></svg>
             <span>{t(i18n, "action.search")} / {t(i18n, "library.filters")}{#if search || site || tag || aiTag || color || sort !== "id"} ({t(i18n, "library.activeFilters")}){/if}</span>
             {#if search || site || tag || aiTag || color || sort !== "id" || direction !== "desc"}
-                <span class="glean-badge glean-badge--match">已过滤</span>
+                <span class="glean-badge glean-badge--match">{t(i18n, "highlight.filteredBadge")}</span>
             {/if}
         </summary>
         <div class="glean-highlights__filters" role="search" aria-label={t(i18n, "action.search")}>
@@ -791,7 +894,7 @@ function focusHighlightRow(id: string): void {
         <div class="glean-highlights__export-actions" role="group" aria-label={t(i18n, "highlight.exportTitle")} style:display={selected.length > 0 ? "flex" : "none"}>
             <button class="glean-btn glean-btn--ghost glean-btn--sm" disabled={loading || exportBusy || !selected.length} onclick={() => void runExport("copy")}>{t(i18n, "highlight.copy")}</button>
             <button class="glean-btn glean-btn--ghost glean-btn--sm" disabled={loading || exportBusy || !selected.length} onclick={() => void copySelectedHighlightBlockRefs()} title={t(i18n, "action.copyBlockRef")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg> <span>{t(i18n, "action.copyBlockRef")}</span></button>
-            <div class="glean-citation-group" role="group" aria-label="引用格式">
+            <div class="glean-citation-group" role="group" aria-label={t(i18n, "citation.formatGroup")}>
                 <button class="glean-btn glean-btn--ghost glean-btn--sm" disabled={loading || exportBusy || !selected.length} onclick={() => void copySelectedHighlightCitations("gbt")} title={t(i18n, "citation.copyGBT")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg> <span>{t(i18n, "citation.copyGBT")}</span></button>
                 <button class="glean-btn glean-btn--ghost glean-btn--sm" disabled={loading || exportBusy || !selected.length} onclick={() => void copySelectedHighlightCitations("bibtex")} title={t(i18n, "citation.copyBibTeX")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArchive" /></svg> <span>BibTeX</span></button>
                 <button class="glean-btn glean-btn--ghost glean-btn--sm" disabled={loading || exportBusy || !selected.length} onclick={() => void copySelectedHighlightCitations("apa")} title={t(i18n, "citation.copyAPA")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanLocal" /></svg> <span>APA</span></button>
@@ -799,6 +902,7 @@ function focusHighlightRow(id: string): void {
             </div>
             <button class="glean-btn glean-btn--ghost glean-btn--sm" disabled={loading || exportBusy || !selected.length} onclick={() => void runExport("csv")}>{t(i18n, "highlight.csv")}</button>
             <button class="glean-btn glean-btn--ghost glean-btn--sm" disabled={loading || exportBusy || !selected.length} onclick={() => void runExport("markdown")}>{t(i18n, "highlight.markdown")}</button>
+            <button class="glean-btn glean-btn--ghost glean-btn--sm glean-highlights__zettel-btn" disabled={loading || exportBusy || !selected.length} onclick={() => void exportColorCardsZettelkasten()}>{t(i18n, "highlight.exportZettel")}</button>
             <button class="glean-btn glean-btn--pri glean-btn--sm glean-highlights__preview-action" disabled={loading || exportBusy || !selected.length || !!session} onclick={() => void runExport("preview")}>{t(i18n, "highlight.preview")}</button>
         </div>
     </div>
@@ -841,24 +945,24 @@ function focusHighlightRow(id: string): void {
                             <span class="glean-highlights__item-label">{t(i18n, "highlight.quoteTag")}</span>
                             {#if item.annotationTag}
                                 <span class="glean-annotation-tag glean-annotation-tag--{item.annotationTag}">
-                                    {#if item.annotationTag === "pinned"}📌 置顶
-                                    {:else if item.annotationTag === "important"}⭐ 重要
-                                    {:else if item.annotationTag === "reading"}📖 阅读
-                                    {:else if item.annotationTag === "todo"}✔️ 待办
-                                    {:else if item.annotationTag === "question"}❓ 存疑
+                                    {#if item.annotationTag === "pinned"}📌 {t(i18n, "highlight.tagPinned")}
+                                    {:else if item.annotationTag === "important"}⭐ {t(i18n, "highlight.tagImportant")}
+                                    {:else if item.annotationTag === "reading"}📖 {t(i18n, "highlight.tagReading")}
+                                    {:else if item.annotationTag === "todo"}✔️ {t(i18n, "highlight.tagTodo")}
+                                    {:else if item.annotationTag === "question"}❓ {t(i18n, "highlight.tagQuestion")}
                                     {:else}🏷️ {item.annotationTag}{/if}
                                 </span>
                             {/if}
                             {#if item.annotationKind === "siyuan-comment"}
-                                <span class="glean-annotation-kind" title="来自鲸鱼快速批注">💬 鲸鱼批注</span>
+                                <span class="glean-annotation-kind" title={t(i18n, "highlight.kindWhaleHint")}>{t(i18n, "highlight.kindWhale")}</span>
                             {:else if item.annotationKind === "native-memo"}
-                                <span class="glean-annotation-kind" title="来自思源原生备注">📝 块备注</span>
+                                <span class="glean-annotation-kind" title={t(i18n, "highlight.kindMemoHint")}>{t(i18n, "highlight.kindMemo")}</span>
                             {/if}
                             <span class="glean-highlights__item-index">{(visible.page - 1) * highlightPageSize + visible.items.indexOf(item) + 1}</span>
                         </div>
                         <label class="glean-highlights__quote"><input type="checkbox" checked={selected.includes(item.id)} disabled={exportBusy} onchange={() => toggle(item.id)} aria-label={`${t(i18n, "highlight.quoteTag")} ${(visible.page - 1) * highlightPageSize + visible.items.indexOf(item) + 1}: ${item.text.slice(0, 120)}`} /><span>{item.text}</span></label>
                         {#if item.memo}
-                            <div class="glean-highlights__memo-bubble" role="note" aria-label="批注思考">
+                            <div class="glean-highlights__memo-bubble" role="note" aria-label={t(i18n, "highlight.memoThought")}>
                                 <span class="glean-highlights__memo-icon" aria-hidden="true">💡</span>
                                 <span class="glean-highlights__memo-text">{item.memo}</span>
                             </div>
@@ -898,6 +1002,18 @@ function focusHighlightRow(id: string): void {
                                     <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg>
                                     <span>MLA</span>
                                 </button>
+                                {#if hasCardsInstalled}
+                                    <button type="button" class="glean-btn glean-btn--ghost" aria-busy={cardingKey === item.id} disabled={Boolean(cardingKey)} onclick={() => void pushToCards(item)} title={t(i18n, "quoteCard.pushToCards")} aria-label={t(i18n, "quoteCard.pushToCards")}>
+                                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg>
+                                        <span>{t(i18n, "quoteCard.pushToCards")}</span>
+                                    </button>
+                                {/if}
+                                {#if hasCommonInstalled}
+                                    <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void saveToCommon(item)} title={t(i18n, "quoteCard.saveToCommon")} aria-label={t(i18n, "quoteCard.saveToCommon")}>
+                                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanBookmark" /></svg>
+                                        <span>{t(i18n, "quoteCard.saveToCommon")}</span>
+                                    </button>
+                                {/if}
                                 <button type="button" class="glean-btn glean-btn--ghost" class:glean-ghost-btn={!hasCardsInstalled} aria-busy={cardingKey === item.id} disabled={Boolean(cardingKey)} onclick={() => void card(item)} title={t(i18n, "flashcard.make")} aria-label={hasCardsInstalled ? t(i18n, "flashcard.make") : t(i18n, "reader.cardGhostHint")}><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanCard" /></svg><span>{t(i18n, "flashcard.make")}</span></button>
                                 <button type="button" class="glean-btn glean-btn--ghost" class:glean-ghost-btn={!hasExamInstalled} disabled={exportBusy} onclick={() => void exam(item)} title={hasExamInstalled ? t(i18n, "reader.examMake") : t(i18n, "reader.examGhostHint")} aria-label={t(i18n, "reader.examMake")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanEdit" /></svg> <span>{t(i18n, "reader.examMake")}</span></button>
                             </ActionPopover>
@@ -954,24 +1070,24 @@ function focusHighlightRow(id: string): void {
                                         <span class="glean-highlights__item-label">{t(i18n, "highlight.quoteTag")}</span>
                                         {#if item.annotationTag}
                                             <span class="glean-annotation-tag glean-annotation-tag--{item.annotationTag}">
-                                                {#if item.annotationTag === "pinned"}📌 置顶
-                                                {:else if item.annotationTag === "important"}⭐ 重要
-                                                {:else if item.annotationTag === "reading"}📖 阅读
-                                                {:else if item.annotationTag === "todo"}✔️ 待办
-                                                {:else if item.annotationTag === "question"}❓ 存疑
+                                                {#if item.annotationTag === "pinned"}📌 {t(i18n, "highlight.tagPinned")}
+                                                {:else if item.annotationTag === "important"}⭐ {t(i18n, "highlight.tagImportant")}
+                                                {:else if item.annotationTag === "reading"}📖 {t(i18n, "highlight.tagReading")}
+                                                {:else if item.annotationTag === "todo"}✔️ {t(i18n, "highlight.tagTodo")}
+                                                {:else if item.annotationTag === "question"}❓ {t(i18n, "highlight.tagQuestion")}
                                                 {:else}🏷️ {item.annotationTag}{/if}
                                             </span>
                                         {/if}
                                         {#if item.annotationKind === "siyuan-comment"}
-                                            <span class="glean-annotation-kind" title="来自鲸鱼快速批注">💬 鲸鱼批注</span>
+                                            <span class="glean-annotation-kind" title={t(i18n, "highlight.kindWhaleHint")}>{t(i18n, "highlight.kindWhale")}</span>
                                         {:else if item.annotationKind === "native-memo"}
-                                            <span class="glean-annotation-kind" title="来自思源原生备注">📝 块备注</span>
+                                            <span class="glean-annotation-kind" title={t(i18n, "highlight.kindMemoHint")}>{t(i18n, "highlight.kindMemo")}</span>
                                         {/if}
                                         <span class="glean-highlights__item-index">{itemIndex + 1}</span>
                                     </div>
                                     <label class="glean-highlights__quote"><input type="checkbox" checked={selected.includes(item.id)} disabled={exportBusy} onchange={() => toggle(item.id)} aria-label={`${t(i18n, "highlight.quoteTag")} ${itemIndex + 1}: ${item.text.slice(0, 120)}`} /><span>{item.text}</span></label>
                                     {#if item.memo}
-                                        <div class="glean-highlights__memo-bubble" role="note" aria-label="批注思考">
+                                        <div class="glean-highlights__memo-bubble" role="note" aria-label={t(i18n, "highlight.memoThought")}>
                                             <span class="glean-highlights__memo-icon" aria-hidden="true">💡</span>
                                             <span class="glean-highlights__memo-text">{item.memo}</span>
                                         </div>
@@ -1006,6 +1122,18 @@ function focusHighlightRow(id: string): void {
                                                 <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg>
                                                 <span>MLA</span>
                                             </button>
+                                            {#if hasCardsInstalled}
+                                                <button type="button" class="glean-btn glean-btn--ghost" aria-busy={cardingKey === item.id} disabled={Boolean(cardingKey)} onclick={() => void pushToCards(item)} title={t(i18n, "quoteCard.pushToCards")} aria-label={t(i18n, "quoteCard.pushToCards")}>
+                                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg>
+                                                    <span>{t(i18n, "quoteCard.pushToCards")}</span>
+                                                </button>
+                                            {/if}
+                                            {#if hasCommonInstalled}
+                                                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void saveToCommon(item)} title={t(i18n, "quoteCard.saveToCommon")} aria-label={t(i18n, "quoteCard.saveToCommon")}>
+                                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanBookmark" /></svg>
+                                                    <span>{t(i18n, "quoteCard.saveToCommon")}</span>
+                                                </button>
+                                            {/if}
                                             <button type="button" class="glean-btn glean-btn--ghost" class:glean-ghost-btn={!hasCardsInstalled} aria-busy={cardingKey === item.id} disabled={Boolean(cardingKey)} onclick={() => void card(item)} title={t(i18n, "flashcard.make")} aria-label={hasCardsInstalled ? t(i18n, "flashcard.make") : t(i18n, "reader.cardGhostHint")}><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanCard" /></svg><span>{t(i18n, "flashcard.make")}</span></button>
                                             <button type="button" class="glean-btn glean-btn--ghost" class:glean-ghost-btn={!hasExamInstalled} disabled={exportBusy} onclick={() => void exam(item)} title={hasExamInstalled ? t(i18n, "reader.examMake") : t(i18n, "reader.examGhostHint")} aria-label={t(i18n, "reader.examMake")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanEdit" /></svg> <span>{t(i18n, "reader.examMake")}</span></button>
                                         </ActionPopover>

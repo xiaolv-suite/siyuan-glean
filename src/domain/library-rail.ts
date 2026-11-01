@@ -5,6 +5,15 @@ export type RailGroupKey = (typeof RAIL_GROUP_KEYS)[number];
 export interface RailGroupPrefs { collapsed: boolean; expanded: boolean }
 export type RailGroups = Record<RailGroupKey, RailGroupPrefs>;
 
+export const DEFAULT_RAIL_WIDTH = 216;
+export const MIN_RAIL_WIDTH = 180;
+export const MAX_RAIL_WIDTH = 420;
+
+export function clampRailWidth(value: unknown): number {
+    if (typeof value !== "number" || !Number.isFinite(value)) return DEFAULT_RAIL_WIDTH;
+    return Math.max(MIN_RAIL_WIDTH, Math.min(MAX_RAIL_WIDTH, Math.round(value)));
+}
+
 export function normalizeRailGroups(raw: unknown): RailGroups {
     const source = raw && typeof raw === "object" ? raw as Record<string, unknown> : {};
     return Object.fromEntries(RAIL_GROUP_KEYS.map((name) => {

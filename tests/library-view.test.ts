@@ -200,6 +200,28 @@ test("keyword：关键词支持检索文章 summary 摘要字段", () => {
     assert.deepEqual(filtered.map((item) => item.id).sort(), ["1", "2"]);
 });
 
+test("keyword：空格多关键词支持逻辑与（AND 匹配与多 Token 分词，BL-28）", () => {
+    const items = [
+        clip({ id: "1", title: "分布式系统架构设计", summary: "探讨一致性模型与容错思维" }),
+        clip({ id: "2", title: "架构模式指南", summary: "常见微服务实践" }),
+        clip({ id: "3", title: "思维模型训练", summary: "认知提升方案" }),
+        clip({ id: "4", title: "无关技术", summary: "纯前端样式排版" }),
+    ];
+    // 同时包含 "思维" 和 "架构" 的只有 id: 1
+    const filtered = filterAndSortLibrary(items, { keyword: "思维 架构" });
+    assert.equal(filtered.length, 1);
+    assert.equal(filtered[0].id, "1");
+
+    // 顺序无关
+    const reversed = filterAndSortLibrary(items, { keyword: "架构 思维" });
+    assert.equal(reversed.length, 1);
+    assert.equal(reversed[0].id, "1");
+
+    // 单个关键词正常命中各自多项
+    assert.equal(filterAndSortLibrary(items, { keyword: "架构" }).length, 2);
+    assert.equal(filterAndSortLibrary(items, { keyword: "思维" }).length, 2);
+});
+
 test("matchLibraryReason：按优先级判定关键词命中字段", () => {
     const item = clip({
         title: "Rust 异步编程指南",

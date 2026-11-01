@@ -41,12 +41,14 @@ export interface RoamingPickOptions {
     timeBudget?: RoamingTimeBudget;
     tag?: string;
     favoriteOnly?: boolean;
+    highRatingPriority?: boolean;
     random?: () => number;
 }
 
 export function calculateRoamingScore(
     item: RoamingCandidate,
-    randomFactor: number = Math.random()
+    randomFactor: number = Math.random(),
+    highRatingPriority: boolean = false
 ): { score: number; reason: string } {
     // 1. 重要度 (40分)
     const p = Math.max(1, Math.min(5, item.priority || 3));
@@ -82,7 +84,17 @@ export function calculateRoamingScore(
     // 4. 随机扰动 (10分)
     const randScore = Math.max(0, Math.min(1, randomFactor)) * 10;
 
-    const totalScore = Math.round((priorityScore + ratingScore + sliceScore + randScore) * 10) / 10;
+    // BL-36: 高星级与评分加权高频重浮加分
+    let bonus = 0;
+    if (highRatingPriority) {
+        if (r >= 4) bonus += (r - 3) * 15;
+        if (p >= 4) bonus += (p - 3) * 10;
+        if (item.favorite) bonus += 15;
+        if (r >= 4) reason = "💖 高评分重温";
+        else if (p >= 4) reason = "⭐ 高价值推荐";
+    }
+
+    const totalScore = Math.round((priorityScore + ratingScore + sliceScore + randScore + bonus) * 10) / 10;
     return { score: totalScore, reason };
 }
 
@@ -95,6 +107,7 @@ export function pickRoamingArticle(
     let timeBudget: RoamingTimeBudget = "all";
     let targetTag = "";
     let favoriteOnly = false;
+    let highRatingPriority = false;
     let random = Math.random;
 
     if (options) {
@@ -107,6 +120,7 @@ export function pickRoamingArticle(
             if (opts.timeBudget) timeBudget = opts.timeBudget;
             if (opts.tag) targetTag = opts.tag;
             if (opts.favoriteOnly) favoriteOnly = Boolean(opts.favoriteOnly);
+            if (opts.highRatingPriority) highRatingPriority = Boolean(opts.highRatingPriority);
             if (opts.random) random = opts.random;
         }
     }
@@ -132,7 +146,7 @@ export function pickRoamingArticle(
     let bestReason = "";
 
     for (const item of pool) {
-        const { score, reason } = calculateRoamingScore(item, random());
+        const { score, reason } = calculateRoamingScore(item, random(), highRatingPriority);
         if (score > bestScore) {
             bestScore = score;
             bestItem = item;

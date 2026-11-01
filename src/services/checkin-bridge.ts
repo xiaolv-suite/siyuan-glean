@@ -16,6 +16,7 @@ interface CheckinApi {
     recordEvent?: (input: {
         itemId: string;
         value?: number;
+        unit?: string;
         source: "api";
         externalRef?: string;
         note?: string;
@@ -77,14 +78,18 @@ export type ReadingRecordResult = "recorded" | "duplicate" | "blocked" | "reject
 export async function recordReadingDone(
     itemId: string,
     docId: string,
-    docTitle: string
+    docTitle: string,
+    readMinutes?: number
 ): Promise<ReadingRecordResult> {
     if (!itemId) return "unavailable";
     const externalRef = readingEventRef(docId);
+    const value = readMinutes && readMinutes > 0 ? readMinutes : 1;
+    const unit = readMinutes && readMinutes > 0 ? "min" : undefined;
     try {
         const logged = await logCheckinEventSafely({
             itemId,
-            value: 1,
+            value,
+            unit,
             externalRef,
             note: readingEventNote(docTitle),
         });
@@ -100,6 +105,8 @@ export async function recordReadingDone(
     try {
         const result = await checkin.recordEvent({
             itemId,
+            value,
+            unit,
             source: "api",
             externalRef,
             note: readingEventNote(docTitle),

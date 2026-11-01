@@ -6,7 +6,7 @@ import { clampSpeechRate } from "../domain/speech.ts";
  */
 import type { Plugin } from "siyuan";
 import { normalizePreviewRatio } from "../domain/workbench-preview.ts";
-import { normalizeRailGroups, type RailGroups } from "../domain/library-rail.ts";
+import { normalizeRailGroups, DEFAULT_RAIL_WIDTH, clampRailWidth, type RailGroups } from "../domain/library-rail.ts";
 import {
     DEFAULT_READER_APPEARANCE,
     EMPTY_GOVERNANCE_MUTED,
@@ -43,6 +43,7 @@ export interface UiPrefs {
     libraryRailGroups: RailGroups;
     railAccordion: boolean;
     railCollapsed: boolean;
+    railWidth: number;
     savedViews: SavedView[];
     tagAliases: TagAlias[];
     defaultSavedViewId: string;
@@ -66,6 +67,7 @@ const DEFAULTS: UiPrefs = {
     libraryRailGroups: normalizeRailGroups(undefined),
     railAccordion: false,
     railCollapsed: false,
+    railWidth: DEFAULT_RAIL_WIDTH,
     savedViews: [],
     tagAliases: [],
     defaultSavedViewId: "",
@@ -99,6 +101,7 @@ export function normalizeUiPrefs(raw: unknown): UiPrefs {
         libraryRailGroups: normalizeRailGroups(partial.libraryRailGroups),
         railAccordion: partial.railAccordion === true,
         railCollapsed: partial.railCollapsed === true,
+        railWidth: clampRailWidth(partial.railWidth),
         savedViews,
         tagAliases: normalizeTagAliases(partial.tagAliases),
         defaultSavedViewId: savedViews.some((view) => view.id === requestedDefault) ? requestedDefault : "",

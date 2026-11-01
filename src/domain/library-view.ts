@@ -186,6 +186,13 @@ function searchableText(item: LibraryItem): string {
     return text;
 }
 
+/** 将检索关键词拆分为多词 Token（支持按空白字符 AND 逻辑与检索，BL-28） */
+export function tokenizeKeyword(keyword: string | undefined): string[] {
+    const raw = key(keyword);
+    if (!raw) return [];
+    return raw.split(/\s+/).filter(Boolean);
+}
+
 /** 是否满足当前视图的所有筛选项。 */
 export function matchesLibraryFilter(item: LibraryItem, filter: LibraryFilter = {}): boolean {
     if (item.kind === "candidate" && !filter.includeCandidates) return false;
@@ -207,8 +214,12 @@ export function matchesLibraryFilter(item: LibraryItem, filter: LibraryFilter = 
     if (filter.readingTimeTier && !matchReadingTimeTier(filter.readingTimeTier, item.minutes)) return false;
     // T-1755：仅看收藏（候选不参与收藏）
     if (filter.favoriteOnly && !(item.kind === "clip" && item.favorite === true)) return false;
-    const query = key(filter.keyword);
-    return !query || searchableText(item).includes(query);
+    const tokens = tokenizeKeyword(filter.keyword);
+    if (tokens.length > 0) {
+        const text = searchableText(item);
+        if (!tokens.every((token) => text.includes(token))) return false;
+    }
+    return true;
 }
 
 function compareValue(item: LibraryItem, sortBy: LibrarySortKey): string | number {
@@ -344,18 +355,20 @@ export interface LibraryMatchTarget {
  * 关键词为空或未命中时返回 null。
  */
 export function matchLibraryReason(item: LibraryMatchTarget, keyword: string | undefined): LibraryMatchReason | null {
-    const query = key(keyword);
-    if (!query) return null;
-    if (key(item.title).includes(query)) return { kind: "title" };
-    if (key(item.summary).includes(query)) return { kind: "summary" };
-    const hitTag = (item.tags ?? []).find((t) => key(t).includes(query));
-    if (hitTag) return { kind: "tag", value: hitTag };
-    const hitAiTag = (item.aiTags ?? []).find((t) => key(t).includes(query));
-    if (hitAiTag) return { kind: "aiTag", value: hitAiTag };
-    if (key(item.author).includes(query)) return { kind: "author", value: item.author };
-    if (key(item.site).includes(query)) return { kind: "site", value: item.site };
-    if (key(item.url).includes(query)) return { kind: "url" };
-    if (key(item.hpath).includes(query)) return { kind: "hpath" };
+    const tokens = tokenizeKeyword(keyword);
+    if (tokens.length === 0) return null;
+    for (const query of tokens) {
+        if (key(item.title).includes(query)) return { kind: "title" };
+        if (key(item.summary).includes(query)) return { kind: "summary" };
+        const hitTag = (item.tags ?? []).find((t) => key(t).includes(query));
+        if (hitTag) return { kind: "tag", value: hitTag };
+        const hitAiTag = (item.aiTags ?? []).find((t) => key(t).includes(query));
+        if (hitAiTag) return { kind: "aiTag", value: hitAiTag };
+        if (key(item.author).includes(query)) return { kind: "author", value: item.author };
+        if (key(item.site).includes(query)) return { kind: "site", value: item.site };
+        if (key(item.url).includes(query)) return { kind: "url" };
+        if (key(item.hpath).includes(query)) return { kind: "hpath" };
+    }
     return null;
 }
 

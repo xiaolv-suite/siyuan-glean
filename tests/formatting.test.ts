@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { analyzeFormatting, buildFormattingPrompt, formattingCandidates, formattingSourceLink, parseFormattingPlan, renderFormatting } from "../src/domain/formatting.ts";
+import { analyzeFormatting, buildFormattingPrompt, formattingCandidates, formattingSourceLink, parseFormattingPlan, renderFormatting, stripPromotionalLinks } from "../src/domain/formatting.ts";
 
 const longUrl = `https://example.test/article?tracking=${"a".repeat(90)}`;
 const emptyPlan = { headings: [], cleanup: [] };
@@ -162,4 +162,16 @@ test("微信公众号特有模板噪声（合集、关注、在看）识别为�
     assert.equal(analysis.blocks.find((b) => b.id === promoIds[2])?.raw.trim(), "喜欢本文请点赞在看转发！");
     assert.equal(analysis.blocks.find((b) => b.id === promoIds[3])?.raw.trim(), "赞赏作者喜欢就支持一下吧");
     assert.equal(analysis.blocks.find((b) => b.id === promoIds[4])?.raw.trim(), "往期推荐精彩内容回顾：");
+});
+
+test("stripPromotionalLinks：剥离商业推广/营销追踪外链，保留纯文本描述（BL-41）", () => {
+    const raw = "文章正文介绍技术原理。[点击购买专属优惠券](https://mall.example.com/item?id=123&utm_source=ad)可享8折，另外可参考[官方文档](https://docs.example.com)。";
+    const cleaned = stripPromotionalLinks(raw);
+
+    // 推广购买链接剥离超链接保留文本
+    assert.ok(cleaned.includes("点击购买专属优惠券"));
+    assert.ok(!cleaned.includes("https://mall.example.com/item"));
+
+    // 正常文档超链接完好保留
+    assert.ok(cleaned.includes("[官方文档](https://docs.example.com)"));
 });

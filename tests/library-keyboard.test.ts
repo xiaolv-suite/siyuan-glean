@@ -8,7 +8,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { moveLibraryCursor, resolveLibraryShortcut, cyclePriorityValue, cycleRatingValue, type LibraryKeyboardContext } from "../src/domain/library-keyboard.ts";
+import { moveLibraryCursor, moveKanbanCursor2D, moveKanbanCursorVertical, resolveLibraryShortcut, cyclePriorityValue, cycleRatingValue, type LibraryKeyboardContext } from "../src/domain/library-keyboard.ts";
 
 const dock = readFileSync(new URL("../src/ui/DockPanel.svelte", import.meta.url), "utf8");
 const styles = readFileSync(new URL("../src/index.scss", import.meta.url), "utf8");
@@ -234,4 +234,34 @@ test("样式：光标描边使用设计令牌并提供强制颜色系统回退",
     assert.match(styles, /\.glean-drow--cursor,\s*\n\.glean-kcard--cursor,\s*\n\.glean-card--cursor\s*\{\s*\n\s*outline: 2px solid var\(--glean-accent-b\);/);
     assert.match(styles, /@media \(forced-colors: active\) \{[\s\S]*?\.glean-drow--cursor,[\s\S]*?outline: 2px solid Highlight;/);
     assert.match(styles, /\.glean-kbdhint[\s\S]*?kbd \{/);
+});
+
+test("二维网格与看板方向键游走（BL-30）：跨列左右流转与列内上下平滑移动", () => {
+    const columns = [
+        ["col0-1", "col0-2"],
+        [],
+        ["col2-1", "col2-2", "col2-3"],
+    ];
+
+    // 列内上下移动
+    assert.equal(moveKanbanCursorVertical(columns, "col0-1", 1), "col0-2");
+    assert.equal(moveKanbanCursorVertical(columns, "col0-2", 1), "col0-2", "列底不越界");
+    assert.equal(moveKanbanCursorVertical(columns, "col0-2", -1), "col0-1");
+    assert.equal(moveKanbanCursorVertical(columns, "col0-1", -1), "col0-1", "列顶不越界");
+
+    // 跨列向右移动（跳过空列 1，直接到达列 2 对应的行）
+    assert.equal(moveKanbanCursor2D(columns, "col0-2", 1), "col2-2");
+    assert.equal(moveKanbanCursor2D(columns, "col2-3", 1), "col2-3", "最右列保持不动");
+
+    // 跨列向左移动（行号超出目标列最大长度时自动 clamp）
+    assert.equal(moveKanbanCursor2D(columns, "col2-3", -1), "col0-2");
+    assert.equal(moveKanbanCursor2D(columns, "col0-1", -1), "col0-1", "最左列保持不动");
+
+    // 快捷键解析：激活光标时 ArrowLeft / ArrowRight 触发 moveCol
+    assert.deepEqual(resolveLibraryShortcut(key("ArrowLeft"), active), { type: "moveCol", delta: -1 });
+    assert.deepEqual(resolveLibraryShortcut(key("ArrowRight"), active), { type: "moveCol", delta: 1 });
+    assert.deepEqual(resolveLibraryShortcut(key("h"), active), { type: "moveCol", delta: -1 });
+    // 未激活光标时不抢原生方向键
+    assert.equal(resolveLibraryShortcut(key("ArrowLeft"), {}), null);
+    assert.equal(resolveLibraryShortcut(key("ArrowRight"), {}), null);
 });

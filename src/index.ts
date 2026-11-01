@@ -2,7 +2,7 @@
  * 小驴拾遗插件入口（薄壳）：生命周期、UI 挂载、收录入口三件套。
  * 业务编排在 services/，内核交互在 api/，纯函数在 domain/，组件只依赖 types.ts 门面。
  */
-import { Plugin, getFrontend, openTab, openMobileFileById, showMessage, getAllEditor } from "siyuan";
+import { Plugin, getFrontend, openTab, openMobileFileById, showMessage, getAllEditor, Menu } from "siyuan";
 import { mount, unmount } from "svelte";
 import "./index.scss";
 
@@ -70,6 +70,9 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
     private loaded = false;
     private lastReadingDocId = "";
     private recentReadings: RecentReadingEntry[] = [];
+    private inboxMigrating = false;
+    private readonly capturingDocIds = new Set<string>();
+    private readonly statusBusyDocIds = new Set<string>();
     private readonly pendingLibraryDocIds = new Map<string, string>();
     private readonly destroyedLibraryTabIds = new Set<string>();
     private libraryOpenRequest = 0;
@@ -77,6 +80,7 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
     private readonly destroyedReaderTabIds = new Set<string>();
     private readerOpenRequest = 0;
     private topBarElement?: HTMLElement;
+    private topBarContextMenuHandler?: (event: MouseEvent) => void;
     private unregisterRaikiri?: () => void;
     private readonly openWorkbenchPopupSingleton = createDialogSingleton(
         (initialPreviewId: string | undefined, onClose: () => void) => svelteDialog({
@@ -111,52 +115,127 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
   <path d="M16 13.5c-2.8-1.5-5.5 0-5.5 2s2.7 2 5.5 2M16 18.5c-2.8-1.5-5.5 0-5.5 2s2.7 2 5.5 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
   <circle cx="16" cy="5" r="2.5" fill="currentColor"/>
 </symbol>
-<symbol id="iconGleanGear" viewBox="0 0 32 32">
-<path d="M16 11.5a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9zm0 2.2a2.3 2.3 0 1 1 0 4.6 2.3 2.3 0 0 1 0-4.6z"/>
-<path d="M14 3h4l.7 3.4c.9.3 1.7.7 2.5 1.3l3.3-1.2 2 3.5-2.6 2.3c.1.5.1 1.1.1 1.7s0 1.2-.1 1.7l2.6 2.3-2 3.5-3.3-1.2c-.8.6-1.6 1-2.5 1.3L18 25h-4l-.7-3.4c-.9-.3-1.7-.7-2.5-1.3l-3.3 1.2-2-3.5 2.6-2.3a10 10 0 0 1 0-3.4L5.5 10l2-3.5 3.3 1.2c.8-.6 1.6-1 2.5-1.3L14 3zm1.2 2.2-.6 3-.9.3c-.7.2-1.3.6-1.9 1l-.8.6-2.9-1-1 1.7 2.3 2-.2 1a7.7 7.7 0 0 0 0 2.4l.2 1-2.3 2 1 1.7 2.9-1 .8.6c.6.4 1.2.8 1.9 1l.9.3.6 3h2l.6-3 .9-.3c.7-.2 1.3-.6 1.9-1l.8-.6 2.9 1 1-1.7-2.3-2 .2-1a7.7 7.7 0 0 0 0-2.4l-.2-1 2.3-2-1-1.7-2.9 1-.8-.6c-.6-.4-1.2-.8-1.9-1l-.9-.3-.6-3h-2z"/></symbol>
-<symbol id="iconGleanPopup" viewBox="0 0 32 32">
-<path d="M6 5h11a2 2 0 0 1 2 2v3h-2.2V7.2H8.2v16.6h8.8V21H19v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/>
-<path d="M17 4h10a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-3.2v-2.2h1V6.2H19v3.6H17V5z" transform="translate(0 0)"/>
-<path d="M15.2 12.8H29v13.6H15.2zM17.4 15v9.2h9.4V15z"/></symbol>
-<symbol id="iconGleanRefresh" viewBox="0 0 32 32">
-<path d="M16 6a10 10 0 0 1 8.6 4.9l-2.4 1.4A7.4 7.4 0 0 0 16 8.6 7.4 7.4 0 1 0 23.4 16h2.6A10 10 0 1 1 16 6z"/>
-<path d="M22 4h6v6h-2.4V6.4H22z"/></symbol>
-<symbol id="iconGleanArchive" viewBox="0 0 32 32"><path d="M5 6h22v5H5zM7.5 13h17v13h-17zM12 16h8v2h-8zm0 4h8v2h-8z"/></symbol>
-<symbol id="iconGleanInbox" viewBox="0 0 32 32"><path d="M4 7h24l-3 18H7L4 7zm3 3 1.8 12h14.4L25 10H7zM5.5 19h6l1.8 3h5.4l1.8-3h6"/></symbol>
-<symbol id="iconGleanNews" viewBox="0 0 32 32"><path d="M5 5h22v19H8a3 3 0 0 1-3-3V5zm3 3v13c0 .6.4 1 1 1h15V8H8zm3 3h10v2H11zm0 4h10v2H11z"/></symbol>
-<symbol id="iconGleanCamera" viewBox="0 0 32 32"><path d="M6 9h5l2-3h6l2 3h5v17H6V9zm3 3v11h14V12H9zm7 2.5a4 4 0 1 1 0 8 4 4 0 0 1 0-8zm0 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/></symbol>
-<symbol id="iconGleanSpark" viewBox="0 0 32 32"><path d="m16 3 2.2 8.8L27 14l-8.8 2.2L16 25l-2.2-8.8L5 14l8.8-2.2L16 3zm8 18 .8 3.2L28 25l-3.2.8L24 29l-.8-3.2L20 25l3.2-.8L24 21z"/></symbol>
-<symbol id="iconGleanPin" viewBox="0 0 32 32"><path d="m20 4 8 8-3 3-2-2-4 4v5l-3 3-3-7-6-3 3-3h5l4-4-2-2 3-3zM12 23l-5 5"/></symbol>
-<symbol id="iconGleanEdit" viewBox="0 0 32 32"><path d="m22 4 6 6-15 15-8 2 2-8L22 4zm-1 5-11 11-1 4 4-1 11-11-3-3z"/></symbol>
-<symbol id="iconGleanLocal" viewBox="0 0 32 32"><path d="M5 6h22v20H5V6zm3 3v14h16V9H8zm3 3h10v2H11zm0 4h7v2h-7z"/></symbol>
-<symbol id="iconGleanClose" viewBox="0 0 32 32"><path d="m8 6 8 8 8-8 2 2-8 8 8 8-2 2-8-8-8 8-2-2 8-8-8-8 2-2z"/></symbol>
-<symbol id="iconGleanExternal" viewBox="0 0 32 32"><path d="M18 5h9v9h-2.5V9.3L13.4 20.4l-1.8-1.8L22.7 7.5H18V5zM7 7h8v2.5H9.5v13h13V18H25v7H7V7z"/></symbol>
-<symbol id="iconGleanPlus" viewBox="0 0 32 32"><path d="M14.5 5h3v9.5H27v3h-9.5V27h-3v-9.5H5v-3h9.5V5z"/></symbol>
-<symbol id="iconGleanCard" viewBox="0 0 32 32"><path d="M6 5h20a2 2 0 0 1 2 2v18a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2zm1 3v16h18V8H7zm3 3h12v2H10zm0 4h8v2h-8z"/></symbol>
-<symbol id="iconGleanSearch" viewBox="0 0 32 32"><path d="M14 5a9 9 0 1 0 5.7 16l5.6 5.6 1.7-1.7-5.6-5.6A9 9 0 0 0 14 5zm0 2.5a6.5 6.5 0 1 1 0 13 6.5 6.5 0 0 1 0-13z"/></symbol>
-<symbol id="iconGleanArrowUp" viewBox="0 0 32 32"><path d="m6 19 10-10 10 10-2.1 2.1-7.9-7.9-7.9 7.9z"/></symbol>
-<symbol id="iconGleanArrowDown" viewBox="0 0 32 32"><path d="m6 13 2.1-2.1 7.9 7.9 7.9-7.9L26 13 16 23z"/></symbol>
-<symbol id="iconGleanArrowRight" viewBox="0 0 32 32"><path d="m12 6 2.1-2.1L26.2 16 14.1 28.1 12 26l10-10z"/></symbol>
-<symbol id="iconGleanArrowLeft" viewBox="0 0 32 32"><path d="m20 6 2.1 2.1-10 10 10 10L20 30 7.9 18.1z"/></symbol>
-<symbol id="iconGleanCheck" viewBox="0 0 32 32"><path d="m5.5 16.7 2.2-2.2 5.3 5.3L24.3 8.5l2.2 2.2L13 24.2z"/></symbol>
-<symbol id="iconGleanAccordion" viewBox="0 0 32 32"><path d="M4 6h24v5H4V6zm0 7h24v4H4v-4zm0 6h24v4H4v-4zM7 8.5h3v0H7zm0 7h3v0H7zm0 6h3v0H7z"/></symbol>
-<symbol id="iconGleanCollapseAll" viewBox="0 0 32 32"><path d="m8 10 8 6 8-6-1.5-2L16 12.1 9.5 8zm0 14 8-6 8 6-1.5 2-6.5-4.9-6.5 4.9z"/></symbol>
-<symbol id="iconGleanExpandAll" viewBox="0 0 32 32"><path d="m8 14 8-6 8 6-1.5 2L16 11.1 9.5 16zm0 4 8 6 8-6-1.5-2-6.5 4.9-6.5-4.9z"/></symbol>
-<symbol id="iconGleanCopy" viewBox="0 0 32 32"><path d="M9 4h14a2 2 0 0 1 2 2v3h-2.5V6.5H9.5v13H12V22H9a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><path d="M14 9h12a2 2 0 0 1 2 2v15a2 2 0 0 1-2 2H14a2 2 0 0 1-2-2V11a2 2 0 0 1 2-2zm0 2.5v14.5h12V11.5H14z"/></symbol>
-<symbol id="iconGleanDownload" viewBox="0 0 32 32"><path d="M16 4v14m-5-5 5 5 5-5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 22v3a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-<symbol id="iconGleanHeart" viewBox="0 0 32 32"><path d="M16 28s-11-6.8-13.4-11.7C.2 11.5 1.8 6.5 6 4.8c4.2-1.7 7.7.8 10 3.3 2.3-2.5 5.8-5 10-3.3 4.2 1.7 5.8 6.7 3.4 11.5C27 21.2 16 28 16 28z"/></symbol>
-<symbol id="iconGleanHeartOutline" viewBox="0 0 32 32"><path d="M16 26.5s-10-6.2-12.2-10.7C1.7 11.2 3.1 6.8 6.9 5.3c3.8-1.5 7 .7 9.1 3 2.1-2.3 5.3-4.5 9.1-3 3.8 1.5 5.2 5.9 3.1 10.5C26 20.3 16 26.5 16 26.5z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/></symbol>
-<symbol id="iconGleanBookmark" viewBox="0 0 32 32"><path d="M7 5h18a1 1 0 0 1 1 1v22l-10-6-10 6V6a1 1 0 0 1 1-1z"/></symbol>
-<symbol id="iconGleanFlame" viewBox="0 0 32 32"><path d="M16 3c-1 3.5-3.5 6-6 8.5-2.2 2.2-4 5.2-4 8.5 0 5.5 4.5 9 10 9s10-3.5 10-9c0-4.5-2.5-8-6-10.5-1-1-2-2.5-2.5-4-.5 2-2 3.5-3.5 4-1-3.5.5-6.5 2-8z"/></symbol>
-<symbol id="iconGleanPlay" viewBox="0 0 32 32"><path d="M10 7l15 9-15 9z"/></symbol>
-<symbol id="iconGleanPause" viewBox="0 0 32 32"><path d="M9 7h4v18H9zm10 0h4v18h-4z"/></symbol>
-<symbol id="iconGleanStop" viewBox="0 0 32 32"><path d="M8 8h16v16H8z"/></symbol>
-<symbol id="iconGleanBolt" viewBox="0 0 32 32"><path d="M18 3L6 17h8l-2 12 14-16h-9l3-10z"/></symbol>
-<symbol id="iconGleanStar" viewBox="0 0 32 32"><path d="M16 3.5l3.8 8.4 9.2 1-6.8 6.2 1.9 9.1L16 23.6l-8.1 4.6 1.9-9.1-6.8-6.2 9.2-1z"/></symbol>
-<symbol id="iconGleanStarOutline" viewBox="0 0 32 32"><path d="M16 3.5l3.8 8.4 9.2 1-6.8 6.2 1.9 9.1L16 23.6l-8.1 4.6 1.9-9.1-6.8-6.2 9.2-1z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/></symbol>
-<symbol id="iconGleanClock" viewBox="0 0 32 32"><circle cx="16" cy="16" r="12" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M16 9v7.5l5 3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
-<symbol id="iconGleanShield" viewBox="0 0 32 32"><path d="M16 3L5 7v10c0 7 4.5 11.5 11 12 6.5-.5 11-5 11-12V7L16 3zm0 3.2l8.5 3.1V17c0 5.2-3.3 8.6-8.5 9.1-5.2-.5-8.5-3.9-8.5-9.1v-7.7L16 6.2z"/></symbol>
-<symbol id="iconGleanShieldCheck" viewBox="0 0 32 32"><path d="M16 3L5 7v10c0 7 4.5 11.5 11 12 6.5-.5 11-5 11-12V7L16 3zm-2 18.5l-5-5 1.8-1.8 3.2 3.2 7.2-7.2 1.8 1.8-9 9z"/></symbol>`);
+<symbol id="iconGleanGear" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"/><circle cx="12" cy="12" r="3"/>
+</symbol>
+<symbol id="iconGleanPopup" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+</symbol>
+<symbol id="iconGleanRefresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>
+</symbol>
+<symbol id="iconGleanArchive" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/>
+</symbol>
+<symbol id="iconGleanInbox" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>
+</symbol>
+<symbol id="iconGleanNews" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M3 5h.01"/><path d="M3 12h.01"/><path d="M3 19h.01"/><path d="M8 5h13"/><path d="M8 12h13"/><path d="M8 19h13"/>
+</symbol>
+<symbol id="iconGleanCamera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>
+</symbol>
+<symbol id="iconGleanSpark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+  <path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72"/><path d="m14 7 3 3"/><path d="M5 6v4"/><path d="M19 14v4"/><path d="M10 2v2"/><path d="M7 8H3"/><path d="M21 16h-4"/><path d="M11 3H9"/>
+</symbol>
+<symbol id="iconGleanPin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/>
+</symbol>
+<symbol id="iconGleanEdit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/>
+</symbol>
+<symbol id="iconGleanLocal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/>
+</symbol>
+<symbol id="iconGleanClose" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+</symbol>
+<symbol id="iconGleanExternal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+</symbol>
+<symbol id="iconGleanPlus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M5 12h14"/><path d="M12 5v14"/>
+</symbol>
+<symbol id="iconGleanCard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/><path d="M9 15h12"/>
+</symbol>
+<symbol id="iconGleanSearch" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/>
+</symbol>
+<symbol id="iconGleanArrowUp" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <path d="m18 15-6-6-6 6"/>
+</symbol>
+<symbol id="iconGleanArrowDown" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <path d="m6 9 6 6 6-6"/>
+</symbol>
+<symbol id="iconGleanArrowRight" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <path d="m9 18 6-6-6-6"/>
+</symbol>
+<symbol id="iconGleanArrowLeft" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <path d="m15 18-6-6 6-6"/>
+</symbol>
+<symbol id="iconGleanCheck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M20 6 9 17l-5-5"/>
+</symbol>
+<symbol id="iconGleanAccordion" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M3 6h18M3 12h18M3 18h18"/>
+</symbol>
+<symbol id="iconGleanCollapseAll" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <path d="m7 15 5-5 5 5M7 9l5-5 5 5"/>
+</symbol>
+<symbol id="iconGleanExpandAll" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <path d="m7 9 5 5 5-5M7 15l5 5 5-5"/>
+</symbol>
+<symbol id="iconGleanCopy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/><path d="M16 4h2a2 2 0 0 1 2 2v4"/><path d="M21 14H11"/><path d="m15 10-4 4 4 4"/>
+</symbol>
+<symbol id="iconGleanDownload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/>
+</symbol>
+<symbol id="iconGleanHeart" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"/>
+</symbol>
+<symbol id="iconGleanHeartOutline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"/>
+</symbol>
+<symbol id="iconGleanBookmark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M17 3a2 2 0 0 1 2 2v15a1 1 0 0 1-1.496.868l-4.512-2.578a2 2 0 0 0-1.984 0l-4.512 2.578A1 1 0 0 1 5 20V5a2 2 0 0 1 2-2z"/>
+</symbol>
+<symbol id="iconGleanFlame" viewBox="0 0 24 24" fill="currentColor">
+  <path d="M12 2c-.6 2.2-2.2 3.8-3.8 5.4-1.4 1.4-2.5 3.3-2.5 5.4 0 3.5 2.9 5.7 6.3 5.7s6.3-2.2 6.3-5.7c0-2.9-1.6-5.1-3.8-6.7-.6-.6-1.3-1.6-1.6-2.5-.3 1.3-1.3 2.2-2.2 2.5-.6-2.2.3-4.1 1.3-5.1z"/>
+</symbol>
+<symbol id="iconGleanPlay" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+  <path d="M6 4v16a1 1 0 0 0 1.524 .852l13 -8a1 1 0 0 0 0 -1.704l-13 -8a1 1 0 0 0 -1.524 .852z" />
+</symbol>
+<symbol id="iconGleanPause" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <rect x="14" y="3" width="5" height="18" rx="1"/><rect x="5" y="3" width="5" height="18" rx="1"/>
+</symbol>
+<symbol id="iconGleanStop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <rect width="16" height="16" x="4" y="4" rx="2" />
+</symbol>
+<symbol id="iconGleanBolt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M15.914 4a1.5 1.5 0 00-2.474-1.561l-9 9A1.5 1.5 0 005.5 14h4.002a.5.5 0 01.471.666L8.086 20a1.5 1.5 0 002.475 1.56l9-9A1.5 1.5 0 0018.5 10h-3.997a.5.5 0 01-.472-.667z" />
+</symbol>
+<symbol id="iconGleanStar" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"/>
+</symbol>
+<symbol id="iconGleanStarOutline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"/>
+</symbol>
+<symbol id="iconGleanClock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+</symbol>
+<symbol id="iconGleanShield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>
+</symbol>
+<symbol id="iconGleanShieldCheck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>
+</symbol>
+<symbol id="iconGleanUser" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M17.925 20.056a6 6 0 0 0-11.851.001"/><circle cx="12" cy="11" r="4"/><circle cx="12" cy="12" r="10"/>
+</symbol>`);
 
         // 设置只在此处加载一次；面板/弹窗都读这个缓存
         this.settings = await loadSettings(this);
@@ -245,6 +324,7 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
         this.addCommand({ langKey: "cmd.openSource", callback: () => void this.openCurrentSource() });
         this.addCommand({ langKey: "cmd.excerptQuote", callback: () => void this.excerptQuoteFromSelection() });
         this.addCommand({ langKey: "cmd.readerHelp", callback: () => this.showReaderHelp() });
+        this.addCommand({ langKey: "cmd.roamingPick", callback: () => void this.triggerRoamingPick() });
 
         // 右键菜单"加入读库"（收录入口三件套之一）
         this.eventBus.on("open-menu-content", this.onMenuContent);
@@ -360,6 +440,11 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
             }
         })();
 
+        // BL-43: 每日自动本地轮转备份（7 份快照）
+        void import("./services/backup-service").then(({ runDailyAutoBackup }) => {
+            void runDailyAutoBackup(this, this.settings);
+        }).catch(() => undefined);
+
         if (this.isMobile) return;
         if (this.topBarElement) return;
         this.topBarElement = this.addTopBar({
@@ -368,6 +453,12 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
             position: "right",
             callback: () => this.openPanel(),
         });
+        this.topBarContextMenuHandler = (event: MouseEvent) => {
+            event.preventDefault();
+            event.stopPropagation();
+            this.showTopBarContextMenu(event);
+        };
+        this.topBarElement.addEventListener("contextmenu", this.topBarContextMenuHandler);
     }
 
     /**
@@ -392,6 +483,9 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
         this.destroyedLibraryTabIds.clear();
         this.pendingReaderDocIds.clear();
         this.destroyedReaderTabIds.clear();
+        this.capturingDocIds?.clear();
+        this.statusBusyDocIds?.clear();
+        this.inboxMigrating = false;
         if (this.onboardingTimer !== null) {
             clearTimeout(this.onboardingTimer);
             this.onboardingTimer = null;
@@ -411,6 +505,10 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
         this.eventBus.off("sync-end", this.onSyncEnd);
         this.disposeReadingContext?.();
         this.disposeReadingContext = null;
+        if (this.topBarElement && this.topBarContextMenuHandler) {
+            this.topBarElement.removeEventListener("contextmenu", this.topBarContextMenuHandler);
+            this.topBarContextMenuHandler = undefined;
+        }
         this.topBarElement = undefined;
         // dock/tab 的 Svelte 实例由 addDock/addTab 的 destroy 回调负责卸载
     }
@@ -626,7 +724,8 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
     /** 当前文档显式改状态（读完/稍后/归档）；done 走同一打卡桥钩子。 */
     async markCurrentStatus(status: "done" | "later" | "archived"): Promise<void> {
         const id = this.requireCurrentDoc();
-        if (!id) return;
+        if (!id || this.statusBusyDocIds.has(id)) return;
+        this.statusBusyDocIds.add(id);
         try {
             const result = await batchSetStatusDetailed(this, [id], status);
             if (result.ok !== 1) {
@@ -642,6 +741,8 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
         } catch (error) {
             console.warn("[glean] 状态命令失败:", error);
             showMessage(t(this.i18n, "msg.statusFailed"), 3000);
+        } finally {
+            this.statusBusyDocIds.delete(id);
         }
     }
 
@@ -815,6 +916,65 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
         }
     }
 
+    /** 全局漫游盲盒：随机抽选一篇文章重温 */
+    async triggerRoamingPick(): Promise<void> {
+        try {
+            const { loadIndex } = await import("./services/index-store");
+            const { pickRoamingArticle } = await import("./domain/roaming");
+            const { openRoamingDialog } = await import("./ui/roaming-dialog");
+            const index = await loadIndex(this);
+            const candidates = Object.values(index.clips);
+            const pick = pickRoamingArticle(candidates);
+            if (pick) {
+                openRoamingDialog(this, pick, (id, readPoint) => {
+                    this.openReadingDocument(id, readPoint);
+                });
+            } else {
+                showMessage(t(this.i18n, "roaming.emptyPool"), 2500);
+            }
+        } catch (error) {
+            console.warn("[glean] 漫游抽选失败:", error);
+            showMessage(t(this.i18n, "msg.actionFailed"), 2500);
+        }
+    }
+
+    private showTopBarContextMenu(event: MouseEvent): void {
+        const menu = new Menu("glean-topbar-context-menu");
+        menu.addItem({
+            iconHTML: "",
+            label: t(this.i18n, "topbarMenu.resurface"),
+            click: () => this.openPanel("resurface"),
+        });
+        menu.addItem({
+            iconHTML: "",
+            label: t(this.i18n, "topbarMenu.library"),
+            click: () => this.openPanel("library"),
+        });
+        menu.addItem({
+            iconHTML: "",
+            label: t(this.i18n, "topbarMenu.highlights"),
+            click: () => this.openPanel("highlights"),
+        });
+        menu.addItem({
+            iconHTML: "",
+            label: t(this.i18n, "topbarMenu.stats"),
+            click: () => this.openPanel("stats"),
+        });
+        menu.addSeparator();
+        menu.addItem({
+            iconHTML: "",
+            label: t(this.i18n, "topbarMenu.roaming"),
+            click: () => void this.triggerRoamingPick(),
+        });
+        menu.addSeparator();
+        menu.addItem({
+            iconHTML: "",
+            label: t(this.i18n, "topbarMenu.settings"),
+            click: () => this.openSettings(),
+        });
+        menu.open({ x: event.clientX, y: event.clientY });
+    }
+
     private cardSelection(): { quote: string; docId: string; blockId: string } | null {
         const selection = window.getSelection();
         if (!selection || selection.isCollapsed) return null;
@@ -828,38 +988,43 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
 
     /** 收集箱右键"迁入读库"：open-menu-inbox detail.ids → 逐条取详情迁移（T-1500） */
     private migrateFromInbox = async (ids: string[]): Promise<void> => {
+        if (this.inboxMigrating) return;
         const notebookId = this.settings.anchorNotebooks[0];
         if (!notebookId) {
             showMessage(t(this.i18n, "panel.noAnchorHint"), 4000);
             return;
         }
-        let ok = 0;
-        let duplicates = 0;
-        for (const id of ids) {
-            try {
-                const shorthand = await getShorthand(id);
-                if (!shorthand) continue;
-                const result = await migrateShorthand(this, shorthand, { notebookId });
-                if (result.duplicate) {
-                    duplicates += 1;
-                    showMessage(`${t(this.i18n, "inbox.duplicate")}: ${result.existing?.title || result.existing?.hpath || ""}`, 3500);
-                    continue;
+        this.inboxMigrating = true;
+        try {
+            let ok = 0;
+            let duplicates = 0;
+            for (const id of ids) {
+                try {
+                    const shorthand = await getShorthand(id);
+                    if (!shorthand) continue;
+                    const result = await migrateShorthand(this, shorthand, { notebookId });
+                    if (result.duplicate) {
+                        duplicates += 1;
+                        showMessage(`${t(this.i18n, "inbox.duplicate")}: ${result.existing?.title || result.existing?.hpath || ""}`, 3500);
+                        continue;
+                    }
+                    ok += 1;
+                } catch (error) {
+                    console.warn("[glean] 收集箱迁入失败:", error);
+                    const kind = isKernelRequestError(error) ? error.kind : kernelErrorKind(error);
+                    const messageKey = kind === "permission" ? "inbox.permissionRequired"
+                        : kind === "network" ? "inbox.networkFailed"
+                        : kind === "timeout" ? "inbox.timeout"
+                        : "msg.actionFailed";
+                    showMessage(t(this.i18n, messageKey), 4500);
                 }
-                ok += 1;
-            } catch (error) {
-                console.warn("[glean] 收集箱迁入失败:", error);
-                const kind = isKernelRequestError(error) ? error.kind : kernelErrorKind(error);
-                const messageKey = kind === "permission" ? "inbox.permissionRequired"
-                    : kind === "network" ? "inbox.networkFailed"
-                    : kind === "timeout" ? "inbox.timeout"
-                    : "msg.actionFailed";
-                showMessage(t(this.i18n, messageKey), 4500);
             }
+            if (ok > 0) showMessage(t(this.i18n, "inbox.migrated"), 3000);
+            if (duplicates > 0) showMessage(`${t(this.i18n, "inbox.duplicate")}（${duplicates}）`, 3500);
+            this.notifyDataChanged();
+        } finally {
+            this.inboxMigrating = false;
         }
-        if (ok > 0) showMessage(t(this.i18n, "inbox.migrated"), 3000);
-        if (duplicates > 0) showMessage(`${t(this.i18n, "inbox.duplicate")}（${duplicates}）`, 3500);
-        this.notifyDataChanged();
-        void ok;
     };
 
     private readonly onSyncEnd = (): void => {
@@ -879,8 +1044,8 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
             } else if (action === "settings") {
                 this.openSettings();
             } else if (action === "open") {
-                const id = parsed.searchParams.get("id");
-                if (id) this.openReadingDocument(id);
+                const id = parsed.searchParams.get("id")?.trim();
+                if (id && /^[\w-]+$/.test(id)) this.openReadingDocument(id);
             } else if (action === "capture") {
                 void this.addCurrentDocToLibrary();
             }
@@ -908,6 +1073,8 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
             showMessage(t(this.i18n, "msg.noSelection"), 3000);
             return;
         }
+        if (this.capturingDocIds.has(docId)) return;
+        this.capturingDocIds.add(docId);
         try {
             const result = await captureDocument(this, docId, { src: "manual" });
             showMessage(
@@ -921,6 +1088,8 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
         } catch (error) {
             console.warn("[glean] 手动收录失败:", error);
             showMessage(t(this.i18n, "msg.captureFailed"), 3500);
+        } finally {
+            this.capturingDocIds.delete(docId);
         }
     }
 

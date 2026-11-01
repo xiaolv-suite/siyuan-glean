@@ -328,6 +328,11 @@ window.__siyuanShim = {
       def.init.call(tabObj);
       return tabObj;
     }
+    if (opts?.doc?.id) {
+      window.__openedDocTabs = window.__openedDocTabs || [];
+      window.__openedDocTabs.push(opts.doc.id);
+      return { id: "tab-doc-" + opts.doc.id };
+    }
     return { id: "tab-doc" };
   },
   fetchSyncPost: async (url, data) => {
@@ -338,6 +343,85 @@ window.__siyuanShim = {
     });
     return await res.json();
   }
+};
+
+// 挂载小驴全生态兄弟插件 Mock 桩环境（闪卡、人脉、常用、打卡）
+window.__receivedExtracts = [];
+window.__capturedQuotes = [];
+window.__appendedFacts = [];
+window.__recordedCheckinEvents = [];
+window.__cardsReviewOpened = false;
+
+window.xiaolvCards = {
+  protocol: 1,
+  capabilities: ["receiveExtract", "due", "openReview"],
+  whenReady: async () => true,
+  hasCapability: (name) => ["receiveExtract", "due", "openReview"].includes(name),
+  receiveExtract: async (envelope) => {
+    window.__receivedExtracts.push(envelope);
+    return { ok: true, data: { blockID: "mock-card-" + Date.now(), enrolled: true } };
+  },
+  getDueSummary: async () => ({
+    ok: true,
+    data: {
+      unreviewedCount: 8,
+      unreviewedNewCardCount: 5,
+      unreviewedOldCardCount: 3,
+      todayReviewedCount: 12,
+      updatedAt: new Date().toISOString(),
+    },
+  }),
+  openReview: async () => {
+    window.__cardsReviewOpened = true;
+    return { ok: true };
+  },
+};
+
+window.LvContacts = {
+  protocol: 2,
+  apiVersion: 2,
+  version: "0.7.6",
+  capabilities: ["searchPeople", "getPerson", "ensurePerson", "recordInteraction", "appendFact"],
+  whenReady: async () => true,
+  hasCapability: (name) => ["searchPeople", "getPerson", "ensurePerson", "recordInteraction", "appendFact"].includes(name),
+  searchPeople: async (kw) => {
+    if (kw && kw.includes("卡尔·纽波特")) {
+      return [{ docId: "person-doc-cal", itemId: "p_cal", name: "卡尔·纽波特", group: "学者", tags: ["深度工作"] }];
+    }
+    return [];
+  },
+  ensurePerson: async (name, options) => {
+    window.__ensuredPerson = { name, options };
+    return { docId: "person-doc-new", itemId: "p_new", name, group: "未分组", tags: [], created: true };
+  },
+  appendFact: async (personDocId, input) => {
+    window.__appendedFacts.push({ personDocId, input });
+    return { id: "fact-" + Date.now(), ...input };
+  },
+};
+
+window.xiaolvCommon = {
+  protocol: 1,
+  capabilities: ["captureQuote", "search", "get"],
+  whenReady: async () => true,
+  hasCapability: (name) => ["captureQuote", "search", "get"].includes(name),
+  captureQuote: async (input) => {
+    window.__capturedQuotes.push(input);
+    return { ok: true, data: { id: "common-quote-" + Date.now() } };
+  },
+};
+
+window.siyuanCheckin = {
+  protocol: "siyuan-checkin",
+  version: 5,
+  capabilities: ["streaks.read", "events.record"],
+  whenReady: async () => true,
+  hasCapability: (name) => ["streaks.read", "events.record"].includes(name),
+  getStreaks: () => [{ itemId: "habit-reading", current: 7, longest: 21 }],
+  recordEvent: async (envelope) => {
+    window.__recordedCheckinEvents.push(envelope);
+    return { ok: true };
+  },
 };
 
 window.module = { exports: {} };
@@ -497,6 +581,31 @@ window.require = (id) => {
         assert.equal(resurfaceMetrics.hasBookmarkBadge, true, "继续阅读卡片必须显示真实书签徽标");
         assert.equal(resurfaceMetrics.contextFoldClosed, true);
         assert.equal(resurfaceMetrics.moreMenuClosed, true);
+
+        // 1.1 走查小驴闪卡联动：校验「🗂️ 闪卡待复习 16 张」快捷胶囊与一键直达复习接口
+        for (let i = 0; i < 20; i += 1) {
+            const hasDuePill = await evalInPage(`Boolean(document.querySelector(".glean-surf-cards-due-pill"))`);
+            if (hasDuePill) break;
+            await new Promise((r) => setTimeout(r, 100));
+        }
+        const cardsDueCheck = await evalInPage(`(async () => {
+            const pill = document.querySelector(".glean-surf-cards-due-pill");
+            const text = pill?.textContent?.trim() || "";
+            pill?.click();
+            for (let i = 0; i < 20; i += 1) {
+                if (window.__cardsReviewOpened) break;
+                await new Promise((r) => setTimeout(r, 50));
+            }
+            return {
+                hasPill: Boolean(pill),
+                text,
+                reviewOpened: Boolean(window.__cardsReviewOpened),
+            };
+        })()`);
+        assert.equal(cardsDueCheck.hasPill, true, "今日拾遗操作区必须呈现小驴闪卡待复习快捷胶囊");
+        assert.ok(cardsDueCheck.text.includes("16"), "闪卡胶囊必须显示正确的待复习卡片总数（16张）");
+        assert.equal(cardsDueCheck.reviewOpened, true, "点击闪卡待复习胶囊必须调用小驴闪卡 openReview 接口直达复习");
+
         await saveShot("01-resurface-live.png");
 
         // 2. 在浏览器中点击展开「按可用时间与主题挑一篇」和卡片「⋯ 更多操作」
@@ -600,9 +709,12 @@ window.require = (id) => {
             window.__toasts.length = 0;
             document.querySelector(".glean-preview__fav-btn")?.click();
         })()`);
-        for (let i = 0; i < 20; i += 1) {
-            const favActive = await evalInPage(`Boolean(document.querySelector(".glean-preview__fav-btn--active"))`);
-            if (favActive && (await evalInPage(`window.__toasts.length`)) > 0) break;
+        for (let i = 0; i < 25; i += 1) {
+            const state = await evalInPage(`({
+                favActive: Boolean(document.querySelector(".glean-preview__fav-btn--active")),
+                rowFavBadge: Boolean(document.querySelector(".glean-drow .glean-tier-badge--fav")),
+            })`);
+            if (state.favActive && state.rowFavBadge) break;
             await new Promise((r) => setTimeout(r, 150));
         }
         const favLinkage = await evalInPage(`({
@@ -783,6 +895,62 @@ window.require = (id) => {
         assert.equal(highlightCheck.hasCardPopover, true, "摘录卡片低频操作必须收纳进 ActionPopover（BL-13）");
         assert.equal(highlightCheck.hasAnnotationTag, true, "摘录视图必须展示批注标记徽标（📌⭐📖✔️❓）");
         assert.equal(highlightCheck.hasAnnotationKind, true, "摘录视图必须展示批注类型来源徽标（💬鲸鱼批注/📝块备注）");
+
+        // 8.1 走查全库摘录墙跨插件联动：在单卡 ActionPopover 中一键推入小驴闪卡与存入小驴常用片段
+        const hlFederationRes = await evalInPage(`(async () => {
+            const cardPopoverTrigger = document.querySelector(".glean-highlights__tools--card .glean-action-popover__trigger");
+            cardPopoverTrigger?.click();
+            const popBody = document.querySelector(".glean-highlights__tools--card .glean-action-popover__body");
+            if (popBody && typeof popBody.showPopover === "function") {
+                try { popBody.showPopover(); } catch {}
+            }
+            await new Promise((r) => setTimeout(r, 100));
+
+            const pushCardsBtn = Array.from(popBody?.querySelectorAll("button") || []).find((b) => (b.textContent || "").includes("闪卡"));
+            const pushCommonBtn = Array.from(popBody?.querySelectorAll("button") || []).find((b) => (b.textContent || "").includes("常用"));
+
+            const initialExtractCount = window.__receivedExtracts?.length || 0;
+            const initialQuoteCount = window.__capturedQuotes?.length || 0;
+
+            let clickError = "";
+            try {
+                pushCardsBtn?.click();
+            } catch (e) {
+                clickError = String(e?.message || e);
+            }
+            for (let i = 0; i < 20; i += 1) {
+                if ((window.__receivedExtracts?.length || 0) > initialExtractCount) break;
+                await new Promise((r) => setTimeout(r, 50));
+            }
+
+            if (popBody && typeof popBody.showPopover === "function") {
+                try { popBody.showPopover(); } catch {}
+            }
+            await new Promise((r) => setTimeout(r, 100));
+
+            let commonClickError = "";
+            try {
+                pushCommonBtn?.click();
+            } catch (e) {
+                commonClickError = String(e?.message || e);
+            }
+            for (let i = 0; i < 20; i += 1) {
+                if ((window.__capturedQuotes?.length || 0) > initialQuoteCount) break;
+                await new Promise((r) => setTimeout(r, 50));
+            }
+
+            return {
+                hasPushCards: Boolean(pushCardsBtn),
+                hasPushCommon: Boolean(pushCommonBtn),
+                extractCountAfter: window.__receivedExtracts?.length || 0,
+                quoteCountAfter: window.__capturedQuotes?.length || 0,
+            };
+        })()`);
+        assert.equal(hlFederationRes.hasPushCards, true, "摘录卡片菜单中必须提供「推入小驴闪卡」入口");
+        assert.equal(hlFederationRes.hasPushCommon, true, "摘录卡片菜单中必须提供「存入小驴常用」入口");
+        assert.ok(hlFederationRes.extractCountAfter >= 1, "点击推入闪卡必须成功触发 window.xiaolvCards.receiveExtract");
+        assert.ok(hlFederationRes.quoteCountAfter >= 1, "点击存入常用必须成功触发 window.xiaolvCommon.captureQuote");
+
         await saveShot("08-highlights-grouped-live.png");
 
         // 真实点击摘录聚类头部的「创建摘录笔记」按钮，验证 toast 反馈并在思源内核验证新笔记文档落盘 + internal:true 标记
@@ -836,13 +1004,209 @@ window.require = (id) => {
         await new Promise((r) => setTimeout(r, 200));
         assert.equal(await evalInPage(`Boolean(document.querySelector(".b3-dialog--open"))`), false);
 
-        // 10. 打开伴读阅读器（ReaderTab）并开启 5 阶语义折叠阅读（FoldedReaderView），验证容器块递归采集与代码块排除（BL-05/BL-06）
+        // 10. 打开伴读阅读器（ReaderTab），对全新三区架构顶栏和多 Tab 伴生栏进行全量按钮与输入组件有效性验证
         await evalInPage(`window.__gleanPlugin?.openReader?.(${JSON.stringify(fulltextDocId)})`);
         for (let i = 0; i < 30; i += 1) {
-            const hasReader = await evalInPage(`Boolean(document.querySelector(".glean-reader"))`);
-            if (hasReader) break;
+            const hasReaderAndMeta = await evalInPage(`Boolean(document.querySelector(".glean-reader")) && Boolean(document.querySelector(".glean-reader__toolbar-meta"))`);
+            if (hasReaderAndMeta) break;
             await new Promise((r) => setTimeout(r, 200));
         }
+
+        // 10.1 验证顶栏三区布局结构与元数据信息（左中右）
+        const toolbarStructure = await evalInPage(`(() => {
+            const left = document.querySelector(".glean-reader__toolbar-left");
+            const center = document.querySelector(".glean-reader__toolbar-center");
+            const right = document.querySelector(".glean-reader__toolbar-right");
+            const title = left?.querySelector(".glean-reader__toolbar-title")?.textContent?.trim() || "";
+            const meta = left?.querySelector(".glean-reader__toolbar-meta")?.textContent?.trim() || "";
+            const backBtn = Boolean(left?.querySelector(".glean-reader__toolbar-back"));
+            return {
+                hasLeft: Boolean(left),
+                hasCenter: Boolean(center),
+                hasRight: Boolean(right),
+                hasBackBtn: backBtn,
+                title,
+                hasMeta: meta.length > 0,
+            };
+        })()`);
+        assert.ok(toolbarStructure.hasLeft && toolbarStructure.hasCenter && toolbarStructure.hasRight, "顶栏必须具备清晰的左中右三区结构");
+        assert.equal(toolbarStructure.hasBackBtn, true, "顶栏左侧必须具备返回读库按钮");
+        assert.ok(toolbarStructure.title.length > 0, "顶栏左侧必须显示文章标题");
+        assert.equal(toolbarStructure.hasMeta, true, "顶栏左侧必须显示载体、字数与阅读时长元数据");
+
+        // 10.1.1 走查小驴人脉生态联动：顶栏自动识别已知作者徽标，点击一键直达作者人脉文档
+        for (let i = 0; i < 20; i += 1) {
+            const hasAuthorBtn = await evalInPage(`Boolean(document.querySelector(".glean-reader__author-contact-btn"))`);
+            if (hasAuthorBtn) break;
+            await new Promise((r) => setTimeout(r, 100));
+        }
+        const authorLinkage = await evalInPage(`(async () => {
+            const btn = document.querySelector(".glean-reader__author-contact-btn");
+            const btnText = btn?.textContent?.trim() || "";
+            btn?.click();
+            for (let i = 0; i < 20; i += 1) {
+                if ((window.__openedDocTabs || []).length > 0) break;
+                await new Promise((r) => setTimeout(r, 50));
+            }
+            return {
+                hasBtn: Boolean(btn),
+                btnText,
+                openedDoc: (window.__openedDocTabs || [])[(window.__openedDocTabs || []).length - 1],
+            };
+        })()`);
+        assert.equal(authorLinkage.hasBtn, true, "顶栏必须自动识别作者为小驴人脉联系人并渲染人脉徽标");
+        assert.ok(authorLinkage.btnText.includes("卡尔·纽波特"), "人脉徽标必须正确展示作者姓名");
+        assert.equal(authorLinkage.openedDoc, "person-doc-cal", "点击作者人脉徽标必须直达作者在思源中的人脉主档案文档");
+
+        // 10.2 验证顶栏中间模式分段器（伴读 / 原生编辑模式切换）
+        const modeSwitchResult = await evalInPage(`(async () => {
+            const segBtns = Array.from(document.querySelectorAll(".glean-reader__mode .glean-seg__btn"));
+            if (segBtns.length < 2) return { ok: false, reason: "seg buttons not found" };
+            // 切换为 edit 原生编辑模式
+            segBtns[1].click();
+            await new Promise((r) => setTimeout(r, 120));
+            const editModeActive = document.querySelector(".glean-reader")?.getAttribute("data-reader-mode") === "edit";
+            // 切回 read 伴读模式
+            segBtns[0].click();
+            await new Promise((r) => setTimeout(r, 120));
+            const readModeActive = document.querySelector(".glean-reader")?.getAttribute("data-reader-mode") === "read";
+            return { ok: true, editModeActive, readModeActive };
+        })()`);
+        assert.equal(modeSwitchResult.ok, true, "必须存在模式切换分段按钮");
+        assert.equal(modeSwitchResult.editModeActive, true, "点击原生编辑分段按钮必须切换至 edit 模式");
+        assert.equal(modeSwitchResult.readModeActive, true, "点击伴读分段按钮必须切回 read 模式");
+
+        // 10.3 验证顶栏右侧搜索条（Ctrl+F 打开、关键字输入、匹配计数、大小写切换、关闭）
+        await evalInPage(`document.querySelector(".glean-reader__toolbar-search")?.click()`);
+        for (let i = 0; i < 20; i += 1) {
+            const searchOpened = await evalInPage(`Boolean(document.querySelector(".glean-reader-search"))`);
+            if (searchOpened) break;
+            await new Promise((r) => setTimeout(r, 100));
+        }
+        assert.equal(await evalInPage(`Boolean(document.querySelector(".glean-reader-search"))`), true, "点击顶栏搜索按钮必须弹出搜索条");
+
+        // 在搜索输入框中键入关键词并验证匹配与大小写切换
+        const searchInputRes = await evalInPage(`(async () => {
+            const input = document.querySelector(".glean-reader-search__input");
+            if (!input) return { ok: false };
+            input.value = "段落";
+            input.dispatchEvent(new Event("input", { bubbles: true }));
+            await new Promise((r) => setTimeout(r, 100));
+            const countText = document.querySelector(".glean-reader-search__count")?.textContent?.trim() || "";
+            // 点击区分大小写切换
+            const caseBtn = Array.from(document.querySelectorAll(".glean-reader-search__btn")).find((b) => b.textContent?.trim() === "Aa");
+            const initialCase = caseBtn?.getAttribute("aria-pressed");
+            caseBtn?.click();
+            await new Promise((r) => setTimeout(r, 100));
+            const toggledCase = caseBtn?.getAttribute("aria-pressed");
+            // 点击关闭搜索
+            const closeBtn = document.querySelector(".glean-reader-search__btn--close");
+            closeBtn?.click();
+            return {
+                ok: true,
+                hasCount: countText.length > 0,
+                initialCase,
+                toggledCase,
+            };
+        })()`);
+        assert.equal(searchInputRes.ok, true, "搜索输入框与操作必须有效执行");
+        assert.notEqual(searchInputRes.initialCase, searchInputRes.toggledCase, "区分大小写按钮点击后必须切换状态");
+        await new Promise((r) => setTimeout(r, 150));
+        assert.equal(await evalInPage(`Boolean(document.querySelector(".glean-reader-search"))`), false, "点击关闭搜索必须收起搜索条");
+
+        // 10.4 验证顶栏 Aa 排版设置 Popover（字号切换、版心切换、行高切换、调色板点击）
+        await evalInPage(`document.querySelector(".glean-reader__toolbar-appearance")?.click()`);
+        for (let i = 0; i < 15; i += 1) {
+            const popoverOpen = await evalInPage(`Boolean(document.querySelector(".glean-reader__appearance-popover[open]"))`);
+            if (popoverOpen) break;
+            await new Promise((r) => setTimeout(r, 100));
+        }
+        assert.equal(await evalInPage(`Boolean(document.querySelector(".glean-reader__appearance-popover[open]"))`), true, "点击 Aa 按钮必须展开排版 Popover");
+
+        const appearanceRes = await evalInPage(`(async () => {
+            const popover = document.querySelector(".glean-reader__appearance-popover");
+            const selects = popover?.querySelectorAll("select");
+            const fontSelect = selects?.[0];
+            const heightSelect = selects?.[1];
+            const widthSelect = selects?.[2];
+            if (fontSelect) {
+                fontSelect.value = "large";
+                fontSelect.dispatchEvent(new Event("change", { bubbles: true }));
+            }
+            if (heightSelect) {
+                heightSelect.value = "relaxed";
+                heightSelect.dispatchEvent(new Event("change", { bubbles: true }));
+            }
+            if (widthSelect) {
+                widthSelect.value = "wide";
+                widthSelect.dispatchEvent(new Event("change", { bubbles: true }));
+            }
+            const palettes = popover?.querySelectorAll(".glean-reader__palette-opt");
+            palettes?.[1]?.click();
+            await new Promise((r) => setTimeout(r, 120));
+            const readerEl = document.querySelector(".glean-reader");
+            const fontSizeAttr = readerEl?.getAttribute("data-reader-font-size") || "";
+            const widthAttr = readerEl?.getAttribute("data-reader-width") || "";
+            // 收起 Popover
+            popover.removeAttribute("open");
+            return {
+                selectCount: selects?.length || 0,
+                paletteCount: palettes?.length || 0,
+                fontSizeAttr,
+                widthAttr,
+            };
+        })()`);
+        assert.equal(appearanceRes.selectCount, 3, "排版面板必须提供字号、宽度、行高 3 项核心调节项");
+        assert.ok(appearanceRes.paletteCount >= 6, "排版面板必须提供 6 种高品质阅读调色板");
+        assert.equal(appearanceRes.fontSizeAttr, "large", "修改字号选择必须同步至 data-reader-font-size");
+        assert.equal(appearanceRes.widthAttr, "wide", "修改版心选择必须同步至 data-reader-width");
+
+        // 10.5 验证顶栏禅模式（Zen mode）与收藏切换
+        const zenRes = await evalInPage(`(async () => {
+            const zenBtn = document.querySelector(".glean-reader__toolbar-zen");
+            zenBtn?.click();
+            await new Promise((r) => setTimeout(r, 120));
+            const isZen = document.querySelector(".glean-reader")?.classList.contains("glean-reader--zen");
+            zenBtn?.click();
+            await new Promise((r) => setTimeout(r, 120));
+            const exitedZen = !document.querySelector(".glean-reader")?.classList.contains("glean-reader--zen");
+            return { isZen, exitedZen };
+        })()`);
+        assert.equal(zenRes.isZen, true, "点击禅模式按钮必须激活 .glean-reader--zen");
+        assert.equal(zenRes.exitedZen, true, "再次点击禅模式按钮必须退出禅模式");
+
+        const favRes = await evalInPage(`(async () => {
+            const favBtn = document.querySelector(".glean-reader__toolbar-fav");
+            const initActive = favBtn?.classList.contains("glean-reader__toolbar-fav--active");
+            favBtn?.click();
+            await new Promise((r) => setTimeout(r, 150));
+            const toggledActive = favBtn?.classList.contains("glean-reader__toolbar-fav--active");
+            return { initActive, toggledActive };
+        })()`);
+        assert.notEqual(favRes.initActive, favRes.toggledActive, "点击收藏按钮必须切换收藏激活状态");
+
+        // 10.6 验证伴生栏折叠/展开切换按钮
+        const sidebarToggleRes = await evalInPage(`(async () => {
+            const sideBtn = document.querySelector(".glean-reader__toolbar-sidebar");
+            const side = document.querySelector(".glean-reader__side");
+            sideBtn?.click();
+            for (let i = 0; i < 20; i += 1) {
+                if (!sideBtn?.disabled && side?.hasAttribute("hidden")) break;
+                await new Promise((r) => setTimeout(r, 100));
+            }
+            const hiddenAfterCollapse = side?.hasAttribute("hidden");
+            sideBtn?.click();
+            for (let i = 0; i < 20; i += 1) {
+                if (!sideBtn?.disabled && !side?.hasAttribute("hidden")) break;
+                await new Promise((r) => setTimeout(r, 100));
+            }
+            const visibleAfterExpand = !side?.hasAttribute("hidden");
+            return { hiddenAfterCollapse, visibleAfterExpand };
+        })()`);
+        assert.equal(sidebarToggleRes.hiddenAfterCollapse, true, "点击伴生栏按钮必须收起伴生侧边栏");
+        assert.equal(sidebarToggleRes.visibleAfterExpand, true, "再次点击伴生栏按钮必须重新展开伴生侧边栏");
+
+        // 10.7 验证顶栏「5 阶语义折叠」按钮直接触发折叠阅读（FoldedReaderView），验证容器块递归采集与代码块排除（BL-05/BL-06）
         await evalInPage(`document.querySelector(".glean-reader__toolbar-fold")?.click()`);
         for (let i = 0; i < 30; i += 1) {
             const hasFold = await evalInPage(`document.querySelectorAll(".glean-fold-card").length > 0`);
@@ -863,11 +1227,177 @@ window.require = (id) => {
         assert.equal(foldCheck.hasCodeNoise, false, "折叠阅读器必须按思源短类型码（c）排除代码块噪音（BL-06）");
         await saveShot("09-reader-folded-live.png");
 
-        // 11. 在伴读阅读器中切回「全部」伴生栏，等待大纲加载完成后点击「渐进切片」打开弹窗并点击「一键生成切片子文档」，验证弹窗收起、toast 反馈与思源内核子文档真实落盘
-        await evalInPage(`(() => {
-            const navBtns = Array.from(document.querySelectorAll(".glean-reader__side-nav-btn"));
-            navBtns[0]?.click();
+        // 10.8 验证伴生栏全 Tab 切换（折叠 -> 批注 -> 工具 -> 大纲）及其组件有效性
+        const tabCheckRes = await evalInPage(`(async () => {
+            const foldBtn = document.querySelector(".glean-reader__side-nav-btn--fold");
+            const notesBtn = document.querySelector(".glean-reader__side-nav-btn--notes");
+            const toolsBtn = document.querySelector(".glean-reader__side-nav-btn--tools");
+            const outlineBtn = document.querySelector(".glean-reader__side-nav-btn--outline");
+
+            // 切到 notes 批注 tab
+            notesBtn?.click();
+            await new Promise((r) => setTimeout(r, 120));
+            const hasNotesSection = Boolean(document.querySelector(".glean-reader__section"));
+            const hasNotesCopyBtn = Boolean(document.querySelector(".glean-reader__highlights-copy-all"));
+
+            // 切到 tools 工具 tab
+            toolsBtn?.click();
+            await new Promise((r) => setTimeout(r, 120));
+            const hasStatusActions = Boolean(document.querySelector(".glean-reader__status-actions"));
+            const syncPills = document.querySelectorAll(".glean-reader__sync-pill");
+
+            // 切回 outline 大纲 tab
+            outlineBtn?.click();
+            await new Promise((r) => setTimeout(r, 120));
+            const hasCapsule = Boolean(document.querySelector(".glean-reader__metric-capsule"));
+
+            return {
+                hasFoldBtn: Boolean(foldBtn),
+                hasNotesBtn: Boolean(notesBtn),
+                hasToolsBtn: Boolean(toolsBtn),
+                hasOutlineBtn: Boolean(outlineBtn),
+                hasNotesSection,
+                hasStatusActions,
+                syncPillCount: syncPills.length,
+                hasCapsule,
+            };
         })()`);
+        assert.equal(tabCheckRes.hasFoldBtn && tabCheckRes.hasNotesBtn && tabCheckRes.hasToolsBtn && tabCheckRes.hasOutlineBtn, true, "伴生栏必须渲染大纲、批注、折叠、工具 4 个独立导航 Tab");
+        assert.equal(tabCheckRes.hasNotesSection, true, "批注 Tab 下必须渲染高亮与批注管理区");
+        assert.equal(tabCheckRes.hasStatusActions, true, "工具 Tab 下必须渲染文章阅读状态控制组");
+        assert.ok(tabCheckRes.syncPillCount >= 2, "工具 Tab 下必须提供置顶元数据 Callout 与 Daily Note 快捷记录按钮");
+        assert.equal(tabCheckRes.hasCapsule, true, "切回大纲 Tab 必须展现阅读度量胶囊");
+
+        // 10.9 伴生栏批注 Tab 深度走查：卡片推入小驴闪卡、存入小驴常用与呼出金句卡片模态窗
+        const notesDeepRes = await evalInPage(`(async () => {
+            const notesBtn = document.querySelector(".glean-reader__side-nav-btn--notes");
+            notesBtn?.click();
+            for (let i = 0; i < 20; i += 1) {
+                if (document.querySelector(".glean-reader__push-cards-btn")) break;
+                await new Promise((r) => setTimeout(r, 100));
+            }
+            const pushCardsBtn = document.querySelector(".glean-reader__push-cards-btn");
+            const pushCommonBtn = document.querySelector(".glean-reader__push-common-btn");
+            const cardFooterOps = Array.from(document.querySelectorAll(".glean-reader__highlight-footer .glean-op-btn"));
+            const quoteCardBtn = cardFooterOps.find((b) => (b.getAttribute("title") || "").includes("金句卡片") || (b.innerHTML || "").includes("#iconGleanSpark"));
+
+            const initialCards = window.__receivedExtracts?.length || 0;
+            const initialCommon = window.__capturedQuotes?.length || 0;
+
+            pushCardsBtn?.click();
+            for (let i = 0; i < 20; i += 1) {
+                if ((window.__receivedExtracts?.length || 0) > initialCards) break;
+                await new Promise((r) => setTimeout(r, 50));
+            }
+
+            pushCommonBtn?.click();
+            for (let i = 0; i < 20; i += 1) {
+                if ((window.__capturedQuotes?.length || 0) > initialCommon) break;
+                await new Promise((r) => setTimeout(r, 50));
+            }
+
+            quoteCardBtn?.click();
+            for (let i = 0; i < 20; i += 1) {
+                if (document.querySelector(".glean-quote-card-dialog")) break;
+                await new Promise((r) => setTimeout(r, 100));
+            }
+            const hasQuoteDialog = Boolean(document.querySelector(".glean-quote-card-dialog"));
+            const dialogPushCards = Array.from(document.querySelectorAll(".glean-quote-card-btn")).find((b) => (b.textContent || "").includes("闪卡"));
+            const dialogPushCommon = Array.from(document.querySelectorAll(".glean-quote-card-btn")).find((b) => (b.textContent || "").includes("常用"));
+
+            const preDialogCards = window.__receivedExtracts?.length || 0;
+            const preDialogCommon = window.__capturedQuotes?.length || 0;
+
+            dialogPushCards?.click();
+            for (let i = 0; i < 20; i += 1) {
+                if ((window.__receivedExtracts?.length || 0) > preDialogCards) break;
+                await new Promise((r) => setTimeout(r, 50));
+            }
+
+            dialogPushCommon?.click();
+            for (let i = 0; i < 20; i += 1) {
+                if ((window.__capturedQuotes?.length || 0) > preDialogCommon) break;
+                await new Promise((r) => setTimeout(r, 50));
+            }
+
+            return {
+                hasPushCards: Boolean(pushCardsBtn),
+                hasPushCommon: Boolean(pushCommonBtn),
+                hasQuoteDialog,
+                hasDialogPushCards: Boolean(dialogPushCards),
+                hasDialogPushCommon: Boolean(dialogPushCommon),
+                cardsCount: window.__receivedExtracts?.length || 0,
+                commonCount: window.__capturedQuotes?.length || 0,
+            };
+        })()`);
+        assert.equal(notesDeepRes.hasPushCards, true, "伴生栏批注卡片必须提供推入小驴闪卡按钮");
+        assert.equal(notesDeepRes.hasPushCommon, true, "伴生栏批注卡片必须提供存入小驴常用按钮");
+        assert.equal(notesDeepRes.hasQuoteDialog, true, "点击批注卡片金句图标必须呼出金句卡片生成弹窗（QuoteCardDialog）");
+        assert.equal(notesDeepRes.hasDialogPushCards, true, "金句卡片弹窗底部必须集成「推入小驴闪卡」操作");
+        assert.equal(notesDeepRes.hasDialogPushCommon, true, "金句卡片弹窗底部必须集成「存入小驴常用」操作");
+        assert.ok(notesDeepRes.cardsCount >= 2, "小驴闪卡接收端必须成功接收划词与金句两路摘录");
+        assert.ok(notesDeepRes.commonCount >= 2, "小驴常用片段库必须成功接收批注与金句两路文本");
+
+        // 关闭 QuoteCardDialog 弹窗
+        await sendCdp("Input.dispatchKeyEvent", { type: "keyDown", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27, nativeVirtualKeyCode: 27 });
+        await sendCdp("Input.dispatchKeyEvent", { type: "keyUp", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27, nativeVirtualKeyCode: 27 });
+        await new Promise((r) => setTimeout(r, 200));
+
+        // 10.10 伴生栏工具 Tab 深度走查：作者人脉档案联动与一键直达
+        const toolsDeepRes = await evalInPage(`(async () => {
+            const toolsBtn = document.querySelector(".glean-reader__side-nav-btn--tools");
+            toolsBtn?.click();
+            for (let i = 0; i < 20; i += 1) {
+                if (document.querySelector(".glean-author-editor")) break;
+                await new Promise((r) => setTimeout(r, 100));
+            }
+            const authorEditor = document.querySelector(".glean-author-editor");
+            const editBtn = authorEditor?.querySelector("button.glean-btn");
+            editBtn?.click();
+            for (let i = 0; i < 20; i += 1) {
+                if (authorEditor?.querySelector(".glean-author-editor__current")) break;
+                await new Promise((r) => setTimeout(r, 100));
+            }
+            const currentBlock = authorEditor?.querySelector(".glean-author-editor__current");
+            const authorName = currentBlock?.querySelector("strong")?.textContent?.trim() || "";
+            const linkedContactBtn = currentBlock?.querySelector("button");
+            const prevOpened = (window.__openedDocTabs || []).length;
+            linkedContactBtn?.click();
+            await new Promise((r) => setTimeout(r, 120));
+            const nowOpened = (window.__openedDocTabs || []).length;
+            // 还原关闭作者编辑
+            editBtn?.click();
+            return {
+                hasAuthorEditor: Boolean(authorEditor),
+                authorName,
+                hasLinkedContactBtn: Boolean(linkedContactBtn),
+                openedContact: nowOpened > prevOpened,
+            };
+        })()`);
+        assert.equal(toolsDeepRes.hasAuthorEditor, true, "工具 Tab 必须挂载作者编辑组件");
+        assert.equal(toolsDeepRes.authorName, "卡尔·纽波特", "作者编辑器必须准确读取当前作者");
+        assert.equal(toolsDeepRes.hasLinkedContactBtn, true, "作者编辑器必须呈现已关联合约人脉按钮");
+        assert.equal(toolsDeepRes.openedContact, true, "点击已关联合约人脉按钮必须在思源中打开联系人主文档");
+
+        // 10.11 走查顶栏右侧更多操作 ActionPopover 下拉菜单（漫游/思源原生页签）
+        const topbarPopoverRes = await evalInPage(`(async () => {
+            const trigger = document.querySelector(".glean-reader__toolbar-right .glean-action-popover__trigger");
+            trigger?.click();
+            await new Promise((r) => setTimeout(r, 120));
+            const popBody = document.querySelector(".glean-reader__toolbar-right .glean-action-popover__body");
+            const hasRoam = Boolean(popBody?.querySelector(".glean-reader__toolbar-roam"));
+            const hasNative = Boolean(popBody?.querySelector(".glean-reader__toolbar-native"));
+            // 关闭 Popover
+            trigger?.click();
+            return { hasTrigger: Boolean(trigger), hasRoam, hasNative };
+        })()`);
+        assert.equal(topbarPopoverRes.hasTrigger && topbarPopoverRes.hasRoam && topbarPopoverRes.hasNative, true, "顶栏右侧必须提供更多操作 ActionPopover 下拉菜单（漫游/思源原生页签）");
+
+        // 切回 outline 大纲 tab，为后续切片测试做好准备
+        await evalInPage(`document.querySelector(".glean-reader__side-nav-btn--outline")?.click()`);
+        await new Promise((r) => setTimeout(r, 150));
+
+        // 11. 在伴读阅读器大纲中，等待大纲条目加载完成后点击「渐进切片」打开弹窗并点击「一键生成切片子文档」，验证弹窗收起、toast 反馈与思源内核子文档真实落盘
         for (let i = 0; i < 30; i += 1) {
             const hasSliceBtn = await evalInPage(`document.querySelectorAll(".glean-reader__slice-btn").length >= 3`);
             if (hasSliceBtn) break;
@@ -909,6 +1439,30 @@ window.require = (id) => {
             body: JSON.stringify({ id: sliceDoc.id }),
         }).then((r) => r.json()).then((j) => j.data || {});
         assert.equal(sliceAttrs["custom-clip-status"], "later", "生成的切片子文档必须自动标记 custom-clip-status=later 进入稍后读队列");
+
+        // 11.1 走查顶栏「✓→ 完成并下一篇」主动作与小驴打卡联动（上报真实阅读分钟数）
+        const checkinResult = await evalInPage(`(async () => {
+            const initialCheckins = window.__recordedCheckinEvents?.length || 0;
+            const primaryBtn = document.querySelector(".glean-reader__toolbar-primary");
+            primaryBtn?.click();
+            for (let i = 0; i < 20; i += 1) {
+                if ((window.__recordedCheckinEvents?.length || 0) > initialCheckins) break;
+                await new Promise((r) => setTimeout(r, 150));
+            }
+            const latestCheckin = (window.__recordedCheckinEvents || [])[(window.__recordedCheckinEvents || []).length - 1];
+            return {
+                hasPrimaryBtn: Boolean(primaryBtn),
+                recordedCount: window.__recordedCheckinEvents?.length || 0,
+                itemId: latestCheckin?.itemId,
+                unit: latestCheckin?.unit,
+                hasValue: typeof latestCheckin?.value === "number" && latestCheckin.value > 0,
+            };
+        })()`);
+        assert.equal(checkinResult.hasPrimaryBtn, true, "顶栏右侧必须提供「✓→ 完成并下一篇」核心主按钮");
+        assert.ok(checkinResult.recordedCount >= 1, "点击完成并下一篇必须触发小驴打卡 recordEvent 接口");
+        assert.equal(checkinResult.itemId, "habit-reading", "打卡事件必须正确传递配置的目标打卡项 ID");
+        assert.equal(checkinResult.unit, "min", "打卡事件必须将真实阅读时长单位标记为 min");
+        assert.equal(checkinResult.hasValue, true, "打卡事件必须上报正数值的阅读时长");
 
         // 12. 切换到 360px 真实思源侧边栏（Dock 模式），走查全插件页面排版、无挤压/无折行断言
         await evalInPage(`(() => {
@@ -1071,7 +1625,15 @@ async function main() {
         const plugin = createPluginAdapter(base, token);
         const nbData = await client.apiChecked("/api/notebook/createNotebook", { name: `siyuan-glean-smoke-${Date.now()}` });
         const notebookId = nbData.notebook.id;
-        const settings = { ...DEFAULT_SETTINGS, anchorNotebooks: [notebookId] };
+        const settings = {
+            ...DEFAULT_SETTINGS,
+            anchorNotebooks: [notebookId],
+            integration: {
+                ...DEFAULT_SETTINGS.integration,
+                checkinEnabled: true,
+                checkinItemId: "habit-reading",
+            },
+        };
 
         // Step 1: 扫描与边界核对（普通笔记 vs 全文剪藏候选 vs 仅链接候选）
         const ordinaryDocId = await client.apiChecked("/api/filetree/createDocWithMd", {
@@ -1418,7 +1980,7 @@ async function main() {
                 plugin,
             });
             recordStep(
-                "Step 11 · 真实浏览器全表面交互实测（四视图/看板/摘录聚类/设置/归档分级Esc/伴读折叠器）",
+                "Step 11 · 真实浏览器全表面交互实测（四视图/看板/摘录聚类/设置/归档分级Esc/伴读新架构/生态联动）",
                 true,
                 `${liveRes.screenshots.length} 张交互态截图已输出至 output/e2e-browser-live/ (首屏主按钮 bottom=${liveRes.priBottom}px)`,
             );

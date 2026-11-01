@@ -138,3 +138,36 @@ export async function applyBackupRestore(
         return report;
     } finally { session.busy = false; }
 }
+
+/**
+ * 每日启动时自动化本地轮转备份（BL-43）
+ * 每天仅备份一次，并在 local storage 中保留最近 7 份历史快照
+ */
+export async function runDailyAutoBackup(
+    plugin: Plugin,
+    settings: GleanSettings,
+): Promise<{ ok: boolean; skipped?: boolean; filename?: string }> {
+    const today = new Date().toISOString().slice(0, 10);
+    const indexData = (await plugin.loadData("daily-backup-index.json").catch(() => null)) as {
+        snapshots?: Array<{ date: string; filename: string; count: number; createdAt: string }>;
+    } | null;
+    const snapshots = indexData?.snapshots ?? [];
+    if (snapshots.some((s) => s.date === today)) {
+        return { ok: true, skipped: true };
+    }
+
+    try {
+        const content = await exportLibraryBackup(plugin, settings);
+        const filename = `daily-backup-${today}.json`;
+        await plugin.saveData(filename, content);
+        const nextSnapshots = [
+            { date: today, filename, count: Object.keys(settings).length, createdAt: new Date().toISOString() },
+            ...snapshots,
+        ].slice(0, 7);
+        await plugin.saveData("daily-backup-index.json", { snapshots: nextSnapshots });
+        return { ok: true, filename };
+    } catch (error) {
+        console.warn("[glean] 自动本地轮转备份失败:", error);
+        return { ok: false };
+    }
+}

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount, untrack, tick } from "svelte";
-    import { showMessage } from "siyuan";
+    import { openTab, showMessage } from "siyuan";
     import type { GleanFacade } from "../types";
     import { t } from "../libs/i18n";
     import { aiFailureKey } from "../libs/ai-feedback";
@@ -10,10 +10,13 @@
     import { authorSuggestionEnabled, suggestClipAuthor } from "../services/author-service";
     import { activeAiSettings } from "../services/enrich-service";
     import { DEFAULT_SETTINGS, type GleanSettings } from "../services/settings";
+    import { ensurePersonSafely, getBridgeSafely, searchPersonSafely, type ContactsPerson } from "../libs/ecosystem-bridge-kit";
 
     interface Props { facade: GleanFacade; docId: string; onSaved?: () => void | Promise<void> }
     let { facade, docId, onSaved }: Props = $props();
     const i18n = $derived(facade.i18n);
+    const hasContactsInstalled = $derived(typeof window !== "undefined" && Boolean(getBridgeSafely("contacts")));
+    let contactPerson = $state<ContactsPerson | null>(null);
     let editing = $state(false);
     let busy = $state(false);
     let draft = $state("");
@@ -206,6 +209,31 @@
         suggestionAdopted = true;
         input?.focus();
     }
+
+    $effect(() => {
+        const raw = snapshot?.raw?.trim();
+        if (raw && hasContactsInstalled) {
+            void searchPersonSafely(raw).then((p) => { contactPerson = p; });
+        } else {
+            contactPerson = null;
+        }
+    });
+
+    function openContact(): void {
+        if (!contactPerson?.docId) return;
+        void openTab({ app: facade.pluginInstance.app, doc: { id: contactPerson.docId }, keepCursor: false });
+    }
+
+    async function enrollContact(): Promise<void> {
+        if (!snapshot?.raw) return;
+        const res = await ensurePersonSafely(snapshot.raw, { docId });
+        if (res.ok && res.person) {
+            contactPerson = res.person;
+            showMessage(t(i18n, res.created ? "author.enrolledToContacts" : "author.linkedToContacts"), 2500);
+        } else {
+            showMessage(t(i18n, "msg.actionFailed"), 2500);
+        }
+    }
 </script>
 
 <svelte:window onkeydown={handleWindowKeydown} />
@@ -219,7 +247,27 @@
                 <input id={`glean-author-editor-input-${docId}`} class="b3-text-field" bind:this={input} bind:value={draft} disabled={busy} autocomplete="off" maxlength="120" onkeydown={handleInputKeydown} />
             </label>
             <p class="glean-author-editor__hint">{t(i18n, "author.hint")}</p>
-            {#if snapshot}<p class="glean-author-editor__current"><span>{t(i18n, "author.current")}</span><strong>{snapshot.raw || t(i18n, "author.unknown")}</strong></p>{/if}
+            {#if snapshot}
+                <div class="glean-author-editor__current" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                    <div>
+                        <span>{t(i18n, "author.current")}</span>
+                        <strong>{snapshot.raw || t(i18n, "author.unknown")}</strong>
+                    </div>
+                    {#if hasContactsInstalled && snapshot.raw}
+                        {#if contactPerson}
+                            <button type="button" class="glean-btn glean-btn--ghost glean-btn--xs" title={t(i18n, "author.openInContacts")} onclick={openContact}>
+                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanUser" /></svg>
+                                <span>{t(i18n, "author.linkedContact")}</span>
+                            </button>
+                        {:else}
+                            <button type="button" class="glean-btn glean-btn--ghost glean-btn--xs" title={t(i18n, "author.enrollHint")} onclick={() => void enrollContact()}>
+                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanUser" /></svg>
+                                <span>{t(i18n, "author.enrollToContacts")}</span>
+                            </button>
+                        {/if}
+                    {/if}
+                </div>
+            {/if}
             {#if snapshot && aiOn}
                 <button type="button" class="glean-btn glean-btn--ghost" disabled={busy || suggesting || needsReload} onclick={() => void suggest()}>{t(i18n, "author.suggestion.request")}</button>
             {/if}

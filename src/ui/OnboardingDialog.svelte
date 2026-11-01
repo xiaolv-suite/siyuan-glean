@@ -25,6 +25,7 @@ const titleId = `${idPrefix}-title`;
 const descId = `${idPrefix}-desc`;
 const anchorTitleId = `${idPrefix}-anchor-title`;
 const previewTitleId = `${idPrefix}-preview-title`;
+const activeDocId = $derived(facade.currentDocId?.() ?? "");
 
 let step = $state<OnboardingStep>(1);
 let notebooks = $state<NotebookMeta[]>([]);
@@ -253,6 +254,35 @@ async function finishByConfirmingCandidates(): Promise<void> {
     }
 }
 
+async function finishWithCurrentDoc(): Promise<void> {
+    if (disposed || completed || actionBusy || scanning) return;
+    const docId = activeDocId;
+    actionBusy = true;
+    completionRequested = true;
+    try {
+        await persist();
+        if (disposed || completed) return;
+        await markDone();
+        if (disposed || completed) return;
+        actionFailed = false;
+        completed = true;
+        actionBusy = false;
+        onClose();
+        facade.notifyDataChanged();
+        if (docId) {
+            await facade.addCurrentDocToLibrary();
+            facade.openReadingDocument(docId);
+        } else {
+            facade.openWorkbenchPopup();
+        }
+    } catch (error) {
+        completionRequested = false;
+        reportActionFailure("引导收录活动文档失败", error);
+    } finally {
+        actionBusy = false;
+    }
+}
+
 async function skip(): Promise<void> {
     if (disposed || completed || actionBusy || scanning) return;
     actionBusy = true;
@@ -344,9 +374,9 @@ $effect(() => {
             <h3 id={`${idPrefix}-welcome-title`} class="glean-empty__title">{t(i18n, "onboarding.welcomeTitle")}</h3>
             <div class="glean-empty__hint">{t(i18n, "onboarding.welcomeBody")}</div>
             <div class="glean-onb-hero__highlights">
-                <span class="glean-badge glean-onb-hero__badge"><span class="glean-dot glean-dot--live"></span>沉浸阅读 · 5阶语义折叠</span>
-                <span class="glean-badge glean-onb-hero__badge"><span class="glean-dot glean-dot--live"></span>金句摘录 · 双向反链图谱</span>
-                <span class="glean-badge glean-onb-hero__badge"><span class="glean-dot glean-dot--live"></span>数据主权 · 块属性不私存</span>
+                <span class="glean-badge glean-onb-hero__badge"><span class="glean-dot glean-dot--live"></span>{t(i18n, "onboarding.heroBadge1")}</span>
+                <span class="glean-badge glean-onb-hero__badge"><span class="glean-dot glean-dot--live"></span>{t(i18n, "onboarding.heroBadge2")}</span>
+                <span class="glean-badge glean-onb-hero__badge"><span class="glean-dot glean-dot--live"></span>{t(i18n, "onboarding.heroBadge3")}</span>
             </div>
         </div>
         <div class="glean-migrate__ops">
@@ -446,7 +476,7 @@ $effect(() => {
                 </div>
             {:else}
                 <div class="glean-empty glean-onb-empty">
-                    <div class="glean-empty__hint">💡 当前笔记本暂无剪藏文章。引导完成后将为您自动放入示范长文，您也可以随时使用剪藏扩展收录！</div>
+                    <div class="glean-empty__hint">{t(i18n, "onboarding.emptyNote")}</div>
                 </div>
             {/if}
             <div class="glean-migrate__ops">
@@ -494,12 +524,22 @@ $effect(() => {
                 <button class="glean-linkish" disabled={actionBusy || scanning} aria-busy={actionBusy} onclick={() => void finish(true)}>{t(i18n, "import.title")} <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArrowRight" /></svg></button>
             </div>
         </div>
+        {#if activeDocId}
+            <div class="glean-empty glean-onb-empty glean-onb-empty--activedoc" style="margin-top: 8px;">
+                <div class="glean-empty__hint">
+                    {t(i18n, "onboarding.captureCurrentHint")}
+                </div>
+            </div>
+        {/if}
         <div class="glean-migrate__ops">
             <button class="glean-linkish glean-onb-pause" disabled={actionBusy} onclick={continueLater}>{t(i18n, "onboarding.continueLater")}</button>
+            {#if activeDocId}
+                <button class="glean-btn glean-btn--pri" disabled={actionBusy || scanning} aria-busy={actionBusy} onclick={() => void finishWithCurrentDoc()}>{t(i18n, "onboarding.captureCurrentDoc")}</button>
+            {/if}
             {#if (preview?.candidates ?? 0) > 0}
-                <button class="glean-btn glean-btn--pri" disabled={actionBusy || scanning} aria-busy={actionBusy} onclick={() => void finishByConfirmingCandidates()}>{t(i18n, "onboarding.ctaConfirm")}</button>
+                <button class="glean-btn" class:glean-btn--pri={!activeDocId} class:glean-btn--ghost={Boolean(activeDocId)} disabled={actionBusy || scanning} aria-busy={actionBusy} onclick={() => void finishByConfirmingCandidates()}>{t(i18n, "onboarding.ctaConfirm")}</button>
             {:else}
-                <button class="glean-btn glean-btn--pri" disabled={actionBusy || scanning} aria-busy={actionBusy} onclick={() => void finish(false)}>{t(i18n, "onboarding.startExploring")}</button>
+                <button class="glean-btn" class:glean-btn--pri={!activeDocId} class:glean-btn--ghost={Boolean(activeDocId)} disabled={actionBusy || scanning} aria-busy={actionBusy} onclick={() => void finish(false)}>{t(i18n, "onboarding.startExploring")}</button>
             {/if}
         </div>
     {/if}

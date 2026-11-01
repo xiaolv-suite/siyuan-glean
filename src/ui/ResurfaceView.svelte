@@ -20,6 +20,7 @@ import { cyclePriorityValue, cycleRatingValue } from "../domain/library-keyboard
 import { writeClip } from "../services/clip-store";
 import { isWechatUrl, displayWechatAuthor } from "../domain/wechat";
 import { resolveReadingTimeTier } from "../domain/library-view";
+import { getCardsDueSummarySafely, openCardsReviewSafely } from "../libs/ecosystem-bridge-kit";
 
 interface Props {
     facade: GleanFacade;
@@ -84,6 +85,14 @@ let swipeState = $state<{
 /** UX 审计 #10：本会话"开始阅读"过的文章回执（纯视图状态，不写属性）。 */
 let startedToday = $state<Array<{ id: string; title: string }>>([]);
 let recentReadings = $state<RecentReadingEntry[]>([]);
+let cardsDueCount = $state(0);
+
+$effect(() => {
+    void index.updatedAt;
+    void getCardsDueSummarySafely().then((res) => {
+        if (res.ok) cardsDueCount = res.unreviewedCount;
+    });
+});
 
 $effect(() => {
     recentReadings = facade.recentReadingDocuments().map((entry) => ({ ...entry }));
@@ -747,6 +756,35 @@ function focusCard(id: string): void {
         panelRoot?.querySelector<HTMLElement>(`[data-glean-surf-id="${CSS.escape(id)}"] button.glean-surf__title-action, [data-glean-surf-id="${CSS.escape(id)}"] .glean-surf__title button`)?.focus({ preventScroll: true });
     });
 }
+
+let exportingDailyNote = $state(false);
+
+async function exportPicksToDailyNote(): Promise<void> {
+    if (picks.length === 0 || exportingDailyNote) return;
+    const notebookId = facade.settings.anchorNotebooks[0];
+    if (!notebookId) {
+        showMessage(t(i18n, "panel.noAnchorHint"), 3000);
+        return;
+    }
+    exportingDailyNote = true;
+    try {
+        const { recordBatchDailyNotePlan } = await import("../services/daily-note-service");
+        const docIds = picks.map((p) => p.item.id);
+        const res = await recordBatchDailyNotePlan(notebookId, docIds, {
+            sectionHeader: `### 🎯 ${t(i18n, "resurface.dailyPlanTitle")}`,
+        });
+        if (res.ok) {
+            showMessage(t(i18n, "resurface.dailyPlanExported", { n: res.count }), 3000);
+        } else {
+            showMessage(t(i18n, "dailyNote.failed"), 3000);
+        }
+    } catch (err) {
+        console.warn("[glean] 导出今日日记计划失败:", err);
+        showMessage(t(i18n, "dailyNote.failed"), 3000);
+    } finally {
+        exportingDailyNote = false;
+    }
+}
 </script>
 
 <svelte:window onkeydown={onWindowKeyDown} />
@@ -865,7 +903,7 @@ function focusCard(id: string): void {
                 </div>
                 <div class="glean-surf-stepper" role="group" aria-label={t(i18n, "resurface.weeklyStepper")}>
                     {#each recent7Days as step (step.date)}
-                        <div class="glean-surf-step" class:glean-surf-step--done={step.completed} class:glean-surf-step--today={step.isToday} title={`${step.date}: ${step.completed ? '已完成' : (step.isToday ? '今日待读' : '未读')}`}>
+                        <div class="glean-surf-step" class:glean-surf-step--done={step.completed} class:glean-surf-step--today={step.isToday} title={`${step.date}: ${step.completed ? t(i18n, 'resurface.stepCompleted') : (step.isToday ? t(i18n, 'resurface.stepToday') : t(i18n, 'resurface.stepUnread'))}`}>
                             <span class="glean-surf-step__day">{step.dayLabel}</span>
                             <div class="glean-surf-step__circle">
                                 {#if step.completed}
@@ -914,21 +952,9 @@ function focusCard(id: string): void {
                     </div>
                     <strong class="glean-surf-streak-card__count"><svg class="glean-icon glean-icon--xs glean-icon--flame" aria-hidden="true"><use href="#iconGleanFlame" /></svg> {t(i18n, "resurface.streakCardDays", { n: completionStreak || 0 })}</strong>
                 </div>
-                {#if onStartRoaming}
-                    <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm" title={t(i18n, "roaming.buttonHint")} onclick={onStartRoaming}>
-                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanRefresh" /></svg>
-                        <span>{t(i18n, "roaming.button")}</span>
-                    </button>
-                {/if}
-                {#if onQuickSearch}
-                    <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm" title="{t(i18n, 'action.search')} (/)" onclick={onQuickSearch}>
-                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSearch" /></svg>
-                        <span>{t(i18n, "action.search")}</span>
-                    </button>
-                {/if}
                 <div class="glean-surf-stepper" role="group" aria-label={t(i18n, "resurface.weeklyStepper")}>
                     {#each recent7Days as step (step.date)}
-                        <div class="glean-surf-step" class:glean-surf-step--done={step.completed} class:glean-surf-step--today={step.isToday} title={`${step.date}: ${step.completed ? '已完成' : (step.isToday ? '今日待读' : '未读')}`}>
+                        <div class="glean-surf-step" class:glean-surf-step--done={step.completed} class:glean-surf-step--today={step.isToday} title={`${step.date}: ${step.completed ? t(i18n, 'resurface.stepCompleted') : (step.isToday ? t(i18n, 'resurface.stepToday') : t(i18n, 'resurface.stepUnread'))}`}>
                             <span class="glean-surf-step__day">{step.dayLabel}</span>
                             <div class="glean-surf-step__circle">
                                 {#if step.completed}
@@ -1038,6 +1064,46 @@ function focusCard(id: string): void {
                 {activePick ? t(i18n, "library.keyboardCursor", { title: activePick.item.title || t(i18n, "panel.untitled") }) : ""}
             </span>
         {/if}
+        {#if picks.length > 0}
+            <div class="glean-surf-ops-bar">
+                <span class="glean-surf-ops-bar__label">{t(i18n, "resurface.subtitle", { n: picks.length })}</span>
+                <div class="glean-surf-ops-bar__actions" style="display: flex; align-items: center; gap: var(--glean-space-1-5);">
+                    {#if cardsDueCount > 0}
+                        <button
+                            type="button"
+                            class="glean-btn glean-btn--ghost glean-btn--xs glean-surf-cards-due-pill"
+                            title={t(i18n, "resurface.cardsDueHint", { n: cardsDueCount })}
+                            onclick={() => void openCardsReviewSafely()}
+                        >
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg>
+                            <span>{t(i18n, "resurface.cardsDue", { n: cardsDueCount })}</span>
+                        </button>
+                    {/if}
+                    {#if onStartRoaming}
+                        <button type="button" class="glean-btn glean-btn--ghost glean-btn--xs" title={t(i18n, "roaming.buttonHint")} onclick={onStartRoaming}>
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanRefresh" /></svg>
+                            <span>{t(i18n, "roaming.button")}</span>
+                        </button>
+                    {/if}
+                    {#if onQuickSearch}
+                        <button type="button" class="glean-btn glean-btn--ghost glean-btn--xs" title="{t(i18n, 'action.search')} (/)" onclick={onQuickSearch}>
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSearch" /></svg>
+                            <span>{t(i18n, "action.search")}</span>
+                        </button>
+                    {/if}
+                    <button
+                        type="button"
+                        class="glean-btn glean-btn--ghost glean-btn--xs glean-surf-daily-btn"
+                        disabled={exportingDailyNote}
+                        title={t(i18n, "resurface.exportToDailyNote")}
+                        onclick={exportPicksToDailyNote}
+                    >
+                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanPin" /></svg>
+                        <span>{t(i18n, "resurface.exportToDailyNote")}</span>
+                    </button>
+                </div>
+            </div>
+        {/if}
         <div class="glean-surf">
             {#each picks as pick, pickIdx (pick.item.id)}
                 {@const clip = index.clips[pick.item.id]}
@@ -1075,7 +1141,7 @@ function focusCard(id: string): void {
                         <span class={`glean-carrier-badge glean-carrier-badge--${resolveCarrier(pick.item.contentType)}`}>{carrierLabel(pick)}</span>
                         {#if isWechatUrl(pick.item.url) || isWechatUrl(pick.item.site)}
                             <span class="glean-badge glean-source-wechat" title={displayWechatAuthor(pick.item.author) || t(i18n, "wechat.officialAccount")}>
-                                <span class="glean-wechat-dot" aria-hidden="true"></span>微信{#if displayWechatAuthor(pick.item.author)} · {displayWechatAuthor(pick.item.author)}{/if}
+                                <span class="glean-wechat-dot" aria-hidden="true"></span>{t(i18n, "wechat.name")}{#if displayWechatAuthor(pick.item.author)} · {displayWechatAuthor(pick.item.author)}{/if}
                             </span>
                         {/if}
                         {#if isPinnedToday(pick)}<span class="glean-surf__pinned"><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanPin" /></svg>{t(i18n, "resurface.pinnedToday")}</span>{/if}

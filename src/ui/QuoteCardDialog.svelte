@@ -14,6 +14,7 @@
         type QuoteCardTheme,
     } from "../domain/quote-card";
     import { formatCitation, type CitationFormat, type CitationItem } from "../domain/citation";
+    import { captureQuoteToCommonSafely, getBridgeSafely, sendExtractToCardsSafely } from "../libs/ecosystem-bridge-kit";
 
     interface Props {
         facade: GleanFacade;
@@ -22,10 +23,13 @@
 
     let { facade, source }: Props = $props();
     const i18n = $derived(facade.i18n);
+    const hasCardsInstalled = $derived(typeof window !== "undefined" && Boolean(getBridgeSafely("cards")));
+    const hasCommonInstalled = $derived(typeof window !== "undefined" && Boolean(getBridgeSafely("common")));
 
     let activeThemeKey = $state<QuoteCardTheme>("teal");
     let activeFontSize = $state<QuoteCardFontSize>("md");
     let showWatermark = $state(true);
+    let signature = $state("");
     let copying = $state(false);
     let downloading = $state(false);
 
@@ -184,6 +188,28 @@
             ctx.fillText(t(i18n, "quoteCard.watermark"), padding, footerY);
         }
 
+        // 7. 个人印章（BL-38）
+        if (signature.trim()) {
+            const stampText = signature.trim().slice(0, 4);
+            const stampSize = 36;
+            const stampX = width - padding - stampSize;
+            const stampY = totalHeight - padding - stampSize + 14;
+
+            ctx.save();
+            ctx.strokeStyle = "#DC2626";
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(stampX, stampY, stampSize, stampSize);
+            ctx.fillStyle = "rgba(220, 38, 38, 0.08)";
+            ctx.fillRect(stampX, stampY, stampSize, stampSize);
+
+            ctx.fillStyle = "#DC2626";
+            ctx.font = `bold ${stampText.length <= 2 ? 14 : 11}px "Songti SC", "SimSun", serif`;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(stampText, stampX + stampSize / 2, stampY + stampSize / 2);
+            ctx.restore();
+        }
+
         return canvas;
     }
 
@@ -278,6 +304,35 @@
             showMessage(t(i18n, msgKey), 2000);
         } catch {
             showMessage(t(i18n, "msg.actionFailed"), 2000);
+        }
+    }
+
+    async function pushToCards(): Promise<void> {
+        const res = await sendExtractToCardsSafely({
+            content: source.quote,
+            sourceBlockId: source.blockId || source.docId || "",
+            sourceDocId: source.docId,
+            sourceTitle: source.title,
+        });
+        if (res.ok) {
+            showMessage(t(i18n, "reader.extractedToCards"), 2500);
+        } else {
+            showMessage(t(i18n, "msg.actionFailed"), 2500);
+        }
+    }
+
+    async function saveToCommon(): Promise<void> {
+        const res = await captureQuoteToCommonSafely({
+            quote: source.quote,
+            author: source.author,
+            sourceDocId: source.docId,
+            sourceBlockId: source.blockId,
+            sourceTitle: source.title,
+        });
+        if (res.ok) {
+            showMessage(t(i18n, "quoteCard.savedToCommon"), 2500);
+        } else {
+            showMessage(t(i18n, "msg.actionFailed"), 2500);
         }
     }
 
@@ -450,6 +505,14 @@
                 <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg>
                 <span>{showWatermark ? t(i18n, "quoteCard.watermarkOn") : t(i18n, "quoteCard.watermarkOff")}</span>
             </button>
+            <input
+                type="text"
+                class="b3-text-field glean-quote-card-seal-input"
+                maxlength="6"
+                placeholder={t(i18n, "quoteCard.sealPlaceholder")}
+                aria-label={t(i18n, "quoteCard.sealPlaceholder")}
+                bind:value={signature}
+            />
         </div>
     </div>
 
@@ -482,6 +545,10 @@
                 <footer class="glean-quote-card-footer" style:color={activeTheme.watermarkColor}>
                     <span>{t(i18n, "quoteCard.watermark")}</span>
                 </footer>
+            {/if}
+
+            {#if signature.trim()}
+                <span class="glean-quote-card-stamp" aria-label={signature}>{signature.trim().slice(0, 4)}</span>
             {/if}
         </article>
     </div>
@@ -563,6 +630,28 @@
             >
                 <svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanCard" /></svg>
                 <span>MLA</span>
+            </button>
+        {/if}
+        {#if hasCardsInstalled}
+            <button
+                type="button"
+                class="glean-btn glean-btn--ghost glean-quote-card-btn"
+                onclick={() => void pushToCards()}
+                title={t(i18n, "quoteCard.pushToCards")}
+            >
+                <svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanCard" /></svg>
+                <span>{t(i18n, "quoteCard.pushToCards")}</span>
+            </button>
+        {/if}
+        {#if hasCommonInstalled}
+            <button
+                type="button"
+                class="glean-btn glean-btn--ghost glean-quote-card-btn"
+                onclick={() => void saveToCommon()}
+                title={t(i18n, "quoteCard.saveToCommon")}
+            >
+                <svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanBookmark" /></svg>
+                <span>{t(i18n, "quoteCard.saveToCommon")}</span>
             </button>
         {/if}
     </div>

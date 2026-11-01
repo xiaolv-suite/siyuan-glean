@@ -136,6 +136,22 @@ test("parseOmnivoreJson：originalArticleUrl 优先 + isArchived 映射", () => 
     assert.ok(result.items[0].time.startsWith("20230501"));
 });
 
+test("parseOmnivoreJson 解析包含的文章划线与金句摘录（BL-42）", () => {
+    const raw = JSON.stringify([
+        {
+            url: "https://example.com/post-1",
+            title: "精读长文",
+            highlights: [
+                { quote: "这是高亮第一句重点" },
+                { quote: "这是高亮第二句金句" },
+            ],
+        },
+    ]);
+    const res = parseOmnivoreJson(raw);
+    assert.equal(res.items.length, 1);
+    assert.deepEqual(res.items[0].highlights, ["这是高亮第一句重点", "这是高亮第二句金句"]);
+});
+
 test("parseWallabagJson：{entries} 包裹 + is_archived/is_read 映射", () => {
     const result = parseWallabagJson(WALLABAG_JSON);
     assert.equal(result.items.length, 2);

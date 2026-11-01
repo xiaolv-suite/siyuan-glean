@@ -20,6 +20,7 @@
         dotClass?: (value: string) => string;
         groupPrefs?: RailGroupPrefs;
         onToggleGroup?: (group: RailGroupKey, key: keyof RailGroupPrefs) => void;
+        onContextMenu?: (event: MouseEvent, item: LibraryFacet) => void;
     }
     let {
         plugin,
@@ -35,6 +36,7 @@
         dotClass,
         groupPrefs,
         onToggleGroup,
+        onContextMenu,
     }: Props = $props();
     let localPrefs = $state<RailGroupPrefs>({ collapsed: false, expanded: false });
     let query = $state("");
@@ -89,7 +91,20 @@
             <input class="b3-text-field glean-rail__search" type="search" bind:value={query} aria-label={t(i18n, "rail.searchGroup", { name: label })} placeholder={t(i18n, "rail.searchGroup", { name: label })} />
         {/if}
         {#each visible as item (item.value)}
-            <button class="glean-rail__item" class:glean-rail__item--on={railFacetSelected(item.value, selected)} aria-pressed={railFacetSelected(item.value, selected)} title={`${itemLabel(item.value)} (${item.count})`} onclick={() => onSelect(item.value)}>
+            <button
+                class="glean-rail__item"
+                class:glean-rail__item--on={railFacetSelected(item.value, selected)}
+                aria-pressed={railFacetSelected(item.value, selected)}
+                title={`${itemLabel(item.value)} (${item.count})`}
+                onclick={() => onSelect(item.value)}
+                oncontextmenu={(e) => {
+                    if (onContextMenu) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onContextMenu(e, item);
+                    }
+                }}
+            >
                 {#if dotClass}<span class={dotClass(item.value)}></span>{/if}
                 <span class="glean-rail__value">{prefix}{itemLabel(item.value)}</span><span class="glean-rail__n">{item.count}</span>
             </button>

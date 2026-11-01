@@ -443,8 +443,8 @@
                 <button
                     type="button"
                     class="glean-btn glean-btn--ghost glean-preview__widen-btn"
-                    title={widen ? "恢复标准宽度" : "加宽预览视口"}
-                    aria-label={widen ? "恢复标准宽度" : "加宽预览视口"}
+                    title={widen ? t(i18n, "preview.restoreWidth") : t(i18n, "preview.widen")}
+                    aria-label={widen ? t(i18n, "preview.restoreWidth") : t(i18n, "preview.widen")}
                     onclick={() => onToggleWiden?.()}
                 >
                     <svg class="glean-icon glean-icon--xs" aria-hidden="true">

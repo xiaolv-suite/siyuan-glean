@@ -28,6 +28,8 @@ export interface ImportPreviewRow {
     status: ImportedItem["status"];
     /** 库内已有同 URL，导入时将跳过 */
     duplicate: boolean;
+    /** 导入高亮与金句摘录（BL-42） */
+    highlights?: string[];
 }
 
 export interface ImportPreview {
@@ -67,6 +69,7 @@ export async function previewImport(content: string, format: ImportFormat | "aut
             tags: triaged.tags,
             status: triaged.status as ImportedItem["status"],
             duplicate: existingUrls.has(normalizeUrl(item.url)),
+            highlights: item.highlights,
         };
     });
     return {
@@ -211,7 +214,7 @@ export async function runImport(
                     entry.state = "creating";
                     await checkpoint();
                     let returnedId = "";
-                    try { returnedId = await createDocWithMd(options.notebookId, entry.hpath, buildImportMarkdown(row.title || row.url, row.url, row.site, row.time, row.tags, row.doneTime), row.tags.join(",")); }
+                    try { returnedId = await createDocWithMd(options.notebookId, entry.hpath, buildImportMarkdown(row.title || row.url, row.url, row.site, row.time, row.tags, row.doneTime, row.highlights), row.tags.join(",")); }
                     catch { returnedId = ""; }
                     if (!isImportId(returnedId)) {
                         entry.state = "unknown";
@@ -308,7 +311,7 @@ function sanitizeTitle(title: string): string {
     return (cleaned && cleaned !== "." && cleaned !== ".." ? cleaned : "未命名").slice(0, 80);
 }
 
-function buildImportMarkdown(title: string, url: string, site: string, time: string, tags: string[], doneTime = ""): string {
+function buildImportMarkdown(title: string, url: string, site: string, time: string, tags: string[], doneTime = "", highlights: string[] = []): string {
     const lines: string[] = [];
     const safeTitle = sanitizeMarkdownText(title, "未命名");
     lines.push(`# ${safeTitle}`);
@@ -323,6 +326,14 @@ function buildImportMarkdown(title: string, url: string, site: string, time: str
         .filter(Boolean);
     if (safeTags.length > 0) lines.push(`- 标签：${safeTags.map((tag) => `#${tag}`).join(" ")}`);
     lines.push("");
+    if (highlights && highlights.length > 0) {
+        lines.push(`### 💡 金句与高亮摘录 (${highlights.length})`);
+        lines.push("");
+        for (const hl of highlights) {
+            lines.push(`> ${escapeMarkdownText(hl.trim())}`);
+            lines.push("");
+        }
+    }
     lines.push(`> 由迁移导入器带入。原文内容请访问来源链接，或使用剪藏扩展重新剪藏全文。`);
     return lines.join("\n");
 }

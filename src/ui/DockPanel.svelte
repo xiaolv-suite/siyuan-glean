@@ -1,7 +1,7 @@
 <script lang="ts">
 /** 读库 Dock 面板 v2（T-1104/T-1201/T-1202/T-1300/T-1400c）：库 / 统计 / 高亮 三视图；tab 画布 rail+行表/看板。 */
 import { onMount, tick, untrack } from "svelte";
-import { openTab, showMessage } from "siyuan";
+import { openTab, showMessage, Menu } from "siyuan";
 import type { GleanFacade } from "../types";
 import { t } from "../libs/i18n";
 import { aiFailureKey } from "../libs/ai-feedback";
@@ -17,11 +17,11 @@ import StatsView from "./StatsView.svelte";
 import HighlightView from "./HighlightView.svelte";
 import LibraryRailGroup from "./LibraryRailGroup.svelte";
 import WorkbenchPreview from "./WorkbenchPreview.svelte";
-import { applyRailGroupToggle, syncAccordionRailGroups, toggleAllRailGroups, normalizeRailGroups, type RailGroupKey, type RailGroupPrefs, type RailGroups } from "../domain/library-rail";
+import { applyRailGroupToggle, syncAccordionRailGroups, toggleAllRailGroups, normalizeRailGroups, DEFAULT_RAIL_WIDTH, MIN_RAIL_WIDTH, MAX_RAIL_WIDTH, clampRailWidth, type RailGroupKey, type RailGroupPrefs, type RailGroups } from "../domain/library-rail";
 import { createRailBadgeDebouncer, reconcileRailFacets } from "../domain/library-rail-badges.ts";
 import LibraryBatchBar from "./LibraryBatchBar.svelte";
 import { librarySelectionScope, addDisplayedSelection, retainFilteredSelection } from "../domain/library-selection";
-import { moveLibraryCursor, resolveLibraryShortcut, cyclePriorityValue, cycleRatingValue, type LibraryKeyboardAction, type LibraryKeyboardContext } from "../domain/library-keyboard";
+import { moveLibraryCursor, resolveLibraryShortcut, moveKanbanCursor2D, moveKanbanCursorVertical, cyclePriorityValue, cycleRatingValue, type LibraryKeyboardAction, type LibraryKeyboardContext } from "../domain/library-keyboard";
 import LibraryFilters from "./LibraryFilters.svelte";
 import ActionPopover from "./ActionPopover.svelte";
 import AuthorEditor from "./AuthorEditor.svelte";
@@ -40,6 +40,7 @@ import { isWechatUrl, displayWechatAuthor, isWechatSeriesTag } from "../domain/w
 import { calculateSnapshotHealth } from "../domain/snapshot-health";
 import { pickRoamingArticle } from "../domain/roaming";
 import { openRoamingDialog } from "./roaming-dialog";
+import { makeQuoteCardPreview } from "./flashcard-dialog";
 import { formatAPA, formatBibTeX, formatGBT7714, formatMLA, type CitationFormat, type CitationItem } from "../domain/citation";
 import { batchRecognizeWechatAuthors, scanAndFillWechatAuthor, purifyWechatArticle } from "../services/wechat-service";
 import ClipStatusActions from "./ClipStatusActions.svelte";
@@ -280,6 +281,10 @@ let savedViewId = $state("");
 let railGroups = $state<RailGroups>(normalizeRailGroups(undefined));
 let railAccordion = $state(false);
 let railCollapsed = $state(false);
+let railWidth = $state(DEFAULT_RAIL_WIDTH);
+let railDraggingPointer: number | null = null;
+let railDragStartX = 0;
+let railDragStartWidth = DEFAULT_RAIL_WIDTH;
 let tagAliases = $state<TagAlias[]>([]);
 let tagAliasManagerOpen = $state(false);
 let tagAliasDraftId = $state("");
@@ -541,7 +546,16 @@ function loadMoreRows(): void {
 }
 
 $effect(() => {
-    if (activeFilterKey !== "") renderLimit = LIBRARY_RENDER_PAGE;
+    if (activeFilterKey !== "") {
+        renderLimit = LIBRARY_RENDER_PAGE;
+        kanbanColLimits = {
+            inbox: KANBAN_INITIAL_LIMIT,
+            later: KANBAN_INITIAL_LIMIT,
+            reading: KANBAN_INITIAL_LIMIT,
+            done: KANBAN_INITIAL_LIMIT,
+            archived: KANBAN_INITIAL_LIMIT,
+        };
+    }
 });
 
 // 窄 Dock 里搜索入口是折叠的；打开后立即聚焦，避免用户再点一次输入框。
@@ -1008,7 +1022,25 @@ const kanbanCols = $derived.by(() => {
     }
     return queues.map((status) => ({ status, label: queueLabel(status), items: byStatus[status] }));
 });
-const visibleKanbanCols = $derived(kanbanCols.map((column) => ({ ...column, items: column.items.slice(0, renderLimit), totalCount: column.items.length })));
+
+const KANBAN_INITIAL_LIMIT = 50;
+let kanbanColLimits = $state<Record<string, number>>({
+    inbox: KANBAN_INITIAL_LIMIT,
+    later: KANBAN_INITIAL_LIMIT,
+    reading: KANBAN_INITIAL_LIMIT,
+    done: KANBAN_INITIAL_LIMIT,
+    archived: KANBAN_INITIAL_LIMIT,
+});
+
+function loadMoreCol(status: string): void {
+    const current = kanbanColLimits[status] ?? KANBAN_INITIAL_LIMIT;
+    kanbanColLimits[status] = current + 50;
+}
+
+const visibleKanbanCols = $derived(kanbanCols.map((column) => {
+    const limit = Math.max(kanbanColLimits[column.status] ?? KANBAN_INITIAL_LIMIT, renderLimit);
+    return { ...column, items: column.items.slice(0, limit), totalCount: column.items.length };
+}));
 const renderedKanbanCount = $derived(visibleKanbanCols.reduce((total, column) => total + column.items.length, 0));
 const totalKanbanCount = $derived(kanbanCols.reduce((total, column) => total + column.items.length, 0));
 const hasMoreKanban = $derived(renderedKanbanCount < totalKanbanCount);
@@ -1020,6 +1052,94 @@ const displayedSelectionIds = $derived(isTabCanvas && layoutMode === "kanban"
     ? visibleKanbanCols.flatMap((column) => column.items.map((entry) => entry.id))
     : visibleRows.filter((entry) => entry.kind === "clip").map((entry) => entry.id));
 const selectionScope = $derived(librarySelectionScope(selection, filteredSelectionIds, displayedSelectionIds));
+
+function handleRailItemContextMenu(event: MouseEvent, group: RailGroupKey, value: string): void {
+    event.preventDefault();
+    event.stopPropagation();
+    const menu = new Menu("glean-rail-item-menu");
+
+    if (group === "tags" || group === "aiTags") {
+        menu.addItem({
+            iconHTML: "",
+            label: t(i18n, "railMenu.filterTag", { tag: value }),
+            click: () => {
+                markPrefsInteraction();
+                if (group === "tags") selectedTag = value;
+                else selectedAiTag = value;
+            },
+        });
+        menu.addItem({
+            iconHTML: "",
+            label: t(i18n, "railMenu.setAlias"),
+            click: () => openTagAliasManager(),
+        });
+        menu.addSeparator();
+        menu.addItem({
+            iconHTML: "",
+            label: t(i18n, "railMenu.markGroupDone"),
+            click: () => void markGroupArticlesDone(group, value),
+        });
+    } else if (group === "authors") {
+        menu.addItem({
+            iconHTML: "",
+            label: t(i18n, "railMenu.filterAuthor", { author: value }),
+            click: () => selectAuthor(value),
+        });
+        menu.addSeparator();
+        menu.addItem({
+            iconHTML: "",
+            label: t(i18n, "railMenu.markGroupDone"),
+            click: () => void markGroupArticlesDone(group, value),
+        });
+    } else if (group === "sites") {
+        menu.addItem({
+            iconHTML: "",
+            label: t(i18n, "railMenu.filterSite", { site: value }),
+            click: () => {
+                markPrefsInteraction();
+                selectedSite = value;
+            },
+        });
+        if (value && !value.includes("/")) {
+            menu.addItem({
+                iconHTML: "",
+                label: t(i18n, "railMenu.openExternalSite"),
+                click: () => {
+                    const url = value.startsWith("http") ? value : `https://${value}`;
+                    window.open(url, "_blank");
+                },
+            });
+        }
+        menu.addSeparator();
+        menu.addItem({
+            iconHTML: "",
+            label: t(i18n, "railMenu.markGroupDone"),
+            click: () => void markGroupArticlesDone(group, value),
+        });
+    }
+
+    menu.open({ x: event.clientX, y: event.clientY });
+}
+
+async function markGroupArticlesDone(group: RailGroupKey, value: string): Promise<void> {
+    const targetClips = Object.values(index.clips).filter((clip) => {
+        if (clip.status === "done" || clip.status === "archived") return false;
+        if (group === "authors") return clip.author?.toLocaleLowerCase() === value.toLocaleLowerCase();
+        if (group === "sites") return clip.site?.toLocaleLowerCase() === value.toLocaleLowerCase();
+        if (group === "tags") return (clip.tags ?? []).some((t) => t.toLocaleLowerCase() === value.toLocaleLowerCase());
+        if (group === "aiTags") return (clip.aiTags ?? []).some((t) => t.toLocaleLowerCase() === value.toLocaleLowerCase());
+        return false;
+    });
+    if (targetClips.length === 0) {
+        showMessage(t(i18n, "railMenu.noUnreadArticles"), 2500);
+        return;
+    }
+    const ids = targetClips.map((c) => c.id);
+    const res = await batchSetStatusDetailed(facade.pluginInstance, ids, "done");
+    showMessage(t(i18n, "railMenu.markDoneResult", { n: res.succeeded.length }), 3000);
+    facade.notifyDataChanged();
+    await reload();
+}
 
 function selectDisplayedArticles(): void {
     if (batchBusy) return;
@@ -1039,6 +1159,28 @@ function keepFilteredArticles(origin: Element | null = document.activeElement): 
     void tick().then(() => {
         if (!disposed && rootEl?.getClientRects().length && canRestoreLibraryFocus(origin)) restoreLibrarySelectionFocus();
     });
+}
+
+function computeBatchDiff(mode: "tag" | "author", text: string): { update: number; skip: number } {
+    const raw = text.trim().replace(/^#/, "");
+    if (!raw) return { update: 0, skip: 0 };
+    let update = 0;
+    let skip = 0;
+    for (const id of selection) {
+        const clip = index.clips[id];
+        if (!clip) continue;
+        if (mode === "tag") {
+            const has = (clip.aiTags ?? []).some((t) => t.toLocaleLowerCase() === raw.toLocaleLowerCase()) ||
+                        (clip.tags ?? []).some((t) => t.toLocaleLowerCase() === raw.toLocaleLowerCase());
+            if (has) skip++;
+            else update++;
+        } else if (mode === "author") {
+            const has = (clip.author ?? "").toLocaleLowerCase() === raw.toLocaleLowerCase();
+            if (has) skip++;
+            else update++;
+        }
+    }
+    return { update, skip };
 }
 
 async function batchAddTag(tag: string): Promise<void> {
@@ -1266,8 +1408,8 @@ async function batchCopySummaryList(): Promise<void> {
         const clip = index.clips[id] || index.candidates[id];
         const title = clip?.title || t(i18n, "panel.untitled");
         const parts = [`- **[${title}](siyuan://blocks/${id})**`];
-        if (clip?.author) parts.push(`*作者: ${clip.author}*`);
-        if (clip?.site) parts.push(`*来源: ${clip.site}*`);
+        if (clip?.author) parts.push(t(i18n, "library.summaryAuthor", { author: clip.author }));
+        if (clip?.site) parts.push(t(i18n, "library.summarySite", { site: clip.site }));
         if (clip?.minutes) parts.push(`*⏱️ ${clip.minutes}m*`);
         if (clip?.tags?.length) parts.push(`#${clip.tags.join(" #")}`);
         let line = parts.join(" · ");
@@ -1339,7 +1481,10 @@ async function batchPurifyWechat(): Promise<void> {
         const entry = index.clips[id];
         return entry && (isWechatUrl(entry.url) || isWechatUrl(entry.site));
     });
-    if (wechatDocIds.length === 0) return;
+    if (wechatDocIds.length === 0) {
+        showMessage(t(i18n, "wechat.authorNotFound"), 2000);
+        return;
+    }
     batchBusy = true;
     let count = 0;
     try {
@@ -1357,13 +1502,16 @@ async function batchPurifyWechat(): Promise<void> {
             );
             count += results.filter((r) => r.ok).length;
         }
-        showMessage(t(i18n, "wechat.batchPurifyDone", { count }), 3000);
         selection = new Set();
-        facade.notifyDataChanged();
+        showMessage(t(i18n, "wechat.batchPurifyDone", { count }), 3000);
     } catch (err) {
         console.warn("[glean] 批量提纯失败:", err);
         showMessage(t(i18n, "msg.actionFailed"), 3000);
     } finally {
+        if (count > 0) {
+            facade.notifyDataChanged();
+            await reload();
+        }
         batchBusy = false;
     }
 }
@@ -1419,6 +1567,10 @@ async function moveTo(entry: ClipIndexEntry, status: ClipStatus) {
     if (entry.status === status) return;
     if (entry.status === "archived" && status !== "archived") {
         facade.openRestoreDialog(entry.id);
+        return;
+    }
+    if (status === "archived") {
+        facade.openArchiveDialog(entry.id);
         return;
     }
     await setStatus(entry, status);
@@ -1490,6 +1642,7 @@ async function restorePreferences(): Promise<void> {
         railGroups = prefs.libraryRailGroups;
         railAccordion = prefs.railAccordion;
         railCollapsed = prefs.railCollapsed;
+        railWidth = prefs.railWidth ?? DEFAULT_RAIL_WIDTH;
         if (!previewPrefsTouched) {
             previewEnabled = prefs.workbenchPreviewEnabled;
             previewRatio = prefs.workbenchPreviewRatio;
@@ -1771,7 +1924,11 @@ async function toggleRailCollapsed(): Promise<void> {
 async function collapseAllGroups(): Promise<void> {
     const next = toggleAllRailGroups(railGroups, true);
     railGroups = next;
-    await saveUiPrefs(facade.pluginInstance, { libraryRailGroups: next });
+    try {
+        await saveUiPrefs(facade.pluginInstance, { libraryRailGroups: next });
+    } catch (error) {
+        console.debug("[glean] 全部折叠偏好保存失败:", error);
+    }
 }
 
 async function expandAllGroups(): Promise<void> {
@@ -1782,10 +1939,65 @@ async function expandAllGroups(): Promise<void> {
     }
     const next = toggleAllRailGroups(railGroups, false);
     railGroups = next;
-    await saveUiPrefs(facade.pluginInstance, {
-        railAccordion: nextAccordion,
-        libraryRailGroups: next,
-    });
+    try {
+        await saveUiPrefs(facade.pluginInstance, {
+            railAccordion: nextAccordion,
+            libraryRailGroups: next,
+        });
+    } catch (error) {
+        console.debug("[glean] 全部展开偏好保存失败:", error);
+    }
+}
+
+function startRailResize(event: PointerEvent): void {
+    if (event.button !== 0 || railDraggingPointer !== null) return;
+    event.preventDefault();
+    const separator = event.currentTarget as HTMLElement;
+    separator.focus({ preventScroll: true });
+    separator.setPointerCapture(event.pointerId);
+    railDraggingPointer = event.pointerId;
+    railDragStartX = event.clientX;
+    railDragStartWidth = railWidth;
+}
+
+function resizeRail(event: PointerEvent): void {
+    if (railDraggingPointer !== event.pointerId) return;
+    const delta = event.clientX - railDragStartX;
+    railWidth = clampRailWidth(railDragStartWidth + delta);
+}
+
+function finishRailResize(event: PointerEvent, cancel = false): void {
+    if (railDraggingPointer !== event.pointerId) return;
+    railDraggingPointer = null;
+    if (cancel) {
+        railWidth = railDragStartWidth;
+    } else {
+        void saveUiPrefs(facade.pluginInstance, { railWidth });
+    }
+    const separator = event.currentTarget as HTMLElement;
+    if (separator.hasPointerCapture(event.pointerId)) {
+        separator.releasePointerCapture(event.pointerId);
+    }
+}
+
+function railResizeKey(event: KeyboardEvent): void {
+    if (event.defaultPrevented || event.isComposing || event.keyCode === 229 || event.ctrlKey || event.altKey || event.metaKey) return;
+    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.key === "Home") {
+        railWidth = MIN_RAIL_WIDTH;
+    } else if (event.key === "End") {
+        railWidth = MAX_RAIL_WIDTH;
+    } else {
+        railWidth = clampRailWidth(railWidth + (event.key === "ArrowLeft" ? -12 : 12));
+    }
+    void saveUiPrefs(facade.pluginInstance, { railWidth });
+}
+
+function resetRailWidth(): void {
+    railWidth = DEFAULT_RAIL_WIDTH;
+    void saveUiPrefs(facade.pluginInstance, { railWidth });
 }
 
 // 插件壳广播的数据变更（迁移完成、右键收录等）触发面板对账（防抖防重入）
@@ -2502,7 +2714,19 @@ async function copyEntryCitation(entry: { id: string; title?: string; author?: s
 
 async function runKeyboardAction(action: LibraryKeyboardAction): Promise<void> {
     if (action.type === "move") {
-        setKeyboardCursor(moveLibraryCursor(keyboardIds, keyboardCursorId, action.delta));
+        if (layoutMode === "kanban" && isTabCanvas) {
+            const kanbanColumnIds = visibleKanbanCols.map((c) => c.items.map((it) => it.id));
+            setKeyboardCursor(moveKanbanCursorVertical(kanbanColumnIds, keyboardCursorId, action.delta));
+        } else {
+            setKeyboardCursor(moveLibraryCursor(keyboardIds, keyboardCursorId, action.delta));
+        }
+        return;
+    }
+    if (action.type === "moveCol") {
+        if (layoutMode === "kanban" && isTabCanvas) {
+            const kanbanColumnIds = visibleKanbanCols.map((c) => c.items.map((it) => it.id));
+            setKeyboardCursor(moveKanbanCursor2D(kanbanColumnIds, keyboardCursorId, action.delta));
+        }
         return;
     }
     if (action.type === "clearCursor") {
@@ -2800,16 +3024,16 @@ function sourceFallback(entry: ClipIndexEntry): string {
 }
 
 function siteDisplayLabel(entry: ClipIndexEntry): string {
-    if (!entry.site) return isWechatEntry(entry) ? "微信" : sourceFallback(entry);
+    if (!entry.site) return isWechatEntry(entry) ? t(i18n, "wechat.name") : sourceFallback(entry);
     const site = displaySiteName(entry.site);
     if ((site === "微信公众号" || isWechatEntry(entry)) && entry.author) {
-        return "微信";
+        return t(i18n, "wechat.name");
     }
     return site;
 }
 
 function siteItemLabel(val: string): string {
-    return isWechatUrl(val) || val === "mp.weixin.qq.com" ? "微信" : displaySiteName(val);
+    return isWechatUrl(val) || val === "mp.weixin.qq.com" ? t(i18n, "wechat.name") : displaySiteName(val);
 }
 
 function carrierLabel(entry: ClipIndexEntry): string {
@@ -2854,11 +3078,113 @@ function metaLine(entry: Row): string {
     }
     return parts.join(" · ");
 }
+
+let externalDragDepth = $state(0);
+const isExternalDragActive = $derived(externalDragDepth > 0 && !dragId && !facade.isMobile);
+
+function handleExternalDragEnter(e: DragEvent): void {
+    if (dragId) return;
+    if (e.dataTransfer && Array.from(e.dataTransfer.types).includes("text/plain")) {
+        externalDragDepth += 1;
+    }
+}
+
+function handleExternalDragLeave(_e: DragEvent): void {
+    if (dragId) return;
+    externalDragDepth = Math.max(0, externalDragDepth - 1);
+}
+
+function handleExternalDragOver(e: DragEvent): void {
+    if (dragId) return;
+    if (e.dataTransfer && Array.from(e.dataTransfer.types).includes("text/plain")) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "copy";
+    }
+}
+
+async function handleExternalDrop(e: DragEvent): Promise<void> {
+    externalDragDepth = 0;
+    if (dragId) return;
+    const dataTransfer = e.dataTransfer;
+    if (!dataTransfer) return;
+    const plainText = dataTransfer.getData("text/plain")?.trim() ?? "";
+    if (!plainText) return;
+    e.preventDefault();
+
+    const blockIdMatch = plainText.match(/\b(\d{14}-[0-9a-z]{7})\b/);
+    if (blockIdMatch) {
+        const blockId = blockIdMatch[1];
+        try {
+            const { querySql } = await import("../api/client");
+            const rows = await querySql<{ type: string; root_id: string; content: string }>(
+                `SELECT type, root_id, content FROM blocks WHERE id = '${blockId}' LIMIT 1`
+            );
+            if (rows.length > 0) {
+                const block = rows[0];
+                if (block.type === "d") {
+                    const { captureDocument } = await import("../services/clip-store");
+                    const res = await captureDocument(facade.pluginInstance, blockId, { src: "drag" });
+                    showMessage(
+                        res.conflict
+                            ? `${t(i18n, "inbox.duplicate")}: ${res.conflict.title || res.conflict.hpath}`
+                            : t(i18n, res.captured ? "msg.added" : "msg.alreadyIn"),
+                        3000,
+                    );
+                    facade.notifyDataChanged();
+                    await reload();
+                    return;
+                } else {
+                    const quote = block.content?.trim() || plainText;
+                    makeQuoteCardPreview(facade, {
+                        title: "",
+                        quote,
+                        docId: block.root_id || (facade.currentDocId?.() ?? ""),
+                        blockId: blockId,
+                    });
+                    return;
+                }
+            }
+        } catch (error) {
+            console.warn("[glean] dropzone block check failed:", error);
+        }
+    }
+
+    makeQuoteCardPreview(facade, {
+        title: "",
+        quote: plainText,
+        docId: facade.currentDocId?.() ?? "",
+        blockId: "",
+    });
+}
+
+let hostEl = $state<HTMLElement | null>(null);
+
+$effect(() => {
+    const el = hostEl;
+    if (!el || facade.isMobile) return;
+    el.addEventListener("dragenter", handleExternalDragEnter);
+    el.addEventListener("dragleave", handleExternalDragLeave);
+    el.addEventListener("dragover", handleExternalDragOver);
+    el.addEventListener("drop", handleExternalDrop);
+    return () => {
+        el.removeEventListener("dragenter", handleExternalDragEnter);
+        el.removeEventListener("dragleave", handleExternalDragLeave);
+        el.removeEventListener("dragover", handleExternalDragOver);
+        el.removeEventListener("drop", handleExternalDrop);
+    };
+});
 </script>
 
 <svelte:window ondragend={() => { if (dragId || dragOverCol) { dragId = ""; dragOverCol = null; } }} />
 
-<div class="glean-panel-host">
+<div class="glean-panel-host" bind:this={hostEl}>
+    {#if isExternalDragActive}
+        <div class="glean-dropzone-overlay" role="region" aria-label={t(i18n, "dropzone.title")}>
+            <svg class="glean-dropzone-overlay__icon" aria-hidden="true"><use href="#iconGleanInbox" /></svg>
+            <div class="glean-dropzone-overlay__title">{t(i18n, "dropzone.title")}</div>
+            <div class="glean-dropzone-overlay__desc">{t(i18n, "dropzone.desc")}</div>
+        </div>
+    {/if}
 <div class="glean-panel glean-panel--shell" class:glean-panel--mobile={facade.isMobile} bind:this={rootEl} oninput={markPrefsInteraction} onchange={markPrefsInteraction} aria-busy={loading}>
     {#if !facade.isMobile}
         <aside class="glean-workbench-rail" aria-label={t(i18n, "view.resurface")}>
@@ -3152,49 +3478,51 @@ function metaLine(entry: Row): string {
         <InboxSection {facade} onMutated={() => void reload()} />
         <AiBatchPanel {facade} bind:open={aiBatchOpen} docIds={aiBatchIds} />
 
-        <nav class="glean-queues" aria-label={t(i18n, "view.library")}>
-            {#each queues as queue (queue)}
-                <button
-                    class="glean-q"
-                    class:glean-q--on={!authorTimeline && activeQueue === queue}
-                    aria-pressed={!authorTimeline && activeQueue === queue}
-                    onclick={() => selectQueue(queue)}
-                >
-                    {queueLabel(queue)}
-                    <span class="glean-q__n">{queueCount(queue)}</span>
-                </button>
-            {/each}
-        </nav>
+        <div class="glean-queues-row">
+            <nav class="glean-queues" aria-label={t(i18n, "view.library")}>
+                {#each queues as queue (queue)}
+                    <button
+                        class="glean-q"
+                        class:glean-q--on={!authorTimeline && activeQueue === queue}
+                        aria-pressed={!authorTimeline && activeQueue === queue}
+                        onclick={() => selectQueue(queue)}
+                    >
+                        {queueLabel(queue)}
+                        <span class="glean-q__n">{queueCount(queue)}</span>
+                    </button>
+                {/each}
+            </nav>
 
-        {#if !facade.isMobile && isTabCanvas}
-            <details class="glean-kbdhint-fold">
-                <summary class="glean-kbdhint-fold__summary"><kbd>?</kbd> <span>{t(i18n, "reader.shortcuts")}</span></summary>
-                <div class="glean-kbdhint" class:glean-kbdhint--active={Boolean(keyboardEntry)}>
-                    <span class="glean-kbdhint__keys" aria-hidden="true">
-                        <kbd>J</kbd><kbd>K</kbd> {t(i18n, "library.keyboardMove")}
-                        <kbd>Enter</kbd> {t(i18n, "library.keyboardView")}
-                        <kbd>O</kbd> {t(i18n, "library.keyboardSource")}
-                        <kbd>R</kbd> {t(i18n, "library.keyboardRead")}
-                        <kbd>A</kbd> {t(i18n, "library.keyboardLater")}
-                        <kbd>E</kbd> {t(i18n, "library.keyboardArchive")}
-                        <kbd>X</kbd> {t(i18n, "library.keyboardSelect")}
-                        <kbd>S</kbd> {t(i18n, "library.keyboardSelectDisplayed")}
-                        <kbd>F</kbd> {selection.size > 0 ? t(i18n, "library.keyboardKeepFiltered") : t(i18n, "roaming.favoriteAction")}
-                        <kbd>C</kbd> {selection.size > 0 ? t(i18n, "library.keyboardClearSelection") : t(i18n, "citation.copyGBT")}
-                        <kbd>Shift+C</kbd> BibTeX
-                        <kbd>P</kbd><kbd>1-5</kbd> {t(i18n, "library.keyboardPriority")}
-                        <kbd>M</kbd> {t(i18n, "library.keyboardRating")}
-                        <kbd>Y</kbd> {t(i18n, "action.copyBlockRef")}
-                        <kbd>B</kbd> {t(i18n, "roaming.button")}
-                        <kbd>/</kbd> {t(i18n, "action.search")}
-                        <kbd>Esc</kbd> {t(i18n, "library.keyboardExit")}
-                    </span>
-                </div>
-            </details>
-            <span class="glean-sr-only" role="status" aria-live="polite">
-                {keyboardEntry ? t(i18n, "library.keyboardCursor", { title: keyboardEntry.title || t(i18n, "panel.untitled") }) : ""}
-            </span>
-        {/if}
+            {#if !facade.isMobile && isTabCanvas}
+                <details class="glean-kbdhint-fold">
+                    <summary class="glean-kbdhint-fold__summary"><kbd>?</kbd> <span>{t(i18n, "reader.shortcuts")}</span></summary>
+                    <div class="glean-kbdhint" class:glean-kbdhint--active={Boolean(keyboardEntry)}>
+                        <span class="glean-kbdhint__keys" aria-hidden="true">
+                            <kbd>J</kbd><kbd>K</kbd> {t(i18n, "library.keyboardMove")}
+                            <kbd>Enter</kbd> {t(i18n, "library.keyboardView")}
+                            <kbd>O</kbd> {t(i18n, "library.keyboardSource")}
+                            <kbd>R</kbd> {t(i18n, "library.keyboardRead")}
+                            <kbd>A</kbd> {t(i18n, "library.keyboardLater")}
+                            <kbd>E</kbd> {t(i18n, "library.keyboardArchive")}
+                            <kbd>X</kbd> {t(i18n, "library.keyboardSelect")}
+                            <kbd>S</kbd> {t(i18n, "library.keyboardSelectDisplayed")}
+                            <kbd>F</kbd> {selection.size > 0 ? t(i18n, "library.keyboardKeepFiltered") : t(i18n, "roaming.favoriteAction")}
+                            <kbd>C</kbd> {selection.size > 0 ? t(i18n, "library.keyboardClearSelection") : t(i18n, "citation.copyGBT")}
+                            <kbd>Shift+C</kbd> BibTeX
+                            <kbd>P</kbd><kbd>1-5</kbd> {t(i18n, "library.keyboardPriority")}
+                            <kbd>M</kbd> {t(i18n, "library.keyboardRating")}
+                            <kbd>Y</kbd> {t(i18n, "action.copyBlockRef")}
+                            <kbd>B</kbd> {t(i18n, "roaming.button")}
+                            <kbd>/</kbd> {t(i18n, "action.search")}
+                            <kbd>Esc</kbd> {t(i18n, "library.keyboardExit")}
+                        </span>
+                    </div>
+                </details>
+                <span class="glean-sr-only" role="status" aria-live="polite">
+                    {keyboardEntry ? t(i18n, "library.keyboardCursor", { title: keyboardEntry.title || t(i18n, "panel.untitled") }) : ""}
+                </span>
+            {/if}
+        </div>
 
         {#if facade.isMobile}
             <div class="glean-mobile-filter-summary">
@@ -3646,7 +3974,7 @@ function metaLine(entry: Row): string {
                                             <AuthorEditor {facade} docId={entry.id} onSaved={reload} />
                                             <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryBlockRef(entry)}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg> <span>{t(i18n, "action.copyBlockRef")}</span></button>
                                             <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "gbt")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg> <span>{t(i18n, "citation.copyGBT")}</span></button>
-                                            <button class="glean-btn glean-btn--ghost" disabled={snappingId === entry.id} onclick={() => void takeSnapshot(entry)}>{snapshotLabel(entry)}</button>
+                                            <button class="glean-btn glean-btn--ghost" disabled={snappingId === entry.id} onclick={() => void takeSnapshot(entry)} title={snapshotLabel(entry)} aria-label={snapshotLabel(entry)}>{snapshotLabel(entry)}</button>
                                             <button class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId)} aria-pressed={isPinnedToday(entry)} onclick={() => void toggleSurfacePin(entry)}>{surfacePinLabel(entry)}</button>
                                         </ActionPopover>
                                     </div>
@@ -3658,7 +3986,7 @@ function metaLine(entry: Row): string {
                                 <button
                                     type="button"
                                     class="glean-btn glean-btn--ghost glean-btn--sm glean-kcol__more-btn"
-                                    onclick={loadMoreRows}
+                                    onclick={() => loadMoreCol(col.status)}
                                 >
                                     {t(i18n, "library.loadMore")}
                                 </button>
@@ -3674,7 +4002,12 @@ function metaLine(entry: Row): string {
                 </div>
             {/if}
         {:else if isTabCanvas && layoutMode === "list"}
-            <div class="glean-lib" class:glean-lib--preview={Boolean(previewEntry)} bind:this={previewSplit}>
+            <div
+                class="glean-lib"
+                class:glean-lib--preview={Boolean(previewEntry)}
+                style="--glean-rail-w: {railWidth}px; --glean-preview-rail-width: {railCollapsed ? 0 : railWidth}px;"
+                bind:this={previewSplit}
+            >
                 <aside class="glean-rail" hidden={railCollapsed} aria-label={t(i18n, "view.library")}>
                     <div class="glean-rail__toolbar" role="toolbar" aria-label={t(i18n, "rail.title")}>
                         <span class="glean-rail__toolbar-title">{t(i18n, "rail.title")}</span>
@@ -3721,18 +4054,40 @@ function metaLine(entry: Row): string {
                     </div>
                     <LibraryRailGroup plugin={facade.pluginInstance} {i18n} group="queues" label={t(i18n, "rail.queues")} items={queues.map((queue) => ({ value: queue, count: queueCount(queue) }))} selected={authorTimeline ? "" : activeQueue} itemLabel={(value) => queueLabel(value as ClipStatus)} dotClass={(value) => statusDotClass(value as ClipStatus)} onSelect={(value) => selectQueue(value as ClipStatus)} groupPrefs={railGroups.queues} onToggleGroup={handleToggleRailGroup} />
                     {#if railStats.authors.length > 0 || selectedAuthor}
-                        <LibraryRailGroup plugin={facade.pluginInstance} {i18n} group="authors" label={t(i18n, "rail.authors")} items={railStats.authors} selected={selectedAuthor} dotClass={authorDotClass} onSelect={selectAuthor} groupPrefs={railGroups.authors} onToggleGroup={handleToggleRailGroup} />
+                        <LibraryRailGroup plugin={facade.pluginInstance} {i18n} group="authors" label={t(i18n, "rail.authors")} items={railStats.authors} selected={selectedAuthor} dotClass={authorDotClass} onSelect={selectAuthor} groupPrefs={railGroups.authors} onToggleGroup={handleToggleRailGroup} onContextMenu={(e, item) => handleRailItemContextMenu(e, "authors", item.value)} />
                     {/if}
                     {#if railStats.sites.length > 0 || selectedSite}
-                        <LibraryRailGroup plugin={facade.pluginInstance} {i18n} group="sites" label={t(i18n, "rail.sites")} items={railStats.sites} selected={selectedSite} itemLabel={siteItemLabel} onSelect={(value) => { markPrefsInteraction(); selectedSite = selectedSite.toLocaleLowerCase() === value.toLocaleLowerCase() ? "" : value; }} groupPrefs={railGroups.sites} onToggleGroup={handleToggleRailGroup} />
+                        <LibraryRailGroup plugin={facade.pluginInstance} {i18n} group="sites" label={t(i18n, "rail.sites")} items={railStats.sites} selected={selectedSite} itemLabel={siteItemLabel} onSelect={(value) => { markPrefsInteraction(); selectedSite = selectedSite.toLocaleLowerCase() === value.toLocaleLowerCase() ? "" : value; }} groupPrefs={railGroups.sites} onToggleGroup={handleToggleRailGroup} onContextMenu={(e, item) => handleRailItemContextMenu(e, "sites", item.value)} />
                     {/if}
                     {#if railStats.tags.length > 0 || selectedTag}
-                        <LibraryRailGroup plugin={facade.pluginInstance} {i18n} group="tags" label={t(i18n, "rail.tags")} prefix="#" items={railStats.tags} selected={selectedTag} itemLabel={aliasForTag} onSelect={(value) => { markPrefsInteraction(); selectedTag = selectedTag.toLocaleLowerCase() === value.toLocaleLowerCase() ? "" : value; }} groupPrefs={railGroups.tags} onToggleGroup={handleToggleRailGroup} />
+                        <LibraryRailGroup plugin={facade.pluginInstance} {i18n} group="tags" label={t(i18n, "rail.tags")} prefix="#" items={railStats.tags} selected={selectedTag} itemLabel={aliasForTag} onSelect={(value) => { markPrefsInteraction(); selectedTag = selectedTag.toLocaleLowerCase() === value.toLocaleLowerCase() ? "" : value; }} groupPrefs={railGroups.tags} onToggleGroup={handleToggleRailGroup} onContextMenu={(e, item) => handleRailItemContextMenu(e, "tags", item.value)} />
                     {/if}
                     {#if railStats.aiTags.length > 0 || selectedAiTag}
-                        <LibraryRailGroup plugin={facade.pluginInstance} {i18n} group="aiTags" label={`✨ ${t(i18n, "rail.aiTags")}`} hint={t(i18n, "library.filterAiTagHint")} prefix="✨" items={railStats.aiTags} selected={selectedAiTag} onSelect={(value) => { markPrefsInteraction(); selectedAiTag = selectedAiTag.toLocaleLowerCase() === value.toLocaleLowerCase() ? "" : value; }} groupPrefs={railGroups.aiTags} onToggleGroup={handleToggleRailGroup} />
+                        <LibraryRailGroup plugin={facade.pluginInstance} {i18n} group="aiTags" label={`✨ ${t(i18n, "rail.aiTags")}`} hint={t(i18n, "library.filterAiTagHint")} prefix="✨" items={railStats.aiTags} selected={selectedAiTag} onSelect={(value) => { markPrefsInteraction(); selectedAiTag = selectedAiTag.toLocaleLowerCase() === value.toLocaleLowerCase() ? "" : value; }} groupPrefs={railGroups.aiTags} onToggleGroup={handleToggleRailGroup} onContextMenu={(e, item) => handleRailItemContextMenu(e, "aiTags", item.value)} />
                     {/if}
                 </aside>
+                {#if !railCollapsed}
+                    <input
+                        type="range"
+                        class="glean-rail-separator"
+                        min={MIN_RAIL_WIDTH}
+                        max={MAX_RAIL_WIDTH}
+                        step="1"
+                        value={railWidth}
+                        aria-label={t(i18n, "rail.resizeHandle")}
+                        oninput={(event) => {
+                            railWidth = clampRailWidth(Number(event.currentTarget.value));
+                            void saveUiPrefs(facade.pluginInstance, { railWidth });
+                        }}
+                        ondblclick={resetRailWidth}
+                        onpointerdown={startRailResize}
+                        onpointermove={resizeRail}
+                        onpointerup={(e) => finishRailResize(e)}
+                        onpointercancel={(e) => finishRailResize(e, true)}
+                        onlostpointercapture={(e) => finishRailResize(e)}
+                        onkeydown={railResizeKey}
+                    />
+                {/if}
                 <div class="glean-lib__main">
                     {#if rows.length === 0}
                         <div class="glean-empty" role="status">
@@ -3753,26 +4108,26 @@ function metaLine(entry: Row): string {
                                 </button>
                                 </div>
                             {:else if !hasFilters && totalClips === 0}
-                                <div class="glean-empty__quick-cards" role="region" aria-label="快速起步">
+                                <div class="glean-empty__quick-cards" role="region" aria-label={t(i18n, "library.quickStart")}>
                                     <button type="button" class="glean-empty__card" disabled={seedingDemoArticles} onclick={() => void handleSeedDemoArticles()}>
                                         <div class="glean-empty__card-icon"><svg class="glean-icon"><use href="#iconGleanNews" /></svg></div>
                                         <div class="glean-empty__card-text">
-                                            <div class="glean-empty__card-title">🌱 预置精读示范文章</div>
-                                            <div class="glean-empty__card-desc">自动放入 2 篇示范长文（含导读档案卡与反链），立即体验</div>
+                                            <div class="glean-empty__card-title">{t(i18n, "library.seedDemoTitle")}</div>
+                                            <div class="glean-empty__card-desc">{t(i18n, "library.seedDemoDesc")}</div>
                                         </div>
                                     </button>
                                     <button type="button" class="glean-empty__card" onclick={() => facade.openImport()}>
                                         <div class="glean-empty__card-icon"><svg class="glean-icon"><use href="#iconGleanDownload" /></svg></div>
                                         <div class="glean-empty__card-text">
-                                            <div class="glean-empty__card-title">📥 导入外部书签与收藏</div>
-                                            <div class="glean-empty__card-desc">支持 Pocket、Omnivore、Wallabag、微信读书笔记</div>
+                                            <div class="glean-empty__card-title">{t(i18n, "library.importBookmarksTitle")}</div>
+                                            <div class="glean-empty__card-desc">{t(i18n, "library.importBookmarksDesc")}</div>
                                         </div>
                                     </button>
                                     <button type="button" class="glean-empty__card" onclick={() => facade.openOnboarding()}>
                                         <div class="glean-empty__card-icon"><svg class="glean-icon"><use href="#iconGleanWheat" /></svg></div>
                                         <div class="glean-empty__card-text">
-                                            <div class="glean-empty__card-title">🧭 查看新手配置向导</div>
-                                            <div class="glean-empty__card-desc">重新检查或切换存放长文剪藏的笔记本范围</div>
+                                            <div class="glean-empty__card-title">{t(i18n, "library.onboardingGuideTitle")}</div>
+                                            <div class="glean-empty__card-desc">{t(i18n, "library.onboardingGuideDesc")}</div>
                                         </div>
                                     </button>
                                 </div>
@@ -3894,7 +4249,7 @@ function metaLine(entry: Row): string {
                                                     <button class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId) || entry.status === "later"} onclick={() => void setStatus(entry, "later")}>{t(i18n, "action.moveToLater")}</button>
                                                     <button class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId)} onclick={() => facade.openArchiveDialog(entry.id)}>{t(i18n, "action.archive")}</button>
                                                 {/if}
-                                                <button class="glean-btn glean-btn--ghost" disabled={snappingId === entry.id} onclick={() => void takeSnapshot(entry)}>{snapshotLabel(entry)}</button>
+                                                <button class="glean-btn glean-btn--ghost" disabled={snappingId === entry.id} onclick={() => void takeSnapshot(entry)} title={snapshotLabel(entry)} aria-label={snapshotLabel(entry)}>{snapshotLabel(entry)}</button>
                                                 <button class="glean-btn glean-btn--ghost" disabled={Boolean(exportingMarkdownId)} aria-busy={exportingMarkdownId === entry.id} onclick={() => void exportMarkdown(entry)}>{t(i18n, "export.markdown")}</button>
                                                 <button class="glean-btn glean-btn--ghost" disabled={enrichingId === entry.id} onclick={() => void enrich(entry)}>{t(i18n, "ai.actionEnrich")}</button>
                                                 <button class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId)} aria-pressed={isPinnedToday(entry)} onclick={() => void toggleSurfacePin(entry)}>{surfacePinLabel(entry)}</button>
@@ -3978,26 +4333,26 @@ function metaLine(entry: Row): string {
                             </button>
                             </div>
                         {:else if !hasFilters && totalClips === 0}
-                            <div class="glean-empty__quick-cards" role="region" aria-label="快速起步">
+                            <div class="glean-empty__quick-cards" role="region" aria-label={t(i18n, "library.quickStart")}>
                                 <button type="button" class="glean-empty__card" disabled={seedingDemoArticles} onclick={() => void handleSeedDemoArticles()}>
                                     <div class="glean-empty__card-icon"><svg class="glean-icon"><use href="#iconGleanNews" /></svg></div>
                                     <div class="glean-empty__card-text">
-                                        <div class="glean-empty__card-title">🌱 预置精读示范文章</div>
-                                        <div class="glean-empty__card-desc">自动放入 2 篇示范长文（含导读档案卡与反链），立即体验</div>
+                                        <div class="glean-empty__card-title">{t(i18n, "library.seedDemoTitle")}</div>
+                                        <div class="glean-empty__card-desc">{t(i18n, "library.seedDemoDesc")}</div>
                                     </div>
                                 </button>
                                 <button type="button" class="glean-empty__card" onclick={() => facade.openImport()}>
                                     <div class="glean-empty__card-icon"><svg class="glean-icon"><use href="#iconGleanDownload" /></svg></div>
                                     <div class="glean-empty__card-text">
-                                        <div class="glean-empty__card-title">📥 导入外部书签与收藏</div>
-                                        <div class="glean-empty__card-desc">支持 Pocket、Omnivore、Wallabag、微信读书笔记</div>
+                                        <div class="glean-empty__card-title">{t(i18n, "library.importBookmarksTitle")}</div>
+                                        <div class="glean-empty__card-desc">{t(i18n, "library.importBookmarksDesc")}</div>
                                     </div>
                                 </button>
                                 <button type="button" class="glean-empty__card" onclick={() => facade.openOnboarding()}>
                                     <div class="glean-empty__card-icon"><svg class="glean-icon"><use href="#iconGleanWheat" /></svg></div>
                                     <div class="glean-empty__card-text">
-                                        <div class="glean-empty__card-title">🧭 查看新手配置向导</div>
-                                        <div class="glean-empty__card-desc">重新检查或切换存放长文剪藏的笔记本范围</div>
+                                        <div class="glean-empty__card-title">{t(i18n, "library.onboardingGuideTitle")}</div>
+                                        <div class="glean-empty__card-desc">{t(i18n, "library.onboardingGuideDesc")}</div>
                                     </div>
                                 </button>
                             </div>
@@ -4152,7 +4507,7 @@ function metaLine(entry: Row): string {
                                                 <button class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId) || entry.status === "done"} onclick={() => void setStatus(entry, "done")}>{t(i18n, "action.markDone")}</button>
                                                 <button class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId)} onclick={() => facade.openArchiveDialog(entry.id)}>{t(i18n, "action.archive")}</button>
                                             {/if}
-                                            <button class="glean-btn glean-btn--ghost" disabled={snappingId === entry.id} onclick={() => void takeSnapshot(entry)}>{snapshotLabel(entry)}</button>
+                                            <button class="glean-btn glean-btn--ghost" disabled={snappingId === entry.id} onclick={() => void takeSnapshot(entry)} title={snapshotLabel(entry)} aria-label={snapshotLabel(entry)}>{snapshotLabel(entry)}</button>
                                             <button class="glean-btn glean-btn--ghost" disabled={Boolean(exportingMarkdownId)} aria-busy={exportingMarkdownId === entry.id} onclick={() => void exportMarkdown(entry)}>{t(i18n, "export.markdown")}</button>
                                             <button class="glean-btn glean-btn--ghost" disabled={enrichingId === entry.id} onclick={() => void enrich(entry)}>{t(i18n, "ai.actionEnrich")}</button>
                                             <button class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId)} aria-pressed={isPinnedToday(entry)} onclick={() => void toggleSurfacePin(entry)}>{surfacePinLabel(entry)}</button>
@@ -4211,6 +4566,7 @@ function metaLine(entry: Row): string {
             onBatchPriority={batchSetPriority}
             onBatchRating={batchSetRating}
             {allSelectedAreFavorite}
+            computeDiff={computeBatchDiff}
         />
     {:else if view === "resurface"}
         <ResurfaceView

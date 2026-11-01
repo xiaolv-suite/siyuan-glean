@@ -21,6 +21,7 @@
     const i18n = $derived(facade.i18n);
 
     let targetMinutes = $state(8);
+    let sliceHeadingLevel = $state(0);
     let creating = $state(false);
 
     $effect(() => registerCloseGuard?.(() => !creating));
@@ -32,6 +33,7 @@
             targetMinutesPerSlice: targetMinutes,
             totalWords: context.words,
             totalMinutes: estimatedMinutes,
+            headingLevel: sliceHeadingLevel,
         })
     );
 
@@ -121,6 +123,12 @@
                     </button>
                 {/each}
             </div>
+            <select class="b3-select glean-slicing-level-select" bind:value={sliceHeadingLevel} aria-label={t(i18n, "docSlicing.headingLevel")}>
+                <option value={0}>{t(i18n, "docSlicing.levelAuto")}</option>
+                <option value={1}>{t(i18n, "docSlicing.levelH1")}</option>
+                <option value={2}>{t(i18n, "docSlicing.levelH2")}</option>
+                <option value={3}>{t(i18n, "docSlicing.levelH3")}</option>
+            </select>
         </div>
         <div class="glean-slicing-summary">
             {t(i18n, "docSlicing.summary", {

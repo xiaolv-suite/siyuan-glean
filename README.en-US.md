@@ -17,10 +17,17 @@ Lv Glean organizes clippings and articles already in SiYuan. It does not crawl t
 
 ## ✨ Core Capabilities
 
-- **📚 Library Workbench**: Table, Kanban, and Card views with multi-faceted filtering (status, queues, sites, authors, tags, favorites), batch actions for priority/rating, smart favorite toggles, and CSV/digest exports.
-- **📖 Companion Reader**: Distraction-free reading (centered 760px container), dual-mode support (custom companion vs. native Protyle), real-time metrics, eye-level Margin Notes, in-article search highlights (`Ctrl+F`), 1-click quote cards (`Alt+Q`), AI summary callout insertions, and WeChat article purification & WeRead guide.
-- **🎓 Quadruple Academic Citations & Ecosystem Bridges**: GB/T 7714-2015, BibTeX `@article`, APA 7th, and MLA 9th citation standards; quote tagging synced to SiYuan Attribute Views (AV Collection); 1-click Task Horizon and flashcard creation.
-- **🎲 Daily Resurface & Blind-Box Roaming**: Ebbinghaus-driven resurfacing, time-budgeted roaming (<5m / 5-15m / >15m), and keyboard priority (`P`) & rating (`M`) cycles.
+- **📚 Library Workbench**: Table, Kanban, and Card views with adaptive rail width (180-420px, `BL-21`); native DropZone capture & flashcard creation (`BL-25`); multi-token AND search (`BL-28`); rail item context menus (`BL-29`); 2D keyboard navigation with arrow keys and `h/j/k` (`BL-30`); lightweight virtual Kanban columns (`BL-22`); and batch diff estimations (`BL-31`).
+- **📖 Companion Reader (3-Zone Toolbar & 5 Partitioned Tabs)**: Balanced 3-zone header layout (metadata & author contact on left, mode toggle in center, search/5-tier fold/Aa typography palette/zen mode/favorites/more actions/✓→ Done & Next on right); 5 dedicated companion tabs (Outline, Notes, Fold, AI, Tools & Metadata); Zen Fullscreen Mode (`F11`, `BL-32`); TTS speech with real-time yellow pulse & smooth scroll tracking (`BL-33`); Mini Floating Pill mode (`BL-34`); 5-Tier Semantic Folded Reader (`Alt+Z`) with 1-click Markdown digest copy (`BL-35`); Quote Card custom red signature seals (`BL-38`); and multi-color Zettelkasten highlights export (`BL-39`).
+- **🐴 Lv Ecosystem Federation (Epoch 6 Standard · D-0248)**:
+  - **Lv Cards (`siyuan-lv-cards`)**: 1-click extract push to incremental learning boxes with bidirectional backlink lineage, strictly isolated from FSRS algorithms; Today's Resurface due card banner with 1-click jump to review.
+  - **Lv Contacts (`siyuan-contacts`)**: Automatic author contact recognition via protocol v2, toolbar badge navigation, 1-click contact enrollment (`ensurePerson`), and reading fact logging (`appendFact`).
+  - **Lv Common (`xiaolv-common`)**: 1-click quote and extract ingestion (`captureQuote`) into the global snippet library from both Quote Cards and Companion Notes.
+  - **Lv Checkin (`siyuan-checkin`)**: Automatic reporting of verified reading minutes (`readMinutes`, `unit: "min"`) on article completion.
+  - **Quadruple Academic Citations**: GB/T 7714-2015, BibTeX `@article`, APA 7th, and MLA 9th citation standards.
+- **🎨 SiYuan Native 24×24 Vector Icon Unification**: 100% aligned with SiYuan Note's native `litheness/icon.js` vector path standards (1.7px stroke width, rounded caps and joins, unified `#iconGlean*` symbol registry).
+- **🎲 Daily Resurface & Blind-Box Roaming**: Ebbinghaus-driven resurfacing with high-rating priority boost (`BL-36`); 1-click Daily Note plan block insertion (`BL-37`); Command Palette roaming command (`cmd.roamingPick`, `BL-26`); topbar context menu (`BL-27`); and onboarding active doc capture (`BL-45`).
+- **🛠️ Slicing, Safety & Portable Config**: Custom heading level progressive slicing (`BL-40`); promotional link stripping (`BL-41`); Omnivore highlight extraction (`BL-42`); automated 7-day rolling local backups (`BL-43`); and portable JSON settings export/import (`BL-44`).
 - **📊 Reading Stats & Review**: 365-day reading heatmap, streak tracking, reading conversion funnel, instant search on completed articles (`/`), and periodic Markdown/CSV review reports.
 - **⚡ Keyboard-First Workflow**: Universal `/` and `Ctrl+F` search focus across all main views, single-key ratings (`1-5`), cyclic priority adjustments (`P`), block-ref copying (`Y`), citation export (`C` / `Shift+C`), and blind-box roaming (`B`).
 
@@ -57,7 +64,7 @@ In just 3 minutes, transform scattered clippings into structured knowledge asset
 | --- | --- | --- |
 | **Library Workbench** | `Ctrl+Alt+G` / `⌥⌘G`, or Left Dock icon | Central hub for all library articles. Provides Table, Kanban, and Card views; left rail for multi-faceted filters (status, queues, sites, authors, tags, favorites); bottom batch bar for bulk priority, rating, and status changes; right-side drawer preview. |
 | **Today's Resurface** | Top bar "Today's Resurface" or Command Palette | Anti-forgetting resurfacing hub. Recommends articles daily based on age, ratings, priorities, and diversity; full keyboard controls: `Enter` to read, `L` for later, `A` to archive, `P` to pin, `R` to replace; includes streak banner and blind-box roaming launcher. |
-| **Companion Reader** | Click "Start reading" in library or native capsule | Dedicated reading environment. Centered text column (760px limit) reduces eye fatigue; left outline for quick navigation; right margin notes aligned at eye level; selection capsule for Quote Cards (`Alt+Q`) and in-article search (`Ctrl+F`). |
+| **Companion Reader** | Click "Start reading" in library or native capsule | Dedicated reading environment with 3-zone balanced topbar & 5 partitioned companion tabs (Outline, Notes, Fold, AI, Tools). Left area displays title & author contact badge; center hosts Read/Edit segmented toggle; right area provides search, 5-tier semantic fold, typography palette popover, Zen mode, favorites, more actions, and ✓→ Done & Next. Selection capsule supports Quote Cards (`Alt+Q`), 1-click push to Lv Cards, Lv Common ingestion, and in-article search (`Ctrl+F`). |
 | **Highlight Wall** | Top bar "Highlights" or Command Palette | Ingestion and synthesis hub. Aggregates all highlights and margin notes across the library; provides flat timeline and clustered views; 4-color filtering (yellow/red/blue/green); 1-click export to Markdown or SiYuan reading notes. |
 | **Stats & Review** | Top bar "Stats" or Command Palette | Growth and achievement tracking. Displays 365-day reading heatmap, streak records, conversion funnels (Capture ➔ Reading ➔ Done ➔ Archived); instant fuzzy search on completed items (`/`); periodic review reports in Markdown and RFC 4180 CSV. |
 | **Roaming Blind-Box Drawer** | Press `B`, or launcher in Resurface/Reader | Serendipitous reading tool. Pulls random unread articles filtered by time budget (<5m, 5-15m, >15m) or tags; supports browsing history and keyboard adjustments for priority (`P`), rating (`M`), and citations. |
@@ -169,6 +176,14 @@ In just 3 minutes, transform scattered clippings into structured knowledge asset
   - Form factors: Desktop app, Web browser frontend, and adaptive mobile layouts.
 - **Real-Environment Acceptance**:
   - Automated tests and architectural gates pass 100%. Device-specific touch behaviors, external AI integrations, and real-environment acceptance boundaries are detailed in the [capability matrix](docs/CAPABILITY-MATRIX.md) and [known blockers](docs/BLOCKERS.md).
+
+## v1.4.3 update (2026-11-01)
+
+This update connects highlight ecosystem interoperability and streamlines the sidebar card experience.
+
+- **Multi-Source Annotation Interop**: Bridges `siyuan-comment` annotations and native block `memo` entries with category badges and 1-click jump back to source blocks;
+- **Streamlined Sidebar Cards**: Eliminates redundant rating badges and isolated action rows, reducing card height by ~60% for a clean 360px sidebar fit;
+- **Bilingual i18n & Gate Polish**: Aligns i18n keys and snapshot accessible labels for 100% green verification.
 
 ## v1.4.2 update (2026-10-31)
 

@@ -11,6 +11,7 @@
 
 export type LibraryKeyboardAction =
     | { type: "move"; delta: 1 | -1 }
+    | { type: "moveCol"; delta: 1 | -1 }
     | { type: "activate" }
     | { type: "openDocument" }
     | { type: "startReading" }
@@ -99,6 +100,12 @@ export function resolveLibraryShortcut(
     if (lower === "k" || (key === "ArrowUp" && cursorActive)) {
         return repeatOrNull(event, { type: "move", delta: -1 });
     }
+    if ((lower === "h" || key === "ArrowLeft") && cursorActive) {
+        return repeatOrNull(event, { type: "moveCol", delta: -1 });
+    }
+    if (key === "ArrowRight" && cursorActive) {
+        return repeatOrNull(event, { type: "moveCol", delta: 1 });
+    }
     // Enter 在按钮/链接上保留原生点击语义；只有焦点在行容器时才接管。
     if (key === "Enter" && !context.nativeAction && cursorActive) {
         return repeatOrNull(event, { type: "activate" });
@@ -147,6 +154,77 @@ export function moveLibraryCursor(ids: readonly string[], currentId: string, del
     if (index < 0) return delta > 0 ? ids[0] : ids[ids.length - 1];
     const next = Math.min(ids.length - 1, Math.max(0, index + delta));
     return ids[next];
+}
+
+/**
+ * 二维网格/看板列间光标移动（BL-30）：
+ * 给定各列 ID 二维数组 columns: readonly (readonly string[])[]，
+ * 从当前 currentId 跨列移动（delta: 1 为向右，-1 为向左）。
+ * 移动到相邻非空列的相同或最接近的行索引。
+ */
+export function moveKanbanCursor2D(
+    columns: readonly (readonly string[])[],
+    currentId: string,
+    delta: 1 | -1,
+): string {
+    if (columns.length === 0) return "";
+    let currentCol = -1;
+    let currentRow = -1;
+    for (let c = 0; c < columns.length; c++) {
+        const r = columns[c].indexOf(currentId);
+        if (r >= 0) {
+            currentCol = c;
+            currentRow = r;
+            break;
+        }
+    }
+    if (currentCol < 0) {
+        for (const col of columns) {
+            if (col.length > 0) return col[0];
+        }
+        return "";
+    }
+
+    let targetCol = currentCol + delta;
+    while (targetCol >= 0 && targetCol < columns.length) {
+        if (columns[targetCol].length > 0) {
+            const targetRow = Math.min(currentRow, columns[targetCol].length - 1);
+            return columns[targetCol][targetRow];
+        }
+        targetCol += delta;
+    }
+    return currentId;
+}
+
+/**
+ * 看板列内垂直移动光标（BL-30）：
+ * 在当前卡片所在列中沿上下方向移动，不出列。
+ */
+export function moveKanbanCursorVertical(
+    columns: readonly (readonly string[])[],
+    currentId: string,
+    delta: 1 | -1,
+): string {
+    if (columns.length === 0) return "";
+    let currentCol = -1;
+    let currentRow = -1;
+    for (let c = 0; c < columns.length; c++) {
+        const r = columns[c].indexOf(currentId);
+        if (r >= 0) {
+            currentCol = c;
+            currentRow = r;
+            break;
+        }
+    }
+    if (currentCol < 0) {
+        for (const col of columns) {
+            if (col.length > 0) return delta > 0 ? col[0] : col[col.length - 1];
+        }
+        return "";
+    }
+    const col = columns[currentCol];
+    const targetRow = Math.min(col.length - 1, Math.max(0, currentRow + delta));
+    return col[targetRow];
 }
 
 /** 供 UI 决定是否显示「已用键盘选中」提示。 */

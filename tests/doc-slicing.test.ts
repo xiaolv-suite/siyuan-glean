@@ -34,6 +34,29 @@ test("planDocSlices 依据 H2 章节合理划分切片与分配时长", () => {
     assert.ok(plan.slices[0].estimatedMinutes > 0);
 });
 
+test("planDocSlices 支持指定 headingLevel（H1/H2/H3）自定义层级精确切片（BL-40）", () => {
+    const outline = [
+        { id: "h1-1", level: 1 as const, title: "第一章：基础理论" },
+        { id: "h2-1", level: 2 as const, title: "1.1 认知机制" },
+        { id: "h2-2", level: 2 as const, title: "1.2 实验结论" },
+        { id: "h1-2", level: 1 as const, title: "第二章：系统实践" },
+        { id: "h2-3", level: 2 as const, title: "2.1 架构设计" },
+    ];
+
+    // 按 H1 分切：恰好分为 2 个大片（两章）
+    const planH1 = planDocSlices(outline, { headingLevel: 1, totalWords: 6000, totalMinutes: 15 });
+    assert.equal(planH1.totalSlices, 2);
+    assert.equal(planH1.slices[0].title, "第一章：基础理论");
+    assert.equal(planH1.slices[1].title, "第二章：系统实践");
+
+    // 按 H2 分切：恰好分为 3 个小片（三节）
+    const planH2 = planDocSlices(outline, { headingLevel: 2, totalWords: 6000, totalMinutes: 15 });
+    assert.equal(planH2.totalSlices, 3);
+    assert.equal(planH2.slices[0].title, "1.1 认知机制");
+    assert.equal(planH2.slices[1].title, "1.2 实验结论");
+    assert.equal(planH2.slices[2].title, "2.1 架构设计");
+});
+
 test("formatSliceMarkdown 生成包含标准思源块引用与原长文链接的内容", () => {
     const slice = {
         index: 1,

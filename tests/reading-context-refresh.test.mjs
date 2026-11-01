@@ -18,7 +18,7 @@ registerHooks({
         return nextResolve(specifier, context);
     },
     load(url, context, nextLoad) {
-        if (url === "glean-context-refresh:svelte") return { format: "module", source: "export const untrack = callback => callback();", shortCircuit: true };
+        if (url === "glean-context-refresh:svelte") return { format: "module", source: "export const untrack = callback => callback(); export const onMount = callback => { try { callback(); } catch {} };", shortCircuit: true };
         if (url === "glean-context-refresh:siyuan") return { format: "module", source: "export const showMessage = () => {};", shortCircuit: true };
         if (url === "glean-context-refresh:../services/clip-store") return {
             format: "module", shortCircuit: true,

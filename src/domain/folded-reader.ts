@@ -250,3 +250,32 @@ export function toggleNodeFold(node: FoldNode): FoldNode {
         expanded: !node.expanded,
     };
 }
+
+/**
+ * 将当前阶数的折叠大纲节点格式化为 Markdown 笔记草稿（BL-35）
+ */
+export function formatFoldNodesToMarkdown(nodes: readonly FoldNode[], level: FoldLevel): string {
+    const lines: string[] = [];
+    for (const node of nodes) {
+        let content = "";
+        if (level === 1) {
+            content = node.fullText;
+        } else if (level === 2) {
+            content = node.brief || node.fullText;
+        } else if (level === 3) {
+            content = (node.points && node.points.length > 0) ? node.points.join("；") : (node.brief || node.fullText);
+        } else if (level === 4) {
+            content = node.gist || node.brief || node.fullText;
+        } else {
+            content = node.concept || node.gist || node.brief || node.fullText;
+        }
+        if (content && content.trim()) {
+            if (node.blockId) {
+                lines.push(`- ${content.trim()} ((${node.blockId} '*'))`);
+            } else {
+                lines.push(`- ${content.trim()}`);
+            }
+        }
+    }
+    return lines.join("\n");
+}

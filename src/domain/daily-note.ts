@@ -51,16 +51,17 @@ export function escapeDailyNoteText(text: string): string {
  */
 export function formatDailyNoteReadingMarkdown(
     entry: DailyNoteReadingEntry,
-    labels: DailyNoteLabels = DEFAULT_DAILY_NOTE_LABELS,
+    labels: Partial<DailyNoteLabels> = DEFAULT_DAILY_NOTE_LABELS,
 ): string {
-    const titleText = escapeDailyNoteText(entry.title || labels.untitled);
+    const effectiveLabels: DailyNoteLabels = { ...DEFAULT_DAILY_NOTE_LABELS, ...labels };
+    const titleText = escapeDailyNoteText(entry.title || effectiveLabels.untitled);
     const ref = `(( ${entry.docId} '《${titleText}》' ))`;
-    const statusIcon = entry.status === "done" ? `✅ ${labels.done}` : `📖 ${labels.reading}`;
+    const statusIcon = entry.status === "done" ? `✅ ${effectiveLabels.done}` : `📖 ${effectiveLabels.reading}`;
     const authorText = entry.author?.trim() ? ` · ✍️ ${escapeDailyNoteText(entry.author.trim())}` : "";
     const ratingNum = Math.max(0, Math.min(5, Math.round(entry.rating ?? 0)));
     const ratingStars = ratingNum > 0 ? ` · ⭐ ${"⭐".repeat(ratingNum)}` : "";
     const readMinutesCount = Number.isSafeInteger(entry.readMinutes) && (entry.readMinutes ?? 0) > 0 ? (entry.readMinutes ?? 0) : 0;
-    const minutesText = readMinutesCount > 0 ? ` · ⏱️ ${labels.timeSpent} ${readMinutesCount} ${labels.minutes}` : "";
+    const minutesText = readMinutesCount > 0 ? ` · ⏱️ ${effectiveLabels.timeSpent} ${readMinutesCount} ${effectiveLabels.minutes}` : "";
 
     let content = `- ${statusIcon} ${ref}${authorText}${ratingStars}${minutesText}`;
     if (entry.summary?.trim()) {

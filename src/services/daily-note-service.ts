@@ -64,7 +64,7 @@ export async function findDailyNoteReadingHeadingId(dailyDocId: string): Promise
 export async function recordDailyNoteReading(
     notebookId: string,
     articleDocId: string,
-    labels?: DailyNoteLabels,
+    labels?: Partial<DailyNoteLabels>,
 ): Promise<RecordDailyNoteResult> {
     if (!notebookId?.trim() || !/^\d{14}-[0-9a-z]{7}$/.test(articleDocId)) {
         return { ok: false, error: "笔记本或文章 ID 非法" };
@@ -119,5 +119,32 @@ export async function recordDailyNoteReading(
     } catch (error) {
         console.warn("[glean] 记录阅读足迹至今日日记失败:", error);
         return { ok: false, error: error instanceof Error ? error.message : "记录失败" };
+    }
+}
+
+/**
+ * 批量将今日必读文章计划写入今日日记（BL-37）
+ */
+export async function recordBatchDailyNotePlan(
+    notebookId: string,
+    articleDocIds: string[],
+    labels?: Partial<DailyNoteLabels>,
+): Promise<{ ok: boolean; count: number; dailyDocId?: string; error?: string }> {
+    if (!notebookId?.trim() || articleDocIds.length === 0) {
+        return { ok: false, count: 0, error: "参数不合法" };
+    }
+    try {
+        let count = 0;
+        let lastDailyDocId = "";
+        for (const docId of articleDocIds) {
+            const res = await recordDailyNoteReading(notebookId, docId, labels);
+            if (res.ok) {
+                count++;
+                if (res.dailyDocId) lastDailyDocId = res.dailyDocId;
+            }
+        }
+        return { ok: true, count, dailyDocId: lastDailyDocId };
+    } catch (error) {
+        return { ok: false, count: 0, error: error instanceof Error ? error.message : "批量写入日记失败" };
     }
 }

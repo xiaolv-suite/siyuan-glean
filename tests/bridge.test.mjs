@@ -44,6 +44,12 @@ export const openTab = () => undefined;
 export const openMobileFileById = () => undefined;
 export const showMessage = () => undefined;
 export const getAllEditor = () => [];
+export class Menu {
+    addItem() {}
+    addSeparator() {}
+    open() {}
+    close() {}
+}
 export class Plugin {
     constructor(options) {
         Object.assign(this, options);

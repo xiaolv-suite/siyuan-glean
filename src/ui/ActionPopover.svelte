@@ -26,8 +26,7 @@
     $effect(() => {
         const element = root;
         if (!element) return;
-        const stopClick = (event: Event) => {
-            event.stopPropagation();
+        const handleClick = (event: Event) => {
             const target = event.target instanceof Element ? event.target : null;
             const btn = target?.closest("button");
             if (btn && element.contains(btn) && !btn.closest(".glean-author-editor, [data-keep-popover-open]")) {
@@ -45,11 +44,11 @@
             if (!open || !(target instanceof Node) || element.contains(target) || target === trigger) return;
             close();
         };
-        element.addEventListener("click", stopClick);
+        element.addEventListener("click", handleClick);
         element.addEventListener("keydown", onKey);
         document.addEventListener("focusin", onFocusIn, true);
         return () => {
-            element.removeEventListener("click", stopClick);
+            element.removeEventListener("click", handleClick);
             element.removeEventListener("keydown", onKey);
             document.removeEventListener("focusin", onFocusIn, true);
         };

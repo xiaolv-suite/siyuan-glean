@@ -6,6 +6,10 @@ import {
     applyRailGroupToggle,
     syncAccordionRailGroups,
     toggleAllRailGroups,
+    DEFAULT_RAIL_WIDTH,
+    MIN_RAIL_WIDTH,
+    MAX_RAIL_WIDTH,
+    clampRailWidth,
     type RailGroups,
 } from "../src/domain/library-rail.ts";
 
@@ -129,4 +133,32 @@ test("UI 模板接线断言：DockPanel.svelte 与 LibraryRailGroup.svelte 完�
     assert.match(railGroup, /groupPrefs\?: RailGroupPrefs/);
     assert.match(railGroup, /onToggleGroup\?: \(group: RailGroupKey, key: keyof RailGroupPrefs\) => void/);
     assert.match(railGroup, /const prefs = \$derived\(groupPrefs \?\? localPrefs\)/);
+});
+
+test("侧栏宽度钳制与超宽屏自适应（BL-21）：clampRailWidth 规范边界并防止异常值", () => {
+    assert.equal(clampRailWidth(undefined), DEFAULT_RAIL_WIDTH);
+    assert.equal(clampRailWidth(null), DEFAULT_RAIL_WIDTH);
+    assert.equal(clampRailWidth("invalid"), DEFAULT_RAIL_WIDTH);
+    assert.equal(clampRailWidth(NaN), DEFAULT_RAIL_WIDTH);
+    assert.equal(clampRailWidth(Infinity), DEFAULT_RAIL_WIDTH);
+
+    // 边界钳制
+    assert.equal(clampRailWidth(100), MIN_RAIL_WIDTH);
+    assert.equal(clampRailWidth(180), 180);
+    assert.equal(clampRailWidth(250), 250);
+    assert.equal(clampRailWidth(420), 420);
+    assert.equal(clampRailWidth(600), MAX_RAIL_WIDTH);
+});
+
+test("UI 模板接线断言：DockPanel.svelte 支持侧栏调宽手柄（BL-21）与 WAI-ARIA 规范", () => {
+    assert.match(dockPanel, /class="glean-rail-separator"/);
+    assert.match(dockPanel, /type="range"/);
+    assert.match(dockPanel, /aria-label=\{t\(i18n, "rail\.resizeHandle"\)\}/);
+    assert.match(dockPanel, /value=\{railWidth\}/);
+    assert.match(dockPanel, /min=\{MIN_RAIL_WIDTH\}/);
+    assert.match(dockPanel, /max=\{MAX_RAIL_WIDTH\}/);
+    assert.match(dockPanel, /onpointerdown=\{startRailResize\}/);
+    assert.match(dockPanel, /onkeydown=\{railResizeKey\}/);
+    assert.match(dockPanel, /ondblclick=\{resetRailWidth\}/);
+    assert.match(dockPanel, /--glean-rail-w:\s*\{railWidth\}px/);
 });

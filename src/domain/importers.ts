@@ -17,6 +17,8 @@ export interface ImportedItem {
     doneTime: string;
     tags: string[];
     status: "inbox" | "done" | "archived";
+    /** 外部导入高亮/划线引述列表（BL-42） */
+    highlights?: string[];
 }
 
 export interface ParseResult {
@@ -344,6 +346,7 @@ interface OmnivorePage {
     labels?: unknown;
     state?: unknown;
     isArchived?: unknown;
+    highlights?: unknown;
 }
 
 export function parseOmnivoreJson(raw: string): ParseResult {
@@ -362,6 +365,11 @@ export function parseOmnivoreJson(raw: string): ParseResult {
         const labels = Array.isArray(page.labels)
             ? (page.labels as Array<{ name?: unknown }>).map((label) => String(label?.name ?? "")).filter(Boolean)
             : [];
+        const rawHighlights = Array.isArray(page.highlights)
+            ? (page.highlights as Array<{ quote?: unknown; text?: unknown; annotation?: unknown }>)
+                .map((h) => String(h?.quote ?? h?.text ?? h?.annotation ?? "").trim())
+                .filter(Boolean)
+            : [];
         // Omnivore 导出的归档语义有两种载体：wallabag 风格 isArchived 布尔，或 state 字符串（如 "ARCHIVED"）
         const state = String(page.state ?? "").toUpperCase();
         const archived = page.isArchived === true || state.includes("ARCHIVED");
@@ -373,6 +381,7 @@ export function parseOmnivoreJson(raw: string): ParseResult {
             doneTime: "",
             tags: capTags(labels),
             status: archived ? "archived" : "inbox",
+            highlights: rawHighlights.length > 0 ? rawHighlights : undefined,
         });
     }
     const deduped = dedupe(items);

@@ -12,6 +12,7 @@ import {
     parseBlocksToFoldNodes,
     applyGlobalFoldLevel,
     toggleNodeFold,
+    formatFoldNodesToMarkdown,
     type FoldNode,
 } from "../src/domain/folded-reader.ts";
 
@@ -170,4 +171,19 @@ test("folded-reader.scss 样式规范符合 UI-UX-PRO-MAX 触控、高对比度�
     assert.match(scss, /@media\s*\(max-width:\s*560px\)[\s\S]*\.glean-fold-card__btn\s*\{[\s\S]*min-height:\s*44px;/);
     assert.match(scss, /@media\s*\(max-width:\s*360px\)[\s\S]*\.glean-fold-reader__levels\s*\{[\s\S]*grid-template-columns:\s*repeat\(3,\s*1fr\);/);
     assert.match(scss, /@media\s*\(prefers-reduced-motion:\s*reduce\)[\s\S]*transition:\s*var\(--glean-motion-none\)\s*!important;/);
+});
+
+test("formatFoldNodesToMarkdown：将各层级折叠节点格式化为 Markdown 列表并附带块引用（BL-35）", () => {
+    const nodes: FoldNode[] = [
+        createFoldNode("20260101120000-aaaaaaa", "认知负荷理论指出，读者的工作记忆容量极其有限。"),
+        createFoldNode("20260101120000-bbbbbbb", "因此，好的界面应当减少冗余视觉噪音，提升沉浸质感。"),
+    ];
+
+    const mdLevel2 = formatFoldNodesToMarkdown(nodes, 2);
+    assert.match(mdLevel2, /^- .+ \(\(20260101120000-aaaaaaa '\*'\)\)/m);
+    assert.match(mdLevel2, /^- .+ \(\(20260101120000-bbbbbbb '\*'\)\)/m);
+
+    const mdLevel1 = formatFoldNodesToMarkdown(nodes, 1);
+    assert.match(mdLevel1, /认知负荷理论指出/);
+    assert.match(mdLevel1, /好的界面应当减少冗余视觉噪音/);
 });

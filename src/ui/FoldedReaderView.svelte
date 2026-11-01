@@ -1,7 +1,9 @@
 <script lang="ts">
+    import { showMessage } from "siyuan";
     import { t, type I18nBundle } from "../libs/i18n.ts";
     import {
         FOLD_LEVEL_CONFIGS,
+        formatFoldNodesToMarkdown,
         type FoldLevel,
         type FoldNode,
     } from "../domain/folded-reader.ts";
@@ -42,6 +44,18 @@
         currentLevel = lvl;
         if (onLevelChange) {
             onLevelChange(lvl);
+        }
+    }
+
+    async function copyCurrentOutlineMarkdown(): Promise<void> {
+        if (nodes.length === 0) return;
+        const md = formatFoldNodesToMarkdown(nodes, currentLevel);
+        if (!md.trim()) return;
+        try {
+            await navigator.clipboard.writeText(md);
+            showMessage(t(i18n, "foldReader.markdownCopied", { n: nodes.length }), 2500);
+        } catch {
+            showMessage(t(i18n, "msg.actionFailed"), 2000);
         }
     }
 
@@ -137,7 +151,20 @@
         </div>
         <div class="glean-fold-reader__desc-row">
             <span>{t(i18n, activeConfig.descKey)}</span>
-            <span class="glean-kbdhint" aria-hidden="true"><kbd>1-5</kbd> {t(i18n, "foldReader.desc")}</span>
+            <div class="glean-fold-reader__ops-row">
+                {#if nodes.length > 0}
+                    <button
+                        type="button"
+                        class="glean-linkish glean-fold-reader__copy-btn"
+                        title={t(i18n, "foldReader.copyMarkdown")}
+                        onclick={copyCurrentOutlineMarkdown}
+                    >
+                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
+                        <span>{t(i18n, "foldReader.copyMarkdown")}</span>
+                    </button>
+                {/if}
+                <span class="glean-kbdhint" aria-hidden="true"><kbd>1-5</kbd> {t(i18n, "foldReader.desc")}</span>
+            </div>
         </div>
     </header>
 

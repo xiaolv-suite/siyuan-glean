@@ -38,6 +38,7 @@ test("loadUiPrefs：旧存档补齐首启进度默认值", async () => {
         libraryRailGroups: { queues: { collapsed: false, expanded: false }, sites: { collapsed: false, expanded: false }, authors: { collapsed: false, expanded: false }, tags: { collapsed: false, expanded: false }, aiTags: { collapsed: false, expanded: false } },
         railAccordion: false,
         railCollapsed: false,
+        railWidth: 216,
         savedViews: [],
         tagAliases: [],
         defaultSavedViewId: "",
@@ -61,6 +62,7 @@ test("normalizeUiPrefs：非法步骤与已完成状态不会产生可恢复脏�
         libraryRailGroups: { queues: { collapsed: false, expanded: false }, sites: { collapsed: false, expanded: false }, authors: { collapsed: false, expanded: false }, tags: { collapsed: false, expanded: false }, aiTags: { collapsed: false, expanded: false } },
         railAccordion: false,
         railCollapsed: false,
+        railWidth: 216,
         savedViews: [],
         tagAliases: [],
         defaultSavedViewId: "",
@@ -81,6 +83,7 @@ test("normalizeUiPrefs：非法步骤与已完成状态不会产生可恢复脏�
         libraryRailGroups: { queues: { collapsed: false, expanded: false }, sites: { collapsed: false, expanded: false }, authors: { collapsed: false, expanded: false }, tags: { collapsed: false, expanded: false }, aiTags: { collapsed: false, expanded: false } },
         railAccordion: false,
         railCollapsed: false,
+        railWidth: 216,
         savedViews: [],
         tagAliases: [],
         defaultSavedViewId: "",
@@ -297,5 +300,24 @@ test("saveUiPrefs：持久化分面侧栏折叠开关 railCollapsed", async () =
     await saveUiPrefs(harness.plugin, { railCollapsed: false });
     prefs = await loadUiPrefs(harness.plugin);
     assert.equal(prefs.railCollapsed, false);
+});
+
+test("saveUiPrefs：持久化分面侧栏宽度 railWidth 并遵守范围保护（BL-21）", async () => {
+    const harness = createPlugin({});
+    let prefs = await loadUiPrefs(harness.plugin);
+    assert.equal(prefs.railWidth, 216);
+
+    await saveUiPrefs(harness.plugin, { railWidth: 320 });
+    prefs = await loadUiPrefs(harness.plugin);
+    assert.equal(prefs.railWidth, 320);
+
+    // 边界钳制测试
+    await saveUiPrefs(harness.plugin, { railWidth: 50 });
+    prefs = await loadUiPrefs(harness.plugin);
+    assert.equal(prefs.railWidth, 180);
+
+    await saveUiPrefs(harness.plugin, { railWidth: 800 });
+    prefs = await loadUiPrefs(harness.plugin);
+    assert.equal(prefs.railWidth, 420);
 });
 

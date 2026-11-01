@@ -34,10 +34,42 @@
     const selectedFields = $derived(session?.rows.reduce((count, row) => count + row.fields.filter((field) => field.supported && field.selected).length, 0) ?? 0);
     const configAllowed = $derived(!settingsDirty && !settingsBusy && session?.preferences.settingsSupported);
 
+    interface AutoSnapshotItem {
+        date: string;
+        filename: string;
+        count: number;
+        createdAt: string;
+    }
+    let autoSnapshots = $state<AutoSnapshotItem[]>([]);
+
     onMount(() => {
         mounted = true;
+        void facade.pluginInstance.loadData("daily-backup-index.json").then((res: any) => {
+            if (mounted && res && Array.isArray(res.snapshots)) {
+                autoSnapshots = res.snapshots;
+            }
+        }).catch(() => undefined);
         return () => { mounted = false; requests.invalidate(); controller?.abort(); };
     });
+
+    async function loadSnapshot(snap: AutoSnapshotItem): Promise<void> {
+        if (busy) return;
+        busy = "file";
+        error = "";
+        try {
+            const text = await facade.pluginInstance.loadData(snap.filename);
+            if (typeof text === "string" && mounted) {
+                reset();
+                filename = snap.filename;
+                content = text;
+                showMessage(t(i18n, "backup.snapshotLoaded", { date: snap.date }), 2500);
+            }
+        } catch {
+            error = t(i18n, "backup.snapshotLoadFailed");
+        } finally {
+            busy = "";
+        }
+    }
 
     function reset(): void {
         session = null;
@@ -195,6 +227,21 @@
             {busy === "preview" ? t(i18n, "panel.loading") : t(i18n, session ? "backup.repreview" : "backup.preview")}
         </button>
     </div>
+    {#if autoSnapshots.length > 0}
+        <div class="glean-backup__snapshots">
+            <span class="glean-backup__section-hint">{t(i18n, "backup.autoSnapshotList")}</span>
+            <div class="glean-backup__snapshot-list">
+                {#each autoSnapshots as snap (snap.filename)}
+                    <div class="glean-backup__snapshot-item">
+                        <span>📅 {snap.date}</span>
+                        <button type="button" class="glean-btn glean-btn--ghost glean-btn--xs" disabled={Boolean(busy)} onclick={() => void loadSnapshot(snap)}>
+                            {t(i18n, "backup.loadSnapshot")}
+                        </button>
+                    </div>
+                {/each}
+            </div>
+        </div>
+    {/if}
     {#if filename}<p class="glean-backup__filename">{filename}</p>{/if}
     {#if session}
         <p class="glean-backup__meta">{t(i18n, "backup.previewInfo", { createdAt: session.backup.createdAt, n: session.rows.length })}</p>

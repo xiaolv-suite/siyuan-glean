@@ -955,5 +955,168 @@ test("列表行尾操作与看板选择框平滑微交互契约：默认低透�
 
     assert.match(freshLibKeyboard, /lower === "a" \|\| lower === "l"/);
     assert.match(freshReaderShortcuts, /input\.key === "a" \|\| input\.key === "l"/);
+
+    // 62. 看板单列虚拟滚动与轻量分页（BL-22）守门：content-visibility: auto 与独立分页加载
+    assert.match(styles, /\.glean-kcard\s*\{[\s\S]*content-visibility:\s*auto;/);
+    assert.match(styles, /\.glean-kcard\s*\{[\s\S]*contain-intrinsic-size:\s*auto\s*120px;/);
+    assert.match(freshDockPanel, /KANBAN_INITIAL_LIMIT\s*=\s*50;/);
+    assert.match(freshDockPanel, /kanbanColLimits/);
+    assert.match(freshDockPanel, /loadMoreCol/);
+
+    // 63. 沉浸式阅读器矮屏（<600px）大纲与划线手风琴折叠自适应（BL-23）守门
+    assert.match(styles, /@media\s*\(max-height:\s*600px\)\s*\{[\s\S]*\.glean-reader__outline,[\s\S]*\.glean-reader__highlights\s*\{[\s\S]*max-height:\s*180px;/);
+    assert.match(freshReaderTab, /isShortViewport/);
+    assert.match(freshReaderTab, /onOutlineToggle/);
+    assert.match(freshReaderTab, /onHighlightsToggle/);
+    assert.match(freshReaderTab, /bind:open=\{outlineOpen\}/);
+
+    // 64. 原生编辑器阅读伴生栏移动端软键盘动态避让（BL-24）守门
+    const freshReadingContext = read("src/ui/ReadingContext.svelte");
+    assert.match(styles, /\.glean-reading-context\s*\{[\s\S]*transform:\s*translateY\(calc\(-1\s*\*\s*var\(--glean-keyboard-inset,\s*0px\)\)\);/);
+    assert.match(styles, /\.glean-reading-context\[data-glean-keyboard-open\]\s*\{/);
+    assert.match(freshReadingContext, /installMobileViewportVars/);
+    assert.match(freshReadingContext, /bind:this=\{rootEl\}/);
+
+    // 65. 全局快捷与入口增强：漫游盲盒指令、顶栏右键快捷菜单与新手引导活动文档起步（BL-26/BL-27/BL-45）
+    assert.match(freshIndexTs, /langKey:\s*"cmd\.roamingPick"/);
+    assert.match(freshIndexTs, /async triggerRoamingPick\(\)/);
+    assert.match(freshIndexTs, /this\.topBarContextMenuHandler\s*=/);
+    assert.match(freshIndexTs, /this\.topBarElement\.addEventListener\("contextmenu"/);
+    assert.match(freshIndexTs, /showTopBarContextMenu/);
+    assert.match(freshIndexTs, /topbarMenu\.resurface/);
+    assert.match(freshIndexTs, /topbarMenu\.library/);
+    assert.match(freshIndexTs, /topbarMenu\.highlights/);
+    assert.match(freshIndexTs, /topbarMenu\.stats/);
+    assert.match(freshIndexTs, /topbarMenu\.roaming/);
+    assert.match(freshIndexTs, /topbarMenu\.settings/);
+
+    assert.match(onboardingDialogSvelte, /const activeDocId = \$derived\(facade\.currentDocId/);
+    assert.match(onboardingDialogSvelte, /async function finishWithCurrentDoc\(\)/);
+    assert.match(onboardingDialogSvelte, /onboarding\.captureCurrentDoc/);
+    assert.match(onboardingDialogSvelte, /onboarding\.captureCurrentHint/);
+
+    // 66. 原生编辑器文本/块手柄拖拽至读库 DropZone 自动收录与制卡（BL-25）守门
+    assert.match(freshDockPanel, /handleExternalDragEnter/);
+    assert.match(freshDockPanel, /handleExternalDragLeave/);
+    assert.match(freshDockPanel, /handleExternalDragOver/);
+    assert.match(freshDockPanel, /handleExternalDrop/);
+    assert.match(freshDockPanel, /isExternalDragActive/);
+    assert.match(freshDockPanel, /glean-dropzone-overlay/);
+    assert.match(freshDockPanel, /dropzone\.title/);
+    assert.match(freshDockPanel, /dropzone\.desc/);
+    assert.match(styles, /\.glean-dropzone-overlay\s*\{[\s\S]*border:\s*2px dashed var\(--glean-color-action\);/);
+
+    // 67. 导轨分面项（作者/站点/标签）右键快捷操作菜单（BL-29）守门
+    const freshRailGroupSvelte = read("src/ui/LibraryRailGroup.svelte");
+    assert.match(freshRailGroupSvelte, /onContextMenu\?:\s*\(event:\s*MouseEvent,\s*item:\s*LibraryFacet\)\s*=>\s*void/);
+    assert.match(freshRailGroupSvelte, /oncontextmenu=\{/);
+    assert.match(freshDockPanel, /handleRailItemContextMenu/);
+    assert.match(freshDockPanel, /markGroupArticlesDone/);
+    assert.match(freshDockPanel, /railMenu\.filterTag/);
+    assert.match(freshDockPanel, /railMenu\.setAlias/);
+    assert.match(freshDockPanel, /railMenu\.markGroupDone/);
+    assert.match(freshDockPanel, /railMenu\.filterAuthor/);
+    assert.match(freshDockPanel, /railMenu\.filterSite/);
+    assert.match(freshDockPanel, /railMenu\.openExternalSite/);
+
+    // 68. 看板二维方向键导航（BL-30）与批量操作 Diff 预估提示（BL-31）守门
+    const freshBatchBarSvelte = read("src/ui/LibraryBatchBar.svelte");
+    assert.match(freshDockPanel, /moveKanbanCursor2D/);
+    assert.match(freshDockPanel, /moveKanbanCursorVertical/);
+    assert.match(freshDockPanel, /computeBatchDiff/);
+    assert.match(freshBatchBarSvelte, /computeDiff\?:/);
+    assert.match(freshBatchBarSvelte, /inlineDiff/);
+    assert.match(freshBatchBarSvelte, /glean-batchbar__diff-hint/);
+    assert.match(freshBatchBarSvelte, /library\.batchDiffHint/);
+    assert.match(styles, /\.glean-batchbar__diff-hint\s*\{[\s\S]*color:\s*var\(--glean-color-action\);/);
+
+    // 69. 沉浸阅读器禅意模式（BL-32）与 TTS 语音朗读段落黄色呼吸跟踪（BL-33）守门
+    assert.match(freshReaderTab, /zenMode/);
+    assert.match(freshReaderTab, /toggleZenMode/);
+    assert.match(freshReaderTab, /exitZenMode/);
+    assert.match(freshReaderTab, /glean-reader__toolbar-zen/);
+    assert.match(freshReaderTab, /reader\.zenEnter/);
+    assert.match(freshReaderTab, /reader\.zenExit/);
+    assert.match(freshReaderTab, /event\.key === "F11"/);
+    assert.match(styles, /\.glean-reader--zen\s*\{[\s\S]*\.glean-reader__toolbar\s*\{[\s\S]*opacity:\s*0\.15;/);
+
+    assert.match(freshReaderTab, /highlightTtsChunk/);
+    assert.match(freshReaderTab, /clearTtsHighlight/);
+    assert.match(freshReaderTab, /glean-tts-reading-pulse/);
+    assert.match(styles, /\.glean-tts-reading-pulse\s*\{[\s\S]*outline:\s*2px solid #f59e0b/);
+    assert.match(styles, /@keyframes gleanTtsPulse/);
+
+    // 70. 伴生栏悬浮胶囊模式（BL-34）与折叠大纲笔记草稿复制（BL-35）守门
+    assert.match(freshReadingContext, /pillMode/);
+    assert.match(freshReadingContext, /togglePillMode/);
+    assert.match(freshReadingContext, /glean-reading-context--pill/);
+    assert.match(freshReadingContext, /glean-reading-context__pill-toggle/);
+    assert.match(freshReadingContext, /reading\.pillCollapse/);
+    assert.match(freshReadingContext, /reading\.pillExpand/);
+    assert.match(styles, /\.glean-reading-context--pill\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\)/);
+
+    const freshFoldedSvelte = read("src/ui/FoldedReaderView.svelte");
+    assert.match(freshFoldedSvelte, /copyCurrentOutlineMarkdown/);
+    assert.match(freshFoldedSvelte, /formatFoldNodesToMarkdown/);
+    assert.match(freshFoldedSvelte, /glean-fold-reader__copy-btn/);
+    assert.match(freshFoldedSvelte, /foldReader\.copyMarkdown/);
+    assert.match(freshFoldedSvelte, /foldReader\.markdownCopied/);
+
+    // 71. 漫游高星级加权抽选（BL-36）与今日必读卡导出今日日记计划（BL-37）守门
+    assert.match(roamingDrawerSvelte, /highRatingPriority/);
+    assert.match(roamingDrawerSvelte, /toggleHighRatingPriority/);
+    assert.match(roamingDrawerSvelte, /glean-roaming-rating-filter-btn/);
+    assert.match(roamingDrawerSvelte, /roaming\.highRatingPriority/);
+
+    assert.match(resurfaceViewSvelte, /exportingDailyNote/);
+    assert.match(resurfaceViewSvelte, /exportPicksToDailyNote/);
+    assert.match(resurfaceViewSvelte, /glean-surf-ops-bar/);
+    assert.match(resurfaceViewSvelte, /resurface\.exportToDailyNote/);
+    assert.match(styles, /\.glean-surf-ops-bar\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
+
+    // 72. 金句卡片笔名印章（BL-38）与批注墙划线分流导出卡片盒笔记（BL-39）守门
+    const freshQuoteDialog = read("src/ui/QuoteCardDialog.svelte");
+    assert.match(freshQuoteDialog, /let signature = \$state\(""\)/);
+    assert.match(freshQuoteDialog, /glean-quote-card-stamp/);
+    assert.match(freshQuoteDialog, /glean-quote-card-seal-input/);
+    assert.match(freshQuoteDialog, /quoteCard\.sealPlaceholder/);
+    assert.match(styles, /\.glean-quote-card-stamp\s*\{[\s\S]*border:\s*1\.5px solid #DC2626;/);
+
+    const freshHighlightSvelte = read("src/ui/HighlightView.svelte");
+    assert.match(freshHighlightSvelte, /exportColorCardsZettelkasten/);
+    assert.match(freshHighlightSvelte, /glean-highlights__zettel-btn/);
+    assert.match(freshHighlightSvelte, /highlight\.exportZettel/);
+    assert.match(freshHighlightSvelte, /highlight\.zettelHeading/);
+    assert.match(freshHighlightSvelte, /highlight\.zettelCopied/);
+
+    // 73. 长文切片自定义层级分切（BL-40）与排版清洗剥离商业推广外链（BL-41）守门
+    const freshDocSlicingSvelte = read("src/ui/DocSlicingDialog.svelte");
+    assert.match(freshDocSlicingSvelte, /sliceHeadingLevel/);
+    assert.match(freshDocSlicingSvelte, /glean-slicing-level-select/);
+    assert.match(freshDocSlicingSvelte, /docSlicing\.headingLevel/);
+    assert.match(styles, /\.glean-slicing-level-select\s*\{[\s\S]*border-radius:\s*var\(--glean-radius-pill\);/);
+
+    const freshFormattingDomain = read("src/domain/formatting.ts");
+    assert.match(freshFormattingDomain, /export function stripPromotionalLinks/);
+
+    // 74. 外部导入金句摘录块生成（BL-42）守门
+    assert.match(read("src/services/import-service.ts"), /金句与高亮摘录/);
+
+    // 75. 读库元数据定时轮转自动备份与快照载入（BL-43）守门
+    const freshBackupService = read("src/services/backup-service.ts");
+    assert.match(freshBackupService, /export async function runDailyAutoBackup/);
+    const freshBackupPanel = read("src/ui/BackupPanel.svelte");
+    assert.match(freshBackupPanel, /autoSnapshots/);
+    assert.match(freshBackupPanel, /loadSnapshot/);
+    assert.match(freshBackupPanel, /glean-backup__snapshots/);
+    assert.match(styles, /\.glean-backup__snapshots\s*\{/);
+
+    // 76. 设置配置包导出与导入（BL-44）守门
+    const freshSettingsView = read("src/ui/SettingsView.svelte");
+    assert.match(freshSettingsView, /exportPortableSettings/);
+    assert.match(freshSettingsView, /importPortableSettings/);
+    assert.match(freshSettingsView, /settings\.portableConfig/);
+    assert.match(freshSettingsView, /settings\.exportConfig/);
+    assert.match(freshSettingsView, /settings\.importConfig/);
 });
 

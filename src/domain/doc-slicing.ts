@@ -26,6 +26,8 @@ export interface SlicePlanOptions {
     totalWords?: number;
     /** 文章总预估时长（分钟） */
     totalMinutes?: number;
+    /** 自定义切片标题层级：0 为自动，1 为 H1，2 为 H2，3 为 H3（BL-40） */
+    headingLevel?: number;
 }
 
 export interface DocSlicePlan {
@@ -63,6 +65,29 @@ export function planDocSlices(
                 },
             ],
         };
+    }
+
+    // BL-40: 若指定自定义切片标题层级（H1/H2/H3），按该层级精确独立分切
+    if (options.headingLevel && options.headingLevel >= 1) {
+        const matchingHeadings = outline.filter((o) => o.level === options.headingLevel);
+        if (matchingHeadings.length > 0) {
+            const avgWordsPerSlice = Math.round(totalWords / matchingHeadings.length);
+            const avgMinutesPerSlice = Math.max(1, Math.round(estimatedTotalMinutes / matchingHeadings.length));
+            const slices: DocSlice[] = matchingHeadings.map((h, i) => ({
+                index: i + 1,
+                title: h.title || `切片 ${i + 1}`,
+                startBlockId: h.id,
+                sectionIds: [h.id],
+                sectionTitles: [h.title],
+                estimatedWords: avgWordsPerSlice,
+                estimatedMinutes: avgMinutesPerSlice,
+            }));
+            return {
+                totalSlices: slices.length,
+                targetMinutes,
+                slices,
+            };
+        }
     }
 
     // 寻找最佳分片层级：优先选择 H2，若无 H2 则选出现最多的顶级层级

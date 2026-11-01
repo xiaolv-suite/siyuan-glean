@@ -18,6 +18,7 @@
     import ClipStatusActions from "./ClipStatusActions.svelte";
     import { openFormattingDialog } from "./formatting-dialog";
     import { syncMetaCalloutToDocument } from "../services/meta-callout-service";
+    import { installMobileViewportVars } from "../libs/mobile-viewport";
 
     interface Props {
         facade: GleanFacade;
@@ -36,8 +37,14 @@
     let loadError = $state(false);
     let busy = $state(false);
     let maintenanceOpen = $state(false);
+    let pillMode = $state(false);
+
+    function togglePillMode(): void {
+        pillMode = !pillMode;
+    }
     let reloadToken = 0;
     let mounted = true;
+    let rootEl = $state<HTMLElement | null>(null);
     // 包括“普通文档，无阅读栏”的已判定结果；后台重读不重放骨架屏。
     let settled = false;
     const isWechat = $derived(Boolean((context?.url && isWechatUrl(context.url)) || (context?.site && isWechatUrl(context.site))));
@@ -82,6 +89,7 @@
 
     $effect(() => {
         const id = docId;
+        const cleanupViewport = installMobileViewportVars(rootEl, facade.isMobile);
         mounted = true;
         settled = false;
         context = null;
@@ -101,6 +109,7 @@
             reloadToken += 1;
             document.removeEventListener("glean:data-changed", handler);
             document.removeEventListener("glean:reading-context-refresh", refreshHandler);
+            cleanupViewport();
         };
     });
 
@@ -306,7 +315,7 @@
 </script>
 
 {#if loading}
-    <aside class="glean-reading-context glean-reading-context--loading" aria-label={t(i18n, "panel.loading")} aria-busy="true">
+    <aside bind:this={rootEl} class="glean-reading-context glean-reading-context--loading" aria-label={t(i18n, "panel.loading")} aria-busy="true">
         <div class="glean-reading-context__loading-main" aria-hidden="true">
             <span class="glean-reading-context__skeleton glean-reading-context__skeleton--title"></span>
             <span class="glean-reading-context__skeleton glean-reading-context__skeleton--meta"></span>
@@ -314,7 +323,7 @@
         <div class="glean-reading-context__loading-label" role="status" aria-live="polite">{t(i18n, "panel.loading")}</div>
     </aside>
 {:else if loadError}
-    <aside class="glean-reading-context glean-reading-context--error" role="alert" aria-live="polite" aria-busy={refreshing}>
+    <aside bind:this={rootEl} class="glean-reading-context glean-reading-context--error" role="alert" aria-live="polite" aria-busy={refreshing}>
         <div class="glean-reading-context__error-main">
             <strong>{t(i18n, "reading.contextFailed")}</strong>
             <span>{t(i18n, "reading.contextLabel")}</span>
@@ -322,7 +331,7 @@
         <button type="button" class="glean-reading-context__source-btn" disabled={refreshing} onclick={() => void reload()}>{t(i18n, "action.retry")}</button>
     </aside>
 {:else if context}
-    <aside class="glean-reading-context" aria-labelledby={titleId} aria-busy={busy || measuring || refreshing}>
+    <aside bind:this={rootEl} class="glean-reading-context" class:glean-reading-context--pill={pillMode} aria-labelledby={titleId} aria-busy={busy || measuring || refreshing}>
         <div class="glean-reading-context__main">
             <div id={titleId} class="glean-reading-context__title" role="heading" aria-level="2" title={context.title}>{context.title || t(i18n, "panel.untitled")}</div>
             <div class="glean-reading-context__meta">
@@ -332,7 +341,7 @@
                 <span class="glean-reading-context__status">{statusLabel(context.status)}</span>
                 {#if isWechat}
                     <span class="glean-badge glean-source-wechat" title={displayWechatAuthor(context?.author) || t(i18n, "wechat.officialAccount")}>
-                        <span class="glean-wechat-dot" aria-hidden="true"></span>微信{#if displayWechatAuthor(context?.author)} · {displayWechatAuthor(context?.author)}{/if}
+                        <span class="glean-wechat-dot" aria-hidden="true"></span>{t(i18n, "wechat.name")}{#if displayWechatAuthor(context?.author)} · {displayWechatAuthor(context?.author)}{/if}
                     </span>
                 {/if}
                 {#if context.url && contextDisplaySource(context.url, context.site)}
@@ -341,6 +350,10 @@
             </div>
         </div>
         <div class="glean-reading-context__actions">
+            <button type="button" class="glean-reading-context__source-btn glean-reading-context__pill-toggle" title={t(i18n, pillMode ? "reading.pillExpand" : "reading.pillCollapse")} aria-label={t(i18n, pillMode ? "reading.pillExpand" : "reading.pillCollapse")} onclick={togglePillMode}>
+                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanWheat" /></svg>
+                <span>{t(i18n, pillMode ? "reading.pillExpand" : "reading.pillCollapse")}</span>
+            </button>
             <button type="button" class="glean-reading-context__source-btn" title={t(i18n, "action.copyBlockRef")} onclick={() => void copyDocBlockRef()}>
                 <svg class="glean-icon" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
                 <span>{t(i18n, "action.copyBlockRef")}</span>

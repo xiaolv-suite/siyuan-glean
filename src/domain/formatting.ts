@@ -101,9 +101,11 @@ export function analyzeFormatting(source: string): FormattingAnalysis {
             if (seenImages.has(image[2])) reasons.push("duplicateImage");
             seenImages.add(image[2]);
             if (!image[1].trim()) reasons.push("unlabelledImage");
-        } else if (block.kind === "text" && block.raw.trim().length <= 260 && (
-            /^(?:广告\s*[:：]|推广\s*[:：]|赞助\s*[:：]|请关注|关注公众号|扫码关注|点击下载|下载\S{0,12}(?:APP|客户端)|Advertisement\b|Sponsored\b|Subscribe (?:to|now)|Download (?:our|the) app)/i.test(block.raw.trim())
-            || /^(?:收录于[合话专][集题栏]\s*#|点击上方.*关注|长按二维码.*关注|微信扫一扫.*关注|预览时标签不可点|喜欢本文.*(?:点赞|在看|转发)|文章已于.*修改|后台回复.*领取|商务合作\s*[:：]|点击.*?阅读原文|排版设计\s*[:：]|赞赏作者|喜欢作者|长按赞赏|阅读原文$|\[阅读原文\]|往期推荐|延伸阅读|推荐阅读|往期精彩|精彩回顾|图片来自网络)/i.test(block.raw.trim())
+        } else if (block.kind === "text" && (
+            (block.raw.trim().length <= 260 && (
+                /^(?:广告\s*[:：]|推广\s*[:：]|赞助\s*[:：]|请关注|关注公众号|扫码关注|点击下载|下载\S{0,12}(?:APP|客户端)|Advertisement\b|Sponsored\b|Subscribe (?:to|now)|Download (?:our|the) app)/i.test(block.raw.trim())
+                || /^(?:收录于[合话专][集题栏]\s*#|点击上方.*关注|长按二维码.*关注|微信扫一扫.*关注|预览时标签不可点|喜欢本文.*(?:点赞|在看|转发)|文章已于.*修改|后台回复.*领取|商务合作\s*[:：]|点击.*?阅读原文|排版设计\s*[:：]|赞赏作者|喜欢作者|长按赞赏|阅读原文$|\[阅读原文\]|往期推荐|延伸阅读|推荐阅读|往期精彩|精彩回顾|图片来自网络)/i.test(block.raw.trim())
+            )) || /\[(?:购买链接|点击购买|领券下单|推广链接|赞助商链接)\]\(https?:\/\/[^\s()]+\)/i.test(block.raw.trim())
         )) {
             reasons.push("promotion");
         }
@@ -136,6 +138,21 @@ function shortenLinks(raw: string): string {
         if (/[()\\\u3000-\u9fff]/.test(target) || /[*_~]$/.test(target)) return token;
         const label = linkLabel(target);
         return label ? `[${label}](<${target}>)${token.startsWith("<") ? "" : token.slice(target.length)}` : token;
+    });
+}
+
+/**
+ * 剥离商业推广/营销追踪链接（BL-41）：
+ * 将带有促销文案或推广追踪参数（utm_*, spm, affiliate, cps）的外链降级为纯文本，防止死链与跳转追踪。
+ */
+export function stripPromotionalLinks(raw: string): string {
+    return raw.replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s()]+)(?:\s+"[^"]*")?\)/g, (match, label, href) => {
+        const isPromoText = /(?:购买|领券|优惠券|返利|赞助|广告|推广|合作|下单|店铺|旗舰店|affiliate|sponsor|discount|coupon)/i.test(label);
+        const isTrackingHref = /(?:utm_|spm=|affiliate|cps=|union\.jd\.com|s\.click\.taobao\.com|pinduoduo\.com\/cps)/i.test(href);
+        if (isPromoText || isTrackingHref) {
+            return label;
+        }
+        return match;
     });
 }
 
@@ -206,7 +223,7 @@ export function renderFormatting(analysis: FormattingAnalysis, plan: FormattingP
         if (previous?.kind === "text" && block.kind === "text") gap = gap.replace(/^(?:\r?\n){2,}/, analysis.source.includes("\r\n") ? "\r\n" : "\n");
         markdown += gap;
         if (!selected.has(block.id)) {
-            const text = block.kind === "text" ? shortenLinks(block.raw) : block.raw;
+            const text = block.kind === "text" ? stripPromotionalLinks(shortenLinks(block.raw)) : block.raw;
             markdown += headings.has(block.id) ? `${"#".repeat(headings.get(block.id)!)} ${text}` : text;
         }
         offset = block.end;

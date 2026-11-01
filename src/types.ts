@@ -28,6 +28,8 @@ export interface GleanFacade {
     addCurrentDocToLibrary(): Promise<void>;
     /** 工作台弹出为独立浮窗 */
     openWorkbenchPopup(initialPreviewId?: string): void;
+    /** 全局漫游盲盒（随机抽选一篇文章重温） */
+    triggerRoamingPick?(): Promise<void>;
     /** 面板数据变更后的回调（如迁移完成后刷新） */
     notifyDataChanged(): void;
     /** 当前活动文档（右键/命令收录目标、高亮侧栏来源），无则空串 */
