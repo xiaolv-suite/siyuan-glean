@@ -5,13 +5,12 @@
  * 失败一律静默：写 ai-log.json（最近 50 条）+ console，绝不阻断收录主流程。
  */
 import type { Plugin } from "siyuan";
-import { chatGPT } from "../api/ai";
-import { chatCompletionDirect } from "../api/ai-direct";
+import { dispatchUnifiedAiChat } from "./ai-gateway.ts";
 import { embeddingStat, exportMdContent, querySql, semanticSearchBlock, type SemanticSearchHit } from "../api/client";
 import { isInternalDocument } from "../domain/candidate-policy";
 import { stripMarkdown } from "../domain/migrate";
 import { todayStamp } from "../domain/resurface";
-import { buildEnrichPrompt, isLikelyDuplicate, parseEnrichResponse, type EnrichResult } from "../domain/enrich";
+import { buildEnrichPrompt, isLikelyDuplicate, parseEnrichResponse, type EnrichResult, type AiCallFailure } from "../domain/enrich";
 import { parseClipAttrs } from "../domain/schema";
 import { batchReadClipAttrs, writeClip, type WriteClipOptions } from "./clip-store";
 import { loadIndex } from "./index-store";
@@ -135,37 +134,20 @@ export interface EnrichOutcome {
     indexSyncFailed?: boolean;
 }
 
-export type AiCallFailure = "permission" | "network" | "timeout";
+export type { AiCallFailure };
 
-function classifyAiFailure(error: unknown): AiCallFailure | undefined {
-    const message = String((error as Error)?.message ?? error);
-    if (/\b401\b|\b403\b|unauthori[sz]ed|forbidden|token.{0,20}expired/iu.test(message)) return "permission";
-    if (/timeout|timed out|超时|abort/iu.test(message)) return "timeout";
-    if (/network|fetch failed|connection|offline|econn|enetunreach|ehostunreach|internet disconnected/iu.test(message)) return "network";
-    return undefined;
-}
-
-/** LLM 通道路由：custom=拾遗专用直连（失败转 reason）；siyuan=官方通道。伴读动作复用（D-0030）。 */
+/** LLM 通道路由：接入全生态统一 AI 网关、思源安全密钥库与官方通道，剥离私有 API Key 硬编码依赖。 */
 export async function callLLM(
     plugin: Plugin,
     settings: GleanSettings,
     msg: string
 ): Promise<{ ok: boolean; text?: string; failure?: AiCallFailure }> {
-    if (settings.ai.channel === "custom") {
-        const outcome = await chatCompletionDirect(plugin, settings, msg);
-        if (outcome.ok) return { ok: true, text: outcome.text };
-        const failure = outcome.kind === "permission" ? "permission"
-            : outcome.kind === "timeout" ? "timeout"
-                : outcome.kind === "network" || outcome.kind === "browser" ? "network"
-                    : classifyAiFailure(new Error(String(outcome.status ?? "")));
-        return { ok: false, ...(failure ? { failure } : {}) };
-    }
-    try {
-        return { ok: true, text: await chatGPT(msg) };
-    } catch (error) {
-        const failure = classifyAiFailure(error);
-        return { ok: false, ...(failure ? { failure } : {}) };
-    }
+    const res = await dispatchUnifiedAiChat(plugin, settings, msg);
+    return {
+        ok: res.ok,
+        ...(res.text ? { text: res.text } : {}),
+        ...(res.failure ? { failure: res.failure } : {}),
+    };
 }
 
 async function loadExistingTagVocabulary(plugin: Plugin, excludeDocId?: string): Promise<string[]> {

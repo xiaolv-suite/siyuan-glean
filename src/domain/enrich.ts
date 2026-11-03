@@ -293,3 +293,15 @@ export function buildMultiReportPrompt(items: ReportItem[]): string {
         ...lines,
     ].join("\n");
 }
+
+/* ---------- AI 错误分类与故障判定 ---------- */
+
+export type AiCallFailure = "permission" | "network" | "timeout";
+
+export function classifyAiFailure(error: unknown): AiCallFailure | undefined {
+    const message = String((error as Error)?.message ?? error);
+    if (/\b401\b|\b403\b|unauthori[sz]ed|forbidden|token.{0,20}expired/iu.test(message)) return "permission";
+    if (/timeout|timed out|超时|abort/iu.test(message)) return "timeout";
+    if (/network|fetch failed|connection|offline|econn|enetunreach|ehostunreach|internet disconnected/iu.test(message)) return "network";
+    return undefined;
+}

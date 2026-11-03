@@ -101,8 +101,12 @@ function showMessage(message: string, timeout = 3000, type: "info" | "error" = "
    - 收集箱批量迁入（`migrateFromInbox`）、批量导入（`ImportDialog`）、存量迁移（`MigrateDialog`）、微信作者批量识别均接入 `notifyBatchProgress`，同分类折叠单条计数，彻底消除瀑布刷屏。
 5. **后台常规任务静默化**：
    - 后台自动识别微信作者、文章正文深度提纯与每日本地自动轮转备份降级为 `notifySilentTask`，静默入库零打扰。
-6. **质量门禁验证**：
+6. **全生态 AI 请求规范（统一网关自协商与私有 Key 解耦）**：
+   - 新增 `src/services/ai-gateway.ts` 调度器，优先协商生态统一 AI 网关（`window.xiaolvAiGateway` / `window.lvAiGateway` 等），支持思源内置免配官方 AI 通道与思源安全密钥库通道；
+   - 彻底剥离插件对私有 API Key 硬编码依赖，零明文密钥留存；
+   - 失败统一安全静默降级，不阻断阅读与剪藏主流程。
+7. **质量门禁验证**：
    - `pnpm run check`：0 错误 0 警告；
-   - `pnpm test`：**1,796 / 1,796** 单元测试 100% PASS；
-   - `pnpm run build`：生产构建正常并输出 `package.zip`（700,787B）；
+   - `pnpm test`：**1,798 / 1,798** 单元测试 100% PASS；
+   - `pnpm run build`：生产构建正常并输出 `package.zip`（701,122B）；
    - `pnpm run check:release`：14 / 14 发版门禁全绿通过。

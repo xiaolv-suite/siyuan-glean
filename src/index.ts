@@ -38,7 +38,7 @@ import type { GleanFacade } from "./types";
 import { addRecentReading, pickContinueReadingDocId, type RecentReadingEntry } from "./domain/recent-reading";
 import { docUnderHostKind } from "./services/lifecycle-service";
 import { registerRaikiriModuleSafely } from "./libs/ecosystem-bridge-kit";
-import { lvNotify, notifyClipSuccess, notifyBatchProgress, showNotice } from "./libs/notice";
+import { lvNotify, notifyClipSuccess, notifyClipProgress, showNotice } from "./libs/notice";
 
 const DOCK_TYPE = "glean-dock";
 const TAB_TYPE = "glean-library";
@@ -1015,7 +1015,7 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
             for (const id of ids) {
                 currentIdx += 1;
                 if (total > 1) {
-                    notifyBatchProgress(`正在迁入收集箱 (${currentIdx}/${total})...`, "inbox-migrate-progress");
+                    notifyClipProgress(currentIdx, total, "剪藏");
                 }
                 try {
                     const shorthand = await getShorthand(id);

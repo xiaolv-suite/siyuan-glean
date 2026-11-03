@@ -782,6 +782,7 @@ async function dialogHarness(context, rows, { fingerprint = importOptions.finger
         i18n: {}, t: (_i18n, key) => key, showMessage: () => {},
         lvNotify: { card: () => "", capsule: () => "", silent: () => {}, inline: () => {} },
         notifyBatchProgress: () => "",
+        notifyClipProgress: () => "",
         loadImportProgress, summarizeImportProgress, ImportExecutionError, ImportProgressError, AbortController,
         previewImport, fingerprintImportSource, TextDecoder, MAX_IMPORT_BYTES: 32 * 1024 * 1024,
         runImport: async (...args) => {

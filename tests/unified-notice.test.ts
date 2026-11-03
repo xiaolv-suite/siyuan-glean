@@ -1,13 +1,40 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {
+import { registerHooks } from "node:module";
+import type { UnifiedAiGatewayBridge } from "../src/services/ai-gateway.ts";
+
+// Node 测试环境没有思源运行时；仅在本测试进程为端点传输提供替身。
+registerHooks({
+    resolve(specifier, context, nextResolve) {
+        if (specifier === "siyuan") return { url: "glean-test:siyuan", shortCircuit: true };
+        if (specifier.startsWith(".") && !/\.[cm]?[jt]s$/.test(specifier)) {
+            return nextResolve(`${specifier}.ts`, context);
+        }
+        return nextResolve(specifier, context);
+    },
+    load(url, context, nextLoad) {
+        if (url === "glean-test:siyuan") {
+            return {
+                format: "module",
+                source: "export const fetchSyncPost = () => Promise.resolve({}); export const getFrontend = () => 'desktop';",
+                shortCircuit: true,
+            };
+        }
+        return nextLoad(url, context);
+    },
+});
+
+const {
     lvNotify,
     showNotice,
     notifyClipSuccess,
     notifyBatchProgress,
+    notifyClipProgress,
     notifySilentTask,
     notifyInlineFeedback,
-} from "../src/libs/notice.ts";
+} = await import("../src/libs/notice.ts");
+const { dispatchUnifiedAiChat, getUnifiedAiGateway } = await import("../src/services/ai-gateway.ts");
+const { DEFAULT_SETTINGS } = await import("../src/services/settings.ts");
 
 test("统一通知套件：Node 环境基础防崩溃降级", () => {
     // 在纯 Node 环境下，不抛出任何异常，防御性降级
@@ -146,5 +173,92 @@ test("统一通知套件：浏览器模拟单例协商与生命周期交棒", ()
         globalThis.window = originalWindow;
         globalThis.document = originalDocument;
         globalThis.localStorage = originalLocalStorage;
+    }
+});
+
+test("统一通知套件：剪藏进度折叠规范 (notifyClipProgress)", () => {
+    const originalWindow = globalThis.window;
+    const originalDocument = globalThis.document;
+
+    const mockElements: any[] = [];
+    const mockDoc = {
+        getElementById: () => null,
+        createElement: (tag: string) => {
+            const el: any = {
+                tagName: tag.toUpperCase(),
+                className: "",
+                dataset: {},
+                innerHTML: "",
+                appendChild: (c: any) => c,
+                setAttribute: () => {},
+                addEventListener: () => {},
+                removeEventListener: () => {},
+            };
+            mockElements.push(el);
+            return el;
+        },
+        head: { appendChild: () => {} },
+        body: { appendChild: () => {} },
+    };
+
+    const mockWin: any = {
+        addEventListener: () => {},
+        removeEventListener: () => {},
+        setTimeout: () => 1,
+        clearTimeout: () => {},
+    };
+
+    (globalThis as any).window = mockWin;
+    (globalThis as any).document = mockDoc;
+
+    try {
+        notifyClipProgress(1, 10, "剪藏");
+        notifyClipProgress(2, 10, "剪藏");
+        notifyClipProgress(3, 10, "剪藏");
+
+        const history = mockWin.__LV_NOTICE_HUB__.getHistory();
+        const p = history.find((item: any) => item.category === "glean-clip-progress");
+        assert.ok(p);
+        assert.equal(p.message, "正在剪藏 (3/10)...");
+        assert.equal(p.repeatCount, 3);
+    } finally {
+        globalThis.window = originalWindow;
+        globalThis.document = originalDocument;
+    }
+});
+
+test("全生态 AI 请求规范：统一网关自协商与私有 Key 解耦", async () => {
+    const originalWindow = globalThis.window;
+    let gatewayCalled = false;
+
+    const mockGateway: UnifiedAiGatewayBridge = {
+        protocol: 1,
+        capabilities: ["chat"],
+        whenReady: async () => true,
+        chat: async (req) => {
+            gatewayCalled = true;
+            return { ok: true, text: `网关回复: ${req.prompt}` };
+        },
+    };
+
+    const mockWin: any = {
+        xiaolvAiGateway: mockGateway,
+    };
+    (globalThis as any).window = mockWin;
+
+    try {
+        assert.equal(getUnifiedAiGateway(), mockGateway);
+
+        const dummyPlugin: any = {
+            getSecret: () => "",
+        };
+
+        const res = await dispatchUnifiedAiChat(dummyPlugin, DEFAULT_SETTINGS, "测试 Prompt");
+        assert.equal(res.ok, true);
+        assert.equal(res.source, "gateway");
+        assert.equal(gatewayCalled, true);
+        assert.ok(res.text?.includes("网关回复: 测试 Prompt"));
+    } finally {
+        globalThis.window = originalWindow;
     }
 });

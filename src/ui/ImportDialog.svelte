@@ -19,7 +19,7 @@ import type { GleanFacade } from "../types";
 import { ImportProgressError, summarizeImportProgress, type ImportProgress } from "../domain/import-progress";
 import { discardImportProgress, fingerprintImportSource, loadImportProgress } from "../services/import-progress";
 import { IMPORT_PROGRESS_FILE } from "../domain/import-progress";
-import { lvNotify, notifyBatchProgress } from "../libs/notice";
+import { lvNotify, notifyClipProgress } from "../libs/notice";
 
 /** 导入文件读取上限（32 MiB，与备份同数量级）：整文件解码/指纹/解析都在主线程。 */
 const MAX_IMPORT_BYTES = 32 * 1024 * 1024;
@@ -264,7 +264,7 @@ async function startImport(rowsOverride?: ImportPreviewRow[]) {
             signal: controller.signal,
             onProgress: (done, total) => {
                 if (mounted) progress = total > 0 ? Math.round((done / total) * 100) : 100;
-                notifyBatchProgress(`正在批量导入文章 (${done}/${total})...`, "glean-import-progress");
+                notifyClipProgress(done, total, "导入文章");
             },
         });
     } catch (error) {

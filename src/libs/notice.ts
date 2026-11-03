@@ -94,6 +94,15 @@ export function notifyBatchProgress(
 }
 
 /**
+ * 剪藏与批量处理规范进度提示：
+ * 同类进度折叠为单个计数通知（如“正在剪藏 (3/10)...”），严禁连环弹窗刷屏
+ */
+export function notifyClipProgress(current: number, total: number, label = "剪藏"): string {
+    const message = `正在${label} (${current}/${total})...`;
+    return notifyBatchProgress(message, "glean-clip-progress");
+}
+
+/**
  * 后台常规任务（自动清洗、微信识别、快照健康扫描等）降级为静默模式，绝不弹窗打扰用户
  */
 export function notifySilentTask(message: string, category = "background-task"): void {
