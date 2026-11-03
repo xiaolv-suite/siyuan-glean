@@ -10,6 +10,8 @@ import {
     lvTicker,
     lvAi,
     lvActivity,
+    lvBackup,
+    lvEcosystem,
     type CardNoticeOptions,
     type CapsuleNoticeOptions,
     type SilentNoticeOptions,
@@ -17,9 +19,12 @@ import {
     type LvAiRequestOptions,
     type LvAiResponse,
     type LvActivityRecord,
+    type LvPluginBackupPayload,
+    type LvEcosystemFullBackup,
+    type LvEcosystemDiagnostics,
 } from "./lv-notice-kit.ts";
 
-export { lvNotify, withDocLock, lvSurfaceStack, lvTicker, lvAi, lvActivity };
+export { lvNotify, withDocLock, lvSurfaceStack, lvTicker, lvAi, lvActivity, lvBackup, lvEcosystem };
 export type {
     CardNoticeOptions,
     CapsuleNoticeOptions,
@@ -28,6 +33,9 @@ export type {
     LvAiRequestOptions,
     LvAiResponse,
     LvActivityRecord,
+    LvPluginBackupPayload,
+    LvEcosystemFullBackup,
+    LvEcosystemDiagnostics,
 };
 
 const PLUGIN_SOURCE = "小驴拾遗";

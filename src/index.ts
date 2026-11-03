@@ -14,7 +14,7 @@ import ArchiveDialog from "./ui/ArchiveDialog.svelte";
 import RestoreDialog from "./ui/RestoreDialog.svelte";
 import ImportDialog from "./ui/ImportDialog.svelte";
 import OnboardingDialog from "./ui/OnboardingDialog.svelte";
-import { loadUiPrefs } from "./services/prefs";
+import { loadUiPrefs, saveUiPrefs, type UiPrefs } from "./services/prefs";
 import { applyThemePaletteToDom } from "./libs/theme-palette-controller";
 import SettingsView from "./ui/SettingsView.svelte";
 import { svelteDialog } from "./libs/dialog";
@@ -31,14 +31,15 @@ import { makeQuoteCardPreview } from "./ui/flashcard-dialog";
 import { migrateShorthand } from "./services/inbox-service";
 import { getShorthand } from "./api/inbox";
 import { isKernelRequestError, kernelErrorKind } from "./api/client";
-import { DEFAULT_SETTINGS, loadSettings, saveSettings, type GleanSettings } from "./services/settings";
+import { DEFAULT_SETTINGS, loadSettings, saveSettings, mergeSettingsDraft, normalizeSettings, type GleanSettings } from "./services/settings";
+import type { GleanIndex } from "./services/index-store";
 import { installBridge } from "./services/bridge";
 import pluginManifest from "../plugin.json";
 import type { GleanFacade } from "./types";
 import { addRecentReading, pickContinueReadingDocId, type RecentReadingEntry } from "./domain/recent-reading";
 import { docUnderHostKind } from "./services/lifecycle-service";
 import { registerRaikiriModuleSafely } from "./libs/ecosystem-bridge-kit";
-import { lvNotify, lvTicker, lvActivity, notifyClipSuccess, notifyClipProgress, showNotice } from "./libs/notice";
+import { lvNotify, lvTicker, lvActivity, lvBackup, notifyClipSuccess, notifyClipProgress, showNotice } from "./libs/notice";
 
 const DOCK_TYPE = "glean-dock";
 const TAB_TYPE = "glean-library";
@@ -83,6 +84,7 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
     private topBarElement?: HTMLElement;
     private topBarContextMenuHandler?: (event: MouseEvent) => void;
     private noticeHubCleaner?: () => void;
+    private backupCleaner?: () => void;
     private tickerUnsubscribe?: () => void;
     private unregisterRaikiri?: () => void;
     private readonly openWorkbenchPopupSingleton = createDialogSingleton(
@@ -434,6 +436,15 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
         this.noticeHubCleaner = typeof lvNotify?.registerPlugin === "function"
             ? lvNotify.registerPlugin("siyuan-glean")
             : undefined;
+
+        // Epoch 7 Phase 4 Protocol v1.3.0: 注册全生态灾备切面
+        this.backupCleaner = typeof lvBackup?.register === "function"
+            ? lvBackup.register(
+                "siyuan-glean",
+                async () => this.dumpData(),
+                async (data) => this.restoreData(data)
+            )
+            : undefined;
     }
 
     onLayoutReady() {
@@ -495,6 +506,8 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
     }
 
     async onunload() {
+        this.backupCleaner?.();
+        this.backupCleaner = undefined;
         this.tickerUnsubscribe?.();
         this.tickerUnsubscribe = undefined;
         this.noticeHubCleaner?.();
@@ -541,6 +554,86 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
     async updateSettings(patch: Partial<GleanSettings>, options: { expected?: GleanSettings } = {}): Promise<void> {
         this.settings = await saveSettings(this, { ...this.settings, ...patch }, options);
         this.notifyDataChanged();
+    }
+
+    /**
+     * 全生态联合灾备切面（lvBackup 导出）
+     * 导出剪藏规则、分类标签、界面偏好与剪藏索引数据的全量切面
+     */
+    async dumpData(): Promise<Record<string, unknown>> {
+        const settings = await loadSettings(this);
+        const uiPrefs = await loadUiPrefs(this);
+        const { loadIndex } = await import("./services/index-store");
+        const index = await loadIndex(this);
+
+        return {
+            schema: "siyuan-glean.backup/1",
+            plugin: "siyuan-glean",
+            exportedAt: new Date().toISOString(),
+            settings,
+            uiPrefs,
+            tagAliases: uiPrefs.tagAliases,
+            savedViews: uiPrefs.savedViews,
+            index: {
+                version: index.version,
+                updatedAt: index.updatedAt,
+                clips: index.clips,
+                candidates: index.candidates,
+            },
+        };
+    }
+
+    /**
+     * 全生态联合灾备切面（lvBackup 导入恢复）
+     * 将全生态灾备包中的拾遗数据平滑恢复并通知界面即时刷新
+     */
+    async restoreData(data: Record<string, unknown>): Promise<boolean> {
+        if (!data || typeof data !== "object") return false;
+        try {
+            // 1. 恢复插件设置（剪藏规则、笔记本锚点、重浮策略等）
+            if (data.settings && typeof data.settings === "object") {
+                const currentSettings = await loadSettings(this);
+                const mergedSettings = mergeSettingsDraft(currentSettings, normalizeSettings(data.settings));
+                await saveSettings(this, mergedSettings);
+                this.settings = mergedSettings;
+            }
+
+            // 2. 恢复分类标签与界面偏好
+            if (data.uiPrefs && typeof data.uiPrefs === "object") {
+                await saveUiPrefs(this, data.uiPrefs as Partial<UiPrefs>);
+            } else if (Array.isArray(data.tagAliases) || Array.isArray(data.savedViews)) {
+                await saveUiPrefs(this, {
+                    tagAliases: Array.isArray(data.tagAliases) ? (data.tagAliases as any) : undefined,
+                    savedViews: Array.isArray(data.savedViews) ? (data.savedViews as any) : undefined,
+                });
+            }
+
+            // 3. 恢复剪藏与候选索引缓存
+            if (data.index && typeof data.index === "object") {
+                const rawIndex = data.index as Partial<GleanIndex>;
+                const { saveIndex, loadIndex } = await import("./services/index-store");
+                const currentIndex = await loadIndex(this);
+                const restoredIndex: GleanIndex = {
+                    version: typeof rawIndex.version === "number" ? rawIndex.version : currentIndex.version,
+                    updatedAt: typeof rawIndex.updatedAt === "string" ? rawIndex.updatedAt : new Date().toISOString(),
+                    clips: {
+                        ...currentIndex.clips,
+                        ...(rawIndex.clips && typeof rawIndex.clips === "object" ? rawIndex.clips : {}),
+                    },
+                    candidates: {
+                        ...currentIndex.candidates,
+                        ...(rawIndex.candidates && typeof rawIndex.candidates === "object" ? rawIndex.candidates : {}),
+                    },
+                };
+                await saveIndex(this, restoredIndex, { repair: true });
+            }
+
+            this.notifyDataChanged();
+            return true;
+        } catch (err) {
+            console.error("[glean] 全生态灾备恢复失败:", err);
+            return false;
+        }
     }
 
     notifyDataChanged(): void {

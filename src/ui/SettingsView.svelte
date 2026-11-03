@@ -21,6 +21,7 @@ import BackupPanel from "./BackupPanel.svelte";
 import FlashcardRecoveryPanel from "./FlashcardRecoveryPanel.svelte";
 import AiTagMergePanel from "./AiTagMergePanel.svelte";
 import SnapshotGovernance from "./SnapshotGovernance.svelte";
+import { lvEcosystem } from "../libs/notice";
 
 interface Props {
     facade: GleanFacade;
@@ -104,6 +105,7 @@ let dismissHintBusy = $state(false);
 let exportBusy = $state<"csv" | "diagnostic" | "markdownArchive" | "">("");
 let exportError = $state("");
 let lastExport = $state<"csv" | "diagnostic" | "markdownArchive" | "">("");
+let ecosystemBadgeText = $state(typeof lvEcosystem !== "undefined" ? lvEcosystem.getStatusBadgeText() : "");
 
 let aiLog = $state<AiLogEntry[] | null>(null);
 let aiLogLoading = $state(false);
@@ -267,6 +269,7 @@ onMount(() => {
     let active = true;
     const unregisterCloseGuard = registerCloseGuard?.(canCloseSettings);
     mounted = true;
+    ecosystemBadgeText = typeof lvEcosystem !== "undefined" ? lvEcosystem.getStatusBadgeText() : "";
     originalSettings = cloneSettings(facade.settings);
     loadDraft(originalSettings);
     void loadUiPrefs(facade.pluginInstance).then((prefs) => {
@@ -693,6 +696,9 @@ async function doMountBoard() {
                         {/if}
                     </button>
                 {/each}
+            </div>
+            <div class="glean-settings__nav-ecosystem" title={ecosystemBadgeText}>
+                <span class="glean-settings__ecosystem-badge">{ecosystemBadgeText}</span>
             </div>
         </nav>
         <div id={panelId} class="glean-settings__content" role="tabpanel" aria-labelledby={`${idPrefix}-tab-${activeSection}`} tabindex="-1" inert={saveBusy}>
@@ -1272,7 +1278,12 @@ async function doMountBoard() {
             </div>
         {:else}
             <div class="glean-settings__status" class:glean-settings__status--dirty={draftDirty} aria-live="polite">
-                {#if draftDirty}{t(i18n, "settings.unsavedChanges")}{:else}{t(i18n, "settings.saved")}{/if}
+                {#if draftDirty}
+                    <span class="glean-settings__dirty-tag">{t(i18n, "settings.unsavedChanges")}</span>
+                {/if}
+                <span class="glean-settings__ecosystem-badge" title={ecosystemBadgeText}>
+                    {ecosystemBadgeText}
+                </span>
             </div>
             <button class="glean-btn" disabled={saveBusy} onclick={() => { confirmResetOpen = true; void tick().then(() => cancelResetButton?.focus()); }}>
                 {t(i18n, "settings.resetDefaults")}
@@ -1694,10 +1705,41 @@ async function doMountBoard() {
         gap: var(--glean-space-2);
     }
 
+    .glean-settings__nav-ecosystem {
+        margin-top: auto;
+        padding: var(--glean-space-3) var(--glean-space-1) 0;
+        border-top: 1px dashed var(--glean-border-soft);
+        font-size: var(--glean-text-xs);
+        line-height: var(--glean-leading-tight);
+    }
+
+    .glean-settings__ecosystem-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--glean-space-1);
+        font-size: 11px;
+        color: var(--b3-theme-on-surface);
+        opacity: 0.85;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+    }
+
+    .glean-settings__dirty-tag {
+        margin-right: var(--glean-space-2);
+        color: var(--glean-st-inbox-text);
+        font-weight: var(--glean-weight-semibold);
+    }
+
     @container glean-settings (max-width: 600px) {
         .glean-settings__layout {
             flex-direction: column;
             gap: var(--glean-space-4);
+        }
+
+        .glean-settings__nav-ecosystem {
+            display: none;
         }
 
         .glean-settings__nav {

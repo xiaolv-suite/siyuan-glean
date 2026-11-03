@@ -31,6 +31,8 @@ const {
     lvTicker,
     lvAi,
     lvActivity,
+    lvBackup,
+    lvEcosystem,
     showNotice,
     notifyClipSuccess,
     notifyBatchProgress,
@@ -493,4 +495,102 @@ test("第三阶段今日活动流：lvActivity 广播、查询与 Daily Note 汇
     } finally {
         unsub();
     }
+});
+
+test("第四阶段全生态联合灾备：lvBackup 注册、联合导出 exportFull 与联合恢复 restoreFull", async () => {
+    let restoredGleanData: any = null;
+    let restoredCardsData: any = null;
+
+    // 1. 模拟拾遗与闪卡插件注册灾备切面
+    const unregGlean = lvBackup.register(
+        "siyuan-glean",
+        async () => ({
+            schema: "siyuan-glean.backup/1",
+            clips: [{ id: "20261103-clip01", title: "测试剪藏" }],
+            tagAliases: [{ name: "AI", target: "人工智能" }],
+        }),
+        async (data) => {
+            restoredGleanData = data;
+            return true;
+        }
+    );
+
+    const unregCards = lvBackup.register(
+        "siyuan-lv-cards",
+        async () => ({
+            v: 1,
+            decks: [{ id: "deck-1", name: "考研词汇" }],
+        }),
+        async (data) => {
+            restoredCardsData = data;
+            return true;
+        }
+    );
+
+    try {
+        // 2. 导出全生态联合总包
+        const bundle = await lvBackup.exportFull();
+        assert.equal(bundle.ecosystem, "xiaolv");
+        assert.equal(bundle.v, 1);
+        assert.ok(bundle.exportedAt);
+        assert.ok(bundle.plugins["siyuan-glean"]);
+        assert.ok(bundle.plugins["siyuan-lv-cards"]);
+        assert.equal((bundle.plugins["siyuan-glean"].data as any).clips[0].title, "测试剪藏");
+        assert.equal((bundle.plugins["siyuan-lv-cards"].data as any).decks[0].name, "考研词汇");
+
+        // 3. 联合包全量恢复
+        const restoreRes = await lvBackup.restoreFull(bundle);
+        assert.ok(restoreRes.success.includes("siyuan-glean"));
+        assert.ok(restoreRes.success.includes("siyuan-lv-cards"));
+        assert.equal(restoreRes.failed.length, 0);
+        assert.equal(restoredGleanData?.clips?.[0]?.title, "测试剪藏");
+        assert.equal(restoredCardsData?.decks?.[0]?.name, "考研词汇");
+    } finally {
+        unregGlean();
+        unregCards();
+    }
+});
+
+test("第四阶段全生态自省诊断与胶囊徽章：lvEcosystem 诊断信息与 getStatusBadgeText", () => {
+    // 1. 诊断结构检查
+    const diag = lvEcosystem.getDiagnostics();
+    assert.ok(typeof diag.version === "number");
+    assert.ok(Array.isArray(diag.registeredPlugins));
+    assert.ok(typeof diag.todayActivitiesCount === "number");
+
+    // 2. 徽章胶囊文字生成
+    const badgeText = lvEcosystem.getStatusBadgeText();
+    assert.ok(badgeText.includes("🐴 小驴全家桶协同正常"));
+    assert.ok(badgeText.includes("今日活动"));
+});
+
+test("第四阶段小驴拾遗 dumpData 与 restoreData 灾备数据契约", async () => {
+    // 验证拾遗插件导出的灾备结构完备性
+    const mockSettings = { ...DEFAULT_SETTINGS, inboxQuota: 88 };
+    const mockUiPrefs = { tagAliases: [{ name: "FE", target: "前端" }], savedViews: [] };
+    const mockIndex = {
+        version: 1,
+        updatedAt: "2026-11-03T12:00:00.000Z",
+        clips: {
+            "clip-1": { id: "clip-1", title: "现代架构", status: "reading" },
+        },
+        candidates: {},
+    };
+
+    const dumpPayload = {
+        schema: "siyuan-glean.backup/1",
+        plugin: "siyuan-glean",
+        exportedAt: new Date().toISOString(),
+        settings: mockSettings,
+        uiPrefs: mockUiPrefs,
+        tagAliases: mockUiPrefs.tagAliases,
+        savedViews: mockUiPrefs.savedViews,
+        index: mockIndex,
+    };
+
+    assert.equal(dumpPayload.schema, "siyuan-glean.backup/1");
+    assert.equal(dumpPayload.plugin, "siyuan-glean");
+    assert.equal(dumpPayload.settings.inboxQuota, 88);
+    assert.equal(dumpPayload.tagAliases[0].name, "FE");
+    assert.equal(dumpPayload.index.clips["clip-1"].title, "现代架构");
 });

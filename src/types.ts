@@ -48,4 +48,8 @@ export interface GleanFacade {
     openLibraryArticle(docId: string): Promise<void>;
     /** 只有 openTab 返回的确切工作台可消费返回请求；Dock/浮窗不消费。 */
     consumeLibraryFocus(tabId: string): string;
+    /** 全生态联合灾备数据导出切面 */
+    dumpData?(): Promise<Record<string, unknown>>;
+    /** 全生态联合灾备数据导入恢复切面 */
+    restoreData?(data: Record<string, unknown>): Promise<boolean>;
 }
