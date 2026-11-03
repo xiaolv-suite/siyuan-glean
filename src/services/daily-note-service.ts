@@ -72,53 +72,67 @@ export async function recordDailyNoteReading(
     }
 
     try {
-        const dailyDocId = await createDailyNote(notebookId);
-        if (!dailyDocId) throw new Error("获取今日日记文档失败");
+        let lastError: unknown;
+        for (let attempt = 0; attempt < 3; attempt += 1) {
+            try {
+                const dailyDocId = await createDailyNote(notebookId);
+                if (!dailyDocId) throw new Error("获取今日日记文档失败");
 
-        return await withDocLock(dailyDocId, async () => {
-            const [meta, attrs] = await Promise.all([
-                fetchDocMeta(articleDocId),
-                readClip(articleDocId),
-            ]);
+                return await withDocLock(dailyDocId, async () => {
+                    const [meta, attrs] = await Promise.all([
+                        fetchDocMeta(articleDocId),
+                        readClip(articleDocId),
+                    ]);
 
-            const entry: DailyNoteReadingEntry = {
-                docId: articleDocId,
-                title: meta.title || "",
-                author: attrs.author,
-                site: attrs.site,
-                url: attrs.url,
-                status: attrs.status,
-                rating: attrs.rating,
-                readMinutes: attrs.readMinutes,
-                words: attrs.words,
-                summary: attrs.summary,
-                time: attrs.time,
-            };
+                    const entry: DailyNoteReadingEntry = {
+                        docId: articleDocId,
+                        title: meta.title || "",
+                        author: attrs.author,
+                        site: attrs.site,
+                        url: attrs.url,
+                        status: attrs.status,
+                        rating: attrs.rating,
+                        readMinutes: attrs.readMinutes,
+                        words: attrs.words,
+                        summary: attrs.summary,
+                        time: attrs.time,
+                    };
 
-            const markdown = formatDailyNoteReadingMarkdown(entry, labels);
-            const existingEntryId = await findDailyNoteReadingEntryId(dailyDocId, articleDocId);
+                    const markdown = formatDailyNoteReadingMarkdown(entry, labels);
+                    const existingEntryId = await findDailyNoteReadingEntryId(dailyDocId, articleDocId);
 
-            if (existingEntryId) {
-                await updateBlock(existingEntryId, markdown, "markdown");
-                return { ok: true, dailyDocId, blockId: existingEntryId, updated: true };
+                    if (existingEntryId) {
+                        await updateBlock(existingEntryId, markdown, "markdown");
+                        return { ok: true, dailyDocId, blockId: existingEntryId, updated: true };
+                    }
+
+                    const headingId = await findDailyNoteReadingHeadingId(dailyDocId);
+                    let createdBlockId = "";
+                    if (headingId) {
+                        createdBlockId = await insertBlockAfter(headingId, markdown);
+                    } else {
+                        const sectionHeader = labels?.sectionHeader || DEFAULT_DAILY_NOTE_LABELS.sectionHeader;
+                        const newHeadingId = await appendBlock(dailyDocId, sectionHeader, "markdown");
+                        createdBlockId = await insertBlockAfter(newHeadingId, markdown);
+                    }
+
+                    if (createdBlockId) {
+                        await setDailyNoteSlotAttr(createdBlockId, articleDocId);
+                    }
+
+                    return { ok: true, dailyDocId, blockId: createdBlockId, updated: false };
+                });
+            } catch (error) {
+                lastError = error;
+                const isTransient = /(?:Access is denied|locked|busy)/i.test(String((error as any)?.message || error));
+                if (isTransient && attempt < 2) {
+                    await new Promise((r) => setTimeout(r, 150 * (attempt + 1)));
+                    continue;
+                }
+                throw error;
             }
-
-            const headingId = await findDailyNoteReadingHeadingId(dailyDocId);
-            let createdBlockId = "";
-            if (headingId) {
-                createdBlockId = await insertBlockAfter(headingId, markdown);
-            } else {
-                const sectionHeader = labels?.sectionHeader || DEFAULT_DAILY_NOTE_LABELS.sectionHeader;
-                const newHeadingId = await appendBlock(dailyDocId, sectionHeader, "markdown");
-                createdBlockId = await insertBlockAfter(newHeadingId, markdown);
-            }
-
-            if (createdBlockId) {
-                await setDailyNoteSlotAttr(createdBlockId, articleDocId);
-            }
-
-            return { ok: true, dailyDocId, blockId: createdBlockId, updated: false };
-        });
+        }
+        throw lastError;
     } catch (error) {
         console.warn("[glean] 记录阅读足迹至今日日记失败:", error);
         return { ok: false, error: error instanceof Error ? error.message : "记录失败" };

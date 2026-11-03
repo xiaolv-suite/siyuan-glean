@@ -106,7 +106,8 @@ function responseError<T>(route: string, response: KernelResponse<T>): KernelReq
     if (permissionCode(response.code, response.msg || "")) {
         return decorateError(message, route, "permission", { code: response.code, retryable: false });
     }
-    return decorateError(message, route, "kernel", { code: response.code, retryable: false });
+    const isLockError = /(?:Access is denied|document is locked|file is locked|locked)/i.test(response.msg || "");
+    return decorateError(message, route, "kernel", { code: response.code, retryable: isLockError });
 }
 
 function abortError(route: string): KernelRequestError {
@@ -824,6 +825,9 @@ export async function updateBlock(id: string, data: string, dataType: 'markdown'
         id,
         data,
         dataType,
+    }, {
+        retryable: true,
+        retry: { attempts: 3, delayMs: 150, maxDelayMs: 600 },
     });
 }
 
@@ -833,6 +837,9 @@ export async function appendBlock(parentBlockId: string, data: string, dataType:
         dataType,
         parentID: parentBlockId,
         data,
+    }, {
+        retryable: true,
+        retry: { attempts: 3, delayMs: 150, maxDelayMs: 600 },
     });
     const ids = extractInsertBlockIds(res);
     if (ids.length === 0) throw new Error('appendBlock 未返回节点 ID');
@@ -841,7 +848,10 @@ export async function appendBlock(parentBlockId: string, data: string, dataType:
 
 /** 创建或获取今日 Daily Note（返回文档 ID）。 */
 export async function createDailyNote(notebookId: string): Promise<string> {
-    const data = await kernelPost<{ id?: string }>("/api/filetree/createDailyNote", { notebook: notebookId });
+    const data = await kernelPost<{ id?: string }>("/api/filetree/createDailyNote", { notebook: notebookId }, {
+        retryable: true,
+        retry: { attempts: 3, delayMs: 150, maxDelayMs: 600 },
+    });
     const id = data?.id;
     if (typeof id !== "string" || !/^\d{14}-[0-9a-z]{7}$/.test(id)) {
         throw new Error("createDailyNote 未返回有效文档 ID");

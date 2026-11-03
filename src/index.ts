@@ -770,7 +770,7 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
             const { captureDocument } = await import("./services/clip-store");
             const now = new Date();
             const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}-${String(now.getHours()).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}`;
-            const title = isUrl ? `剪藏 ${dateStr}` : (text.slice(0, 30).replace(/[\r\n]+/g, " ") || `剪藏 ${dateStr}`);
+            const title = isUrl ? `剪藏 ${dateStr}` : (text.slice(0, 30).replace(/[/\\:<>|?*"~\p{Cc}\p{Cf}\r\n]+/gu, " ").trim() || `剪藏 ${dateStr}`);
             const md = isUrl ? `[来源链接](${text})\n\n> 剪藏自系统剪贴板` : `${text}\n\n> 剪藏自系统剪贴板`;
 
             try {
@@ -900,7 +900,9 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
                 const summaryMatch = (c.summary || "").toLowerCase().includes(kw);
                 const tagMatch = (c.tags || []).some((t) => t.toLowerCase().includes(kw));
                 const aiTagMatch = (c.aiTags || []).some((t) => t.toLowerCase().includes(kw));
-                return titleMatch || summaryMatch || tagMatch || aiTagMatch;
+                const authorMatch = (c.author || "").toLowerCase().includes(kw);
+                const siteMatch = (c.site || "").toLowerCase().includes(kw);
+                return titleMatch || summaryMatch || tagMatch || aiTagMatch || authorMatch || siteMatch;
             });
             matched.sort((a, b) => {
                 const aTitle = (a.title || "").toLowerCase();
