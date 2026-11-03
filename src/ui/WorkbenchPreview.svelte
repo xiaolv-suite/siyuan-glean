@@ -23,6 +23,7 @@
     import { isWechatUrl, displayWechatAuthor } from "../domain/wechat";
     import { openWeReadGuideDialog } from "./weread-guide-dialog";
     import { scanAndFillWechatAuthor } from "../services/wechat-service";
+    import { notifyClipSuccess } from "../libs/notice";
     import { snapshotClip } from "../services/snapshot-service";
     import { openQuoteCardDialog } from "./quote-card-dialog";
 
@@ -193,9 +194,15 @@
 
     function confirm(asLocal = false): void {
         const id = entry.id;
+        const title = entry.title;
         const url = sourceUrl;
         void process(async () => {
             const result = await confirmPreviewCandidate(facade.pluginInstance, id, url, asLocal);
+            notifyClipSuccess({
+                docId: id,
+                title,
+                openAction: () => facade.openReadingDocument(id),
+            });
             autoEnrich(facade.pluginInstance, id, facade.settings, () => facade.notifyDataChanged());
             return result;
         }, "msg.added");

@@ -43,6 +43,7 @@ import { openRoamingDialog } from "./roaming-dialog";
 import { makeQuoteCardPreview } from "./flashcard-dialog";
 import { formatAPA, formatBibTeX, formatGBT7714, formatMLA, type CitationFormat, type CitationItem } from "../domain/citation";
 import { batchRecognizeWechatAuthors, scanAndFillWechatAuthor, purifyWechatArticle } from "../services/wechat-service";
+import { lvNotify, notifyClipSuccess, notifyBatchProgress, notifySilentTask, showNotice } from "../libs/notice";
 import ClipStatusActions from "./ClipStatusActions.svelte";
 import { installMobileViewportVars } from "../libs/mobile-viewport";
 import { installEscapeHandler, installModalFocus } from "../libs/modal-focus";
@@ -109,6 +110,7 @@ function triggerSilentWechatScan(): void {
         try {
             const result = await batchRecognizeWechatAuthors(facade.pluginInstance, batch);
             if (result.detectedCount > 0 && !disposed && rootEl) {
+                notifySilentTask(`后台自动识别微信公众号作者：已完成 ${result.detectedCount} 篇`, "wechat-auto-scan");
                 facade.notifyDataChanged();
                 await reload();
             }
@@ -527,14 +529,22 @@ async function startBatchWechatScan(): Promise<void> {
             targets,
             (processed, total, detectedCount) => {
                 wechatScanProgressText = `${processed}/${total} (${detectedCount})`;
+                notifyBatchProgress(`正在识别微信作者 (${processed}/${total})...`, "wechat-batch-scan");
             }
         );
         facade.notifyDataChanged();
         await reload();
-        showMessage(t(i18n, "wechat.batchScanDone", { count: result.detectedCount }), 3500);
+        lvNotify.card({
+            source: "小驴拾遗",
+            category: "wechat-scan-done",
+            title: "微信作者识别完成",
+            message: t(i18n, "wechat.batchScanDone", { count: result.detectedCount }),
+            level: "success",
+            duration: 5000,
+        });
     } catch (error) {
         console.warn("[LvGlean] 批量识别微信公众号失败:", error);
-        showMessage(t(i18n, "reader.actionFailed"), 3000);
+        showNotice(t(i18n, "reader.actionFailed"), 3000, "error");
     } finally {
         wechatScanning = false;
         wechatScanProgressText = "";
@@ -2141,25 +2151,45 @@ $effect(() => {
 async function capture(entry: CandidateEntry) {
     if (candidateBusyId) return;
     if (!normalizeUrl(entry.url)) {
-        showMessage(t(i18n, "msg.candidateNeedsUrl"), 3500);
+        showNotice(t(i18n, "msg.candidateNeedsUrl"), 3500, "warn");
         return;
     }
     candidateBusyId = entry.id;
     try {
         const result = await captureDocument(facade.pluginInstance, entry.id, { url: entry.url || undefined });
         if (result.captured) {
-            showMessage(t(i18n, result.indexSyncFailed ? "msg.writeIndexPending" : "msg.added"), 3500);
+            notifyClipSuccess({
+                docId: entry.id,
+                title: entry.title,
+                openAction: () => facade.openReadingDocument(entry.id),
+            });
             autoEnrich(facade.pluginInstance, entry.id, facade.settings, () => facade.notifyDataChanged());
             facade.notifyDataChanged();
         } else if (result.conflict) {
-            showMessage(`${t(i18n, "inbox.duplicate")}: ${result.conflict.title || result.conflict.hpath}`, 4000);
+            const confTitle = result.conflict.title || result.conflict.hpath || "";
+            lvNotify.card({
+                source: "小驴拾遗",
+                category: "clip-conflict",
+                title: t(i18n, "inbox.duplicate"),
+                message: confTitle ? `已存在相同来源文章：《${confTitle}》` : "读库中已收录过同 URL 的文章",
+                level: "warn",
+                duration: 6000,
+                actions: [
+                    {
+                        label: "查看已有文档",
+                        primary: true,
+                        onClick: () => facade.openReadingDocument(result.conflict!.id),
+                        dismissAfterClick: true,
+                    },
+                ],
+            });
         } else {
-            showMessage(t(i18n, "msg.alreadyIn"), 2500);
+            showNotice(t(i18n, "msg.alreadyIn"), 2500, "info");
         }
         await reload();
     } catch (error) {
         console.warn("[glean] 收录失败:", error);
-        showMessage(writeFailureMessage(error, offline ? "msg.offlineRetry" : "msg.captureFailed"), 3500);
+        showNotice(writeFailureMessage(error, offline ? "msg.offlineRetry" : "msg.captureFailed"), 3500, "error");
     } finally {
         candidateBusyId = "";
     }
@@ -2170,12 +2200,20 @@ async function captureAsLocal(entry: CandidateEntry) {
     candidateBusyId = entry.id;
     try {
         const result = await captureDocument(facade.pluginInstance, entry.id, { contentType: "local" });
-        showMessage(t(i18n, result.indexSyncFailed ? "msg.writeIndexPending" : result.captured ? "msg.added" : "msg.alreadyIn"), 3500);
-        if (result.captured) facade.notifyDataChanged();
+        if (result.captured) {
+            notifyClipSuccess({
+                docId: entry.id,
+                title: entry.title,
+                openAction: () => facade.openReadingDocument(entry.id),
+            });
+            facade.notifyDataChanged();
+        } else {
+            showNotice(t(i18n, "msg.alreadyIn"), 2500, "info");
+        }
         await reload();
     } catch (error) {
         console.warn("[glean] 本地文档收录失败:", error);
-        showMessage(writeFailureMessage(error, offline ? "msg.offlineRetry" : "msg.captureFailed"), 3500);
+        showNotice(writeFailureMessage(error, offline ? "msg.offlineRetry" : "msg.captureFailed"), 3500, "error");
     } finally {
         candidateBusyId = "";
     }
@@ -3124,12 +3162,33 @@ async function handleExternalDrop(e: DragEvent): Promise<void> {
                 if (block.type === "d") {
                     const { captureDocument } = await import("../services/clip-store");
                     const res = await captureDocument(facade.pluginInstance, blockId, { src: "drag" });
-                    showMessage(
-                        res.conflict
-                            ? `${t(i18n, "inbox.duplicate")}: ${res.conflict.title || res.conflict.hpath}`
-                            : t(i18n, res.captured ? "msg.added" : "msg.alreadyIn"),
-                        3000,
-                    );
+                    if (res.captured) {
+                        notifyClipSuccess({
+                            docId: blockId,
+                            title: block.content,
+                            openAction: () => facade.openReadingDocument(blockId),
+                        });
+                    } else if (res.conflict) {
+                        const confTitle = res.conflict.title || res.conflict.hpath || "";
+                        lvNotify.card({
+                            source: "小驴拾遗",
+                            category: "clip-conflict",
+                            title: t(i18n, "inbox.duplicate"),
+                            message: confTitle ? `已存在相同来源文章：《${confTitle}》` : "读库中已收录过同 URL 的文章",
+                            level: "warn",
+                            duration: 6000,
+                            actions: [
+                                {
+                                    label: "查看已有文档",
+                                    primary: true,
+                                    onClick: () => facade.openReadingDocument(res.conflict!.id),
+                                    dismissAfterClick: true,
+                                },
+                            ],
+                        });
+                    } else {
+                        showNotice(t(i18n, "msg.alreadyIn"), 2500, "info");
+                    }
                     facade.notifyDataChanged();
                     await reload();
                     return;

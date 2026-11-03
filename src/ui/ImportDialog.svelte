@@ -19,6 +19,7 @@ import type { GleanFacade } from "../types";
 import { ImportProgressError, summarizeImportProgress, type ImportProgress } from "../domain/import-progress";
 import { discardImportProgress, fingerprintImportSource, loadImportProgress } from "../services/import-progress";
 import { IMPORT_PROGRESS_FILE } from "../domain/import-progress";
+import { lvNotify, notifyBatchProgress } from "../libs/notice";
 
 /** 导入文件读取上限（32 MiB，与备份同数量级）：整文件解码/指纹/解析都在主线程。 */
 const MAX_IMPORT_BYTES = 32 * 1024 * 1024;
@@ -263,6 +264,7 @@ async function startImport(rowsOverride?: ImportPreviewRow[]) {
             signal: controller.signal,
             onProgress: (done, total) => {
                 if (mounted) progress = total > 0 ? Math.round((done / total) * 100) : 100;
+                notifyBatchProgress(`正在批量导入文章 (${done}/${total})...`, "glean-import-progress");
             },
         });
     } catch (error) {
@@ -289,8 +291,19 @@ async function startImport(rowsOverride?: ImportPreviewRow[]) {
                 resumeConfirmed = false;
             }
         }
-        // 导入已完成的场合，即使浮窗在收尾期间被关闭，也要提示结果
-        if (!mounted && result) showMessage(t(i18n, "import.progress.closed", { n: result.imported }), 5000);
+        // 导入已完成的场合，提示卡片回执
+        if (result && result.imported > 0) {
+            lvNotify.card({
+                source: "小驴拾遗",
+                category: "glean-import-done",
+                title: "批量导入完成",
+                message: `成功导入 ${result.imported} 篇剪藏文章${result.skippedDuplicate > 0 ? `（已跳过 ${result.skippedDuplicate} 篇重复）` : ""}`,
+                level: "success",
+                duration: 6000,
+            });
+        } else if (!mounted && result) {
+            showMessage(t(i18n, "import.progress.closed", { n: result.imported }), 5000);
+        }
     }
 }
 

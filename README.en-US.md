@@ -177,6 +177,15 @@ In just 3 minutes, transform scattered clippings into structured knowledge asset
 - **Real-Environment Acceptance**:
   - Automated tests and architectural gates pass 100%. Device-specific touch behaviors, external AI integrations, and real-environment acceptance boundaries are detailed in the [capability matrix](docs/CAPABILITY-MATRIX.md) and [known blockers](docs/BLOCKERS.md).
 
+## v1.4.4 update (2026-11-03)
+
+This update refactors the Reader topbar & companion sidebar, connects to the Lv Unified Notification System, and federates sibling plugin capabilities:
+
+- **Ecosystem Unified Notification (Epoch 7 Standard)**: Integrates decentralized notice coordination with 4-tier progressive noise reduction; provides actionable card receipts on clip capture with a 1-click jump button, folds high-frequency batch progress messages into a single counter, and demotes background routines (auto-cleanup, health scans) to silent logging;
+- **Topbar & Companion Sidebar Architecture Refactoring**: Introduces a 3-zone header layout and 5 dedicated companion tabs (Outline, Notes, Tools, Triage, AI);
+- **Sibling Plugin Federation Linkage (D-0248)**: Bridges full interoperability with Cards (extracts & review jumps), Contacts (author profile linking), Common (saving extracts), and Checkin (minute-level reading logging);
+- **Native SiYuan 24x24 Vector Icons**: Standardizes icons across the plugin to match SiYuan's native 24x24 viewBox and 1.75px stroke conventions.
+
 ## v1.4.3 update (2026-11-01)
 
 This update connects highlight ecosystem interoperability and streamlines the sidebar card experience.

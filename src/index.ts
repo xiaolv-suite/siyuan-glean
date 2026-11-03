@@ -38,6 +38,7 @@ import type { GleanFacade } from "./types";
 import { addRecentReading, pickContinueReadingDocId, type RecentReadingEntry } from "./domain/recent-reading";
 import { docUnderHostKind } from "./services/lifecycle-service";
 import { registerRaikiriModuleSafely } from "./libs/ecosystem-bridge-kit";
+import { lvNotify, notifyClipSuccess, notifyBatchProgress, showNotice } from "./libs/notice";
 
 const DOCK_TYPE = "glean-dock";
 const TAB_TYPE = "glean-library";
@@ -81,6 +82,7 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
     private readerOpenRequest = 0;
     private topBarElement?: HTMLElement;
     private topBarContextMenuHandler?: (event: MouseEvent) => void;
+    private noticeHubCleaner?: () => void;
     private unregisterRaikiri?: () => void;
     private readonly openWorkbenchPopupSingleton = createDialogSingleton(
         (initialPreviewId: string | undefined, onClose: () => void) => svelteDialog({
@@ -426,6 +428,11 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
             window.addEventListener("lv-cards:reviewed", this.cardsReviewedHandler);
             window.addEventListener("lv-exam:stats", this.cardsReviewedHandler);
         }
+
+        // Epoch 7 去中心化通知自协商接入与交棒生命周期
+        this.noticeHubCleaner = typeof lvNotify?.registerPlugin === "function"
+            ? lvNotify.registerPlugin("siyuan-glean")
+            : undefined;
     }
 
     onLayoutReady() {
@@ -476,6 +483,8 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
     }
 
     async onunload() {
+        this.noticeHubCleaner?.();
+        this.noticeHubCleaner = undefined;
         this.loaded = false;
         this.readerOpenRequest += 1;
         this.libraryOpenRequest += 1;
@@ -991,24 +1000,34 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
         if (this.inboxMigrating) return;
         const notebookId = this.settings.anchorNotebooks[0];
         if (!notebookId) {
-            showMessage(t(this.i18n, "panel.noAnchorHint"), 4000);
+            showNotice(t(this.i18n, "panel.noAnchorHint"), 4000, "warn");
             return;
         }
         this.inboxMigrating = true;
         try {
             let ok = 0;
             let duplicates = 0;
+            let lastDocId = "";
+            let lastTitle = "";
+            const total = ids.length;
+            let currentIdx = 0;
+
             for (const id of ids) {
+                currentIdx += 1;
+                if (total > 1) {
+                    notifyBatchProgress(`正在迁入收集箱 (${currentIdx}/${total})...`, "inbox-migrate-progress");
+                }
                 try {
                     const shorthand = await getShorthand(id);
                     if (!shorthand) continue;
                     const result = await migrateShorthand(this, shorthand, { notebookId });
                     if (result.duplicate) {
                         duplicates += 1;
-                        showMessage(`${t(this.i18n, "inbox.duplicate")}: ${result.existing?.title || result.existing?.hpath || ""}`, 3500);
                         continue;
                     }
                     ok += 1;
+                    lastDocId = result.docId;
+                    lastTitle = shorthand.shorthandTitle || shorthand.shorthandDesc?.slice(0, 30) || "";
                 } catch (error) {
                     console.warn("[glean] 收集箱迁入失败:", error);
                     const kind = isKernelRequestError(error) ? error.kind : kernelErrorKind(error);
@@ -1016,11 +1035,40 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
                         : kind === "network" ? "inbox.networkFailed"
                         : kind === "timeout" ? "inbox.timeout"
                         : "msg.actionFailed";
-                    showMessage(t(this.i18n, messageKey), 4500);
+                    showNotice(t(this.i18n, messageKey), 4500, "error");
                 }
             }
-            if (ok > 0) showMessage(t(this.i18n, "inbox.migrated"), 3000);
-            if (duplicates > 0) showMessage(`${t(this.i18n, "inbox.duplicate")}（${duplicates}）`, 3500);
+
+            if (ok > 0) {
+                if (ok === 1 && lastDocId) {
+                    notifyClipSuccess({
+                        docId: lastDocId,
+                        title: lastTitle,
+                        openAction: () => this.openReadingDocument(lastDocId),
+                    });
+                } else {
+                    lvNotify.card({
+                        source: "小驴拾遗",
+                        category: "inbox-migrate-done",
+                        title: "收集箱迁入完成",
+                        message: duplicates > 0
+                            ? `成功迁入 ${ok} 篇待读文章（已跳过 ${duplicates} 篇重复）`
+                            : `成功迁入 ${ok} 篇待读文章`,
+                        level: "success",
+                        duration: 6000,
+                        actions: [
+                            {
+                                label: "打开读库",
+                                primary: true,
+                                onClick: () => this.openPanel(),
+                                dismissAfterClick: true,
+                            },
+                        ],
+                    });
+                }
+            } else if (duplicates > 0) {
+                showNotice(`${t(this.i18n, "inbox.duplicate")}（${duplicates} 篇）`, 3500, "warn");
+            }
             this.notifyDataChanged();
         } finally {
             this.inboxMigrating = false;
@@ -1070,24 +1118,46 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
     async addCurrentDocToLibrary(): Promise<void> {
         const docId = this.currentDocId();
         if (!docId) {
-            showMessage(t(this.i18n, "msg.noSelection"), 3000);
+            showNotice(t(this.i18n, "msg.noSelection"), 3000, "warn");
             return;
         }
         if (this.capturingDocIds.has(docId)) return;
         this.capturingDocIds.add(docId);
         try {
             const result = await captureDocument(this, docId, { src: "manual" });
-            showMessage(
-                result.conflict
-                    ? `${t(this.i18n, "inbox.duplicate")}: ${result.conflict.title || result.conflict.hpath}`
-                    : t(this.i18n, result.captured ? "msg.added" : "msg.alreadyIn"),
-                3000,
-            );
-            if (result.captured) autoEnrich(this, docId, this.settings, () => this.notifyDataChanged());
+            if (result.conflict) {
+                const confTitle = result.conflict.title || result.conflict.hpath || "";
+                lvNotify.card({
+                    source: "小驴拾遗",
+                    category: "clip-conflict",
+                    title: t(this.i18n, "inbox.duplicate"),
+                    message: confTitle ? `已存在相同来源文章：《${confTitle}》` : "读库中已收录过同 URL 的文章",
+                    level: "warn",
+                    duration: 6000,
+                    actions: [
+                        {
+                            label: "查看已有文档",
+                            primary: true,
+                            onClick: () => this.openReadingDocument(result.conflict!.id),
+                            dismissAfterClick: true,
+                        },
+                    ],
+                });
+            } else if (result.captured) {
+                const context = await readClipContext(docId);
+                notifyClipSuccess({
+                    docId,
+                    title: context?.title,
+                    openAction: () => this.openReadingDocument(docId),
+                });
+                autoEnrich(this, docId, this.settings, () => this.notifyDataChanged());
+            } else {
+                showNotice(t(this.i18n, "msg.alreadyIn"), 2500, "info");
+            }
             this.notifyDataChanged();
         } catch (error) {
             console.warn("[glean] 手动收录失败:", error);
-            showMessage(t(this.i18n, "msg.captureFailed"), 3500);
+            showNotice(t(this.i18n, "msg.captureFailed"), 3500, "error");
         } finally {
             this.capturingDocIds.delete(docId);
         }
@@ -1112,7 +1182,7 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
                         makeQuoteCardPreview(this, { title: rows[0]?.content ?? "", quote: selectionText, docId: rootId, blockId: selected?.blockId });
                     } catch (error) {
                         console.warn("[glean] 分享卡生成失败:", error);
-                        showMessage(t(this.i18n, "msg.actionFailed"), 3000);
+                        showNotice(t(this.i18n, "msg.actionFailed"), 3000, "error");
                     }
                 },
             });
@@ -1124,17 +1194,39 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
             click: async () => {
                 try {
                     const result = await captureDocument(this, rootId, { src: "manual" });
-                    showMessage(
-                        result.conflict
-                            ? `${t(this.i18n, "inbox.duplicate")}: ${result.conflict.title || result.conflict.hpath}`
-                            : t(this.i18n, result.captured ? "msg.added" : "msg.alreadyIn"),
-                        3000,
-                    );
-                    if (result.captured) autoEnrich(this, rootId, this.settings, () => this.notifyDataChanged());
+                    if (result.conflict) {
+                        const confTitle = result.conflict.title || result.conflict.hpath || "";
+                        lvNotify.card({
+                            source: "小驴拾遗",
+                            category: "clip-conflict",
+                            title: t(this.i18n, "inbox.duplicate"),
+                            message: confTitle ? `已存在相同来源文章：《${confTitle}》` : "读库中已收录过同 URL 的文章",
+                            level: "warn",
+                            duration: 6000,
+                            actions: [
+                                {
+                                    label: "查看已有文档",
+                                    primary: true,
+                                    onClick: () => this.openReadingDocument(result.conflict!.id),
+                                    dismissAfterClick: true,
+                                },
+                            ],
+                        });
+                    } else if (result.captured) {
+                        const context = await readClipContext(rootId);
+                        notifyClipSuccess({
+                            docId: rootId,
+                            title: context?.title,
+                            openAction: () => this.openReadingDocument(rootId),
+                        });
+                        autoEnrich(this, rootId, this.settings, () => this.notifyDataChanged());
+                    } else {
+                        showNotice(t(this.i18n, "msg.alreadyIn"), 2500, "info");
+                    }
                     this.notifyDataChanged();
                 } catch (error) {
                     console.warn("[glean] 右键收录失败:", error);
-                    showMessage(t(this.i18n, "msg.captureFailed"), 3500);
+                    showNotice(t(this.i18n, "msg.captureFailed"), 3500, "error");
                 }
             },
         });

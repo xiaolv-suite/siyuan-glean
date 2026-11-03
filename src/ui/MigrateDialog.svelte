@@ -20,6 +20,7 @@ import {
     startMigrateProgress,
     type MigrateRow,
 } from "../services/migrate-service";
+import { lvNotify, notifyBatchProgress } from "../libs/notice";
 
 interface Props {
     facade: GleanFacade;
@@ -265,6 +266,7 @@ async function startRun(startNew: boolean) {
         while (true) {
             last = await runBackfillBatch(facade.pluginInstance, facade.settings, { signal, expectedTaskId: taskId });
             cursor = last.cursor;
+            notifyBatchProgress(`存量迁移回填进度 (${cursor}/${rows.length})...`, "migrate-backfill-progress");
             if (last.updatedRows.length > 0) {
                 const updatedById = new Map(last.updatedRows.map((row) => [row.id, row]));
                 rows = rows.map((row) => updatedById.get(row.id) ?? row);
@@ -280,6 +282,16 @@ async function startRun(startNew: boolean) {
         }
         await refreshProgress();
         phase = last?.finished ? "done" : "paused";
+        if (last?.finished) {
+            lvNotify.card({
+                source: "小驴拾遗",
+                category: "migrate-done",
+                title: "存量迁移完成",
+                message: `成功迁移 ${cursor} 篇历史文档，错误 ${last.errors} 篇`,
+                level: "success",
+                duration: 6000,
+            });
+        }
         if (last?.finished && last.errors === 0 && counts.manual === 0) {
             await clearMigrateProgress(facade.pluginInstance, taskId);
             resumeAvailable = false;

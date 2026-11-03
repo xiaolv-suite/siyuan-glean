@@ -27,7 +27,9 @@ for (const imported of transformedSources.get(indexUrl).matchAll(/import\s+(?:\{
     } else {
         source = named.split(",").map((entry) => {
             const name = entry.trim().split(/\s+as\s+/)[0];
-            return name === "installReadingContext"
+            return name === "lvNotify"
+                ? `export const lvNotify = { registerPlugin: () => () => undefined, card: () => "", capsule: () => "", silent: () => {}, inline: () => {} };`
+                : name === "installReadingContext"
                 ? `export const ${name} = () => () => undefined;`
                 : name === "ensurePresetActions"
                 ? `export const ${name} = async () => undefined;`

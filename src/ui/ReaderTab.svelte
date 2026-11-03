@@ -87,6 +87,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
     import { createLatestRequestGate } from "../libs/latest-request";
     import { loadIndex } from "../services/index-store";
     import { resolveReadingTimeTier } from "../domain/library-view";
+    import { lvNotify, notifySilentTask, showNotice } from "../libs/notice";
     import type { RecentReadingEntry } from "../domain/recent-reading";
 
     interface Props {
@@ -1077,18 +1078,25 @@ import { aiFailureKey } from "../libs/ai-feedback";
         try {
             const result = await purifyWechatArticle(facade.pluginInstance, docId);
             if (result.ok) {
-                showMessage(t(i18n, "wechat.purifyDone", { count: result.words ?? 0 }), 3000);
+                lvNotify.capsule({
+                    source: "小驴拾遗",
+                    category: "wechat-purify",
+                    message: t(i18n, "wechat.purifyDone", { count: result.words ?? 0 }),
+                    level: "success",
+                    duration: 3000,
+                });
+                notifySilentTask(`微信文章正文深度清洗提纯完成：${result.words ?? 0} 字`, "article-cleanup");
                 await loadContext(docId);
                 facade.notifyDataChanged();
                 if (result.modified) {
                     openFormattingDialog(facade, docId);
                 }
             } else {
-                showMessage(t(i18n, "msg.actionFailed"), 3000);
+                showNotice(t(i18n, "msg.actionFailed"), 3000, "error");
             }
         } catch (err) {
             console.warn("[glean] 微信文章提纯失败:", err);
-            showMessage(t(i18n, "msg.actionFailed"), 3000);
+            showNotice(t(i18n, "msg.actionFailed"), 3000, "error");
         } finally {
             purifying = false;
         }
@@ -1678,6 +1686,8 @@ import { aiFailureKey } from "../libs/ai-feedback";
                 void loadAuthorArticles(detected, context?.location?.hpath);
                 if (manual) {
                     showMessage(t(i18n, "wechat.authorRecognized", { name: detected }), 2500);
+                } else {
+                    notifySilentTask(`微信文章作者自动识别补全：${detected}`, "wechat-auto-scan");
                 }
             } catch (error) {
                 console.warn("[LvGlean] 自动识别微信公众号失败:", error);
