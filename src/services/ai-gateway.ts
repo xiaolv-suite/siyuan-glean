@@ -16,6 +16,7 @@ import { chatGPT } from "../api/ai.ts";
 import { chatCompletionDirect } from "../api/ai-direct.ts";
 import type { GleanSettings } from "./settings.ts";
 import { classifyAiFailure, type AiCallFailure } from "../domain/enrich.ts";
+import { lvAi } from "../libs/notice.ts";
 
 export interface UnifiedAiGatewayBridge {
     protocol?: number;
@@ -54,14 +55,35 @@ export function getUnifiedAiGateway(): UnifiedAiGatewayBridge | null {
 
 /**
  * 全生态统一 AI 调度入口：
- * 优先协商统一网关，次选用户配置的思源安全密钥库通道，默认走思源官方免配 AI 通道
+ * 优先协商统一网关（lvAi 自动排队防冲频），次选用户配置的思源安全密钥库通道，默认走思源官方免配 AI 通道
  */
 export async function dispatchUnifiedAiChat(
     plugin: Plugin,
     settings: GleanSettings,
-    prompt: string
+    prompt: string,
+    options: { priority?: "high" | "low"; signal?: AbortSignal } = {}
 ): Promise<{ ok: boolean; text?: string; failure?: AiCallFailure; source?: "gateway" | "custom" | "siyuan" }> {
-    // 1. 优先尝试小驴生态统一 AI 网关（如有已就绪的集中式网关，免配置直通）
+    // 1. 优先尝试小驴全生态统一 AI 网关 (lvAi)，支持全局凭据共享、限流队列与 429 自动指数退避
+    if (typeof lvAi?.chat === "function") {
+        try {
+            const aiConfig = lvAi.getConfig?.();
+            if (aiConfig?.apiKey) {
+                const res = await lvAi.chat({
+                    source: "拾遗",
+                    messages: [{ role: "user", content: prompt }],
+                    priority: options.priority ?? "low",
+                    signal: options.signal,
+                });
+                if (res?.content) {
+                    return { ok: true, text: res.content, source: "gateway" };
+                }
+            }
+        } catch (error) {
+            console.warn("[LvGlean] lvAi.chat 网关调度失败，自动降级:", error);
+        }
+    }
+
+    // 2. 备用尝试全局 window 网关别名 (window.xiaolvAiGateway / window.lvAiGateway 等)
     const gateway = getUnifiedAiGateway();
     if (gateway) {
         try {
@@ -83,9 +105,9 @@ export async function dispatchUnifiedAiChat(
         }
     }
 
-    // 2. 自定义 OpenAI 兼容端点（仅通过思源密钥库安全读取，严禁插件私有明文存储）
+    // 3. 自定义 OpenAI 兼容端点（仅通过思源密钥库安全读取，严禁插件私有明文存储）
     if (settings.ai.channel === "custom") {
-        const outcome = await chatCompletionDirect(plugin, settings, prompt);
+        const outcome = await chatCompletionDirect(plugin, settings, prompt, { signal: options.signal });
         if (outcome.ok) return { ok: true, text: outcome.text, source: "custom" };
         const failure = outcome.kind === "permission" ? "permission"
             : outcome.kind === "timeout" ? "timeout"
@@ -94,7 +116,7 @@ export async function dispatchUnifiedAiChat(
         return { ok: false, ...(failure ? { failure } : {}), source: "custom" };
     }
 
-    // 3. 思源官方统一内置通道（默认推荐：思源内置 AI，零 Key 依赖，共享思源本体配置）
+    // 4. 思源官方统一内置通道（默认推荐：思源内置 AI，零 Key 依赖，共享思源本体配置）
     try {
         const text = await chatGPT(prompt);
         return { ok: true, text, source: "siyuan" };

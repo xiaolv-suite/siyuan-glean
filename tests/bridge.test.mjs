@@ -29,6 +29,8 @@ for (const imported of transformedSources.get(indexUrl).matchAll(/import\s+(?:\{
             const name = entry.trim().split(/\s+as\s+/)[0];
             return name === "lvNotify"
                 ? `export const lvNotify = { registerPlugin: () => () => undefined, card: () => "", capsule: () => "", silent: () => {}, inline: () => {} };`
+                : name === "lvActivity"
+                ? `export const lvActivity = { record: () => {}, getTodayRecords: () => [], onActivity: () => () => {}, formatAsMarkdown: () => "" };`
                 : name === "installReadingContext"
                 ? `export const ${name} = () => () => undefined;`
                 : name === "ensurePresetActions"

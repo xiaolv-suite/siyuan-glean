@@ -43,7 +43,7 @@ import { openRoamingDialog } from "./roaming-dialog";
 import { makeQuoteCardPreview } from "./flashcard-dialog";
 import { formatAPA, formatBibTeX, formatGBT7714, formatMLA, type CitationFormat, type CitationItem } from "../domain/citation";
 import { batchRecognizeWechatAuthors, scanAndFillWechatAuthor, purifyWechatArticle } from "../services/wechat-service";
-import { lvNotify, notifyClipSuccess, notifyBatchProgress, notifySilentTask, showNotice } from "../libs/notice";
+import { lvNotify, lvActivity, notifyClipSuccess, notifyBatchProgress, notifySilentTask, showNotice } from "../libs/notice";
 import ClipStatusActions from "./ClipStatusActions.svelte";
 import { installMobileViewportVars } from "../libs/mobile-viewport";
 import { installEscapeHandler, installModalFocus } from "../libs/modal-focus";
@@ -2158,6 +2158,12 @@ async function capture(entry: CandidateEntry) {
     try {
         const result = await captureDocument(facade.pluginInstance, entry.id, { url: entry.url || undefined });
         if (result.captured) {
+            lvActivity.record({
+                source: "拾遗",
+                category: "clip",
+                title: `剪藏《${entry.title || "未命名文章"}》`,
+                linkBlockId: entry.id,
+            });
             notifyClipSuccess({
                 docId: entry.id,
                 title: entry.title,
@@ -2201,6 +2207,12 @@ async function captureAsLocal(entry: CandidateEntry) {
     try {
         const result = await captureDocument(facade.pluginInstance, entry.id, { contentType: "local" });
         if (result.captured) {
+            lvActivity.record({
+                source: "拾遗",
+                category: "clip",
+                title: `剪藏《${entry.title || "未命名文章"}》`,
+                linkBlockId: entry.id,
+            });
             notifyClipSuccess({
                 docId: entry.id,
                 title: entry.title,
@@ -3163,6 +3175,12 @@ async function handleExternalDrop(e: DragEvent): Promise<void> {
                     const { captureDocument } = await import("../services/clip-store");
                     const res = await captureDocument(facade.pluginInstance, blockId, { src: "drag" });
                     if (res.captured) {
+                        lvActivity.record({
+                            source: "拾遗",
+                            category: "clip",
+                            title: `剪藏《${block.content || "未命名文章"}》`,
+                            linkBlockId: blockId,
+                        });
                         notifyClipSuccess({
                             docId: blockId,
                             title: block.content,

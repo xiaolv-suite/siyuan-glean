@@ -19,7 +19,7 @@ import type { GleanFacade } from "../types";
 import { ImportProgressError, summarizeImportProgress, type ImportProgress } from "../domain/import-progress";
 import { discardImportProgress, fingerprintImportSource, loadImportProgress } from "../services/import-progress";
 import { IMPORT_PROGRESS_FILE } from "../domain/import-progress";
-import { lvNotify, notifyClipProgress } from "../libs/notice";
+import { lvNotify, lvActivity, notifyClipProgress } from "../libs/notice";
 
 /** 导入文件读取上限（32 MiB，与备份同数量级）：整文件解码/指纹/解析都在主线程。 */
 const MAX_IMPORT_BYTES = 32 * 1024 * 1024;
@@ -293,6 +293,11 @@ async function startImport(rowsOverride?: ImportPreviewRow[]) {
         }
         // 导入已完成的场合，提示卡片回执
         if (result && result.imported > 0) {
+            lvActivity.record({
+                source: "拾遗",
+                category: "clip",
+                title: `批量导入 ${result.imported} 篇剪藏文章`,
+            });
             lvNotify.card({
                 source: "小驴拾遗",
                 category: "glean-import-done",

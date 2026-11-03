@@ -140,9 +140,10 @@ export type { AiCallFailure };
 export async function callLLM(
     plugin: Plugin,
     settings: GleanSettings,
-    msg: string
+    msg: string,
+    options: { priority?: "high" | "low"; signal?: AbortSignal } = { priority: "low" }
 ): Promise<{ ok: boolean; text?: string; failure?: AiCallFailure }> {
-    const res = await dispatchUnifiedAiChat(plugin, settings, msg);
+    const res = await dispatchUnifiedAiChat(plugin, settings, msg, options);
     return {
         ok: res.ok,
         ...(res.text ? { text: res.text } : {}),

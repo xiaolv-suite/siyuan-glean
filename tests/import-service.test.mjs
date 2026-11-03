@@ -781,6 +781,7 @@ async function dialogHarness(context, rows, { fingerprint = importOptions.finger
         facade: { pluginInstance: context.plugin, notifyDataChanged: () => notifications.push("changed") },
         i18n: {}, t: (_i18n, key) => key, showMessage: () => {},
         lvNotify: { card: () => "", capsule: () => "", silent: () => {}, inline: () => {} },
+        lvActivity: { record: () => {}, getTodayRecords: () => [], onActivity: () => () => {}, formatAsMarkdown: () => "" },
         notifyBatchProgress: () => "",
         notifyClipProgress: () => "",
         loadImportProgress, summarizeImportProgress, ImportExecutionError, ImportProgressError, AbortController,

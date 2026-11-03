@@ -8,14 +8,27 @@ import {
     withDocLock,
     lvSurfaceStack,
     lvTicker,
+    lvAi,
+    lvActivity,
     type CardNoticeOptions,
     type CapsuleNoticeOptions,
     type SilentNoticeOptions,
     type LvNoticeLevel,
+    type LvAiRequestOptions,
+    type LvAiResponse,
+    type LvActivityRecord,
 } from "./lv-notice-kit.ts";
 
-export { lvNotify, withDocLock, lvSurfaceStack, lvTicker };
-export type { CardNoticeOptions, CapsuleNoticeOptions, SilentNoticeOptions, LvNoticeLevel };
+export { lvNotify, withDocLock, lvSurfaceStack, lvTicker, lvAi, lvActivity };
+export type {
+    CardNoticeOptions,
+    CapsuleNoticeOptions,
+    SilentNoticeOptions,
+    LvNoticeLevel,
+    LvAiRequestOptions,
+    LvAiResponse,
+    LvActivityRecord,
+};
 
 const PLUGIN_SOURCE = "小驴拾遗";
 

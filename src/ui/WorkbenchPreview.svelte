@@ -23,7 +23,7 @@
     import { isWechatUrl, displayWechatAuthor } from "../domain/wechat";
     import { openWeReadGuideDialog } from "./weread-guide-dialog";
     import { scanAndFillWechatAuthor } from "../services/wechat-service";
-    import { notifyClipSuccess } from "../libs/notice";
+    import { notifyClipSuccess, lvActivity } from "../libs/notice";
     import { snapshotClip } from "../services/snapshot-service";
     import { openQuoteCardDialog } from "./quote-card-dialog";
 
@@ -198,6 +198,12 @@
         const url = sourceUrl;
         void process(async () => {
             const result = await confirmPreviewCandidate(facade.pluginInstance, id, url, asLocal);
+            lvActivity.record({
+                source: "拾遗",
+                category: "clip",
+                title: `剪藏《${title || "未命名文章"}》`,
+                linkBlockId: id,
+            });
             notifyClipSuccess({
                 docId: id,
                 title,

@@ -38,7 +38,7 @@ import type { GleanFacade } from "./types";
 import { addRecentReading, pickContinueReadingDocId, type RecentReadingEntry } from "./domain/recent-reading";
 import { docUnderHostKind } from "./services/lifecycle-service";
 import { registerRaikiriModuleSafely } from "./libs/ecosystem-bridge-kit";
-import { lvNotify, lvTicker, notifyClipSuccess, notifyClipProgress, showNotice } from "./libs/notice";
+import { lvNotify, lvTicker, lvActivity, notifyClipSuccess, notifyClipProgress, showNotice } from "./libs/notice";
 
 const DOCK_TYPE = "glean-dock";
 const TAB_TYPE = "glean-library";
@@ -1041,7 +1041,13 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
                     }
                     ok += 1;
                     lastDocId = result.docId;
-                    lastTitle = shorthand.shorthandTitle || shorthand.shorthandDesc?.slice(0, 30) || "";
+                    lastTitle = shorthand.shorthandTitle || shorthand.shorthandDesc?.slice(0, 30) || "未命名文章";
+                    lvActivity.record({
+                        source: "拾遗",
+                        category: "clip",
+                        title: `剪藏《${lastTitle}》`,
+                        linkBlockId: result.docId,
+                    });
                 } catch (error) {
                     console.warn("[glean] 收集箱迁入失败:", error);
                     const kind = isKernelRequestError(error) ? error.kind : kernelErrorKind(error);
@@ -1159,9 +1165,16 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
                 });
             } else if (result.captured) {
                 const context = await readClipContext(docId);
+                const docTitle = context?.title || "未命名文章";
+                lvActivity.record({
+                    source: "拾遗",
+                    category: "clip",
+                    title: `剪藏《${docTitle}》`,
+                    linkBlockId: docId,
+                });
                 notifyClipSuccess({
                     docId,
-                    title: context?.title,
+                    title: docTitle,
                     openAction: () => this.openReadingDocument(docId),
                 });
                 autoEnrich(this, docId, this.settings, () => this.notifyDataChanged());
@@ -1228,9 +1241,16 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
                         });
                     } else if (result.captured) {
                         const context = await readClipContext(rootId);
+                        const docTitle = context?.title || "未命名文章";
+                        lvActivity.record({
+                            source: "拾遗",
+                            category: "clip",
+                            title: `剪藏《${docTitle}》`,
+                            linkBlockId: rootId,
+                        });
                         notifyClipSuccess({
                             docId: rootId,
-                            title: context?.title,
+                            title: docTitle,
                             openAction: () => this.openReadingDocument(rootId),
                         });
                         autoEnrich(this, rootId, this.settings, () => this.notifyDataChanged());

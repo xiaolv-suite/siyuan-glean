@@ -29,6 +29,8 @@ const {
     withDocLock,
     lvSurfaceStack,
     lvTicker,
+    lvAi,
+    lvActivity,
     showNotice,
     notifyClipSuccess,
     notifyBatchProgress,
@@ -394,5 +396,101 @@ test("系统资源与并发加固：lvSurfaceStack 栈顶精准逐层关闭且�
         popBottom();
     } finally {
         globalThis.window = originalWindow;
+    }
+});
+
+test("第三阶段 AI 统一网关：lvAi 并发限流与全局共享配置", async () => {
+    const originalFetch = globalThis.fetch;
+    let fetchCalled = false;
+    let fetchHeaders: any = null;
+    let fetchBody: any = null;
+
+    globalThis.fetch = async (url: any, opts: any) => {
+        fetchCalled = true;
+        fetchHeaders = opts.headers;
+        fetchBody = JSON.parse(opts.body);
+        return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+                choices: [{ message: { content: "这是通过 lvAi 网关返回的摘要结果" } }],
+                model: "deepseek-chat",
+                usage: { total_tokens: 42 },
+            }),
+        } as any;
+    };
+
+    try {
+        // 1. 设置共享配置
+        lvAi.setConfig({
+            endpoint: "https://api.deepseek.com/v1",
+            apiKey: "sk-shared-test-key-123456",
+            model: "deepseek-chat",
+        });
+
+        const cfg = lvAi.getConfig();
+        assert.equal(cfg?.apiKey, "sk-shared-test-key-123456");
+        assert.equal(cfg?.model, "deepseek-chat");
+
+        // 2. 调用 lvAi.chat 发送低优先级后台摘要请求
+        const res = await lvAi.chat({
+            source: "拾遗",
+            messages: [{ role: "user", content: "请为本文生成摘要" }],
+            priority: "low",
+        });
+
+        assert.equal(fetchCalled, true);
+        assert.equal(fetchHeaders["Authorization"], "Bearer sk-shared-test-key-123456");
+        assert.equal(fetchBody.model, "deepseek-chat");
+        assert.equal(res.content, "这是通过 lvAi 网关返回的摘要结果");
+
+        // 3. 验证 dispatchUnifiedAiChat 调度自动优先走 lvAi
+        const dummyPlugin: any = { getSecret: () => "" };
+        const dispatchRes = await dispatchUnifiedAiChat(dummyPlugin, DEFAULT_SETTINGS, "正文长文提炼", { priority: "low" });
+        assert.equal(dispatchRes.ok, true);
+        assert.equal(dispatchRes.source, "gateway");
+        assert.equal(dispatchRes.text, "这是通过 lvAi 网关返回的摘要结果");
+    } finally {
+        globalThis.fetch = originalFetch;
+    }
+});
+
+test("第三阶段今日活动流：lvActivity 广播、查询与 Daily Note 汇编", () => {
+    let receivedItem: any = null;
+    const unsub = lvActivity.onActivity((item) => {
+        receivedItem = item;
+    });
+
+    try {
+        // 1. 广播文章入库活动
+        lvActivity.record({
+            source: "拾遗",
+            category: "clip",
+            title: "剪藏《小驴全家桶统一架构设计》",
+            linkBlockId: "20261103120000-clip01",
+            detail: "微信公众号 · 深度长文",
+        });
+
+        assert.ok(receivedItem);
+        assert.equal(receivedItem.source, "拾遗");
+        assert.equal(receivedItem.category, "clip");
+        assert.equal(receivedItem.title, "剪藏《小驴全家桶统一架构设计》");
+        assert.equal(receivedItem.linkBlockId, "20261103120000-clip01");
+
+        // 2. 查询今日活动流
+        const todayRecords = lvActivity.getTodayRecords();
+        assert.ok(todayRecords.length >= 1);
+        const match = todayRecords.find((r) => r.linkBlockId === "20261103120000-clip01");
+        assert.ok(match);
+        assert.equal(match.source, "拾遗");
+
+        // 3. 汇编生成 Markdown
+        const md = lvActivity.formatAsMarkdown();
+        assert.ok(md.includes("小驴全家桶 · 今日活动汇编"));
+        assert.ok(md.includes("[拾遗]"));
+        assert.ok(md.includes("剪藏《小驴全家桶统一架构设计》"));
+        assert.ok(md.includes("siyuan://blocks/20261103120000-clip01"));
+    } finally {
+        unsub();
     }
 });
