@@ -12,6 +12,7 @@
     import type { GleanFacade } from "../types";
     import { t } from "../libs/i18n";
     import { installEscapeHandler } from "../libs/modal-focus";
+    import { lvSurfaceStack } from "../libs/notice";
     import { writeClip } from "../services/clip-store";
     import { archiveMoveDoc, buildDocPurgeInfo, docHostContext, purgeDoc, recycleDoc, type DocHostContext } from "../services/lifecycle-service";
 
@@ -122,11 +123,31 @@
             onClose();
         }
     }
-    $effect(() => registerCloseGuard?.(() => !pending));
+
+    $effect(() => {
+        if (!purgeConfirmOpen) return;
+        return lvSurfaceStack.push({
+            id: `archive-purge-confirm-${instanceId}`,
+            type: "dialog",
+            dismiss: () => {
+                void cancelPurgeConfirmation();
+                return true;
+            },
+        });
+    });
+
+    $effect(() => registerCloseGuard?.(() => !pending && !purgeConfirmOpen));
     $effect(() => {
         if (!rootEl) return;
         return installEscapeHandler(rootEl, (event) => {
-            handleWindowKeydown(event);
+            if (pending) return true;
+            if (purgeConfirmOpen) {
+                event.preventDefault();
+                event.stopPropagation();
+                void cancelPurgeConfirmation();
+                return true;
+            }
+            onClose();
             return true;
         });
     });
