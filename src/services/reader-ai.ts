@@ -12,6 +12,7 @@ import { parseClipAttrs } from "../domain/schema";
 import { activeAiSettings, aiQuotaAvailable, callLLM, enqueueEnrich, logAiEvent, recordAiUsage, type AiCallFailure } from "./enrich-service";
 import { readClipAttributeSnapshot, writeClip } from "./clip-store";
 import type { GleanSettings } from "./settings";
+import { withDocLock } from "../libs/notice.ts";
 
 export interface ReaderAiOutcome {
     ok: boolean;
@@ -249,7 +250,9 @@ export async function insertAiCalloutToDocument(
     options: AiCalloutOptions,
 ): Promise<string> {
     if (!/^\d{14}-[0-9a-z]{7}$/.test(docId)) throw new Error("文档 ID 无效");
-    const dom = buildAiCalloutBlockDom(text, options, escapeDomText);
-    if (!dom) throw new Error("插入内容为空");
-    return prependBlockDom(docId, dom);
+    return withDocLock(docId, async () => {
+        const dom = buildAiCalloutBlockDom(text, options, escapeDomText);
+        if (!dom) throw new Error("插入内容为空");
+        return prependBlockDom(docId, dom);
+    });
 }

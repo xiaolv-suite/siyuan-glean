@@ -11,6 +11,7 @@ import {
     type FlashcardContent, type FlashcardSource, type FlashcardValidation,
 } from "../domain/flashcard";
 import { writeClip } from "./clip-store";
+import { withDocLock } from "../libs/notice.ts";
 import { activeAiSettings, aiQuotaAvailable, callLLM, enqueueEnrich, logAiEvent, recordAiUsage, type AiCallFailure } from "./enrich-service";
 import type { GleanSettings } from "./settings";
 import {
@@ -292,7 +293,9 @@ export async function confirmFlashcard(
                 return { ok: false, reason: "checkpointFailed", hostDocId: session.hostDocId, cardBlockId: requestedId };
             }
             try {
-                await insertBlockDomIds(session.hostDocId, buildFlashcardDom(draft.front, draft.back, requestedId));
+                await withDocLock(session.hostDocId, async () => {
+                    await insertBlockDomIds(session.hostDocId, buildFlashcardDom(draft.front, draft.back, requestedId));
+                });
                 session.draft = draft;
                 session.state = "inserted";
             } catch {

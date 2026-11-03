@@ -38,7 +38,7 @@ import type { GleanFacade } from "./types";
 import { addRecentReading, pickContinueReadingDocId, type RecentReadingEntry } from "./domain/recent-reading";
 import { docUnderHostKind } from "./services/lifecycle-service";
 import { registerRaikiriModuleSafely } from "./libs/ecosystem-bridge-kit";
-import { lvNotify, notifyClipSuccess, notifyClipProgress, showNotice } from "./libs/notice";
+import { lvNotify, lvTicker, notifyClipSuccess, notifyClipProgress, showNotice } from "./libs/notice";
 
 const DOCK_TYPE = "glean-dock";
 const TAB_TYPE = "glean-library";
@@ -83,6 +83,7 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
     private topBarElement?: HTMLElement;
     private topBarContextMenuHandler?: (event: MouseEvent) => void;
     private noticeHubCleaner?: () => void;
+    private tickerUnsubscribe?: () => void;
     private unregisterRaikiri?: () => void;
     private readonly openWorkbenchPopupSingleton = createDialogSingleton(
         (initialPreviewId: string | undefined, onClose: () => void) => svelteDialog({
@@ -452,6 +453,17 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
             void runDailyAutoBackup(this, this.settings);
         }).catch(() => undefined);
 
+        // Epoch 7 Phase 2: 接入全生态统一主时钟跨日监听，零点自动刷新今日池与每日备份
+        if (typeof lvTicker?.onDateCross === "function") {
+            this.tickerUnsubscribe = lvTicker.onDateCross("siyuan-glean", (_todayKey) => {
+                if (!this.loaded) return;
+                this.notifyDataChanged();
+                void import("./services/backup-service").then(({ runDailyAutoBackup }) => {
+                    void runDailyAutoBackup(this, this.settings);
+                }).catch(() => undefined);
+            });
+        }
+
         if (this.isMobile) return;
         if (this.topBarElement) return;
         this.topBarElement = this.addTopBar({
@@ -483,6 +495,8 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
     }
 
     async onunload() {
+        this.tickerUnsubscribe?.();
+        this.tickerUnsubscribe = undefined;
         this.noticeHubCleaner?.();
         this.noticeHubCleaner = undefined;
         this.loaded = false;

@@ -19,6 +19,7 @@ import {
     type ExportMarkdownOptions,
 } from "../api/client";
 import { inspectCandidate } from "../domain/candidate-policy";
+import { withDocLock } from "../libs/notice.ts";
 import {
     ATTR,
     CLIP_HIGHLIGHT_COLORS,
@@ -657,14 +658,14 @@ async function writeClipUnlocked(
     }
 }
 
-/** 所有文档属性写入的统一入口；同一文档的读改写自动串行。 */
+/** 所有文档属性写入的统一入口；同一文档的读改写自动串行（接入全生态 withDocLock 内核排队锁）。 */
 export function writeClip(
     plugin: Plugin,
     docId: string,
     patch: ClipPatch,
     options: WriteClipOptions = {},
 ): Promise<WriteClipResult> {
-    return withClipEditQueue(plugin, docId, (write) => write(patch, options));
+    return withDocLock(docId, () => withClipEditQueue(plugin, docId, (write) => write(patch, options)));
 }
 
 /** 收录（三入口共用）：首次收录补缺失字段；已带有效状态时幂等跳过。 */

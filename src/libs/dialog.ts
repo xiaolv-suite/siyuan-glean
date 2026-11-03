@@ -8,6 +8,7 @@ import { installMobileViewportVars } from "./mobile-viewport";
 import { installModalFocus } from "./modal-focus";
 import { isActivationKey } from "../domain/keyboard";
 import pluginManifest from "../../plugin.json";
+import { lvSurfaceStack } from "./notice";
 
 function isMobileFrontend(): boolean {
     const frontend = getFrontend();
@@ -65,6 +66,18 @@ export const simpleDialog = (args: {
         : null;
     let closed = false;
     let closing = false;
+    const surfaceId = `dialog_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+    const popSurface = lvSurfaceStack.push({
+        id: surfaceId,
+        type: "dialog",
+        dismiss: () => {
+            if (closed || closing) return false;
+            if (args.canClose?.() === false) return false;
+            requestClose();
+            return true;
+        },
+    });
+
     const dialog = new Dialog({
         title: args.title,
         content: `<div class="dialog-content" style="display: flex; flex-direction: column; align-items: stretch; width: 100%; height: 100%; min-width: 0; min-height: 0; box-sizing: border-box;"></div>`,
@@ -73,6 +86,7 @@ export const simpleDialog = (args: {
         destroyCallback: () => {
             if (closed) return;
             closed = true;
+            popSurface();
             disposeFocus();
             disposeViewport();
             args.callback?.();

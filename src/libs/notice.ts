@@ -5,13 +5,16 @@
 
 import {
     lvNotify,
+    withDocLock,
+    lvSurfaceStack,
+    lvTicker,
     type CardNoticeOptions,
     type CapsuleNoticeOptions,
     type SilentNoticeOptions,
     type LvNoticeLevel,
 } from "./lv-notice-kit.ts";
 
-export { lvNotify };
+export { lvNotify, withDocLock, lvSurfaceStack, lvTicker };
 export type { CardNoticeOptions, CapsuleNoticeOptions, SilentNoticeOptions, LvNoticeLevel };
 
 const PLUGIN_SOURCE = "小驴拾遗";

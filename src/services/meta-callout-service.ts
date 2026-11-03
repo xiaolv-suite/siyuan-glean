@@ -1,5 +1,6 @@
 import type { Plugin } from "siyuan";
 import { getBlockAttrs, listChildBlocks, prependBlockMarkdown, querySql, updateBlock, deleteBlock } from "../api/client.ts";
+import { withDocLock } from "../libs/notice.ts";
 import {
     buildMetaCalloutMarkdown,
     META_CALLOUT_SLOT_KEY,
@@ -56,65 +57,69 @@ export async function syncMetaCalloutToDocument(
         return { ok: false, error: "文档 ID 非法" };
     }
 
-    try {
-        const [meta, attrs, rawIal] = await Promise.all([
-            fetchDocMeta(docId),
-            readClip(docId),
-            getBlockAttrs(docId).catch(() => ({} as Record<string, string>)),
-        ]);
+    return withDocLock(docId, async () => {
+        try {
+            const [meta, attrs, rawIal] = await Promise.all([
+                fetchDocMeta(docId),
+                readClip(docId),
+                getBlockAttrs(docId).catch(() => ({} as Record<string, string>)),
+            ]);
 
-        const userTags = parseUserTags((rawIal as Record<string, string> | undefined)?.tags);
+            const userTags = parseUserTags((rawIal as Record<string, string> | undefined)?.tags);
 
-        const article: MetaCalloutArticle = {
-            id: docId,
-            title: meta.title || "",
-            url: attrs.url,
-            site: attrs.site,
-            author: attrs.author,
-            status: attrs.status,
-            priority: attrs.priority,
-            rating: attrs.rating,
-            words: attrs.words,
-            minutes: attrs.minutes,
-            readMinutes: attrs.readMinutes,
-            tags: userTags,
-            aiTags: attrs.aiTags,
-            summary: attrs.summary,
-            readingPosition: attrs.readingPosition,
-        };
+            const article: MetaCalloutArticle = {
+                id: docId,
+                title: meta.title || "",
+                url: attrs.url,
+                site: attrs.site,
+                author: attrs.author,
+                status: attrs.status,
+                priority: attrs.priority,
+                rating: attrs.rating,
+                words: attrs.words,
+                minutes: attrs.minutes,
+                readMinutes: attrs.readMinutes,
+                tags: userTags,
+                aiTags: attrs.aiTags,
+                summary: attrs.summary,
+                readingPosition: attrs.readingPosition,
+            };
 
-        const markdown = buildMetaCalloutMarkdown(article, labels);
-        const existingId = await findMetaCalloutBlockId(docId);
+            const markdown = buildMetaCalloutMarkdown(article, labels);
+            const existingId = await findMetaCalloutBlockId(docId);
 
-        if (existingId) {
-            await updateBlock(existingId, markdown, "markdown");
-            // 保障块级属性受控
-            await setMetaCalloutSlotAttr(existingId);
-            return { ok: true, blockId: existingId, created: false };
-        } else {
-            const newId = await prependBlockMarkdown(docId, markdown);
-            if (newId) {
-                await setMetaCalloutSlotAttr(newId);
+            if (existingId) {
+                await updateBlock(existingId, markdown, "markdown");
+                // 保障块级属性受控
+                await setMetaCalloutSlotAttr(existingId);
+                return { ok: true, blockId: existingId, created: false };
+            } else {
+                const newId = await prependBlockMarkdown(docId, markdown);
+                if (newId) {
+                    await setMetaCalloutSlotAttr(newId);
+                }
+                return { ok: true, blockId: newId, created: true };
             }
-            return { ok: true, blockId: newId, created: true };
+        } catch (error) {
+            console.warn("[glean] 同步导读卡片至正文失败:", error);
+            return { ok: false, error: error instanceof Error ? error.message : "同步失败" };
         }
-    } catch (error) {
-        console.warn("[glean] 同步导读卡片至正文失败:", error);
-        return { ok: false, error: error instanceof Error ? error.message : "同步失败" };
-    }
+    });
 }
 
 /**
  * 从文档中移除导读卡片块
  */
 export async function removeMetaCalloutFromDocument(docId: string): Promise<boolean> {
-    const existingId = await findMetaCalloutBlockId(docId);
-    if (!existingId) return false;
-    try {
-        await deleteBlock(existingId);
-        return true;
-    } catch (e) {
-        console.warn("[glean] 移除导读卡片失败:", e);
-        return false;
-    }
+    return withDocLock(docId, async () => {
+        const existingId = await findMetaCalloutBlockId(docId);
+        if (!existingId) return false;
+        try {
+            await deleteBlock(existingId);
+            return true;
+        } catch (error) {
+            console.warn("[glean] 移除正文导读卡片失败:", error);
+            return false;
+        }
+    });
 }

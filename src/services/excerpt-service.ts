@@ -5,6 +5,7 @@
  * 无 URL/标签/模板证据不会进入候选扫描）。
  */
 import { createDocWithMd, insertBlockAfter, isKernelRequestError, newNodeId, querySql } from "../api/client";
+import { withDocLock } from "../libs/notice.ts";
 import { escapeDomText } from "../domain/flashcard";
 import { buildQuoteBlockDom, clampExcerpt, EXCERPT_MAX_LENGTH } from "../domain/reader";
 import { quoteExportMarkdown, type QuoteEntry } from "../domain/quotes";
@@ -75,16 +76,18 @@ export function excerptFromSelection(host: Element | null, selection: Selection 
     }
 }
 
-/** 摘录为引述块：插在所选块之后；支持附加个人思考批注（memo）；返回引述块 ID。 */
+/** 摘录为引述块：插在所选块之后；支持附加个人思考批注（memo）；返回引述块 ID（通过 withDocLock 串行保护）。 */
 export async function insertQuoteExcerpt(blockId: string, text: string, memo?: string): Promise<string> {
     if (typeof blockId !== "string" || !BLOCK_ID_PATTERN.test(blockId)) throw new Error("摘录块 ID 无效");
-    const rawQuote = clampExcerpt(text).slice(0, EXCERPT_MAX_LENGTH);
-    const trimmedMemo = memo?.trim() ? memo.trim().slice(0, EXCERPT_MAX_LENGTH) : "";
-    const fullText = trimmedMemo ? `${rawQuote}\n\n💡 ${trimmedMemo}` : rawQuote;
-    const dom = buildQuoteBlockDom(fullText, escapeDomText);
-    if (!dom) throw new Error("摘录内容为空");
-    const newQuoteBlockId = await insertBlockAfter(blockId, dom);
-    return newQuoteBlockId;
+    return withDocLock(blockId, async () => {
+        const rawQuote = clampExcerpt(text).slice(0, EXCERPT_MAX_LENGTH);
+        const trimmedMemo = memo?.trim() ? memo.trim().slice(0, EXCERPT_MAX_LENGTH) : "";
+        const fullText = trimmedMemo ? `${rawQuote}\n\n💡 ${trimmedMemo}` : rawQuote;
+        const dom = buildQuoteBlockDom(fullText, escapeDomText);
+        if (!dom) throw new Error("摘录内容为空");
+        const newQuoteBlockId = await insertBlockAfter(blockId, dom);
+        return newQuoteBlockId;
+    });
 }
 
 /**

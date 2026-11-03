@@ -699,22 +699,24 @@ function getSurfaceStack(): LvSurfaceHandle[] {
     if (typeof window === "undefined") return [];
     if (!window.__LV_SURFACE_STACK__) {
         window.__LV_SURFACE_STACK__ = [];
-        // 捕获阶段拦截 Escape 键，阻止向底层冒泡
-        window.addEventListener("keydown", (e: KeyboardEvent) => {
-            if (e.key !== "Escape") return;
-            const stack = window.__LV_SURFACE_STACK__;
-            if (!stack || stack.length === 0) return;
-            const top = stack[stack.length - 1];
-            if (top) {
-                const handled = top.dismiss();
-                if (handled !== false) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const idx = stack.indexOf(top);
-                    if (idx >= 0) stack.splice(idx, 1);
+        if (typeof window.addEventListener === "function") {
+            // 捕获阶段拦截 Escape 键，阻止向底层冒泡
+            window.addEventListener("keydown", (e: KeyboardEvent) => {
+                if (e.key !== "Escape") return;
+                const stack = window.__LV_SURFACE_STACK__;
+                if (!stack || stack.length === 0) return;
+                const top = stack[stack.length - 1];
+                if (top) {
+                    const handled = top.dismiss();
+                    if (handled !== false) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const idx = stack.indexOf(top);
+                        if (idx >= 0) stack.splice(idx, 1);
+                    }
                 }
-            }
-        }, true);
+            }, true);
+        }
     }
     return window.__LV_SURFACE_STACK__;
 }
@@ -744,8 +746,15 @@ export const lvSurfaceStack = {
 /* ========================================================================= */
 
 function getTicker(callerPlugin = "小驴"): LvTickerHub {
-    if (typeof window === "undefined") {
-        throw new Error("[LvTicker] Window environment required");
+    if (!hasFullDom()) {
+        const dummyHub: LvTickerHub = {
+            version: PROTOCOL_VERSION,
+            hostPlugin: callerPlugin,
+            subscribe: () => () => {},
+            onDateCross: () => () => {},
+            destroy: () => {},
+        };
+        return dummyHub;
     }
 
     if (window.__LV_TICKER__ && window.__LV_TICKER__.version >= PROTOCOL_VERSION) {
@@ -886,8 +895,10 @@ export const lvTicker = {
 /* 8. 统一思源内核写屏障与锁 (Kernel Write Mutex)                            */
 /* ========================================================================= */
 
+const nodeDocLockFallback = new Map<string, Promise<unknown>>();
+
 function getDocLockMap(): Map<string, Promise<unknown>> {
-    if (typeof window === "undefined") return new Map();
+    if (typeof window === "undefined") return nodeDocLockFallback;
     if (!window.__LV_DOC_LOCKS__) {
         window.__LV_DOC_LOCKS__ = new Map();
     }

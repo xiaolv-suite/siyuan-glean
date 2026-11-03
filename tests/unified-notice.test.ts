@@ -26,6 +26,9 @@ registerHooks({
 
 const {
     lvNotify,
+    withDocLock,
+    lvSurfaceStack,
+    lvTicker,
     showNotice,
     notifyClipSuccess,
     notifyBatchProgress,
@@ -258,6 +261,137 @@ test("全生态 AI 请求规范：统一网关自协商与私有 Key 解耦", as
         assert.equal(res.source, "gateway");
         assert.equal(gatewayCalled, true);
         assert.ok(res.text?.includes("网关回复: 测试 Prompt"));
+    } finally {
+        globalThis.window = originalWindow;
+    }
+});
+
+test("系统资源与并发加固：withDocLock 同文档串行排队与故障释放", async () => {
+    const docA = "20261103000000-doc00a";
+    const docB = "20261103000000-doc00b";
+
+    const executionLog: string[] = [];
+
+    // 两个并发写入同一文档 docA
+    const taskA1 = withDocLock(docA, async () => {
+        executionLog.push("A1:start");
+        await new Promise((r) => setTimeout(r, 20));
+        executionLog.push("A1:done");
+        return "result-A1";
+    });
+
+    const taskA2 = withDocLock(docA, async () => {
+        executionLog.push("A2:start");
+        await new Promise((r) => setTimeout(r, 10));
+        executionLog.push("A2:done");
+        return "result-A2";
+    });
+
+    // 并发写入不同文档 docB（互不阻塞）
+    const taskB1 = withDocLock(docB, async () => {
+        executionLog.push("B1:start");
+        await new Promise((r) => setTimeout(r, 5));
+        executionLog.push("B1:done");
+        return "result-B1";
+    });
+
+    const [resA1, resA2, resB1] = await Promise.all([taskA1, taskA2, taskB1]);
+    assert.equal(resA1, "result-A1");
+    assert.equal(resA2, "result-A2");
+    assert.equal(resB1, "result-B1");
+
+    // A1 必须在 A2 开始前完成
+    const idxA1Done = executionLog.indexOf("A1:done");
+    const idxA2Start = executionLog.indexOf("A2:start");
+    assert.ok(idxA1Done < idxA2Start, "A1 必须在 A2 启动前执行完成，严格串行排队");
+
+    // 验证异常时锁能够正常释放，不阻塞后续排队
+    let thrown = false;
+    try {
+        await withDocLock(docA, async () => {
+            throw new Error("Simulated Write Error");
+        });
+    } catch {
+        thrown = true;
+    }
+    assert.equal(thrown, true);
+
+    const taskA3 = await withDocLock(docA, async () => {
+        return "recovered-A3";
+    });
+    assert.equal(taskA3, "recovered-A3");
+});
+
+test("系统资源与并发加固：lvSurfaceStack 栈顶精准逐层关闭且不穿透", () => {
+    const originalWindow = globalThis.window;
+
+    let keydownListener: ((e: any) => void) | null = null;
+    const mockWin: any = {
+        addEventListener: (event: string, fn: any) => {
+            if (event === "keydown") keydownListener = fn;
+        },
+        removeEventListener: () => {},
+    };
+
+    (globalThis as any).window = mockWin;
+
+    try {
+        let bottomDismissed = false;
+        let topDismissed = false;
+
+        // 压入底层窗口（如 Dialog）
+        const popBottom = lvSurfaceStack.push({
+            id: "dialog-bottom",
+            type: "dialog",
+            dismiss: () => {
+                bottomDismissed = true;
+                return true;
+            },
+        });
+
+        // 压入顶层浮层（如 Popover）
+        const popTop = lvSurfaceStack.push({
+            id: "popover-top",
+            type: "menu",
+            dismiss: () => {
+                topDismissed = true;
+                return true;
+            },
+        });
+
+        assert.equal(lvSurfaceStack.top()?.id, "popover-top");
+
+        // 模拟第一次按 Escape 键
+        let defaultPrevented = false;
+        let propagationStopped = false;
+        const event1 = {
+            key: "Escape",
+            preventDefault: () => { defaultPrevented = true; },
+            stopPropagation: () => { propagationStopped = true; },
+        };
+        keydownListener!(event1);
+
+        // 顶层浮层关闭，底层窗口未被触碰，事件被阻止冒泡
+        assert.equal(topDismissed, true);
+        assert.equal(bottomDismissed, false);
+        assert.equal(defaultPrevented, true);
+        assert.equal(propagationStopped, true);
+        assert.equal(lvSurfaceStack.top()?.id, "dialog-bottom");
+
+        // 模拟第二次按 Escape 键
+        const event2 = {
+            key: "Escape",
+            preventDefault: () => {},
+            stopPropagation: () => {},
+        };
+        keydownListener!(event2);
+
+        // 底层窗口此时被关闭
+        assert.equal(bottomDismissed, true);
+        assert.equal(lvSurfaceStack.top(), undefined);
+
+        popTop();
+        popBottom();
     } finally {
         globalThis.window = originalWindow;
     }

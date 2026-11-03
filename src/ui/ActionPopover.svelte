@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { Snippet } from "svelte";
+    import { lvSurfaceStack } from "../libs/notice";
     interface Props { label: string; children: Snippet; compact?: boolean; }
     let { label, children, compact = false }: Props = $props();
     const id = $props.id();
@@ -22,6 +23,18 @@
         root?.hidePopover();
         if (restore) trigger?.focus({ preventScroll: true });
     }
+
+    $effect(() => {
+        if (!open) return;
+        return lvSurfaceStack.push({
+            id: `popover_${id}`,
+            type: "menu",
+            dismiss: () => {
+                close(true);
+                return true;
+            },
+        });
+    });
 
     $effect(() => {
         const element = root;
