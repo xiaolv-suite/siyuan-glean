@@ -33,6 +33,7 @@ const {
     lvActivity,
     lvBackup,
     lvEcosystem,
+    lvLaunchpad,
     showNotice,
     notifyClipSuccess,
     notifyBatchProgress,
@@ -593,4 +594,76 @@ test("第四阶段小驴拾遗 dumpData 与 restoreData 灾备数据契约", asy
     assert.equal(dumpPayload.settings.inboxQuota, 88);
     assert.equal(dumpPayload.tagAliases[0].name, "FE");
     assert.equal(dumpPayload.index.clips["clip-1"].title, "现代架构");
+});
+
+test("第五阶段小驴罗盘：lvLaunchpad 注册、三态呈现、状态切换与二级行动", async () => {
+    let inboxOpened = false;
+    let handledAction = "";
+
+    // 1. 注册小驴拾遗到小驴罗盘
+    const unregGlean = lvLaunchpad.register({
+        id: "siyuan-glean",
+        name: "拾遗",
+        fullName: "小驴拾遗",
+        svgIcon: "icon-lv-glean",
+        color: "#a855f7",
+        desc: "文章剪藏 · 智能分拣",
+        digit: 4,
+        badge: "5 篇未读",
+        badgeType: "primary",
+        actions: [
+            "剪藏当前系统剪贴板内容",
+            "打开未读文章收件箱 (Inbox)",
+            "一键批量生成AI结构化摘要",
+            "抓取当前网页全文并存入思源",
+        ],
+        onClick: () => {
+            inboxOpened = true;
+        },
+        onAction: (act) => {
+            handledAction = act;
+        },
+    });
+
+    try {
+        // 2. 检查注册信息及默认三态呈现状态（docked）
+        let items = lvLaunchpad.getItems();
+        const gleanItem = items.find((i) => i.id === "siyuan-glean");
+        assert.ok(gleanItem);
+        assert.equal(gleanItem.name, "拾遗");
+        assert.equal(gleanItem.fullName, "小驴拾遗");
+        assert.equal(gleanItem.svgIcon, "icon-lv-glean");
+        assert.equal(gleanItem.color, "#a855f7");
+        assert.equal(gleanItem.desc, "文章剪藏 · 智能分拣");
+        assert.equal(gleanItem.digit, 4);
+        assert.equal(gleanItem.badge, "5 篇未读");
+        assert.equal(gleanItem.badgeType, "primary");
+        assert.equal(gleanItem.state, "docked");
+        assert.equal(gleanItem.actions?.length, 4);
+
+        // 3. 用户动态设定为置顶在外 (pinned)
+        lvLaunchpad.setPluginState("siyuan-glean", "pinned");
+        items = lvLaunchpad.getItems();
+        assert.equal(items.find((i) => i.id === "siyuan-glean")?.state, "pinned");
+
+        // 4. 用户动态设定为彻底隐藏 (hidden)
+        lvLaunchpad.setPluginState("siyuan-glean", "hidden");
+        items = lvLaunchpad.getItems();
+        assert.equal(items.find((i) => i.id === "siyuan-glean")?.state, "hidden");
+
+        // 5. 触发点击主入口与二级快捷行动
+        gleanItem.onClick?.();
+        assert.equal(inboxOpened, true);
+
+        gleanItem.onAction?.("打开未读文章收件箱 (Inbox)");
+        assert.equal(handledAction, "打开未读文章收件箱 (Inbox)");
+
+        gleanItem.onAction?.("一键批量生成AI结构化摘要");
+        assert.equal(handledAction, "一键批量生成AI结构化摘要");
+    } finally {
+        // 6. 注销
+        unregGlean();
+        const itemsAfter = lvLaunchpad.getItems();
+        assert.equal(itemsAfter.find((i) => i.id === "siyuan-glean"), undefined);
+    }
 });

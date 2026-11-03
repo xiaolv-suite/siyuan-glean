@@ -39,7 +39,7 @@ import type { GleanFacade } from "./types";
 import { addRecentReading, pickContinueReadingDocId, type RecentReadingEntry } from "./domain/recent-reading";
 import { docUnderHostKind } from "./services/lifecycle-service";
 import { registerRaikiriModuleSafely } from "./libs/ecosystem-bridge-kit";
-import { lvNotify, lvTicker, lvActivity, lvBackup, notifyClipSuccess, notifyClipProgress, showNotice } from "./libs/notice";
+import { lvNotify, lvTicker, lvActivity, lvBackup, lvLaunchpad, notifyClipSuccess, notifyClipProgress, showNotice } from "./libs/notice";
 
 const DOCK_TYPE = "glean-dock";
 const TAB_TYPE = "glean-library";
@@ -85,6 +85,8 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
     private topBarContextMenuHandler?: (event: MouseEvent) => void;
     private noticeHubCleaner?: () => void;
     private backupCleaner?: () => void;
+    private launchpadCleaner?: () => void;
+    private unreadCount = 0;
     private tickerUnsubscribe?: () => void;
     private unregisterRaikiri?: () => void;
     private readonly openWorkbenchPopupSingleton = createDialogSingleton(
@@ -114,6 +116,13 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
         this.isMobile = frontend === "mobile" || frontend === "browser-mobile";
 
         this.addIcons(`<symbol id="iconGleanWheat" viewBox="0 0 32 32">
+  <path d="M5 24c4-1.8 8-1 11 1 3-2 7-2.8 11-1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  <path d="M16 8v16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+  <path d="M16 11c2.8-1.5 5.5 0 5.5 2s-2.7 2-5.5 2M16 16c2.8-1.5 5.5 0 5.5 2s-2.7 2-5.5 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M16 13.5c-2.8-1.5-5.5 0-5.5 2s2.7 2 5.5 2M16 18.5c-2.8-1.5-5.5 0-5.5 2s2.7 2 5.5 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+  <circle cx="16" cy="5" r="2.5" fill="currentColor"/>
+</symbol>
+<symbol id="icon-lv-glean" viewBox="0 0 32 32">
   <path d="M5 24c4-1.8 8-1 11 1 3-2 7-2.8 11-1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
   <path d="M16 8v16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
   <path d="M16 11c2.8-1.5 5.5 0 5.5 2s-2.7 2-5.5 2M16 16c2.8-1.5 5.5 0 5.5 2s-2.7 2-5.5 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
@@ -445,6 +454,10 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
                 async (data) => this.restoreData(data)
             )
             : undefined;
+
+        // Epoch 7 Phase 5 Protocol v1.4.0: 注册小驴罗盘（顶栏收敛与极速二级行动直达）
+        this.registerLaunchpad();
+        void this.refreshUnreadCount();
     }
 
     onLayoutReady() {
@@ -506,6 +519,8 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
     }
 
     async onunload() {
+        this.launchpadCleaner?.();
+        this.launchpadCleaner = undefined;
         this.backupCleaner?.();
         this.backupCleaner = undefined;
         this.tickerUnsubscribe?.();
@@ -648,6 +663,208 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
                 at: new Date().toISOString(),
             };
             window.dispatchEvent(new CustomEvent("lv-glean:data-changed", { detail }));
+        }
+        void this.refreshUnreadCount();
+    }
+
+    /** 打开未读文章收件箱（工作台读库） */
+    openInbox(): void {
+        this.openPanel("library");
+    }
+
+    /** 获取当前未读文章总数（收件箱+稍后读+阅读中） */
+    getUnreadCount(): number {
+        return this.unreadCount;
+    }
+
+    private async refreshUnreadCount(): Promise<void> {
+        try {
+            const { loadIndex } = await import("./services/index-store");
+            const index = await loadIndex(this);
+            const unread = Object.values(index.clips)
+                .filter((c) => (c.status === "inbox" || c.status === "later" || c.status === "reading") && !c.internal);
+            const count = unread.length;
+            if (count !== this.unreadCount) {
+                this.unreadCount = count;
+                this.registerLaunchpad();
+            }
+        } catch {
+            // 静默降级
+        }
+    }
+
+    /** 向小驴罗盘注册极速直达入口与二级行动 */
+    private registerLaunchpad(): void {
+        if (typeof lvLaunchpad?.register !== "function") return;
+        const unread = this.getUnreadCount();
+        this.launchpadCleaner = lvLaunchpad.register({
+            id: "siyuan-glean",
+            name: "拾遗",
+            fullName: "小驴拾遗",
+            svgIcon: "icon-lv-glean",
+            color: "#a855f7",
+            desc: "文章剪藏 · 智能分拣",
+            digit: 4,
+            badge: unread > 0 ? `${unread} 篇未读` : undefined,
+            badgeType: "primary",
+            actions: ["剪藏当前系统剪贴板内容", "打开未读文章收件箱 (Inbox)", "一键批量生成AI结构化摘要", "抓取当前网页全文并存入思源"],
+            onClick: () => this.openInbox(),
+            onAction: (action) => void this.handleQuickAction(action),
+        });
+    }
+
+    /** 处理小驴罗盘二级快捷行动直达 */
+    async handleQuickAction(action: string): Promise<void> {
+        if (action === "打开未读文章收件箱 (Inbox)") {
+            this.openInbox();
+            return;
+        }
+
+        if (action === "剪藏当前系统剪贴板内容") {
+            let text = "";
+            if (typeof navigator !== "undefined" && navigator.clipboard?.readText) {
+                try {
+                    text = (await navigator.clipboard.readText())?.trim() ?? "";
+                } catch {
+                    // 权限受限或剪贴板不可读
+                }
+            }
+
+            if (!text) {
+                const docId = this.currentDocId();
+                if (docId) {
+                    await this.addCurrentDocToLibrary();
+                } else {
+                    showNotice("剪贴板内容为空，请先复制需要剪藏的链接或文本", 3500, "warn");
+                }
+                return;
+            }
+
+            const isUrl = /^https?:\/\//i.test(text);
+            const targetNotebook = this.settings.anchorNotebooks[0] || (await (await import("./api/client")).listNotebooks())[0]?.id;
+            if (!targetNotebook) {
+                showNotice("未配置读库笔记本锚点，请在设置中选择读库笔记本", 4000, "warn");
+                return;
+            }
+
+            const { createDocWithMd } = await import("./api/client");
+            const { captureDocument } = await import("./services/clip-store");
+            const now = new Date();
+            const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}-${String(now.getHours()).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}`;
+            const title = isUrl ? `剪藏 ${dateStr}` : (text.slice(0, 30).replace(/[\r\n]+/g, " ") || `剪藏 ${dateStr}`);
+            const md = isUrl ? `[来源链接](${text})\n\n> 剪藏自系统剪贴板` : `${text}\n\n> 剪藏自系统剪贴板`;
+
+            try {
+                const docId = await createDocWithMd(targetNotebook, `/剪藏/${title}`, md);
+                if (docId) {
+                    await captureDocument(this, docId, { src: "manual", url: isUrl ? text : undefined });
+                    notifyClipSuccess({
+                        docId,
+                        title,
+                        openAction: () => this.openReadingDocument(docId),
+                    });
+                    lvActivity.record({
+                        source: "拾遗",
+                        category: "clip",
+                        title: `剪藏剪贴板内容：《${title}》`,
+                        linkBlockId: docId,
+                    });
+                    this.notifyDataChanged();
+                }
+            } catch (err) {
+                console.warn("[glean] 剪贴板剪藏失败:", err);
+                showNotice("剪藏失败，请重试", 3000, "error");
+            }
+            return;
+        }
+
+        if (action === "一键批量生成AI结构化摘要") {
+            try {
+                const { loadIndex } = await import("./services/index-store");
+                const index = await loadIndex(this);
+                const candidates = Object.values(index.clips)
+                    .filter((c) => !c.summary && !c.internal && (c.status === "inbox" || c.status === "later" || c.status === "reading"))
+                    .slice(0, 5);
+
+                if (candidates.length === 0) {
+                    showNotice("未读文章均已生成结构化摘要", 3000, "info");
+                    return;
+                }
+
+                showNotice(`正在为 ${candidates.length} 篇未读文章生成 AI 结构化摘要...`, 3000, "info");
+                const { enrichClip } = await import("./services/enrich-service");
+                for (const clip of candidates) {
+                    void enrichClip(this, clip.id, this.settings).then(() => {
+                        this.notifyDataChanged();
+                    });
+                }
+            } catch (err) {
+                console.warn("[glean] 批量生成摘要失败:", err);
+                showNotice("批量生成摘要失败", 3000, "error");
+            }
+            return;
+        }
+
+        if (action === "抓取当前网页全文并存入思源") {
+            let url = "";
+            const cur = this.currentDocId();
+            if (cur) {
+                try {
+                    const { readClip } = await import("./services/clip-store");
+                    const clip = await readClip(cur);
+                    if (clip?.url) url = clip.url;
+                } catch {}
+            }
+
+            if (!url && typeof navigator !== "undefined" && navigator.clipboard?.readText) {
+                try {
+                    const text = (await navigator.clipboard.readText())?.trim() ?? "";
+                    if (/^https?:\/\//i.test(text)) url = text;
+                } catch {}
+            }
+
+            if (!url) {
+                showNotice("未检测到有效网页链接（请先复制网页 URL 或打开带来源链接的文章）", 4000, "warn");
+                return;
+            }
+
+            showNotice(`正在抓取网页全文并收录至思源: ${url.slice(0, 36)}...`, 3000, "info");
+            const targetNotebook = this.settings.anchorNotebooks[0] || (await (await import("./api/client")).listNotebooks())[0]?.id;
+            if (!targetNotebook) {
+                showNotice("未配置读库笔记本锚点，请在设置中选择读库笔记本", 4000, "warn");
+                return;
+            }
+
+            const { createDocWithMd } = await import("./api/client");
+            const { captureDocument } = await import("./services/clip-store");
+            const now = new Date();
+            const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}-${String(now.getHours()).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}`;
+            const title = `网页收录 ${dateStr}`;
+            const md = `[来源网页](${url})\n\n> 正在等待后台网页正文抓取与快照归档...\n\n- 目标链接: ${url}`;
+
+            try {
+                const docId = await createDocWithMd(targetNotebook, `/剪藏/${title}`, md);
+                if (docId) {
+                    await captureDocument(this, docId, { src: "manual", url });
+                    notifyClipSuccess({
+                        docId,
+                        title,
+                        openAction: () => this.openReadingDocument(docId),
+                    });
+                    lvActivity.record({
+                        source: "拾遗",
+                        category: "clip",
+                        title: `网页收录入库：《${title}》`,
+                        linkBlockId: docId,
+                        detail: url,
+                    });
+                    this.notifyDataChanged();
+                }
+            } catch (err) {
+                console.warn("[glean] 网页全文收录失败:", err);
+                showNotice("网页全文收录失败", 3000, "error");
+            }
+            return;
         }
     }
 

@@ -52,4 +52,10 @@ export interface GleanFacade {
     dumpData?(): Promise<Record<string, unknown>>;
     /** 全生态联合灾备数据导入恢复切面 */
     restoreData?(data: Record<string, unknown>): Promise<boolean>;
+    /** 打开未读文章收件箱（工作台读库） */
+    openInbox?(): void;
+    /** 获取未读文章数量（用于小驴罗盘等生态角标） */
+    getUnreadCount?(): number;
+    /** 处理小驴罗盘二级快捷行动 */
+    handleQuickAction?(action: string): Promise<void>;
 }
