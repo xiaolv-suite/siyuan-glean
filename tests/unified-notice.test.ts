@@ -34,6 +34,7 @@ const {
     lvBackup,
     lvEcosystem,
     lvLaunchpad,
+    lvOmnisearch,
     showNotice,
     notifyClipSuccess,
     notifyBatchProgress,
@@ -665,5 +666,65 @@ test("第五阶段小驴罗盘：lvLaunchpad 注册、三态呈现、状态切�
         unregGlean();
         const itemsAfter = lvLaunchpad.getItems();
         assert.equal(itemsAfter.find((i) => i.id === "siyuan-glean"), undefined);
+    }
+});
+
+test("第七阶段全局万物穿透搜索：lvOmnisearch 提供者注册、跨插件检索与剪藏直达", async () => {
+    let openedDocId = "";
+
+    // 1. 注册小驴拾遗穿透搜索提供者
+    const unregGlean = lvOmnisearch.registerProvider("siyuan-glean", async (kw) => {
+        if (kw.includes("架构") || kw.includes("architecture")) {
+            return [{
+                id: "clip-doc-001",
+                source: "拾遗",
+                category: "clip",
+                title: "现代前端架构解析",
+                snippet: "关于去中心化自协商生态协议的架构思考",
+                linkBlockId: "clip-doc-001",
+                onClick: () => {
+                    openedDocId = "clip-doc-001";
+                },
+            }];
+        }
+        return [];
+    });
+
+    // 2. 模拟另一个插件（如小驴闪卡）也注册了穿透搜索
+    const unregCards = lvOmnisearch.registerProvider("siyuan-lv-cards", async (kw) => {
+        if (kw.includes("架构")) {
+            return [{
+                id: "card-001",
+                source: "闪卡",
+                category: "card",
+                title: "架构模式与原则",
+                onClick: () => {},
+            }];
+        }
+        return [];
+    });
+
+    try {
+        // 3. 执行穿透全局检索
+        const hits = await lvOmnisearch.search("架构");
+        assert.equal(hits.length, 2);
+
+        const gleanHit = hits.find((h) => h.id === "clip-doc-001");
+        assert.ok(gleanHit);
+        assert.equal(gleanHit.source, "拾遗");
+        assert.equal(gleanHit.category, "clip");
+        assert.equal(gleanHit.title, "现代前端架构解析");
+        assert.equal(gleanHit.snippet, "关于去中心化自协商生态协议的架构思考");
+        assert.equal(gleanHit.linkBlockId, "clip-doc-001");
+
+        // 4. 触发直达点击
+        await gleanHit.onClick();
+        assert.equal(openedDocId, "clip-doc-001");
+    } finally {
+        // 5. 注销释放
+        unregGlean();
+        unregCards();
+        const hitsAfter = await lvOmnisearch.search("架构");
+        assert.equal(hitsAfter.length, 0);
     }
 });

@@ -39,7 +39,7 @@ import type { GleanFacade } from "./types";
 import { addRecentReading, pickContinueReadingDocId, type RecentReadingEntry } from "./domain/recent-reading";
 import { docUnderHostKind } from "./services/lifecycle-service";
 import { registerRaikiriModuleSafely } from "./libs/ecosystem-bridge-kit";
-import { lvNotify, lvTicker, lvActivity, lvBackup, lvLaunchpad, notifyClipSuccess, notifyClipProgress, showNotice } from "./libs/notice";
+import { lvNotify, lvTicker, lvActivity, lvBackup, lvLaunchpad, lvOmnisearch, notifyClipSuccess, notifyClipProgress, showNotice } from "./libs/notice";
 
 const DOCK_TYPE = "glean-dock";
 const TAB_TYPE = "glean-library";
@@ -86,6 +86,7 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
     private noticeHubCleaner?: () => void;
     private backupCleaner?: () => void;
     private launchpadCleaner?: () => void;
+    private searchCleaner?: () => void;
     private unreadCount = 0;
     private tickerUnsubscribe?: () => void;
     private unregisterRaikiri?: () => void;
@@ -458,6 +459,22 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
         // Epoch 7 Phase 5 Protocol v1.4.0: 注册小驴罗盘（顶栏收敛与极速二级行动直达）
         this.registerLaunchpad();
         void this.refreshUnreadCount();
+
+        // Epoch 7 Phase 7 Protocol v1.6.0: 注册全局万物穿透搜索提供者
+        this.searchCleaner = typeof lvOmnisearch?.registerProvider === "function"
+            ? lvOmnisearch.registerProvider("siyuan-glean", async (keyword) => {
+                const hits = await this.searchClips(keyword);
+                return hits.slice(0, 5).map(c => ({
+                    id: c.id,
+                    source: "拾遗",
+                    category: "clip",
+                    title: c.title,
+                    snippet: c.summary,
+                    linkBlockId: c.docId,
+                    onClick: () => this.openClipDoc(c.docId),
+                }));
+            })
+            : undefined;
     }
 
     onLayoutReady() {
@@ -519,6 +536,8 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
     }
 
     async onunload() {
+        this.searchCleaner?.();
+        this.searchCleaner = undefined;
         this.launchpadCleaner?.();
         this.launchpadCleaner = undefined;
         this.backupCleaner?.();
@@ -866,6 +885,44 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
             }
             return;
         }
+    }
+
+    /** 检索剪藏文章标题、摘要与标签（用于小驴罗盘穿透搜索等） */
+    async searchClips(keyword: string): Promise<Array<{ id: string; docId: string; title: string; summary?: string }>> {
+        const kw = keyword.trim().toLowerCase();
+        if (!kw) return [];
+        try {
+            const { loadIndex } = await import("./services/index-store");
+            const index = await loadIndex(this);
+            const clips = Object.values(index.clips).filter((c) => !c.internal);
+            const matched = clips.filter((c) => {
+                const titleMatch = (c.title || "").toLowerCase().includes(kw);
+                const summaryMatch = (c.summary || "").toLowerCase().includes(kw);
+                const tagMatch = (c.tags || []).some((t) => t.toLowerCase().includes(kw));
+                const aiTagMatch = (c.aiTags || []).some((t) => t.toLowerCase().includes(kw));
+                return titleMatch || summaryMatch || tagMatch || aiTagMatch;
+            });
+            matched.sort((a, b) => {
+                const aTitle = (a.title || "").toLowerCase();
+                const bTitle = (b.title || "").toLowerCase();
+                const aExact = aTitle === kw ? 2 : aTitle.includes(kw) ? 1 : 0;
+                const bExact = bTitle === kw ? 2 : bTitle.includes(kw) ? 1 : 0;
+                return bExact - aExact;
+            });
+            return matched.map((c) => ({
+                id: c.id,
+                docId: c.id,
+                title: c.title || "未命名文章",
+                summary: c.summary || (c.site ? `来源: ${c.site}` : undefined),
+            }));
+        } catch {
+            return [];
+        }
+    }
+
+    /** 打开剪藏文档进行阅读 */
+    openClipDoc(docId: string): void {
+        this.openReadingDocument(docId);
     }
 
     currentDocId(): string {

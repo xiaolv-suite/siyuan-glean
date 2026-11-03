@@ -13,6 +13,7 @@ import {
     lvBackup,
     lvEcosystem,
     lvLaunchpad,
+    lvOmnisearch,
     type CardNoticeOptions,
     type CapsuleNoticeOptions,
     type SilentNoticeOptions,
@@ -24,9 +25,11 @@ import {
     type LvEcosystemFullBackup,
     type LvEcosystemDiagnostics,
     type LvLaunchpadItem,
+    type LvSearchResultItem,
+    type LvSearchProvider,
 } from "./lv-notice-kit.ts";
 
-export { lvNotify, withDocLock, lvSurfaceStack, lvTicker, lvAi, lvActivity, lvBackup, lvEcosystem, lvLaunchpad };
+export { lvNotify, withDocLock, lvSurfaceStack, lvTicker, lvAi, lvActivity, lvBackup, lvEcosystem, lvLaunchpad, lvOmnisearch };
 export type {
     CardNoticeOptions,
     CapsuleNoticeOptions,
@@ -39,6 +42,8 @@ export type {
     LvEcosystemFullBackup,
     LvEcosystemDiagnostics,
     LvLaunchpadItem,
+    LvSearchResultItem,
+    LvSearchProvider,
 };
 
 const PLUGIN_SOURCE = "小驴拾遗";

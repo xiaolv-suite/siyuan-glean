@@ -58,4 +58,8 @@ export interface GleanFacade {
     getUnreadCount?(): number;
     /** 处理小驴罗盘二级快捷行动 */
     handleQuickAction?(action: string): Promise<void>;
+    /** 检索剪藏文章（全生态穿透搜索） */
+    searchClips?(keyword: string): Promise<Array<{ id: string; docId: string; title: string; summary?: string }>>;
+    /** 打开剪藏文档 */
+    openClipDoc?(docId: string): void;
 }
