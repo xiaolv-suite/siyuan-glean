@@ -884,7 +884,7 @@ async function doMountBoard() {
                     {t(i18n, "settings.aiDailyCap")}
                     <div class="glean-set-row__desc">{t(i18n, "settings.aiDailyCapDesc")}</div>
                 </div>
-                <input class="glean-mini-input" type="number" min="0" max="500" aria-invalid={validationField === "aiDailyCap"} aria-label={t(i18n, "settings.aiDailyCap")} bind:value={aiDailyCap} />
+                <input class="glean-mini-input" type="number" inputMode="numeric" min="0" max="500" aria-invalid={validationField === "aiDailyCap"} aria-label={t(i18n, "settings.aiDailyCap")} bind:value={aiDailyCap} />
             </div>
             <div class="glean-set-row">
                 <div class="glean-set-row__lb">
@@ -1002,7 +1002,7 @@ async function doMountBoard() {
         <div class="glean-set-group">
             <div class="glean-set-row">
                 <div class="glean-set-row__lb">{t(i18n, "settings.resurfaceCount")}</div>
-                <input class="glean-mini-input" type="number" min="1" max="10" aria-invalid={validationField === "dailyCount"} aria-label={t(i18n, "settings.resurfaceCount")} bind:value={dailyCount} />
+                <input class="glean-mini-input" type="number" inputMode="numeric" min="1" max="10" aria-invalid={validationField === "dailyCount"} aria-label={t(i18n, "settings.resurfaceCount")} bind:value={dailyCount} />
             </div>
             <div class="glean-set-row">
                 <div class="glean-set-row__lb">{t(i18n, "settings.resurfaceIncludeDone")}</div>
@@ -1010,11 +1010,11 @@ async function doMountBoard() {
             </div>
             <div class="glean-set-row">
                 <div class="glean-set-row__lb">{t(i18n, "settings.inboxQuota")}</div>
-                <input class="glean-mini-input" type="number" min="5" max="1000" aria-invalid={validationField === "inboxQuota"} aria-label={t(i18n, "settings.inboxQuota")} bind:value={inboxQuota} />
+                <input class="glean-mini-input" type="number" inputMode="numeric" min="5" max="1000" aria-invalid={validationField === "inboxQuota"} aria-label={t(i18n, "settings.inboxQuota")} bind:value={inboxQuota} />
             </div>
             <div class="glean-set-row">
                 <div class="glean-set-row__lb">{t(i18n, "settings.staleDays")}</div>
-                <input class="glean-mini-input" type="number" min="7" max="3650" aria-invalid={validationField === "staleDays"} aria-label={t(i18n, "settings.staleDays")} bind:value={staleDays} />
+                <input class="glean-mini-input" type="number" inputMode="numeric" min="7" max="3650" aria-invalid={validationField === "staleDays"} aria-label={t(i18n, "settings.staleDays")} bind:value={staleDays} />
             </div>
         </div>
     </div>
