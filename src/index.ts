@@ -87,6 +87,7 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
     private backupCleaner?: () => void;
     private launchpadCleaner?: () => void;
     private searchCleaner?: () => void;
+    private mobileEntryCleaner?: () => void;
     private unreadCount = 0;
     private tickerUnsubscribe?: () => void;
     private unregisterRaikiri?: () => void;
@@ -99,6 +100,18 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
             width: "1020px",
             height: "680px",
             containerClass: "glean-tab-root",
+            callback: onClose,
+        }),
+    );
+    private readonly openMobileWorkbenchSingleton = createDialogSingleton(
+        (initialView: string | undefined, onClose: () => void) => svelteDialog({
+            title: t(this.i18n, "pluginName"),
+            closeLabel: t(this.i18n, "action.close"),
+            component: DockPanel,
+            props: { facade: this, initialView },
+            width: "100vw",
+            height: "100dvh",
+            containerClass: "glean-tab-root glean-mobile-fullscreen-dialog",
             callback: onClose,
         }),
     );
@@ -460,18 +473,21 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
         this.registerLaunchpad();
         void this.refreshUnreadCount();
 
-        // Epoch 7 Phase 7 Protocol v1.6.0: 注册全局万物穿透搜索提供者
+        // Epoch 7 Phase 7 Protocol v1.6.0: 注册全局万物穿透搜索提供者（覆盖手机高频剪藏与待读实体）
         this.searchCleaner = typeof lvOmnisearch?.registerProvider === "function"
             ? lvOmnisearch.registerProvider("siyuan-glean", async (keyword) => {
                 const hits = await this.searchClips(keyword);
-                return hits.slice(0, 5).map(c => ({
+                return hits.slice(0, 8).map(c => ({
                     id: c.id,
                     source: "拾遗",
-                    category: "clip",
+                    category: c.category || "clip",
                     title: c.title,
                     snippet: c.summary,
                     linkBlockId: c.docId,
-                    onClick: () => this.openClipDoc(c.docId),
+                    onClick: () => {
+                        if (typeof lvLaunchpad?.haptic === "function") lvLaunchpad.haptic(10);
+                        this.openClipDoc(c.docId);
+                    },
                 }));
             })
             : undefined;
@@ -505,6 +521,11 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
             });
         }
 
+        // Epoch 7 Phase 5 / Mobile Spec v1: 统一手机端入口挂载（小驴罗盘顶栏+悬浮球双入口）
+        if (typeof lvLaunchpad?.ensureMobileEntry === "function") {
+            this.mobileEntryCleaner = lvLaunchpad.ensureMobileEntry();
+        }
+
         if (this.isMobile) return;
         if (this.topBarElement) return;
         this.topBarElement = this.addTopBar({
@@ -536,6 +557,8 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
     }
 
     async onunload() {
+        this.mobileEntryCleaner?.();
+        this.mobileEntryCleaner = undefined;
         this.searchCleaner?.();
         this.searchCleaner = undefined;
         this.launchpadCleaner?.();
@@ -726,20 +749,51 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
             digit: 4,
             badge: unread > 0 ? `${unread} 篇未读` : undefined,
             badgeType: "primary",
-            actions: ["剪藏当前系统剪贴板内容", "打开未读文章收件箱 (Inbox)", "一键批量生成AI结构化摘要", "抓取当前网页全文并存入思源"],
+            actions: ["今日阅读池", "继续上次阅读", "稍后读收件箱", "剪藏剪贴板内容"],
             onClick: () => this.openInbox(),
             onAction: (action) => void this.handleQuickAction(action),
         });
     }
 
-    /** 处理小驴罗盘二级快捷行动直达 */
+    /** 处理小驴罗盘二级快捷行动直达（支持手机直办） */
     async handleQuickAction(action: string): Promise<void> {
-        if (action === "打开未读文章收件箱 (Inbox)") {
+        if (action === "今日阅读池" || action === "打开今日阅读池") {
+            if (typeof lvLaunchpad?.haptic === "function") lvLaunchpad.haptic(10);
+            this.openPanel("resurface");
+            return;
+        }
+
+        if (action === "继续上次阅读") {
+            const cur = this.currentDocId();
+            const targetId = pickContinueReadingDocId(this.recentReadings, cur, this.lastReadingDocId);
+            if (targetId) {
+                if (typeof lvLaunchpad?.haptic === "function") lvLaunchpad.haptic(10);
+                this.openReadingDocument(targetId);
+                return;
+            }
+            void (async () => {
+                try {
+                    const { loadIndex } = await import("./services/index-store");
+                    const index = await loadIndex(this);
+                    const readingDoc = Object.values(index.clips).find((c) => c.status === "reading" && !c.internal);
+                    if (readingDoc?.id) {
+                        if (typeof lvLaunchpad?.haptic === "function") lvLaunchpad.haptic(10);
+                        this.openReadingDocument(readingDoc.id);
+                        return;
+                    }
+                } catch {}
+                showMessage(t(this.i18n, "reading.noRecent"), 3000);
+            })();
+            return;
+        }
+
+        if (action === "稍后读收件箱" || action === "打开未读文章收件箱 (Inbox)") {
+            if (typeof lvLaunchpad?.haptic === "function") lvLaunchpad.haptic(10);
             this.openInbox();
             return;
         }
 
-        if (action === "剪藏当前系统剪贴板内容") {
+        if (action === "剪藏剪贴板内容" || action === "剪藏当前系统剪贴板内容") {
             let text = "";
             if (typeof navigator !== "undefined" && navigator.clipboard?.readText) {
                 try {
@@ -753,6 +807,7 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
                 const docId = this.currentDocId();
                 if (docId) {
                     await this.addCurrentDocToLibrary();
+                    if (typeof lvLaunchpad?.haptic === "function") lvLaunchpad.haptic(10);
                 } else {
                     showNotice("剪贴板内容为空，请先复制需要剪藏的链接或文本", 3500, "warn");
                 }
@@ -777,6 +832,7 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
                 const docId = await createDocWithMd(targetNotebook, `/剪藏/${title}`, md);
                 if (docId) {
                     await captureDocument(this, docId, { src: "manual", url: isUrl ? text : undefined });
+                    if (typeof lvLaunchpad?.haptic === "function") lvLaunchpad.haptic(10);
                     notifyClipSuccess({
                         docId,
                         title,
@@ -888,7 +944,7 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
     }
 
     /** 检索剪藏文章标题、摘要与标签（用于小驴罗盘穿透搜索等） */
-    async searchClips(keyword: string): Promise<Array<{ id: string; docId: string; title: string; summary?: string }>> {
+    async searchClips(keyword: string): Promise<Array<{ id: string; docId: string; title: string; summary?: string; category?: string }>> {
         const kw = keyword.trim().toLowerCase();
         if (!kw) return [];
         try {
@@ -914,6 +970,7 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
             return matched.map((c) => ({
                 id: c.id,
                 docId: c.id,
+                category: c.status === "later" ? "later" : c.status === "done" ? "done" : "clip",
                 title: c.title || "未命名文章",
                 summary: c.summary || (c.site ? `来源: ${c.site}` : undefined),
             }));
@@ -1056,6 +1113,15 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
      * - Dock 侧栏图标 = 窄侧栏速览（toggleModel 切换）
      */
     openPanel(targetView?: string): void {
+        if (this.isMobile) {
+            this.openMobileWorkbenchSingleton(targetView);
+            if (targetView) {
+                setTimeout(() => {
+                    document.dispatchEvent(new CustomEvent("glean:switch-view", { detail: { view: targetView } }));
+                }, 60);
+            }
+            return;
+        }
         void this.openLibraryTab().then(() => {
             if (targetView) {
                 document.dispatchEvent(new CustomEvent("glean:switch-view", { detail: { view: targetView } }));

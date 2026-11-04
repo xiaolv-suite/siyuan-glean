@@ -288,3 +288,57 @@ test("mobile offline state keeps cached content and exposes retry", () => {
     assert.match(view, /msg\.offlineRetry/);
     assert.match(styles, /\.glean-offline-notice\s*\{/);
 });
+
+test("Mobile Spec v1: 统一入口挂载 lvLaunchpad.ensureMobileEntry() 并在 onunload 清理", () => {
+    const index = read("src/index.ts");
+    assert.match(index, /lvLaunchpad\?\.ensureMobileEntry/);
+    assert.match(index, /this\.mobileEntryCleaner = lvLaunchpad\.ensureMobileEntry\(\)/);
+    assert.match(index, /this\.mobileEntryCleaner\?\.\(\);/);
+    assert.match(index, /actions:\s*\["今日阅读池",\s*"继续上次阅读",\s*"稍后读收件箱",\s*"剪藏剪贴板内容"\]/);
+});
+
+test("Mobile Spec v1: 手机端自有面板唤起走全屏 Dialog (100vw/100dvh + safe-area + 下滑关闭)", () => {
+    const index = read("src/index.ts");
+    const dialog = read("src/libs/dialog.ts");
+    const styles = read("src/index.scss");
+    assert.match(index, /openMobileWorkbenchSingleton/);
+    assert.match(index, /containerClass:\s*"glean-tab-root glean-mobile-fullscreen-dialog"/);
+    assert.match(dialog, /args\.width === "100vw" \|\| args\.height === "100dvh"/);
+    assert.match(dialog, /diffY > 70 && diffY > diffX \* 1\.5 && touchStartY < 120/);
+    assert.match(styles, /\.glean-mobile-fullscreen-dialog\s*\{[\s\S]*width:\s*100vw[\s\S]*height:\s*100dvh/);
+    assert.match(styles, /env\(safe-area-inset-top/);
+    assert.match(styles, /touch-action:\s*manipulation/);
+});
+
+test("Mobile Spec v1: 手机阅读注入五态快捷悬浮条 (≥44px、毛玻璃、safe-area、单手流转、触感)", () => {
+    const readingContext = read("src/ui/ReadingContext.svelte");
+    const mobileBar = read("src/ui/MobileReadingBar.svelte");
+    const styles = read("src/index.scss");
+    assert.match(readingContext, /import MobileReadingBar from "\.\/MobileReadingBar\.svelte"/);
+    assert.match(readingContext, /\{#if facade\.isMobile && context\}[\s\S]*<MobileReadingBar/);
+    assert.match(mobileBar, /lvLaunchpad\.haptic\(10\)/);
+    assert.match(mobileBar, /flowStates/);
+    assert.match(mobileBar, /handleArchiveClick/);
+    assert.match(styles, /\.glean-mobile-reading-bar\s*\{[\s\S]*position:\s*fixed[\s\S]*bottom:\s*0/);
+    assert.match(styles, /backdrop-filter:\s*blur\(16px\)/);
+    assert.match(styles, /min-width:\s*44px/);
+    assert.match(styles, /min-height:\s*44px/);
+    assert.match(styles, /touch-action:\s*manipulation/);
+    assert.match(styles, /env\(safe-area-inset-bottom/);
+});
+
+test("Mobile Spec v1: 阅读页字号/行距快捷调节 (Aa 弹层拖动条 + 偏好持久化 + 键盘避让)", () => {
+    const mobileBar = read("src/ui/MobileReadingBar.svelte");
+    const prefs = read("src/services/prefs.ts");
+    const styles = read("src/index.scss");
+    assert.match(mobileBar, /typographyOpen/);
+    assert.match(mobileBar, /glean-mobile-typography-sheet/);
+    assert.match(mobileBar, /saveUiPrefs\(facade\.pluginInstance, \{ mobileReaderAppearance/);
+    assert.match(mobileBar, /isMobileKeyboardOpen/);
+    assert.match(mobileBar, /keyboardHidden/);
+    assert.match(prefs, /export interface MobileReaderAppearance/);
+    assert.match(prefs, /DEFAULT_MOBILE_READER_APPEARANCE/);
+    assert.match(styles, /--glean-reader-font-size/);
+    assert.match(styles, /--glean-reader-line-height/);
+    assert.match(styles, /&--hidden\s*\{[\s\S]*transform:\s*translateY\(120%\)/);
+});

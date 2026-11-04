@@ -92,9 +92,19 @@ export const simpleDialog = (args: {
             args.callback?.();
         }
     });
+    const isFullscreen = args.width === "100vw" || args.height === "100dvh" || (isMobileFrontend() && (args.width === "100%" || !args.width));
     const modalRoot = dialog.element.querySelector<HTMLElement>(".b3-dialog__container") ?? dialog.element;
-    modalRoot.style.maxWidth = "94vw";
-    modalRoot.style.maxHeight = "88vh";
+    if (isFullscreen) {
+        modalRoot.style.maxWidth = "100vw";
+        modalRoot.style.maxHeight = "100dvh";
+        modalRoot.style.width = "100vw";
+        modalRoot.style.height = "100dvh";
+        modalRoot.style.borderRadius = "0";
+        modalRoot.style.margin = "0";
+    } else {
+        modalRoot.style.maxWidth = "94vw";
+        modalRoot.style.maxHeight = "88vh";
+    }
     modalRoot.setAttribute("role", "dialog");
     modalRoot.setAttribute("aria-modal", "true");
     if (!modalRoot.hasAttribute("aria-labelledby")) modalRoot.setAttribute("aria-label", args.title);
@@ -120,6 +130,30 @@ export const simpleDialog = (args: {
             requestClose();
         });
     }
+
+    // 移动端/全屏弹层顶部下拉手势关闭
+    if ((isMobileFrontend() || isFullscreen) && typeof dialog.element?.addEventListener === "function") {
+        let touchStartY = 0;
+        let touchStartX = 0;
+        dialog.element.addEventListener("touchstart", (e: TouchEvent) => {
+            const touch = e.touches[0];
+            if (touch) {
+                touchStartY = touch.clientY;
+                touchStartX = touch.clientX;
+            }
+        }, { passive: true });
+        dialog.element.addEventListener("touchend", (e: TouchEvent) => {
+            const touch = e.changedTouches[0];
+            if (touch) {
+                const diffY = touch.clientY - touchStartY;
+                const diffX = Math.abs(touch.clientX - touchStartX);
+                if (diffY > 70 && diffY > diffX * 1.5 && touchStartY < 120) {
+                    requestClose();
+                }
+            }
+        }, { passive: true });
+    }
+
     disposeViewport = installMobileViewportVars(dialog.element, isMobileFrontend());
     mountPlatformDialogTitleWrap(dialog.element, args.title);
     dialog.element.querySelector(".dialog-content")?.appendChild(args.ele);

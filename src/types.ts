@@ -26,6 +26,8 @@ export interface GleanFacade {
     openRestoreDialog(docId: string): void;
     /** 将当前活动文档手动收录到读库；复用既有命令收录链路。 */
     addCurrentDocToLibrary(): Promise<void>;
+    /** 打开工作台面板（移动端全屏/桌面端页签） */
+    openPanel(targetView?: string): void;
     /** 工作台弹出为独立浮窗 */
     openWorkbenchPopup(initialPreviewId?: string): void;
     /** 全局漫游盲盒（随机抽选一篇文章重温） */
@@ -59,7 +61,7 @@ export interface GleanFacade {
     /** 处理小驴罗盘二级快捷行动 */
     handleQuickAction?(action: string): Promise<void>;
     /** 检索剪藏文章（全生态穿透搜索） */
-    searchClips?(keyword: string): Promise<Array<{ id: string; docId: string; title: string; summary?: string }>>;
+    searchClips?(keyword: string): Promise<Array<{ id: string; docId: string; title: string; summary?: string; category?: string }>>;
     /** 打开剪藏文档 */
     openClipDoc?(docId: string): void;
 }

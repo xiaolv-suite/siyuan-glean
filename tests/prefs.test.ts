@@ -44,6 +44,7 @@ test("loadUiPrefs：旧存档补齐首启进度默认值", async () => {
         defaultSavedViewId: "",
         governanceMuted: { quota: "", stale: "", candidates: "" },
         themePalette: "teal",
+        mobileReaderAppearance: { fontSize: 16, lineHeight: 1.7 },
     });
 });
 
@@ -68,6 +69,7 @@ test("normalizeUiPrefs：非法步骤与已完成状态不会产生可恢复脏�
         defaultSavedViewId: "",
         governanceMuted: { quota: "", stale: "", candidates: "" },
         themePalette: "teal",
+        mobileReaderAppearance: { fontSize: 16, lineHeight: 1.7 },
     });
     assert.deepEqual(normalizeUiPrefs({ onboardingDone: true, onboardingStep: 4, onboardingInterrupted: true }), {
         lastView: "",
@@ -89,6 +91,7 @@ test("normalizeUiPrefs：非法步骤与已完成状态不会产生可恢复脏�
         defaultSavedViewId: "",
         governanceMuted: { quota: "", stale: "", candidates: "" },
         themePalette: "teal",
+        mobileReaderAppearance: { fontSize: 16, lineHeight: 1.7 },
     });
 });
 

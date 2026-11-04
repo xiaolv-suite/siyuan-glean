@@ -16,6 +16,7 @@
     import { recordReadingDone } from "../services/checkin-bridge";
     import { isWechatUrl, displayWechatAuthor } from "../domain/wechat";
     import ClipStatusActions from "./ClipStatusActions.svelte";
+    import MobileReadingBar from "./MobileReadingBar.svelte";
     import { openFormattingDialog } from "./formatting-dialog";
     import { syncMetaCalloutToDocument } from "../services/meta-callout-service";
     import { installMobileViewportVars } from "../libs/mobile-viewport";
@@ -432,4 +433,16 @@
             </details>
         </div>
     </aside>
+{/if}
+
+{#if facade.isMobile && context}
+    <MobileReadingBar
+        {facade}
+        docId={context.id}
+        status={context.status}
+        disabled={busy}
+        onSetStatus={setStatus}
+        onArchive={() => { if (context) facade.openArchiveDialog(context.id); }}
+        protyleElement={rootEl?.closest(".protyle")}
+    />
 {/if}

@@ -24,6 +24,27 @@ import { normalizeThemePaletteId, type ThemePaletteId } from "../domain/theme-pa
 
 export type OnboardingStep = 1 | 2 | 3 | 4;
 
+export interface MobileReaderAppearance {
+    fontSize: number;
+    lineHeight: number;
+}
+
+export const DEFAULT_MOBILE_READER_APPEARANCE: MobileReaderAppearance = {
+    fontSize: 16,
+    lineHeight: 1.7,
+};
+
+function normalizeMobileReaderAppearance(raw: unknown): MobileReaderAppearance {
+    const obj = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
+    const fontSize = typeof obj.fontSize === "number" && Number.isFinite(obj.fontSize)
+        ? Math.min(28, Math.max(12, Math.round(obj.fontSize)))
+        : DEFAULT_MOBILE_READER_APPEARANCE.fontSize;
+    const lineHeight = typeof obj.lineHeight === "number" && Number.isFinite(obj.lineHeight)
+        ? Math.min(2.4, Math.max(1.2, Math.round(obj.lineHeight * 10) / 10))
+        : DEFAULT_MOBILE_READER_APPEARANCE.lineHeight;
+    return { fontSize, lineHeight };
+}
+
 export interface UiPrefs {
     /** 上次停留的面板视图 */
     lastView: string;
@@ -49,6 +70,7 @@ export interface UiPrefs {
     defaultSavedViewId: string;
     governanceMuted: GovernanceMuted;
     themePalette: ThemePaletteId;
+    mobileReaderAppearance: MobileReaderAppearance;
 }
 
 const PREFS_FILE = "ui-prefs.json";
@@ -73,6 +95,7 @@ const DEFAULTS: UiPrefs = {
     defaultSavedViewId: "",
     governanceMuted: { ...EMPTY_GOVERNANCE_MUTED },
     themePalette: "teal",
+    mobileReaderAppearance: { ...DEFAULT_MOBILE_READER_APPEARANCE },
 };
 
 const saveQueues = new WeakMap<object, Promise<unknown>>();
@@ -107,6 +130,7 @@ export function normalizeUiPrefs(raw: unknown): UiPrefs {
         defaultSavedViewId: savedViews.some((view) => view.id === requestedDefault) ? requestedDefault : "",
         governanceMuted: normalizeGovernanceMuted(partial.governanceMuted),
         themePalette: normalizeThemePaletteId(partial.themePalette),
+        mobileReaderAppearance: normalizeMobileReaderAppearance(partial.mobileReaderAppearance),
     };
 }
 
@@ -114,6 +138,7 @@ function clonePrefs(prefs: UiPrefs): UiPrefs {
     return {
         ...prefs,
         readerAppearance: { ...prefs.readerAppearance },
+        mobileReaderAppearance: { ...prefs.mobileReaderAppearance },
         libraryRailGroups: normalizeRailGroups(prefs.libraryRailGroups),
         savedViews: prefs.savedViews.map((view) => ({ ...view, filter: { ...view.filter } })),
         tagAliases: cloneTagAliases(prefs.tagAliases),
@@ -127,6 +152,7 @@ function clonePatch(patch: UiPrefsPatch): UiPrefsPatch {
     return {
         ...patch,
         ...(patch.readerAppearance ? { readerAppearance: { ...patch.readerAppearance } } : {}),
+        ...(patch.mobileReaderAppearance ? { mobileReaderAppearance: { ...patch.mobileReaderAppearance } } : {}),
         ...(patch.libraryRailGroups ? { libraryRailGroups: Object.fromEntries(Object.entries(patch.libraryRailGroups).map(([name, group]) => [name, { ...group }])) } : {}),
         ...(patch.savedViews ? { savedViews: patch.savedViews.map((view) => ({ ...view, filter: { ...view.filter } })) } : {}),
         ...(patch.tagAliases ? { tagAliases: cloneTagAliases(patch.tagAliases) } : {}),

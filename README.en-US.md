@@ -182,6 +182,17 @@ In just 3 minutes, transform scattered clippings into structured knowledge asset
 - **Real-Environment Acceptance**:
   - Automated tests and architectural gates pass 100%. Device-specific touch behaviors, external AI integrations, and real-environment acceptance boundaries are detailed in the [capability matrix](docs/CAPABILITY-MATRIX.md) and [known blockers](docs/BLOCKERS.md).
 
+## v1.4.5 update (2026-11-04)
+
+This update delivers 【Xiaolv Ecosystem · Mobile Spec v1】, achieving a full-lifecycle mobile experience:
+
+- **Unified Mobile Entry**: Integrated with xiaolv-launchpad mobile entry (`lvLaunchpad.ensureMobileEntry()`), supporting both topbar and floating ball entries with persistent mode preference;
+- **Refined Quick Actions**: Second-level launchpad actions restructured for mobile high-frequency direct actions: "Today's Gleaning Pool", "Continue Last Reading", "Later Inbox", and "Clip Clipboard", accompanied by subtle haptic feedback (`haptic(10)`);
+- **Fullscreen Mobile Workspace**: Mobile panel adopts 100vw/100dvh fullscreen dialog with safe-area support, compact header, bottom 4-item navigation, touch target ≥44px, and swipe-down-to-dismiss gesture;
+- **Mobile Reading Status Bar**: Injected frosted-glass floating bar at the bottom during mobile reading, enabling single-hand status flow (Later / Reading / Done / Archived) with haptic feedback;
+- **Reading Typography Quick Adjustment (Aa Sheet)**: Built-in Aa typography sheet with font size (12-28px) and line height (1.3-2.3) sliders for real-time WYSIWYG reading adjustment and preference persistence;
+- **Smart Keyboard Avoidance**: Connected to `mobile-viewport` to automatically tuck away the floating bar whenever the virtual keyboard or input fields are active.
+
 ## v1.4.4 update (2026-11-03)
 
 This update refactors the Reader topbar & companion sidebar, connects to the Lv Unified Notification System, and federates sibling plugin capabilities:
