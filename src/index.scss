@@ -14162,3 +14162,16 @@ body.b3-theme-dark .glean-panel--mobile,
     }
 }
 
+/* ============ 代码块横向滚动防撑爆守门 (Code Block Overflow) ============ */
+
+.protyle-wysiwyg [data-type="NodeCodeBlock"],
+.glean-reader pre,
+.glean-panel pre,
+.glean-preview pre,
+.glean-highlights pre {
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    box-sizing: border-box;
+}
+

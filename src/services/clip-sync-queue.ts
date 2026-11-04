@@ -3,7 +3,7 @@
  * 网络断开或内核超时失败时自动进入待同步队列，网络恢复或切回前台自动静默同步。
  */
 import type { GleanFacade } from "../types.ts";
-import { lvLaunchpad, notifyClipSuccess, lvActivity, showNotice } from "../libs/notice.ts";
+import { lvLaunchpad, notifyClipSuccess, lvActivity, showNotice, lvNotify } from "../libs/notice.ts";
 
 export interface PendingClipItem {
     id: string;
@@ -79,12 +79,30 @@ export async function flushPendingClips(facade: GleanFacade): Promise<number> {
             try {
                 const docId = await createDocWithMd(item.notebookId, `/剪藏/${item.title}`, item.md);
                 if (docId) {
-                    await captureDocument(facade.pluginInstance, docId, {
+                    const captured = await captureDocument(facade.pluginInstance, docId, {
                         src: "manual",
                         url: item.url,
                     });
                     removePendingClip(item.id);
                     syncedCount++;
+
+                    if (captured.conflict) {
+                        lvNotify.card({
+                            source: "小驴拾遗",
+                            category: "clip-conflict",
+                            title: "离线剪藏冲突",
+                            message: `离线剪藏《${item.title}》与已有文章《${captured.conflict.title || captured.conflict.hpath}》来源相同`,
+                            level: "warn",
+                            duration: 6000,
+                            actions: [
+                                {
+                                    label: "查看已有文章",
+                                    onClick: () => facade.openReadingDocument(captured.conflict!.id),
+                                },
+                            ],
+                        });
+                        continue;
+                    }
 
                     lvLaunchpad.haptic(10);
                     notifyClipSuccess({

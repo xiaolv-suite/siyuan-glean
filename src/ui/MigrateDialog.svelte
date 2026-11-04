@@ -595,6 +595,7 @@ $effect(() => {
                 {t(i18n, "migrate.batchSize")}
                 <input
                     type="number"
+                    inputMode="numeric"
                     min="1"
                     max="50"
                     class="glean-mini-input glean-migrate__batch-input"
