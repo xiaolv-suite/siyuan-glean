@@ -88,6 +88,7 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
     private launchpadCleaner?: () => void;
     private searchCleaner?: () => void;
     private mobileEntryCleaner?: () => void;
+    private disposeSyncQueue?: () => void;
     private unreadCount = 0;
     private tickerUnsubscribe?: () => void;
     private unregisterRaikiri?: () => void;
@@ -526,6 +527,13 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
             this.mobileEntryCleaner = lvLaunchpad.ensureMobileEntry();
         }
 
+        // 弱网容错：安装离线剪藏待同步队列监听
+        void import("./services/clip-sync-queue").then(({ installClipSyncQueue }) => {
+            if (this.loaded) {
+                this.disposeSyncQueue = installClipSyncQueue(this);
+            }
+        }).catch(() => undefined);
+
         if (this.isMobile) return;
         if (this.topBarElement) return;
         this.topBarElement = this.addTopBar({
@@ -557,6 +565,8 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
     }
 
     async onunload() {
+        this.disposeSyncQueue?.();
+        this.disposeSyncQueue = undefined;
         this.mobileEntryCleaner?.();
         this.mobileEntryCleaner = undefined;
         this.searchCleaner?.();
@@ -847,8 +857,15 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
                     this.notifyDataChanged();
                 }
             } catch (err) {
-                console.warn("[glean] 剪贴板剪藏失败:", err);
-                showNotice("剪藏失败，请重试", 3000, "error");
+                console.warn("[glean] 剪贴板剪藏失败，进入离线待同步队列:", err);
+                const { enqueuePendingClip } = await import("./services/clip-sync-queue");
+                enqueuePendingClip({
+                    notebookId: targetNotebook,
+                    title,
+                    md,
+                    url: isUrl ? text : undefined,
+                    isUrl,
+                });
             }
             return;
         }

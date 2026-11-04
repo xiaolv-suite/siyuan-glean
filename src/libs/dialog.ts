@@ -129,6 +129,29 @@ export const simpleDialog = (args: {
             event.stopPropagation();
             requestClose();
         });
+    } else if (isMobileFrontend() || isFullscreen) {
+        // 真机审计修复：手机端原生 Dialog 无关闭按钮，主动补齐可见 ✕ 关闭按钮
+        const header = dialog.element.querySelector<HTMLElement>(".b3-dialog__header");
+        if (header) {
+            const mobileCloseBtn = document.createElement("button");
+            mobileCloseBtn.type = "button";
+            mobileCloseBtn.className = "b3-dialog__close glean-mobile-dialog-close";
+            mobileCloseBtn.setAttribute("role", "button");
+            mobileCloseBtn.setAttribute("aria-label", args.closeLabel ?? args.title);
+            mobileCloseBtn.setAttribute("tabindex", "0");
+            mobileCloseBtn.innerHTML = `<svg viewBox="0 0 24 24" style="width: 20px; height: 20px;" aria-hidden="true"><use xlink:href="#iconGleanClose"></use></svg>`;
+            mobileCloseBtn.style.minWidth = "44px";
+            mobileCloseBtn.style.minHeight = "44px";
+            mobileCloseBtn.style.display = "inline-flex";
+            mobileCloseBtn.style.alignItems = "center";
+            mobileCloseBtn.style.justifyContent = "center";
+            mobileCloseBtn.style.background = "transparent";
+            mobileCloseBtn.style.border = "none";
+            mobileCloseBtn.style.color = "var(--b3-theme-on-surface)";
+            mobileCloseBtn.style.cursor = "pointer";
+            mobileCloseBtn.addEventListener("click", () => requestClose());
+            header.appendChild(mobileCloseBtn);
+        }
     }
 
     // 移动端/全屏弹层顶部下拉手势关闭

@@ -51,3 +51,22 @@ export function estimateReadingPercentage(scrollTop: number, scrollHeight: numbe
     const ratio = visibleBottom / scrollHeight;
     return Math.min(100, Math.max(0, Math.round(ratio * 100)));
 }
+
+/**
+ * 双向跨端阅读进度对齐（Mobile Spec v1 深化）：
+ * 对比移动端与桌面端或多端同步回来的阅读断点，以较晚时间戳（最新产生）的断点为准。
+ */
+export function resolveLatestReadingPosition(
+    posA: ReadingPosition | null | undefined,
+    posB: ReadingPosition | null | undefined
+): ReadingPosition | null {
+    const validA = parseReadingPosition(posA);
+    const validB = parseReadingPosition(posB);
+    if (!validA) return validB;
+    if (!validB) return validA;
+    const timeA = Date.parse(validA.at);
+    const timeB = Date.parse(validB.at);
+    if (!Number.isFinite(timeA)) return validB;
+    if (!Number.isFinite(timeB)) return validA;
+    return timeB > timeA ? validB : validA;
+}

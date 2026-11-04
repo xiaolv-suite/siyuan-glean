@@ -21,6 +21,7 @@ import { writeClip } from "../services/clip-store";
 import { isWechatUrl, displayWechatAuthor } from "../domain/wechat";
 import { resolveReadingTimeTier } from "../domain/library-view";
 import { getCardsDueSummarySafely, openCardsReviewSafely } from "../libs/ecosystem-bridge-kit";
+import { lvLaunchpad } from "../libs/notice";
 
 interface Props {
     facade: GleanFacade;
@@ -141,7 +142,64 @@ onDestroy(() => {
     clearSwipeTimers();
     swipeState = null;
     suppressedClickId = "";
+    pullDistance = 0;
+    pullStartY = 0;
 });
+
+let pullStartY = 0;
+let pullDistance = $state(0);
+let pullRefreshing = $state(false);
+let pullHapticTriggered = false;
+
+function onTouchStart(e: TouchEvent) {
+    if (!facade.isMobile || pullRefreshing) return;
+    const target = panelRoot;
+    if (target && target.scrollTop <= 0) {
+        const touch = e.touches[0];
+        if (touch) {
+            pullStartY = touch.clientY;
+            pullHapticTriggered = false;
+        }
+    } else {
+        pullStartY = 0;
+    }
+}
+
+function onTouchMove(e: TouchEvent) {
+    if (!facade.isMobile || !pullStartY || pullRefreshing) return;
+    const touch = e.touches[0];
+    if (!touch) return;
+    const diffY = touch.clientY - pullStartY;
+    if (diffY > 0) {
+        pullDistance = Math.min(84, Math.round(diffY * 0.45));
+        if (pullDistance >= 60 && !pullHapticTriggered) {
+            pullHapticTriggered = true;
+            lvLaunchpad.haptic(15);
+        }
+    } else {
+        pullDistance = 0;
+    }
+}
+
+function onTouchEnd() {
+    if (!facade.isMobile || !pullStartY || pullRefreshing) return;
+    pullStartY = 0;
+    if (pullDistance >= 60) {
+        pullRefreshing = true;
+        lvLaunchpad.haptic(10);
+        try {
+            if (onRetry) onRetry();
+            else onMutated();
+        } finally {
+            setTimeout(() => {
+                pullRefreshing = false;
+                pullDistance = 0;
+            }, 650);
+        }
+    } else {
+        pullDistance = 0;
+    }
+}
 
 $effect(() => {
     if (observedIndex === null) {
@@ -789,7 +847,26 @@ async function exportPicksToDailyNote(): Promise<void> {
 
 <svelte:window onkeydown={onWindowKeyDown} />
 
-<div bind:this={panelRoot} tabindex="-1" class="glean-panel glean-resurface" class:glean-resurface--embedded={embedded} aria-labelledby={!embedded ? panelTitleId : undefined}>
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div
+    bind:this={panelRoot}
+    tabindex="-1"
+    class="glean-panel glean-resurface"
+    class:glean-resurface--embedded={embedded}
+    aria-labelledby={!embedded ? panelTitleId : undefined}
+    ontouchstart={onTouchStart}
+    ontouchmove={onTouchMove}
+    ontouchend={onTouchEnd}
+    ontouchcancel={() => { pullStartY = 0; pullDistance = 0; }}
+>
+    {#if facade.isMobile && (pullDistance > 0 || pullRefreshing)}
+        <div class="glean-pull-refresh-indicator" style:height={`${Math.max(pullDistance, pullRefreshing ? 44 : 0)}px`} role="status" aria-live="polite">
+            <svg class="glean-pull-refresh-spin" class:glean-pull-refresh-spin--active={pullRefreshing || pullDistance >= 60} viewBox="0 0 24 24" aria-hidden="true">
+                <use href="#iconGleanRefresh" />
+            </svg>
+            <span>{pullRefreshing ? t(i18n, "panel.loading") : pullDistance >= 60 ? t(i18n, "mobile.releaseToRefresh") : t(i18n, "mobile.pullToRefresh")}</span>
+        </div>
+    {/if}
     {#if !embedded}<header class="glean-panel__head glean-resurface__head">
         <div class="glean-brand">
             <div class="glean-brand__mark"><svg><use href="#iconGleanWheat" /></svg></div>

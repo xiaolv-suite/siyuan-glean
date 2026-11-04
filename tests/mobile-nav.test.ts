@@ -342,3 +342,51 @@ test("Mobile Spec v1: 阅读页字号/行距快捷调节 (Aa 弹层拖动条 + �
     assert.match(styles, /--glean-reader-line-height/);
     assert.match(styles, /&--hidden\s*\{[\s\S]*transform:\s*translateY\(120%\)/);
 });
+
+test("Mobile Spec v1 深化: resolveLatestReadingPosition 双向跨端取较晚时间戳", async () => {
+    const { resolveLatestReadingPosition } = await import("../src/domain/reading-position.ts");
+    const posOld = { version: 1 as const, blockId: "20261103000000-block01", offset: 120, at: "2026-11-04T08:00:00.000Z" };
+    const posNew = { version: 1 as const, blockId: "20261103000000-block02", offset: 240, at: "2026-11-04T09:30:00.000Z" };
+
+    // 手机端较新
+    assert.deepEqual(resolveLatestReadingPosition(posOld, posNew), posNew);
+    // 桌面端较新
+    assert.deepEqual(resolveLatestReadingPosition(posNew, posOld), posNew);
+    // 单边缺失安全取另一端
+    assert.deepEqual(resolveLatestReadingPosition(null, posNew), posNew);
+    assert.deepEqual(resolveLatestReadingPosition(posOld, undefined), posOld);
+    assert.equal(resolveLatestReadingPosition(null, null), null);
+});
+
+test("Mobile Spec v1 深化: 五态条长按 400ms 说明气泡与已同步微提示", () => {
+    const mobileBar = read("src/ui/MobileReadingBar.svelte");
+    const styles = read("src/index.scss");
+    assert.match(mobileBar, /startLongPress/);
+    assert.match(mobileBar, /activeBubble/);
+    assert.match(mobileBar, /syncNotice/);
+    assert.match(mobileBar, /reading\.syncedProgress/);
+    assert.match(styles, /\.glean-mobile-reading-bar__sync-badge\s*\{/);
+    assert.match(styles, /\.glean-mobile-reading-bar__bubble\s*\{/);
+});
+
+test("Mobile Spec v1 深化: 阅读池列表下拉 60px 触发刷新手势与旋转指示器", () => {
+    const resurface = read("src/ui/ResurfaceView.svelte");
+    const styles = read("src/index.scss");
+    assert.match(resurface, /pullDistance/);
+    assert.match(resurface, /pullRefreshing/);
+    assert.match(resurface, /pullDistance >= 60/);
+    assert.match(resurface, /glean-pull-refresh-indicator/);
+    assert.match(resurface, /glean-pull-refresh-spin/);
+    assert.match(styles, /\.glean-pull-refresh-indicator\s*\{/);
+    assert.match(styles, /\.glean-pull-refresh-spin--active\s*\{[\s\S]*animation:\s*glean-reader-spin/);
+});
+
+test("Mobile Spec v1 深化: 弱网剪藏暂存与静默重试队列 (clip-sync-queue)", async () => {
+    const index = read("src/index.ts");
+    const queueSource = read("src/services/clip-sync-queue.ts");
+    assert.match(index, /enqueuePendingClip/);
+    assert.match(index, /installClipSyncQueue/);
+    assert.match(queueSource, /glean_pending_clip_queue/);
+    assert.match(queueSource, /flushPendingClips/);
+    assert.match(queueSource, /window\.addEventListener\("online"/);
+});

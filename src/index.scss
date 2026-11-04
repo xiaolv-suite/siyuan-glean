@@ -13907,6 +13907,88 @@ body.b3-theme-dark .glean-panel--mobile,
     }
 }
 
+.glean-mobile-reading-bar__sync-badge {
+    position: fixed;
+    bottom: calc(58px + env(safe-area-inset-bottom, 12px));
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1001;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--glean-space-1);
+    padding: 6px 14px;
+    border-radius: var(--glean-radius-pill);
+    background: color-mix(in srgb, var(--b3-theme-surface) 92%, transparent);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--glean-border-soft);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--b3-theme-primary);
+    pointer-events: none;
+    animation: glean-slide-up-badge 0.22s var(--glean-ease-spring);
+
+    svg {
+        width: 14px;
+        height: 14px;
+    }
+}
+
+.glean-mobile-reading-bar__bubble {
+    position: fixed;
+    bottom: calc(66px + env(safe-area-inset-bottom, 12px));
+    transform: translateX(-50%);
+    z-index: 1002;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 3px;
+    padding: 8px 14px;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--b3-theme-surface) 95%, transparent);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--b3-border-color);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+    pointer-events: none;
+    animation: glean-pop-bubble 0.18s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+    white-space: nowrap;
+
+    strong {
+        font-size: 13px;
+        color: var(--b3-theme-primary);
+    }
+
+    span {
+        font-size: 11px;
+        color: var(--b3-theme-on-surface);
+        opacity: 0.8;
+    }
+
+    &-arrow {
+        position: absolute;
+        bottom: -6px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 10px;
+        height: 6px;
+        clip-path: polygon(0 0, 100% 0, 50% 100%);
+        background: var(--b3-theme-surface);
+    }
+}
+
+@keyframes glean-slide-up-badge {
+    from { opacity: 0; transform: translate(-50%, 8px); }
+    to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+@keyframes glean-pop-bubble {
+    from { opacity: 0; transform: translate(-50%, 10px) scale(0.9); }
+    to { opacity: 1; transform: translate(-50%, 0) scale(1); }
+}
+
 /* ============ Aa 排版调节浮层 (Typography Bottom Sheet) ============ */
 
 .glean-mobile-sheet-backdrop {
@@ -14050,5 +14132,30 @@ body.b3-theme-dark .glean-panel--mobile,
 @keyframes glean-slide-up-sheet {
     from { transform: translateY(100%); }
     to { transform: translateY(0); }
+}
+
+/* ============ 阅读池手机端下拉刷新手势指示器 ============ */
+
+.glean-pull-refresh-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--glean-space-2);
+    overflow: hidden;
+    color: var(--b3-theme-on-surface);
+    font-size: 12px;
+    background: color-mix(in srgb, var(--b3-theme-surface) 60%, transparent);
+    transition: height 0.18s ease;
+
+    svg {
+        width: 18px;
+        height: 18px;
+        color: var(--b3-theme-primary);
+        transition: transform 0.2s ease;
+    }
+
+    .glean-pull-refresh-spin--active {
+        animation: glean-reader-spin 0.8s linear infinite;
+    }
 }
 

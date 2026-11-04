@@ -377,7 +377,14 @@ type MobileTaskState = "loading" | "error" | "offline" | "ready";
 const mobileTaskState = $derived<MobileTaskState>(loading ? "loading" : offline ? "offline" : loadError ? "error" : "ready");
 
 function mobileBack() {
-    if (view === "resurface") return;
+    if (view === "resurface") {
+        const dialogRoot = rootEl?.closest(".b3-dialog__container")?.parentElement;
+        const closeBtn = dialogRoot?.querySelector<HTMLButtonElement>(".b3-dialog__close");
+        if (closeBtn) {
+            closeBtn.click();
+        }
+        return;
+    }
     view = "resurface";
     mobileMoreOpen = false;
     markPrefsInteraction();
@@ -3299,9 +3306,8 @@ $effect(() => {
                     type="button"
                     class="glean-mobile-topbar__back"
                     class:glean-mobile-topbar__back--home={view === "resurface"}
-                    disabled={view === "resurface"}
-                    title={t(i18n, "mobile.back")}
-                    aria-label={t(i18n, "mobile.back")}
+                    title={t(i18n, view === "resurface" ? "action.close" : "mobile.back")}
+                    aria-label={t(i18n, view === "resurface" ? "action.close" : "mobile.back")}
                     onclick={() => mobileBack()}
                 >
                     {#if view === "resurface"}
