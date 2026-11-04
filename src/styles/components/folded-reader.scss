@@ -241,6 +241,17 @@
     word-break: break-word;
     margin: var(--glean-space-0);
     white-space: pre-wrap;
+
+    /* 长代码行横向滚动：内嵌 pre 不撑爆移动端外层容器宽度 */
+    pre {
+        overflow-x: auto;
+        overscroll-behavior-x: contain;
+        padding: var(--glean-space-2);
+        border-radius: var(--glean-radius-md, 8px);
+        background: var(--b3-theme-background-light, #f6f7f9);
+        white-space: pre;
+        word-break: normal;
+    }
 }
 
 .glean-fold-card__brief {

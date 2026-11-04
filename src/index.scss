@@ -13818,6 +13818,9 @@ body.b3-theme-dark .glean-panel--mobile,
     touch-action: manipulation;
     user-select: none;
     -webkit-user-select: none;
+    /* 长文快速滚动中悬浮条独立合成层化：杜绝随文档重绘的轻微抖动（滚动期间 transform 纯 GPU） */
+    will-change: transform;
+    backface-visibility: hidden;
 
     &--hidden {
         transform: translateY(120%);
