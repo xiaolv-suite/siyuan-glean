@@ -14175,3 +14175,16 @@ body.b3-theme-dark .glean-panel--mobile,
     box-sizing: border-box;
 }
 
+/* ============ 高亮转闪卡流水线直达按钮与徽章 (Highlight-to-Flashcard Pipeline) ============ */
+
+.glean-highlights__pipeline-btn,
+.glean-reader__pipeline-btn {
+    transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+
+    &--enrolled {
+        color: var(--glean-st-done-text, #059669) !important;
+        background: color-mix(in srgb, var(--glean-st-done, #10b981) 12%, transparent) !important;
+        font-weight: var(--glean-weight-bold);
+    }
+}
+

@@ -25,6 +25,8 @@ import { pickRoamingArticle } from "../domain/roaming";
 import { openRoamingDialog } from "./roaming-dialog";
 import ActionPopover from "./ActionPopover.svelte";
 import { formatBibTeX, formatGBT7714, formatCitation, citationSuccessKey, type CitationFormat, type CitationItem } from "../domain/citation";
+import { buildHighlightFlashcardPayload } from "../domain/highlight-pipeline";
+import { dispatchHighlightToFlashcard } from "../services/highlight-pipeline-service";
 
 interface Props { facade: GleanFacade }
 let { facade }: Props = $props();
@@ -74,6 +76,8 @@ let loadedContext = "";
 let tagAliasGeneration = 0;
 let allGroupsOpen = $state(true);
 let groupOpenMap = $state<Record<string, boolean>>({});
+let enrolledFlashcardIds = $state(new Set<string>());
+let cardingPipelineId = $state("");
 
 function isGroupOpen(rootId: string): boolean {
     return groupOpenMap[rootId] ?? allGroupsOpen;
@@ -656,6 +660,26 @@ async function createDocFromArticleQuotes(group: ArticleHighlightGroup): Promise
     }
 }
 
+async function makeFlashcardFromHighlight(item: HighlightItem): Promise<void> {
+    if (cardingPipelineId || exportBusy) return;
+    cardingPipelineId = item.id;
+    try {
+        const payload = buildHighlightFlashcardPayload({
+            highlightText: item.text,
+            contextText: item.source?.content || item.source?.markdown || item.text,
+            sourceBlockId: item.sourceBlockId || item.id,
+            sourceTitle: item.title || "",
+            docTags: item.tags || [],
+        });
+        const res = await dispatchHighlightToFlashcard(facade, payload);
+        if (res.success) {
+            enrolledFlashcardIds.add(item.id);
+        }
+    } finally {
+        cardingPipelineId = "";
+    }
+}
+
 function hasBlockingOverlay(): boolean {
     if (typeof document === "undefined") return false;
     const overlays = document.querySelectorAll<HTMLElement>(".b3-menu, .b3-dialog, dialog[open], [role='dialog'][aria-modal='true'], .glean-dialog");
@@ -980,6 +1004,20 @@ function focusHighlightRow(id: string): void {
                                 <svg class="glean-icon" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
                                 {t(i18n, "highlight.copyShare")}
                             </button>
+                            <button
+                                type="button"
+                                class="glean-highlights__pipeline-btn"
+                                class:glean-highlights__pipeline-btn--enrolled={enrolledFlashcardIds.has(item.id)}
+                                disabled={Boolean(cardingPipelineId) || exportBusy}
+                                onclick={() => void makeFlashcardFromHighlight(item)}
+                                title={enrolledFlashcardIds.has(item.id) ? t(i18n, "pipeline.cardCreatedBadge") : t(i18n, "pipeline.makeFlashcard")}
+                                aria-label={enrolledFlashcardIds.has(item.id) ? t(i18n, "pipeline.cardCreatedBadge") : t(i18n, "pipeline.makeFlashcard")}
+                            >
+                                <svg class="glean-icon glean-icon--xs" aria-hidden="true">
+                                    <use href={enrolledFlashcardIds.has(item.id) ? "#iconGleanCheck" : "#iconGleanCard"} />
+                                </svg>
+                                <span>{enrolledFlashcardIds.has(item.id) ? t(i18n, "pipeline.cardCreatedBadge") : t(i18n, "pipeline.makeFlashcard")}</span>
+                            </button>
                             <ActionPopover label={t(i18n, "library.moreActions")} compact>
                                 <button type="button" class="glean-btn glean-btn--ghost" onclick={() => openDoc(item.rootId)}>{t(i18n, "action.openDoc")}</button>
                                 <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyQuoteBlockRef(item)} title={t(i18n, "action.copyBlockRef")} aria-label={t(i18n, "action.copyBlockRef")}>
@@ -1099,6 +1137,20 @@ function focusHighlightRow(id: string): void {
                                         <button type="button" aria-busy={copyingId === item.id} disabled={Boolean(copyingId)} onclick={() => void copyQuote(item)} title={t(i18n, "highlight.copyShare")}>
                                             <svg class="glean-icon" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
                                             {t(i18n, "highlight.copyShare")}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            class="glean-highlights__pipeline-btn"
+                                            class:glean-highlights__pipeline-btn--enrolled={enrolledFlashcardIds.has(item.id)}
+                                            disabled={Boolean(cardingPipelineId) || exportBusy}
+                                            onclick={() => void makeFlashcardFromHighlight(item)}
+                                            title={enrolledFlashcardIds.has(item.id) ? t(i18n, "pipeline.cardCreatedBadge") : t(i18n, "pipeline.makeFlashcard")}
+                                            aria-label={enrolledFlashcardIds.has(item.id) ? t(i18n, "pipeline.cardCreatedBadge") : t(i18n, "pipeline.makeFlashcard")}
+                                        >
+                                            <svg class="glean-icon glean-icon--xs" aria-hidden="true">
+                                                <use href={enrolledFlashcardIds.has(item.id) ? "#iconGleanCheck" : "#iconGleanCard"} />
+                                            </svg>
+                                            <span>{enrolledFlashcardIds.has(item.id) ? t(i18n, "pipeline.cardCreatedBadge") : t(i18n, "pipeline.makeFlashcard")}</span>
                                         </button>
                                         <ActionPopover label={t(i18n, "library.moreActions")} compact>
                                             <button type="button" class="glean-btn glean-btn--ghost" onclick={() => openDoc(item.rootId)}>{t(i18n, "action.openDoc")}</button>

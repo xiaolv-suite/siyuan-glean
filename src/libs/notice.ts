@@ -27,9 +27,10 @@ import {
     type LvLaunchpadItem,
     type LvSearchResultItem,
     type LvSearchProvider,
+    lvAutomation,
 } from "./lv-notice-kit.ts";
 
-export { lvNotify, withDocLock, lvSurfaceStack, lvTicker, lvAi, lvActivity, lvBackup, lvEcosystem, lvLaunchpad, lvOmnisearch };
+export { lvNotify, withDocLock, lvSurfaceStack, lvTicker, lvAi, lvActivity, lvBackup, lvEcosystem, lvLaunchpad, lvOmnisearch, lvAutomation };
 export type {
     CardNoticeOptions,
     CapsuleNoticeOptions,

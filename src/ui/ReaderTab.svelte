@@ -89,6 +89,8 @@ import { aiFailureKey } from "../libs/ai-feedback";
     import { resolveReadingTimeTier } from "../domain/library-view";
     import { lvNotify, notifySilentTask, showNotice } from "../libs/notice";
     import type { RecentReadingEntry } from "../domain/recent-reading";
+    import { buildHighlightFlashcardPayload } from "../domain/highlight-pipeline";
+    import { dispatchHighlightToFlashcard } from "../services/highlight-pipeline-service";
 
     interface Props {
         facade: GleanFacade;
@@ -1889,6 +1891,32 @@ import { aiFailureKey } from "../libs/ai-feedback";
         }
     }
 
+    let flashcardPipelineBusy = $state(false);
+    const enrolledFlashcardKeys = $state(new Set<string>());
+
+    async function makeFlashcardFromExcerpt(): Promise<void> {
+        if (!excerpt?.text || !excerpt.blockId || flashcardPipelineBusy) return;
+        flashcardPipelineBusy = true;
+        const blockId = excerpt.blockId;
+        const key = `${blockId}_${excerpt.text.slice(0, 30)}`;
+        try {
+            const payload = buildHighlightFlashcardPayload({
+                highlightText: excerpt.text,
+                contextText: excerpt.text,
+                sourceBlockId: blockId,
+                sourceTitle: context?.title || "文章",
+                docTags: context?.tags || [],
+            });
+            const res = await dispatchHighlightToFlashcard(facade, payload);
+            if (res.success) {
+                enrolledFlashcardKeys.add(key);
+                enrolledFlashcardKeys.add(blockId);
+            }
+        } finally {
+            flashcardPipelineBusy = false;
+        }
+    }
+
     async function copyText(text: string): Promise<void> {
         try {
             await navigator.clipboard.writeText(text);
@@ -2695,6 +2723,20 @@ import { aiFailureKey } from "../libs/ai-feedback";
                     >
                         <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg>
                         <span>{t(i18n, "quoteCard.action")}</span>
+                    </button>
+                    <button
+                        type="button"
+                        class="glean-btn glean-btn--ghost glean-reader__selection-btn glean-reader__pipeline-btn"
+                        class:glean-reader__selection-btn--enrolled={excerpt?.blockId && (enrolledFlashcardKeys.has(excerpt.blockId) || enrolledFlashcardKeys.has(`${excerpt.blockId}_${excerpt.text.slice(0, 30)}`))}
+                        disabled={excerptBusy || flashcardPipelineBusy}
+                        onclick={() => void makeFlashcardFromExcerpt()}
+                        title={excerpt?.blockId && (enrolledFlashcardKeys.has(excerpt.blockId) || enrolledFlashcardKeys.has(`${excerpt.blockId}_${excerpt.text.slice(0, 30)}`)) ? t(i18n, "pipeline.cardCreatedBadge") : t(i18n, "pipeline.makeFlashcard")}
+                        aria-label={excerpt?.blockId && (enrolledFlashcardKeys.has(excerpt.blockId) || enrolledFlashcardKeys.has(`${excerpt.blockId}_${excerpt.text.slice(0, 30)}`)) ? t(i18n, "pipeline.cardCreatedBadge") : t(i18n, "pipeline.makeFlashcard")}
+                    >
+                        <svg class="glean-icon glean-icon--xs" aria-hidden="true">
+                            <use href={excerpt?.blockId && (enrolledFlashcardKeys.has(excerpt.blockId) || enrolledFlashcardKeys.has(`${excerpt.blockId}_${excerpt.text.slice(0, 30)}`)) ? "#iconGleanCheck" : "#iconGleanCard"} />
+                        </svg>
+                        <span>{excerpt?.blockId && (enrolledFlashcardKeys.has(excerpt.blockId) || enrolledFlashcardKeys.has(`${excerpt.blockId}_${excerpt.text.slice(0, 30)}`)) ? t(i18n, "pipeline.cardCreatedBadge") : t(i18n, "pipeline.makeFlashcard")}</span>
                     </button>
                     <ActionPopover label={t(i18n, "library.moreActions")} compact>
                         <button
