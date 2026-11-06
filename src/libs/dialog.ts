@@ -92,6 +92,13 @@ export const simpleDialog = (args: {
             args.callback?.();
         }
     });
+    // 点击遮罩背景快速关闭
+    dialog.element.addEventListener("click", (event) => {
+        const target = event.target as HTMLElement | null;
+        if (target === dialog.element || target?.classList?.contains("b3-dialog__scrim")) {
+            requestClose();
+        }
+    });
     const isFullscreen = args.width === "100vw" || args.height === "100dvh" || (isMobileFrontend() && (args.width === "100%" || !args.width));
     const modalRoot = dialog.element.querySelector<HTMLElement>(".b3-dialog__container") ?? dialog.element;
     if (isFullscreen) {
