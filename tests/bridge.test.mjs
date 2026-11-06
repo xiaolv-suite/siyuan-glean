@@ -570,6 +570,7 @@ test("插件生命周期从 manifest 注册版本，设置加载后可用，卸�
             "listClips",
             "getClip",
             "setClipStatus",
+            "ingestClip",
             "whenReady",
             "getOverview",
         ]);

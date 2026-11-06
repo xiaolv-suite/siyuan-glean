@@ -4,7 +4,7 @@ import { matchesLibraryFilter } from "../domain/library-view";
 import { CLIP_STATUSES, parseClipAttrs, parseUserTags, siyuanTimestamp, type ClipAttrs, type ClipStatus } from "../domain/schema";
 import { logCheckinEventSafely } from "../libs/ecosystem-bridge-kit";
 import type { GleanFacade } from "../types";
-import { batchReadClipAttrs, reconcileIndex, writeClip } from "./clip-store";
+import { batchReadClipAttrs, captureDocument, reconcileIndex, writeClip } from "./clip-store";
 
 export interface GleanBridgeClip {
     id: string;
@@ -64,6 +64,15 @@ export interface GleanBridgeOverview {
     updatedAt: string;
 }
 
+export interface GleanIngestOptions {
+    title?: string;
+    docId?: string;
+    blockId?: string;
+    tags?: string[];
+    summary?: string;
+    url?: string;
+}
+
 export interface GleanBridge {
     readonly protocol: 1;
     readonly apiVersion: 1;
@@ -73,6 +82,7 @@ export interface GleanBridge {
     listClips(filter?: GleanBridgeFilter): Promise<GleanBridgeClip[]>;
     getClip(id: string): Promise<GleanBridgeClip | null>;
     setClipStatus(id: string, status: ClipStatus): Promise<void>;
+    ingestClip(options: GleanIngestOptions): Promise<{ ok: boolean; docId?: string }>;
     getOverview(): GleanBridgeOverview;
 }
 
@@ -190,6 +200,7 @@ export function installBridge(facade: BridgeFacade, version: string, host: Bridg
         "listClips",
         "getClip",
         "setClipStatus",
+        "ingestClip",
         "whenReady",
         "getOverview",
     ] as const;
@@ -274,7 +285,47 @@ export function installBridge(facade: BridgeFacade, version: string, host: Bridg
                 facade.notifyDataChanged();
             });
         },
+        async ingestClip(options: GleanIngestOptions): Promise<{ ok: boolean; docId?: string }> {
+            assertActive();
+            let docId = options?.docId;
+            if (!docId && options?.blockId) {
+                try {
+                    const rows = await querySql<DocRow>(`SELECT root_id FROM blocks WHERE id = '${options.blockId}' LIMIT 1`);
+                    docId = (rows[0] as any)?.root_id;
+                } catch {}
+            }
+            if (!docId) return { ok: false };
+            return run(async () => {
+                try {
+                    await captureDocument(facade.pluginInstance, docId, {
+                        src: "plugin",
+                        url: options.url,
+                    });
+                    const patch: Partial<ClipAttrs> = {};
+                    if (options.summary) patch.summary = options.summary;
+                    if (options.tags && Array.isArray(options.tags)) patch.aiTags = options.tags;
+                    if (Object.keys(patch).length > 0) {
+                        await writeClip(facade.pluginInstance, docId, patch, { force: true });
+                    }
+                    facade.notifyDataChanged();
+                    return { ok: true, docId };
+                } catch {
+                    return { ok: false };
+                }
+            });
+        },
     });
+
+    const onAddClip = (evt: Event) => {
+        const detail = (evt as CustomEvent).detail;
+        if (detail) {
+            void bridge.ingestClip(detail);
+        }
+    };
+    if (typeof window !== "undefined" && typeof window.addEventListener === "function") {
+        window.addEventListener("lv-glean:add-clip", onAddClip);
+    }
+
     const mounted: string[] = [];
     const hostRecord = host as Record<string, unknown>;
     for (const alias of LVGLEAN_API_ALIASES) {
@@ -285,6 +336,9 @@ export function installBridge(facade: BridgeFacade, version: string, host: Bridg
     }
     return () => {
         active = false;
+        if (typeof window !== "undefined" && typeof window.removeEventListener === "function") {
+            window.removeEventListener("lv-glean:add-clip", onAddClip);
+        }
         for (const alias of mounted) {
             if (hostRecord[alias] === bridge) delete hostRecord[alias];
         }
