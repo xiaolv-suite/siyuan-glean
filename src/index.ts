@@ -1575,6 +1575,7 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
     };
 
     private readonly onMenuInbox = (event: { detail: { ids?: string[]; menu: { addItem: (item: unknown) => void } } }): void => {
+        if (!event?.detail?.menu) return;
         const ids = event.detail.ids ?? [];
         if (ids.length === 0) return;
         event.detail.menu.addItem({
@@ -1645,6 +1646,7 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
     private readonly onMenuContent = (event: {
         detail: { protyle?: { block?: { rootID?: string } }; menu: { addItem: (item: unknown) => void } };
     }): void => {
+        if (!event?.detail?.menu) return;
         const rootId = event.detail.protyle?.block?.rootID;
         if (!rootId) return;
         const selected = this.cardSelection();
