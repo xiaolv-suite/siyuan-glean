@@ -110,6 +110,16 @@ export interface CheckinBatchResult {
     usedFallbackTime?: boolean;
 }
 
+export interface CheckinOccasionItem {
+    id: string;
+    name: string;
+    date: string;
+    category?: string;
+    enabled: boolean;
+    priority?: string;
+    time?: string;
+}
+
 export interface CheckinBridgeApi {
     readonly protocol: "siyuan-checkin";
     readonly version: number;
@@ -119,6 +129,8 @@ export interface CheckinBridgeApi {
     recordEventsBatch(inputs: CheckinBatchInput[]): Promise<CheckinBatchResult[]>;
     getStreaks(itemIds?: string[]): Record<string, { current: number; longest: number }>;
     getStrengthSummary?(): unknown;
+    queryOccasions?(options?: { category?: string; includeDisabled?: boolean }): CheckinOccasionItem[];
+    completeOccasion?(id: string, occurrenceDate: string, completed: boolean): Promise<boolean>;
 }
 
 // --- ② 小驴人脉 (siyuan-contacts) ---
@@ -154,8 +166,6 @@ export interface ContactsBridgeApi {
     getPerson(docId: string): Promise<ContactsPerson | null>;
     ensurePerson(name: string, options?: { ref?: string; docId?: string }): Promise<ContactsPerson & { created: boolean }>;
     recordInteraction(docIds: readonly string[], meta?: { ref?: string; date?: string; place?: string; note?: string }): Promise<ContactsInteractionResult>;
-    appendFact?(personDocId: string, input: { text: string; category?: string; sourceRef?: string }): Promise<unknown>;
-    getFacts?(personDocId: string): Promise<unknown[]>;
 }
 
 // --- ③ 小驴管家 (siyuan-home) ---
@@ -258,38 +268,7 @@ export interface CardsDueSummary {
     unreviewedCount: number;
     unreviewedNewCardCount: number;
     unreviewedOldCardCount: number;
-    todayReviewedCount?: number;
     updatedAt: string;
-}
-
-/** 渐进阅读划词摘录载荷（Issue #17 标准） */
-export interface IncrementalExtractPayload {
-    text: string;
-    sourceBlockId: string;
-    docId: string;
-    docTitle?: string;
-    sourceUrl?: string;
-    tags?: string[];
-    createdAt?: string;
-}
-
-/** 任务视界 (Task Horizon) 联动行动项载荷 */
-export interface TaskHorizonActionPayload {
-    taskMarkdown: string;
-    quoteText: string;
-    sourceDocId: string;
-    sourceBlockId?: string;
-    sourceTitle?: string;
-    sourceUrl?: string;
-    priority?: string;
-    createdAt?: string;
-}
-
-export function formatTaskHorizonItem(quote: string, docId: string, title: string, blockId?: string): string {
-    const cleanQuote = quote.replace(/[\r\n]+/g, " ").trim().slice(0, 80);
-    const refId = blockId || docId;
-    const cleanTitle = title || "文章";
-    return `- [ ] 落地阅读行动项：${cleanQuote} 来源：(( ${refId} '${cleanTitle}' )) {: custom-status="todo" custom-priority="medium" }`;
 }
 
 export interface CardsBridgeApi {
@@ -302,13 +281,6 @@ export interface CardsBridgeApi {
     getDueSummary(): Promise<ActionResult<CardsDueSummary>>;
     openHub?(tab?: string): Promise<ActionResult<boolean>>;
     openReview?(options?: unknown): Promise<ActionResult<boolean>>;
-    receiveExtract?(envelope: {
-        content: string;
-        sourceBlockId: string;
-        sourceDocId?: string;
-        sourceTitle?: string;
-        tags?: string[];
-    }): Promise<ActionResult<{ blockID?: string; enrolled?: boolean }>>;
 }
 
 // --- ⑧ 小驴常用 (xiaolv-common) ---
@@ -330,17 +302,6 @@ export interface CommonBridgeApi {
     get(id: string): Promise<ActionResult<CommonSnippet | null>>;
     recent(): Promise<ActionResult<CommonSnippet[]>>;
     favorites(): Promise<ActionResult<CommonSnippet[]>>;
-    captureQuote?(input: {
-        quote: string;
-        author?: string;
-        sourceDocId?: string;
-        sourceBlockId?: string;
-        sourceTitle?: string;
-        tags?: string[];
-        category?: string;
-        alias?: string;
-        shortcode?: string;
-    }): Promise<ActionResult<{ id?: string }>>;
 }
 
 // --- ⑨ 思源雷切命令画板 / 思源外骨骼 ---
@@ -584,7 +545,7 @@ export function subscribeEcosystemEvent<T = Record<string, unknown>>(
 }
 
 /**
- * 监听 Task Horizon 任务完成事件 (tm:task-completed)
+ * 监听 Task Horizon 任务完成事件 (tm:task-completed 及兼容事件名 task-horizon:task-completed)
  * 返回注销清理函数
  */
 export function onTaskHorizonCompleted(
@@ -593,193 +554,137 @@ export function onTaskHorizonCompleted(
     if (typeof window === "undefined" || typeof window.addEventListener !== "function") {
         return () => {};
     }
+    const recentKeys = new Set<string>();
     const handler = (evt: Event) => {
         try {
-            const custom = evt as CustomEvent<TaskHorizonCompletedEventDetail>;
-            if (custom.detail) listener(custom.detail);
+            const custom = evt as CustomEvent<TaskHorizonCompletedEventDetail & {taskId?: string}>;
+            const raw = custom.detail;
+            if (!raw) return;
+            const blockId = String(raw.blockId || raw.id || raw.taskId || "");
+            const dedupeKey = String(raw.operationId || `${blockId}:${raw.completedAt || ""}`);
+            if (dedupeKey && recentKeys.has(dedupeKey)) return;
+            if (dedupeKey) {
+                recentKeys.add(dedupeKey);
+                if (recentKeys.size > 256) {
+                    const oldest = recentKeys.values().next().value;
+                    if (oldest) recentKeys.delete(oldest);
+                }
+            }
+            listener({...raw, id: String(raw.id || blockId), blockId});
         } catch (e) {
             console.error("[小驴生态联邦] 处理 Task Horizon 完成事件异常:", e);
         }
     };
     window.addEventListener("tm:task-completed", handler);
+    window.addEventListener("task-horizon:task-completed", handler);
     return () => {
         window.removeEventListener("tm:task-completed", handler);
+        window.removeEventListener("task-horizon:task-completed", handler);
     };
 }
 
-/* ========================================================================= */
-/* 7. 专项生态联邦安全互通工具 (Specialized Interop Helpers)                  */
-/* ========================================================================= */
-
 /**
- * 安全推送渐进摘录至小驴闪卡（siyuan-lv-cards）
- * 自动建立双向反链血缘并纳入轻量级渐进学习轮转箱，绝不破坏 FSRS 主队列
+ * T-2022：探测宿主窗口是否已加载 Task Horizon 公共接口
  */
-export async function sendExtractToCardsSafely(envelope: {
-    content: string;
-    sourceBlockId: string;
-    sourceDocId?: string;
-    sourceTitle?: string;
-    tags?: string[];
-}): Promise<{ ok: boolean; message?: string }> {
-    return await callBridge<CardsBridgeApi, { ok: boolean; message?: string }>(
-        "cards",
-        "receiveExtract",
-        async (bridge) => {
-            if (typeof bridge.receiveExtract !== "function") return { ok: false, message: "not-supported" };
-            const res = await bridge.receiveExtract(envelope);
-            const isOk = Boolean(res?.ok ?? (res as any)?.enrolled ?? (res as any)?.data?.enrolled ?? (res as any)?.data?.ok);
-            return { ok: isOk, message: (res as any)?.message };
-        },
-        () => ({ ok: false, message: "cards-not-available" })
-    );
+export function isTaskHorizonAvailable(): boolean {
+    const bridge = getBridgeSafely<TaskHorizonBridgeApi>("taskHorizon");
+    return Boolean(bridge && bridge.protocol === "task-horizon");
 }
 
 /**
- * 安全读取小驴闪卡今日待复习量与已复习量（只读）
+ * T-2022：安全拉取 Task Horizon 今日待办列表（有界超时，未安装或未就绪时优雅返回空数组）
  */
-export async function getCardsDueSummarySafely(): Promise<{ ok: boolean; unreviewedCount: number; todayReviewedCount?: number }> {
-    return await callBridge<CardsBridgeApi, { ok: boolean; unreviewedCount: number; todayReviewedCount?: number }>(
-        "cards",
-        "due",
+export async function fetchTaskHorizonTodayTasks(limit = 8): Promise<TaskHorizonItem[]> {
+    const capped = Math.max(1, Math.min(20, Math.round(limit) || 8));
+    return await callBridge<TaskHorizonBridgeApi, TaskHorizonItem[]>(
+        "taskHorizon",
+        "tasks.query",
         async (bridge) => {
-            if (typeof bridge.getDueSummary !== "function") return { ok: false, unreviewedCount: 0 };
-            const res = await bridge.getDueSummary();
-            if (res?.ok && res.data) {
-                return {
-                    ok: true,
-                    unreviewedCount: (res.data.unreviewedCount ?? 0) + (res.data.unreviewedNewCardCount ?? 0) + (res.data.unreviewedOldCardCount ?? 0),
-                    todayReviewedCount: res.data.todayReviewedCount ?? 0,
-                };
+            if (typeof bridge.queryTasks === "function") {
+                const res = await bridge.queryTasks({date: "today", scope: "all", limit: capped, includeCompleted: false});
+                return Array.isArray(res?.tasks) ? res.tasks : [];
             }
-            return { ok: false, unreviewedCount: 0 };
-        },
-        () => ({ ok: false, unreviewedCount: 0 })
-    );
-}
-
-/**
- * 安全唤起小驴闪卡复习界面
- */
-export async function openCardsReviewSafely(): Promise<boolean> {
-    return await callBridge<CardsBridgeApi, boolean>(
-        "cards",
-        "openReview",
-        async (bridge) => {
-            if (typeof bridge.openReview === "function") {
-                const res = await bridge.openReview();
-                return Boolean(res?.ok);
+            if (typeof bridge.getTodayTasks === "function") {
+                const tasks = await bridge.getTodayTasks();
+                return Array.isArray(tasks) ? tasks.slice(0, capped) : [];
             }
-            if (typeof bridge.openHub === "function") {
-                const res = await bridge.openHub();
-                return Boolean(res?.ok);
+            return [];
+        },
+        () => [],
+        2000,
+    );
+}
+
+/**
+ * T-2022：通过 Task Horizon 公共接口安全切换任务完成状态
+ */
+export async function setTaskHorizonTaskDoneSafely(blockId: string, done: boolean): Promise<boolean> {
+    if (!blockId) return false;
+    return await callBridge<TaskHorizonBridgeApi, boolean>(
+        "taskHorizon",
+        "tasks.status.write",
+        async (bridge) => {
+            if (typeof bridge.setTaskStatus !== "function") return false;
+            const options = typeof bridge.getStatusOptions === "function" ? bridge.getStatusOptions() : [];
+            let targetStatus = done ? "done" : "todo";
+            if (Array.isArray(options) && options.length) {
+                const matched = done
+                    ? options.find((opt) => opt.id === "done" || opt.marker.toUpperCase() === "X")
+                    : options.find((opt) => opt.id === "todo" || opt.marker === " ");
+                if (matched?.id) targetStatus = matched.id;
             }
-            return false;
+            return (await bridge.setTaskStatus(blockId, targetStatus)) === true;
         },
-        () => false
+        () => false,
+        2500,
     );
 }
 
 /**
- * 安全检索联系人（小驴人脉 siyuan-contacts）
+ * T-2022：一键唤起 Task Horizon 指定视图（calendar / kanban / timeline / list 等）
  */
-export async function searchPersonSafely(keyword: string): Promise<ContactsPerson | null> {
-    const kw = (keyword || "").trim();
-    if (!kw) return null;
-    return await callBridge<ContactsBridgeApi, ContactsPerson | null>(
-        "contacts",
-        "searchPeople",
-        async (bridge) => {
-            const list = await bridge.searchPeople(kw);
-            if (!Array.isArray(list) || list.length === 0) return null;
-            const exact = list.find((p) => p.name === kw);
-            return exact || list[0] || null;
-        },
-        () => null
-    );
-}
-
-/**
- * 一键安全沉淀联系人至小驴人脉（创建或查找）
- */
-export async function ensurePersonSafely(name: string, options?: { docId?: string }): Promise<{ ok: boolean; person?: ContactsPerson; created?: boolean }> {
-    const cleanName = (name || "").trim();
-    if (!cleanName) return { ok: false };
-    return await callBridge<ContactsBridgeApi, { ok: boolean; person?: ContactsPerson; created?: boolean }>(
-        "contacts",
-        "ensurePerson",
-        async (bridge) => {
-            const person = await bridge.ensurePerson(cleanName, options);
-            return { ok: Boolean(person?.docId), person, created: Boolean(person?.created) };
-        },
-        () => ({ ok: false })
-    );
-}
-
-/**
- * 安全向小驴人脉联系人主档案追加事实项（appendFact）
- */
-export async function appendPersonFactSafely(
-    personDocId: string,
-    fact: { text: string; category?: string; sourceRef?: string }
+export async function openTaskHorizonViewSafely(
+    viewType: "list" | "checklist" | "timeline" | "kanban" | "calendar" | "whiteboard" = "calendar",
 ): Promise<boolean> {
-    if (!personDocId || !fact.text) return false;
-    return await callBridge<ContactsBridgeApi, boolean>(
-        "contacts",
-        "appendFact",
+    return await callBridge<TaskHorizonBridgeApi, boolean>(
+        "taskHorizon",
+        "views.open",
         async (bridge) => {
-            if (typeof bridge.appendFact !== "function") return false;
-            await bridge.appendFact(personDocId, fact);
+            if (typeof bridge.openView !== "function") return false;
+            await bridge.openView(viewType);
             return true;
         },
-        () => false
+        () => false,
+        3000,
     );
 }
 
 /**
- * 一键安全存入金句/常用片段至小驴常用（xiaolv-common）
+ * 安全查询小驴打卡事项簿列表（支持按分类筛选，如 birthday/anniversary/expense/subscription 等）
  */
-export async function captureQuoteToCommonSafely(input: {
-    quote: string;
-    author?: string;
-    sourceDocId?: string;
-    sourceBlockId?: string;
-    sourceTitle?: string;
-    tags?: string[];
-    alias?: string;
-    shortcode?: string;
-}): Promise<{ ok: boolean; itemId?: string }> {
-    if (!input.quote) return { ok: false };
-    return await callBridge<CommonBridgeApi, { ok: boolean; itemId?: string }>(
-        "common",
-        "captureQuote",
-        async (bridge) => {
-            if (typeof bridge.captureQuote !== "function") return { ok: false };
-            const res = await bridge.captureQuote({
-                ...input,
-                category: "拾遗金句",
-            });
-            return { ok: Boolean(res?.ok), itemId: res?.data?.id };
-        },
-        () => ({ ok: false })
-    );
-}
-
-/**
- * 安全读取打卡项目的连续打卡天数（小驴打卡 siyuan-checkin）
- */
-export async function getCheckinStreaksSafely(itemId?: string): Promise<{ current: number; longest: number } | null> {
-    return await callBridge<CheckinBridgeApi, { current: number; longest: number } | null>(
+export async function queryCheckinOccasionsSafely(options?: { category?: string; includeDisabled?: boolean }): Promise<CheckinOccasionItem[]> {
+    return await callBridge<CheckinBridgeApi, CheckinOccasionItem[]>(
         "checkin",
-        "streaks.read",
-        async (bridge) => {
-            if (typeof bridge.getStreaks !== "function") return null;
-            const list = bridge.getStreaks(itemId ? [itemId] : undefined);
-            if (!Array.isArray(list) || list.length === 0) return null;
-            const target = itemId ? list.find((s) => (s as any).itemId === itemId) : list[0];
-            if (!target) return null;
-            return { current: target.current ?? 0, longest: target.longest ?? 0 };
+        "occasions.read",
+        (bridge) => {
+            if (typeof bridge.queryOccasions !== "function") return [];
+            return bridge.queryOccasions(options) || [];
         },
-        () => null
+        () => []
+    );
+}
+
+/**
+ * 安全完成小驴打卡指定事项
+ */
+export async function completeCheckinOccasionSafely(id: string, occurrenceDate: string, completed = true): Promise<boolean> {
+    return await callBridge<CheckinBridgeApi, boolean>(
+        "checkin",
+        "occasions.complete",
+        async (bridge) => {
+            if (typeof bridge.completeOccasion !== "function") return false;
+            return await bridge.completeOccasion(id, occurrenceDate, completed);
+        },
+        () => false
     );
 }
