@@ -433,7 +433,12 @@ async function saveToCommon(item: HighlightItem): Promise<void> {
         if (res.ok) {
             showMessage(t(i18n, "quoteCard.savedToCommon"), 2500);
         } else {
-            showMessage(t(i18n, "msg.actionFailed"), 2500);
+            try {
+                await navigator.clipboard.writeText(item.text);
+                showMessage(t(i18n, "quoteCard.commonMissingFallbackCopied"), 3000);
+            } catch {
+                showMessage(t(i18n, "msg.actionFailed"), 2500);
+            }
         }
     } catch {
         showMessage(t(i18n, "msg.actionFailed"), 2500);

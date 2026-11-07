@@ -1554,6 +1554,7 @@
   "quoteCard.pushToCards": "推入小驴闪卡（渐进摘录）",
   "quoteCard.saveToCommon": "存入小驴常用",
   "quoteCard.savedToCommon": "已存入小驴常用片段库",
+  "quoteCard.commonMissingFallbackCopied": "未检测到小驴常用插件，已将金句复制到剪贴板",
   "resurface.cardsDue": "闪卡待复习 ${n} 张",
   "resurface.cardsDueHint": "小驴闪卡今日有 ${n} 张待复习卡片，点击一键直达复习",
   "author.openInContacts": "在小驴人脉中打开联系人主文档",

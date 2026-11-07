@@ -1554,6 +1554,7 @@
   "quoteCard.pushToCards": "Push to Lv Cards (Incremental Extract)",
   "quoteCard.saveToCommon": "Save to Xiaolv Common",
   "quoteCard.savedToCommon": "Saved to Xiaolv Common snippet library",
+  "quoteCard.commonMissingFallbackCopied": "Xiaolv Common plugin not detected; quote copied to clipboard",
   "resurface.cardsDue": "${n} cards due",
   "resurface.cardsDueHint": "Lv Cards has ${n} cards due today, click to review",
   "author.openInContacts": "Open contact document in Lv Contacts",
