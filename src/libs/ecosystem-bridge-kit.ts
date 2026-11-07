@@ -628,7 +628,8 @@ export async function sendExtractToCardsSafely(envelope: {
         async (bridge) => {
             if (typeof bridge.receiveExtract !== "function") return { ok: false, message: "not-supported" };
             const res = await bridge.receiveExtract(envelope);
-            return { ok: Boolean(res?.ok), message: res?.message };
+            const isOk = Boolean(res?.ok ?? (res as any)?.enrolled ?? (res as any)?.data?.enrolled ?? (res as any)?.data?.ok);
+            return { ok: isOk, message: (res as any)?.message };
         },
         () => ({ ok: false, message: "cards-not-available" })
     );
