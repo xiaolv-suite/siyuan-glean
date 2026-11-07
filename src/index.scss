@@ -321,6 +321,11 @@
     --glean-muted-badge-surface: color-mix(in srgb, var(--b3-theme-on-surface) 12%, transparent);
 
     /* 运行时自适应变量默认基线 */
+    --glean-rail-w: 216px;
+    --glean-trans-fast: 140ms ease-out;
+    --glean-space-0-5: 2px;
+    --glean-shadow-floating: 0 8px 24px rgba(15, 23, 42, 0.12);
+    --glean-radius-dialog: 14px;
     --glean-text-meta: 11px;
     --glean-text-body: 13px;
     --glean-motion-fast: 140ms;
