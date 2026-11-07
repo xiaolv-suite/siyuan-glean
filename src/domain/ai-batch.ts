@@ -46,7 +46,14 @@ export function parseAiBatchJournal(value: unknown): AiBatchJournal | null {
     if (value === null || value === undefined || value === "") return null;
     const serialized = typeof value === "string" ? value : JSON.stringify(value);
     if (typeof serialized !== "string" || new TextEncoder().encode(serialized).length > AI_BATCH_MAX_BYTES) throw new Error("Invalid AI batch journal size");
-    const input: unknown = typeof value === "string" ? JSON.parse(value) : value;
+    let input: unknown = value;
+    if (typeof value === "string") {
+        try {
+            input = JSON.parse(value);
+        } catch {
+            throw new Error("Invalid AI batch journal");
+        }
+    }
     if (!record(input) || !exactKeys(input, ["version", "taskId", "createdAt", "rows"]) || input.version !== AI_BATCH_VERSION || typeof input.taskId !== "string" || !/^[a-z0-9-]{1,80}$/.test(input.taskId) || typeof input.createdAt !== "string" || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(input.createdAt) || !Number.isFinite(Date.parse(input.createdAt)) || new Date(input.createdAt).toISOString() !== input.createdAt || !Array.isArray(input.rows)) {
         throw new Error("Invalid AI batch journal");
     }

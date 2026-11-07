@@ -50,7 +50,12 @@ function requireKeys(value: Record<string, unknown>, keys: string[]): void {
 
 export function parseBackup(content: string): BackupPackage {
     if (byteSize(content) > MAX_BACKUP_BYTES) throw new Error("Backup exceeds 20 MiB");
-    const value: unknown = JSON.parse(content.replace(/^\uFEFF/, ""));
+    let value: unknown;
+    try {
+        value = JSON.parse(content.replace(/^\uFEFF/, ""));
+    } catch {
+        throw new Error("Invalid backup structure");
+    }
     if (!isRecord(value)) throw new Error("Invalid backup structure");
     requireKeys(value, ["format", "version", "createdAt", "pluginVersion", "documents", "settings", "uiPrefs", "index"]);
     if (value.format !== BACKUP_FORMAT || value.version !== 1) throw new Error("Unsupported backup format or version");

@@ -38,7 +38,14 @@ function validNodeId(value: unknown): value is string {
 
 export function parseFlashcardRecovery(value: unknown): FlashcardRecovery | null {
     if (value === null || value === undefined || value === "") return null;
-    const input = typeof value === "string" ? JSON.parse(value) as unknown : value;
+    let input = value;
+    if (typeof value === "string") {
+        try {
+            input = JSON.parse(value);
+        } catch {
+            throw new Error("Invalid flashcard recovery");
+        }
+    }
     if (!record(input)) throw new Error("Invalid flashcard recovery");
     requireKeys(input);
     if (input.version !== FLASHCARD_RECOVERY_VERSION || !boundedText(input.taskId, 96) || !/^flashcard-[a-z0-9-]{1,80}$/.test(input.taskId)) throw new Error("Invalid flashcard recovery identity");

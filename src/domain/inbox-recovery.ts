@@ -63,7 +63,14 @@ function requireKeys(value: Record<string, unknown>): void {
 
 export function parseInboxRecovery(value: unknown): InboxRecovery | null {
     if (value === null || value === undefined || value === "") return null;
-    const input = typeof value === "string" ? JSON.parse(value) as unknown : value;
+    let input = value;
+    if (typeof value === "string") {
+        try {
+            input = JSON.parse(value);
+        } catch {
+            throw new Error("Invalid inbox recovery");
+        }
+    }
     if (!record(input)) throw new Error("Invalid inbox recovery");
     requireKeys(input);
     if (input.version !== INBOX_RECOVERY_VERSION || !/^inbox-[a-z0-9-]{1,80}$/.test(String(input.taskId)) || !boundedText(input.shorthandId, 512) || !validNotebookId(input.notebookId) || !validFolder(input.folder) || typeof input.allowDuplicate !== "boolean") throw new Error("Invalid inbox recovery identity");
