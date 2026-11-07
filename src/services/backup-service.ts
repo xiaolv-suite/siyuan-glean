@@ -1,6 +1,7 @@
 import type { Plugin } from "siyuan";
 import { BACKUP_FORMAT, backupFieldPatch, diffBackupAttrs, parseBackup, type BackupDocument, type BackupFieldDiff, type BackupPackage } from "../domain/backup";
 import { parseClipAttrs, type ClipPatch } from "../domain/schema";
+import { localDate } from "../domain/checkin";
 import { batchReadClipAttrs, ClipRestoreError, readClipAttributeSnapshot, reconcileIndex, restoreClipFields, type ClipAttributeSnapshot } from "./clip-store";
 import { loadSettings, normalizeSettings, saveSettings, settingsEqual, SettingsConflictError, type GleanSettings } from "./settings";
 import { loadUiPrefs, normalizeUiPrefs, saveUiPrefs, UiPrefsConflictError, type UiPrefs } from "./prefs";
@@ -148,7 +149,7 @@ export async function runDailyAutoBackup(
     plugin: Plugin,
     settings: GleanSettings,
 ): Promise<{ ok: boolean; skipped?: boolean; filename?: string }> {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = localDate();
     const indexData = (await plugin.loadData("daily-backup-index.json").catch(() => null)) as {
         snapshots?: Array<{ date: string; filename: string; count: number; createdAt: string }>;
     } | null;

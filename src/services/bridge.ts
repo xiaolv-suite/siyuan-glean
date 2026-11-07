@@ -2,6 +2,7 @@ import type { DocRow } from "../api/client";
 import { querySql } from "../api/client";
 import { matchesLibraryFilter } from "../domain/library-view";
 import { CLIP_STATUSES, parseClipAttrs, parseUserTags, siyuanTimestamp, type ClipAttrs, type ClipStatus } from "../domain/schema";
+import { readingEventRef, readingEventNote } from "../domain/checkin";
 import { logCheckinEventSafely } from "../libs/ecosystem-bridge-kit";
 import type { GleanFacade } from "../types";
 import { batchReadClipAttrs, captureDocument, reconcileIndex, writeClip } from "./clip-store";
@@ -271,8 +272,8 @@ export function installBridge(facade: BridgeFacade, version: string, host: Bridg
                     void logCheckinEventSafely({
                         itemId: facade.settings.integration.checkinItemId,
                         value: 1,
-                        externalRef: `glean:${clip.id}:${new Date().toISOString().slice(0, 10)}`,
-                        note: `完成文章阅读：《${clip.title}》`,
+                        externalRef: readingEventRef(clip.id),
+                        note: readingEventNote(clip.title),
                     });
                 }
                 // The document attribute is the source of truth. A failed
