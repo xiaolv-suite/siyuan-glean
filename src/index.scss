@@ -14145,11 +14145,19 @@ body.b3-theme-dark .glean-panel--mobile,
 }
 
 /* 手机端固定头压缩（顶栏 + 5态队列条 + 筛选摘要条总高 <= 132px）与软键盘收起底栏 */
+.glean-dock-root .glean-panel--mobile {
+    --glean-safe-top: 0px !important;
+}
+
 .glean-panel--mobile {
     display: flex;
     flex-direction: column;
     height: 100%;
     min-height: 0;
+
+    .glean-mobile-task--ready {
+        display: none !important;
+    }
 
     .glean-panel__body {
         display: flex;
@@ -14253,6 +14261,11 @@ body.b3-theme-dark .glean-panel--mobile,
             margin-top: var(--glean-space-0-5);
             gap: var(--glean-space-1);
             flex-wrap: wrap;
+            align-items: center;
+
+            > .glean-mini-tag--ai {
+                display: none;
+            }
         }
 
         .glean-snap-badge {

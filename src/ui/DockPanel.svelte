@@ -3165,7 +3165,7 @@ function metaLine(entry: Row): string {
     const parts: string[] = [];
     if (entry.kind === "clip") {
         if (entry.minutes > 0) parts.push(t(i18n, "panel.minutes", { n: entry.minutes }));
-        parts.push(timeSource(entry));
+        if (!facade.isMobile) parts.push(timeSource(entry));
     }
     return parts.join(" · ");
 }
