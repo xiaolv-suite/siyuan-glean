@@ -134,7 +134,7 @@ export function installModalFocus(root: HTMLElement, options: ModalFocusOptions)
         if (disposed) return;
         const wasTop = scopes[scopes.length - 1] === scope;
         const active = document.activeElement;
-        const shouldRestore = wasTop && (active === document.body || root.contains(active));
+        const shouldRestore = wasTop && (!active || active === document.body || !active.isConnected || root.contains(active));
         disposed = true;
         window.clearTimeout(focusTimer);
         document.removeEventListener("keydown", onKeyDown, true);

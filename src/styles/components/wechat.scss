@@ -111,6 +111,34 @@
     gap: var(--glean-space-1);
 }
 
+.glean-wechat-publisher .glean-citation-more {
+    display: inline-block;
+    position: relative;
+
+    &__list {
+        position: absolute;
+        bottom: 100%;
+        left: 0;
+        z-index: 10;
+        margin-bottom: 4px;
+        background: var(--b3-theme-surface);
+        border: 1px solid var(--glean-border-soft);
+        border-radius: var(--glean-radius-md, 8px);
+        box-shadow: var(--glean-shadow-float);
+        padding: 4px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 120px;
+
+        .glean-btn {
+            font-size: 11px;
+            height: 24px;
+            justify-content: flex-start;
+        }
+    }
+}
+
 .glean-wechat-publisher__series {
     margin-top: var(--glean-space-1-5);
     padding-top: var(--glean-space-1-5);

@@ -686,6 +686,8 @@ import { aiFailureKey } from "../libs/ai-feedback";
         }
     }
 
+    let outlineCopied = $state(false);
+
     async function copyOutlineMarkdown(): Promise<void> {
         if (!outline.length) return;
         const lines = outline.map((item) => {
@@ -694,6 +696,8 @@ import { aiFailureKey } from "../libs/ai-feedback";
         });
         try {
             await navigator.clipboard.writeText(lines.join("\n"));
+            outlineCopied = true;
+            setTimeout(() => { outlineCopied = false; }, 1800);
             showMessage(t(i18n, "reader.outlineCopied"), 2500);
         } catch {
             showMessage(t(i18n, "msg.actionFailed"), 2500);
@@ -877,6 +881,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
             }));
         }
         if (res.ok) {
+            enrolledFlashcardKeys.add(hl.id);
             showMessage(t(i18n, "reader.extractedToCards"), 2500);
         } else {
             void cardFromHighlight(hl);
@@ -1270,12 +1275,16 @@ import { aiFailureKey } from "../libs/ai-feedback";
         if (event.altKey && (event.key === "e" || event.key === "E")) {
             event.preventDefault();
             event.stopPropagation();
-            if (excerpt?.text) {
-                void incrementalExtractToCards();
-            } else {
-                setMode(mode === "read" ? "edit" : "read");
-            }
+            setMode(mode === "read" ? "edit" : "read");
             return;
+        }
+        if (event.altKey && (event.key === "x" || event.key === "X")) {
+            if (excerpt?.text) {
+                event.preventDefault();
+                event.stopPropagation();
+                void incrementalExtractToCards();
+                return;
+            }
         }
         if (event.altKey && (event.key === "p" || event.key === "P")) {
             event.preventDefault();
@@ -1825,6 +1834,10 @@ import { aiFailureKey } from "../libs/ai-feedback";
             });
             if (typeof window !== "undefined") {
                 window.dispatchEvent(new CustomEvent("lv-cards:incremental-extract", { detail: payload }));
+            }
+            if (excerpt.blockId) {
+                enrolledFlashcardKeys.add(excerpt.blockId);
+                enrolledFlashcardKeys.add(`${excerpt.blockId}_${excerpt.text.slice(0, 30)}`);
             }
             showMessage(t(i18n, "reader.extractedToCards"), 2500);
         } else {
@@ -2582,6 +2595,16 @@ import { aiFailureKey } from "../libs/ai-feedback";
                 {/if}
 
                 <ActionPopover label={t(i18n, "reader.moreActions")} compact>
+                    {#if context}
+                        <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void toggleFavorite()}>
+                            <svg class="glean-icon glean-icon--xs" class:glean-icon--fav={context.favorite} aria-hidden="true"><use href={context.favorite ? "#iconGleanHeart" : "#iconGleanHeartOutline"} /></svg>
+                            <span>{context.favorite ? t(i18n, "roaming.favoriteRemoved") : t(i18n, "roaming.favoriteAction")} (Alt+F)</span>
+                        </button>
+                    {/if}
+                    <button type="button" class="glean-btn glean-btn--ghost" onclick={toggleZenMode}>
+                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg>
+                        <span>{t(i18n, zenMode ? "reader.zenExit" : "reader.zenEnter")} (F11)</span>
+                    </button>
                     {#if context && hasSourceAction(context.contentType, context.url)}
                         <button type="button" class="glean-btn glean-btn--ghost glean-reader__toolbar-source" onclick={openSource}>
                             <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanExternal" /></svg>
@@ -3003,18 +3026,23 @@ import { aiFailureKey } from "../libs/ai-feedback";
                             <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg>
                             <span>{t(i18n, "citation.copyGBT")}</span>
                         </button>
-                        <button type="button" class="glean-btn glean-btn--ghost glean-wechat-publisher__btn" onclick={() => void copyCitation("bibtex")} title={t(i18n, "citation.copyBibTeX")}>
-                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArchive" /></svg>
-                            <span>BibTeX</span>
-                        </button>
-                        <button type="button" class="glean-btn glean-btn--ghost glean-wechat-publisher__btn" onclick={() => void copyCitation("apa")} title={t(i18n, "citation.copyAPA")}>
-                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanLocal" /></svg>
-                            <span>APA</span>
-                        </button>
-                        <button type="button" class="glean-btn glean-btn--ghost glean-wechat-publisher__btn" onclick={() => void copyCitation("mla")} title={t(i18n, "citation.copyMLA")}>
-                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg>
-                            <span>MLA</span>
-                        </button>
+                        <details class="glean-citation-more">
+                            <summary class="glean-btn glean-btn--ghost glean-wechat-publisher__btn">BibTeX / APA / MLA</summary>
+                            <div class="glean-citation-more__list">
+                                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation("bibtex")} title={t(i18n, "citation.copyBibTeX")}>
+                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArchive" /></svg>
+                                    <span>BibTeX</span>
+                                </button>
+                                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation("apa")} title={t(i18n, "citation.copyAPA")}>
+                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanLocal" /></svg>
+                                    <span>APA</span>
+                                </button>
+                                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation("mla")} title={t(i18n, "citation.copyMLA")}>
+                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg>
+                                    <span>MLA</span>
+                                </button>
+                            </div>
+                        </details>
                         <button type="button" class="glean-btn glean-btn--ghost glean-wechat-publisher__btn" onclick={() => void copyArticleBlockRef()} title={t(i18n, "action.copyBlockRef")}>
                             <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
                             <span>{t(i18n, "action.copyBlockRef")}</span>
@@ -3235,143 +3263,175 @@ import { aiFailureKey } from "../libs/ai-feedback";
                 </div>
             {/if}
 
-            {#if (companionTab === "all" || companionTab === "outline") && (outline.length > 0 || outlineLoading)}
-                <details id={outlineTitleId} class="glean-reader__section glean-reader__section--card glean-reader__fold" aria-labelledby={outlineTitleId} bind:open={outlineOpen} ontoggle={onOutlineToggle}>
-                    <summary id={outlineTitleId} class="glean-reader__section-title">
-                        <span><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg> {t(i18n, "reader.outlineTitle")} ({outline.length})</span>
-                        {#if outline.length > 0}
-                            <div class="glean-reader__outline-head-ops">
+            {#snippet outlineOps()}
+                {#if outline.length > 0}
+                    <div class="glean-reader__outline-head-ops">
+                        <button
+                            type="button"
+                            class="glean-btn glean-btn--ghost glean-btn--xs glean-reader__slice-btn"
+                            class:glean-btn--active={outlineCopied}
+                            title={t(i18n, "reader.copyOutlineHint")}
+                            onclick={(e) => { e.preventDefault(); e.stopPropagation(); void copyOutlineMarkdown(); }}
+                        >
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href={outlineCopied ? "#iconGleanCheck" : "#iconGleanCopy"} /></svg>
+                            <span>{outlineCopied ? t(i18n, "action.copied") : t(i18n, "reader.copyOutline")}</span>
+                        </button>
+                        <button
+                            type="button"
+                            class="glean-btn glean-btn--ghost glean-btn--xs glean-reader__slice-btn"
+                            title={t(i18n, "reader.createMindmapHint")}
+                            disabled={mindmapBusy}
+                            aria-busy={mindmapBusy}
+                            onclick={(e) => { e.preventDefault(); e.stopPropagation(); void createMindmapDoc(); }}
+                        >
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg>
+                            <span>{t(i18n, "reader.createMindmap")}</span>
+                        </button>
+                        <button
+                            type="button"
+                            class="glean-btn glean-btn--ghost glean-btn--xs glean-reader__slice-btn"
+                            title={t(i18n, "docSlicing.actionBtnHint")}
+                            onclick={(e) => { e.preventDefault(); e.stopPropagation(); openSlicing(); }}
+                        >
+                            {t(i18n, "docSlicing.actionBtn")}
+                        </button>
+                    </div>
+                {/if}
+            {/snippet}
+
+            {#snippet outlineBody()}
+                {#if outline.length >= 6}
+                    <div class="glean-reader__outline-filter-box">
+                        <input
+                            class="glean-mini-input glean-reader__outline-filter"
+                            bind:value={outlineFilter}
+                            placeholder={t(i18n, "reader.outlineFilterPlaceholder")}
+                            aria-label={t(i18n, "reader.outlineFilterPlaceholder")}
+                            onkeydown={(e) => { if (e.key === "Escape" && outlineFilter) { e.stopPropagation(); outlineFilter = ""; } }}
+                        />
+                        {#if outlineFilter}
+                            <button type="button" class="glean-reader__outline-filter-clear" title={t(i18n, "library.clearFilters")} aria-label={t(i18n, "library.clearFilters")} onclick={() => { outlineFilter = ""; }}>
+                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanClose" /></svg>
+                            </button>
+                        {/if}
+                    </div>
+                {/if}
+                {#if outlineLoading}
+                    <div class="glean-reader__hint" role="status" aria-live="polite">{t(i18n, "reader.outlineLoading")}</div>
+                {:else if outlineError}
+                    <div class="glean-reader__issue" role="alert">{t(i18n, "reader.outlineFailed")}</div>
+                    <button class="glean-btn glean-btn--ghost" onclick={() => docId && void loadOutline(docId)}>{t(i18n, "reader.outlineRetry")}</button>
+                {:else if visibleOutline.length === 0}
+                    <div class="glean-reader__hint">{t(i18n, "reader.outlineEmpty")}</div>
+                {:else}
+                    <nav class="glean-reader__outline" aria-label={t(i18n, "reader.outlineTitle")}>
+                        {#each visibleOutline as item (item.id)}
+                            {#if sliceStartMap.has(item.id)}
+                                {@const slice = sliceStartMap.get(item.id)}
+                                {#if slice}
+                                    <div class="glean-reader__outline-slice-marker" role="separator">
+                                        <span class="glean-reader__outline-slice-pill">
+                                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg>
+                                            <span>{slice.title} · 约 {slice.estimatedMinutes}m</span>
+                                        </span>
+                                    </div>
+                                {/if}
+                            {/if}
+                            <div class="glean-reader__outline-row" class:glean-reader__outline-row--active={activeOutlineId === item.id}>
                                 <button
                                     type="button"
-                                    class="glean-btn glean-btn--ghost glean-btn--xs glean-reader__slice-btn"
-                                    title={t(i18n, "reader.copyOutlineHint")}
-                                    onclick={(e) => { e.preventDefault(); e.stopPropagation(); void copyOutlineMarkdown(); }}
+                                    class="glean-reader__outline-item"
+                                    class:glean-reader__outline-item--active={activeOutlineId === item.id}
+                                    style={`--glean-outline-level:${item.level}`}
+                                    title={item.title}
+                                    onclick={() => scrollToOutline(item)}
+                                >
+                                    <span class="glean-reader__outline-tag">H{item.level}</span>
+                                    <span class="glean-reader__outline-text">{item.title}</span>
+                                    {#if activeOutlineId === item.id}
+                                        <span class="glean-reader__outline-bookmark" title={t(i18n, "reading.position.title")} aria-label={t(i18n, "reading.position.title")}>
+                                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanPin" /></svg>
+                                        </span>
+                                    {/if}
+                                </button>
+                                <button
+                                    type="button"
+                                    class="glean-reader__outline-copy-ref"
+                                    title={t(i18n, "action.copyBlockRef")}
+                                    aria-label={t(i18n, "action.copyBlockRef")}
+                                    onclick={() => void copyOutlineBlockRef(item)}
                                 >
                                     <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
-                                    <span>{t(i18n, "reader.copyOutline")}</span>
-                                </button>
-                                <button
-                                    type="button"
-                                    class="glean-btn glean-btn--ghost glean-btn--xs glean-reader__slice-btn"
-                                    title={t(i18n, "reader.createMindmapHint")}
-                                    disabled={mindmapBusy}
-                                    aria-busy={mindmapBusy}
-                                    onclick={(e) => { e.preventDefault(); e.stopPropagation(); void createMindmapDoc(); }}
-                                >
-                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg>
-                                    <span>{t(i18n, "reader.createMindmap")}</span>
-                                </button>
-                                <button
-                                    type="button"
-                                    class="glean-btn glean-btn--ghost glean-btn--xs glean-reader__slice-btn"
-                                    title={t(i18n, "docSlicing.actionBtnHint")}
-                                    onclick={(e) => { e.preventDefault(); e.stopPropagation(); openSlicing(); }}
-                                >
-                                    {t(i18n, "docSlicing.actionBtn")}
                                 </button>
                             </div>
-                        {/if}
-                    </summary>
-                    {#if outline.length >= 6}
-                        <div class="glean-reader__outline-filter-box">
-                            <input
-                                class="glean-mini-input glean-reader__outline-filter"
-                                bind:value={outlineFilter}
-                                placeholder={t(i18n, "reader.outlineFilterPlaceholder")}
-                                aria-label={t(i18n, "reader.outlineFilterPlaceholder")}
-                                onkeydown={(e) => { if (e.key === "Escape" && outlineFilter) { e.stopPropagation(); outlineFilter = ""; } }}
-                            />
-                            {#if outlineFilter}
-                                <button type="button" class="glean-reader__outline-filter-clear" title={t(i18n, "library.clearFilters")} aria-label={t(i18n, "library.clearFilters")} onclick={() => { outlineFilter = ""; }}>
-                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanClose" /></svg>
-                                </button>
-                            {/if}
+                        {/each}
+                    </nav>
+                {/if}
+            {/snippet}
+
+            {#if (companionTab === "all" || companionTab === "outline") && (outline.length > 0 || outlineLoading)}
+                {#if companionTab === "all"}
+                    <details id={outlineTitleId} class="glean-reader__section glean-reader__section--card glean-reader__fold" aria-labelledby={outlineTitleId} bind:open={outlineOpen} ontoggle={onOutlineToggle}>
+                        <summary id={outlineTitleId} class="glean-reader__section-title">
+                            <span><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg> {t(i18n, "reader.outlineTitle")} ({outline.length})</span>
+                            {@render outlineOps()}
+                        </summary>
+                        {@render outlineBody()}
+                    </details>
+                {:else}
+                    <div id={outlineTitleId} class="glean-reader__section glean-reader__section--card glean-reader__tab-panel" aria-labelledby={outlineTitleId}>
+                        <div class="glean-reader__section-title glean-reader__section-title--flat">
+                            <span><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg> {t(i18n, "reader.outlineTitle")} ({outline.length})</span>
+                            {@render outlineOps()}
                         </div>
-                    {/if}
-                    {#if outlineLoading}
-                        <div class="glean-reader__hint" role="status" aria-live="polite">{t(i18n, "reader.outlineLoading")}</div>
-                    {:else if outlineError}
-                        <div class="glean-reader__issue" role="alert">{t(i18n, "reader.outlineFailed")}</div>
-                        <button class="glean-btn glean-btn--ghost" onclick={() => docId && void loadOutline(docId)}>{t(i18n, "reader.outlineRetry")}</button>
-                    {:else if visibleOutline.length === 0}
-                        <div class="glean-reader__hint">{t(i18n, "reader.outlineEmpty")}</div>
-                    {:else}
-                        <nav class="glean-reader__outline" aria-label={t(i18n, "reader.outlineTitle")}>
-                            {#each visibleOutline as item (item.id)}
-                                {#if sliceStartMap.has(item.id)}
-                                    {@const slice = sliceStartMap.get(item.id)}
-                                    {#if slice}
-                                        <div class="glean-reader__outline-slice-marker" role="separator">
-                                            <span class="glean-reader__outline-slice-pill">
-                                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg>
-                                                <span>{slice.title} · 约 {slice.estimatedMinutes}m</span>
-                                            </span>
-                                        </div>
-                                    {/if}
-                                {/if}
-                                <div class="glean-reader__outline-row" class:glean-reader__outline-row--active={activeOutlineId === item.id}>
-                                    <button
-                                        type="button"
-                                        class="glean-reader__outline-item"
-                                        class:glean-reader__outline-item--active={activeOutlineId === item.id}
-                                        style={`--glean-outline-level:${item.level}`}
-                                        title={item.title}
-                                        onclick={() => scrollToOutline(item)}
-                                    >
-                                        <span class="glean-reader__outline-tag">H{item.level}</span>
-                                        <span class="glean-reader__outline-text">{item.title}</span>
-                                        {#if activeOutlineId === item.id}
-                                            <span class="glean-reader__outline-bookmark" title={t(i18n, "reading.position.title")} aria-label={t(i18n, "reading.position.title")}>
-                                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanPin" /></svg>
-                                            </span>
-                                        {/if}
-                                    </button>
-                                    <button
-                                        type="button"
-                                        class="glean-reader__outline-copy-ref"
-                                        title={t(i18n, "action.copyBlockRef")}
-                                        aria-label={t(i18n, "action.copyBlockRef")}
-                                        onclick={() => void copyOutlineBlockRef(item)}
-                                    >
-                                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
-                                    </button>
-                                </div>
-                            {/each}
-                        </nav>
-                    {/if}
-                </details>
+                        {@render outlineBody()}
+                    </div>
+                {/if}
             {/if}
 
-            {#if companionTab === "all" || companionTab === "notes"}
-                <details id={highlightsTitleId} class="glean-reader__section glean-reader__section--card glean-reader__fold" aria-labelledby={highlightsTitleId} bind:open={highlightsOpen} ontoggle={onHighlightsToggle}>
-                    <summary id={highlightsTitleId} class="glean-reader__section-title">
-                        <span><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg> {t(i18n, "reader.highlightsTitle")} ({docHighlights.length})</span>
-                        {#if docHighlights.length > 0}
-                            <div class="glean-reader__highlights-actions">
-                                <button
-                                    type="button"
-                                    class="glean-btn glean-btn--ghost glean-btn--sm glean-reader__highlights-copy-all"
-                                    onclick={(e) => { e.stopPropagation(); void copyAllDocHighlights(); }}
-                                    title={t(i18n, "reader.copyAllHighlights")}
-                                >
-                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
-                                    {t(i18n, "reader.copyAllHighlights")}
-                                </button>
-                                <button
-                                    type="button"
-                                    class="glean-btn glean-btn--ghost glean-btn--sm glean-reader__highlights-doc-btn"
-                                    onclick={(e) => { e.stopPropagation(); void createDocFromDocHighlights(); }}
-                                    title={t(i18n, "highlight.createArticleDoc")}
-                                >
-                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg>
-                                    {t(i18n, "highlight.createArticleDoc")}
-                                </button>
-                            </div>
-                        {/if}
-                    </summary>
-                    {#if highlightsLoading}
-                        <div class="glean-reader__hint" role="status" aria-live="polite">{t(i18n, "panel.loading")}</div>
-                    {:else if docHighlights.length === 0}
+            {#snippet highlightsOps()}
+                <div class="glean-reader__highlights-actions">
+                    <button
+                        type="button"
+                        class="glean-btn glean-btn--ghost glean-btn--xs glean-reader__highlights-rescan-btn"
+                        title={t(i18n, "action.refresh")}
+                        aria-label={t(i18n, "action.refresh")}
+                        aria-busy={highlightsLoading}
+                        disabled={highlightsLoading || !docId}
+                        onclick={(e) => { e.stopPropagation(); if (docId) void loadDocHighlights(docId); }}
+                    >
+                        <svg class="glean-icon glean-icon--xs" class:glean-spin={highlightsLoading} aria-hidden="true">
+                            <use href="#iconGleanRefresh" />
+                        </svg>
+                        <span>{t(i18n, "action.refresh")}</span>
+                    </button>
+                    {#if docHighlights.length > 0}
+                        <button
+                            type="button"
+                            class="glean-btn glean-btn--ghost glean-btn--sm glean-reader__highlights-copy-all"
+                            onclick={(e) => { e.stopPropagation(); void copyAllDocHighlights(); }}
+                            title={t(i18n, "reader.copyAllHighlights")}
+                        >
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
+                            {t(i18n, "reader.copyAllHighlights")}
+                        </button>
+                        <button
+                            type="button"
+                            class="glean-btn glean-btn--ghost glean-btn--sm glean-reader__highlights-doc-btn"
+                            onclick={(e) => { e.stopPropagation(); void createDocFromDocHighlights(); }}
+                            title={t(i18n, "highlight.createArticleDoc")}
+                        >
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg>
+                            {t(i18n, "highlight.createArticleDoc")}
+                        </button>
+                    {/if}
+                </div>
+            {/snippet}
+
+            {#snippet highlightsBody()}
+                {#if highlightsLoading}
+                    <div class="glean-reader__hint" role="status" aria-live="polite">{t(i18n, "panel.loading")}</div>
+                {:else if docHighlights.length === 0}
                         <div class="glean-reader__hint">{t(i18n, "reader.highlightsEmpty")}</div>
                     {:else}
                         {#if docHighlights.length >= 4}
@@ -3444,8 +3504,18 @@ import { aiFailureKey } from "../libs/ai-feedback";
                                             <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg>
                                         </button>
                                         {#if hasCardsInstalled}
-                                            <button class="glean-op-btn glean-reader__push-cards-btn" type="button" title={t(i18n, "quoteCard.pushToCards")} aria-label={t(i18n, "quoteCard.pushToCards")} onclick={(e) => { e.stopPropagation(); void pushHighlightToCards(hl); }}>
-                                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg>
+                                            <button
+                                                class="glean-op-btn glean-reader__push-cards-btn glean-reader__pipeline-btn"
+                                                class:glean-reader__pipeline-btn--enrolled={enrolledFlashcardKeys.has(hl.id)}
+                                                type="button"
+                                                disabled={enrolledFlashcardKeys.has(hl.id)}
+                                                title={enrolledFlashcardKeys.has(hl.id) ? t(i18n, "pipeline.cardCreatedBadge") : t(i18n, "quoteCard.pushToCards")}
+                                                aria-label={enrolledFlashcardKeys.has(hl.id) ? t(i18n, "pipeline.cardCreatedBadge") : t(i18n, "quoteCard.pushToCards")}
+                                                onclick={(e) => { e.stopPropagation(); void pushHighlightToCards(hl); }}
+                                            >
+                                                <svg class="glean-icon glean-icon--xs" aria-hidden="true">
+                                                    <use href={enrolledFlashcardKeys.has(hl.id) ? "#iconGleanCheck" : "#iconGleanCard"} />
+                                                </svg>
                                             </button>
                                         {:else}
                                             <button class="glean-op-btn glean-ghost-btn" type="button" title={t(i18n, "reader.cardGhostHint")} aria-label={t(i18n, "flashcard.make")} onclick={(e) => { e.stopPropagation(); void cardFromHighlight(hl); }}>
@@ -3466,104 +3536,134 @@ import { aiFailureKey } from "../libs/ai-feedback";
                             {/each}
                         </div>
                     {/if}
-                </details>
+            {/snippet}
+
+            {#if companionTab === "all" || companionTab === "notes"}
+                {#if companionTab === "all"}
+                    <details id={highlightsTitleId} class="glean-reader__section glean-reader__section--card glean-reader__fold" aria-labelledby={highlightsTitleId} bind:open={highlightsOpen} ontoggle={onHighlightsToggle}>
+                        <summary id={highlightsTitleId} class="glean-reader__section-title">
+                            <span><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg> {t(i18n, "reader.highlightsTitle")} ({docHighlights.length})</span>
+                            {@render highlightsOps()}
+                        </summary>
+                        {@render highlightsBody()}
+                    </details>
+                {:else}
+                    <div id={highlightsTitleId} class="glean-reader__section glean-reader__section--card glean-reader__tab-panel" aria-labelledby={highlightsTitleId}>
+                        <div class="glean-reader__section-title glean-reader__section-title--flat">
+                            <span><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg> {t(i18n, "reader.highlightsTitle")} ({docHighlights.length})</span>
+                            {@render highlightsOps()}
+                        </div>
+                        {@render highlightsBody()}
+                    </div>
+                {/if}
             {/if}
 
-            {#if companionTab === "all" || companionTab === "tools"}
-                <details id={moreToolsId} class="glean-reader__section glean-reader__section--utility glean-reader__more-tools glean-reader__fold" aria-labelledby={moreToolsTitleId} bind:open={moreToolsOpen}>
-                    <summary id={moreToolsTitleId} class="glean-reader__section-title">{t(i18n, "reader.moreTools")}</summary>
-                    <div class="glean-reader__more-tools-body">
-                        <div class="glean-reader__section glean-reader__section--utility glean-reader__recent" aria-labelledby={recentTitleId}>
-                            <div id={recentTitleId} class="glean-reader__section-title" role="heading" aria-level="3">{t(i18n, "reader.recentTitle")}</div>
-                            <div class="glean-reader__recent-list">
-                                {#each recentReadings as item (item.id)}
-                                    <button
-                                        class="glean-reader__recent-item"
-                                        class:glean-reader__recent-item--current={item.id === docId}
-                                        aria-current={item.id === docId ? "page" : undefined}
-                                        title={item.title || item.id}
-                                        onclick={() => openRecentReading(item)}
-                                    >{item.title || item.id}</button>
-                                {:else}
-                                    <div class="glean-reader__hint">{t(i18n, "reader.recentEmpty")}</div>
-                                {/each}
+            {#snippet toolsBody()}
+                <div class="glean-reader__more-tools-body">
+                    <div class="glean-reader__section glean-reader__section--utility glean-reader__recent" aria-labelledby={recentTitleId}>
+                        <div id={recentTitleId} class="glean-reader__section-title" role="heading" aria-level="3">{t(i18n, "reader.recentTitle")}</div>
+                        <div class="glean-reader__recent-list">
+                            {#each recentReadings as item (item.id)}
+                                <button
+                                    class="glean-reader__recent-item"
+                                    class:glean-reader__recent-item--current={item.id === docId}
+                                    aria-current={item.id === docId ? "page" : undefined}
+                                    title={item.title || item.id}
+                                    onclick={() => openRecentReading(item)}
+                                >{item.title || item.id}</button>
+                            {:else}
+                                <div class="glean-reader__hint">{t(i18n, "reader.recentEmpty")}</div>
+                            {/each}
+                        </div>
+                    </div>
+                    {#if context?.id === docId}<AuthorEditor {facade} {docId} onSaved={() => { if (docId) return loadContext(docId); }} />{/if}
+                    {#if context && speechSupported}
+                        <div class="glean-reader__section glean-reader__section--utility glean-reader__speech" aria-labelledby={speechTitleId}>
+                            <div id={speechTitleId} class="glean-reader__section-title" role="heading" aria-level="3">{t(i18n, "reader.speechTitle")}</div>
+                            <div class="glean-reader__speech-rate">
+                                <label for={speechRateId}>{t(i18n, "reader.speechRate")}</label>
+                                <input
+                                    id={speechRateId}
+                                    type="range"
+                                    min="0.75"
+                                    max="1.5"
+                                    step="0.25"
+                                    value={speechRate}
+                                    aria-label={t(i18n, "reader.speechRate")}
+                                    oninput={(event) => setSpeechRate(Number((event.currentTarget as HTMLInputElement).value))}
+                                />
+                                <span>{speechRate}×</span>
+                            </div>
+                            <div class="glean-reader__ops">
+                                {#if excerpt?.text}
+                                    <button class="glean-btn glean-btn--ghost" disabled={speechState === "playing" || speechState === "paused"} onclick={() => startSpeech("selection")}>
+                                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg>
+                                        <span>{t(i18n, "reader.speechSelection")}</span>
+                                    </button>
+                                {/if}
+                                <button class="glean-btn glean-btn--ghost" disabled={speechState === "playing" || speechState === "paused"} onclick={() => startSpeech("full")}>
+                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg>
+                                    <span>{t(i18n, "reader.speechFull")}</span>
+                                </button>
+                                {#if speechState === "playing" || speechState === "paused"}
+                                    <button class="glean-btn glean-btn--ghost" onclick={toggleSpeechPause}>
+                                        {speechState === "playing" ? t(i18n, "reader.speechPause") : t(i18n, "reader.speechResume")}
+                                    </button>
+                                    <button class="glean-btn glean-btn--ghost" onclick={stopSpeech}>{t(i18n, "reader.speechStop")}</button>
+                                {:else if speechChunks.length > 0 && speechChunkIndex < speechChunks.length}
+                                    <button class="glean-btn glean-btn--ghost" onclick={() => startSpeech(speechScope ?? "full", true)}>
+                                        {t(i18n, "reader.speechContinue")}
+                                    </button>
+                                {/if}
                             </div>
                         </div>
-                        {#if context?.id === docId}<AuthorEditor {facade} {docId} onSaved={() => { if (docId) return loadContext(docId); }} />{/if}
-                        {#if context && speechSupported}
-                            <div class="glean-reader__section glean-reader__section--utility glean-reader__speech" aria-labelledby={speechTitleId}>
-                                <div id={speechTitleId} class="glean-reader__section-title" role="heading" aria-level="3">{t(i18n, "reader.speechTitle")}</div>
-                                <div class="glean-reader__speech-rate">
-                                    <label for={speechRateId}>{t(i18n, "reader.speechRate")}</label>
-                                    <input
-                                        id={speechRateId}
-                                        type="range"
-                                        min="0.75"
-                                        max="1.5"
-                                        step="0.25"
-                                        value={speechRate}
-                                        aria-label={t(i18n, "reader.speechRate")}
-                                        oninput={(event) => setSpeechRate(Number((event.currentTarget as HTMLInputElement).value))}
-                                    />
-                                    <span>{speechRate}×</span>
-                                </div>
-                                <div class="glean-reader__ops">
-                                    {#if excerpt?.text}
-                                        <button class="glean-btn glean-btn--ghost" disabled={speechState === "playing" || speechState === "paused"} onclick={() => startSpeech("selection")}>
-                                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg>
-                                            <span>{t(i18n, "reader.speechSelection")}</span>
-                                        </button>
-                                    {/if}
-                                    <button class="glean-btn glean-btn--ghost" disabled={speechState === "playing" || speechState === "paused"} onclick={() => startSpeech("full")}>
-                                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg>
-                                        <span>{t(i18n, "reader.speechFull")}</span>
-                                    </button>
-                                    {#if speechState === "playing" || speechState === "paused"}
-                                        <button class="glean-btn glean-btn--ghost" onclick={toggleSpeechPause}>
-                                            {speechState === "playing" ? t(i18n, "reader.speechPause") : t(i18n, "reader.speechResume")}
-                                        </button>
-                                        <button class="glean-btn glean-btn--ghost" onclick={stopSpeech}>{t(i18n, "reader.speechStop")}</button>
-                                    {:else if speechChunks.length > 0 && speechChunkIndex < speechChunks.length}
-                                        <button class="glean-btn glean-btn--ghost" onclick={() => startSpeech(speechScope ?? "full", true)}>
-                                            {t(i18n, "reader.speechContinue")}
-                                        </button>
-                                    {/if}
-                                </div>
-                            </div>
-                        {/if}
-                        <details id={appearancePanelId} class="glean-reader__section glean-reader__section--utility glean-reader__appearance glean-reader__fold" aria-labelledby={appearanceTitleId} bind:open={appearanceOpen}>
-                            <summary id={appearanceTitleId} class="glean-reader__section-title">{t(i18n, "reader.appearanceTitle")}</summary>
-                            <label>{t(i18n, "reader.appearanceFontSize")}
-                                <select class="b3-select" disabled={appearanceBusy} value={readerAppearance.fontSize} onchange={(event) => void updateAppearance("fontSize", (event.currentTarget as HTMLSelectElement).value)}>
-                                    <option value="small">{t(i18n, "reader.appearanceSmall")}</option>
-                                    <option value="normal">{t(i18n, "reader.appearanceNormal")}</option>
-                                    <option value="large">{t(i18n, "reader.appearanceLarge")}</option>
-                                </select>
-                            </label>
-                            <label>{t(i18n, "reader.appearanceLineHeight")}
-                                <select class="b3-select" disabled={appearanceBusy} value={readerAppearance.lineHeight} onchange={(event) => void updateAppearance("lineHeight", (event.currentTarget as HTMLSelectElement).value)}>
-                                    <option value="compact">{t(i18n, "reader.appearanceCompact")}</option>
-                                    <option value="normal">{t(i18n, "reader.appearanceNormal")}</option>
-                                    <option value="relaxed">{t(i18n, "reader.appearanceRelaxed")}</option>
-                                </select>
-                            </label>
-                            <label>{t(i18n, "reader.appearanceWidth")}
-                                <select class="b3-select" disabled={appearanceBusy} value={readerAppearance.width} onchange={(event) => void updateAppearance("width", (event.currentTarget as HTMLSelectElement).value)}>
-                                    <option value="narrow">{t(i18n, "reader.appearanceNarrow")}</option>
-                                    <option value="normal">{t(i18n, "reader.appearanceNormal")}</option>
-                                    <option value="wide">{t(i18n, "reader.appearanceWide")}</option>
-                                </select>
-                            </label>
-                            <label>{t(i18n, "reader.appearanceTheme")}
-                                <select class="b3-select" disabled={appearanceBusy} value={readerAppearance.theme} onchange={(event) => void updateAppearance("theme", (event.currentTarget as HTMLSelectElement).value)}>
-                                    <option value="follow">{t(i18n, "reader.appearanceFollow")}</option>
-                                    <option value="paper">{t(i18n, "reader.appearancePaper")}</option>
-                                    <option value="eye">{t(i18n, "reader.appearanceEye")}</option>
-                                </select>
-                            </label>
-                        </details>
+                    {/if}
+                    <details id={appearancePanelId} class="glean-reader__section glean-reader__section--utility glean-reader__appearance glean-reader__fold" aria-labelledby={appearanceTitleId} bind:open={appearanceOpen}>
+                        <summary id={appearanceTitleId} class="glean-reader__section-title">{t(i18n, "reader.appearanceTitle")}</summary>
+                        <label>{t(i18n, "reader.appearanceFontSize")}
+                            <select class="b3-select" disabled={appearanceBusy} value={readerAppearance.fontSize} onchange={(event) => void updateAppearance("fontSize", (event.currentTarget as HTMLSelectElement).value)}>
+                                <option value="small">{t(i18n, "reader.appearanceSmall")}</option>
+                                <option value="normal">{t(i18n, "reader.appearanceNormal")}</option>
+                                <option value="large">{t(i18n, "reader.appearanceLarge")}</option>
+                            </select>
+                        </label>
+                        <label>{t(i18n, "reader.appearanceLineHeight")}
+                            <select class="b3-select" disabled={appearanceBusy} value={readerAppearance.lineHeight} onchange={(event) => void updateAppearance("lineHeight", (event.currentTarget as HTMLSelectElement).value)}>
+                                <option value="compact">{t(i18n, "reader.appearanceCompact")}</option>
+                                <option value="normal">{t(i18n, "reader.appearanceNormal")}</option>
+                                <option value="relaxed">{t(i18n, "reader.appearanceRelaxed")}</option>
+                            </select>
+                        </label>
+                        <label>{t(i18n, "reader.appearanceWidth")}
+                            <select class="b3-select" disabled={appearanceBusy} value={readerAppearance.width} onchange={(event) => void updateAppearance("width", (event.currentTarget as HTMLSelectElement).value)}>
+                                <option value="narrow">{t(i18n, "reader.appearanceNarrow")}</option>
+                                <option value="normal">{t(i18n, "reader.appearanceNormal")}</option>
+                                <option value="wide">{t(i18n, "reader.appearanceWide")}</option>
+                            </select>
+                        </label>
+                        <label>{t(i18n, "reader.appearanceTheme")}
+                            <select class="b3-select" disabled={appearanceBusy} value={readerAppearance.theme} onchange={(event) => void updateAppearance("theme", (event.currentTarget as HTMLSelectElement).value)}>
+                                <option value="follow">{t(i18n, "reader.appearanceFollow")}</option>
+                                <option value="paper">{t(i18n, "reader.appearancePaper")}</option>
+                                <option value="eye">{t(i18n, "reader.appearanceEye")}</option>
+                            </select>
+                        </label>
+                    </details>
+                </div>
+            {/snippet}
+
+            {#if companionTab === "all" || companionTab === "tools"}
+                {#if companionTab === "all"}
+                    <details id={moreToolsId} class="glean-reader__section glean-reader__section--utility glean-reader__more-tools glean-reader__fold" aria-labelledby={moreToolsTitleId} bind:open={moreToolsOpen}>
+                        <summary id={moreToolsTitleId} class="glean-reader__section-title">{t(i18n, "reader.moreTools")}</summary>
+                        {@render toolsBody()}
+                    </details>
+                {:else}
+                    <div id={moreToolsId} class="glean-reader__section glean-reader__section--utility glean-reader__more-tools glean-reader__tab-panel" aria-labelledby={moreToolsTitleId}>
+                        <div class="glean-reader__section-title glean-reader__section-title--flat">{t(i18n, "reader.moreTools")}</div>
+                        {@render toolsBody()}
                     </div>
-                </details>
+                {/if}
             {/if}
             {#if context}
                 {#if docId}

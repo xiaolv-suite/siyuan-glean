@@ -32,6 +32,26 @@
         color: inherit;
     }
 
+    &__clear {
+        width: 18px;
+        height: 18px;
+        padding: 0;
+        display: inline-grid;
+        place-items: center;
+        border-radius: var(--glean-radius-pill);
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        color: var(--b3-theme-on-surface);
+        opacity: 0.6;
+        transition: opacity var(--glean-duration-fast) var(--glean-ease-enter), transform var(--glean-duration-fast) var(--glean-ease-enter);
+
+        &:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+    }
+
     &__count {
         min-width: 48px;
         text-align: center;

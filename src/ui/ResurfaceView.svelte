@@ -1281,15 +1281,20 @@ async function exportPicksToDailyNote(): Promise<void> {
                                 <button class="glean-surf-act" title={t(i18n, "citation.copyGBT") + " (C)"} aria-label={t(i18n, "citation.copyGBT")} onclick={() => void copyPickCitation(pick, "gbt")}>
                                     <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg> <span>{t(i18n, "citation.copyGBT")}</span>
                                 </button>
-                                <button class="glean-surf-act" title={t(i18n, "citation.copyBibTeX") + " (Shift+C)"} aria-label={t(i18n, "citation.copyBibTeX")} onclick={() => void copyPickCitation(pick, "bibtex")}>
-                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArchive" /></svg> <span>BibTeX</span>
-                                </button>
-                                <button class="glean-surf-act" title={t(i18n, "citation.copyAPA")} aria-label={t(i18n, "citation.copyAPA")} onclick={() => void copyPickCitation(pick, "apa")}>
-                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanLocal" /></svg> <span>APA</span>
-                                </button>
-                                <button class="glean-surf-act" title={t(i18n, "citation.copyMLA")} aria-label={t(i18n, "citation.copyMLA")} onclick={() => void copyPickCitation(pick, "mla")}>
-                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg> <span>MLA</span>
-                                </button>
+                                <details class="glean-citation-more" data-keep-popover-open>
+                                    <summary class="glean-surf-act" data-keep-popover-open>BibTeX / APA / MLA</summary>
+                                    <div class="glean-citation-more__list">
+                                        <button class="glean-surf-act" title={t(i18n, "citation.copyBibTeX") + " (Shift+C)"} aria-label={t(i18n, "citation.copyBibTeX")} onclick={() => void copyPickCitation(pick, "bibtex")}>
+                                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArchive" /></svg> <span>BibTeX</span>
+                                        </button>
+                                        <button class="glean-surf-act" title={t(i18n, "citation.copyAPA")} aria-label={t(i18n, "citation.copyAPA")} onclick={() => void copyPickCitation(pick, "apa")}>
+                                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanLocal" /></svg> <span>APA</span>
+                                        </button>
+                                        <button class="glean-surf-act" title={t(i18n, "citation.copyMLA")} aria-label={t(i18n, "citation.copyMLA")} onclick={() => void copyPickCitation(pick, "mla")}>
+                                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg> <span>MLA</span>
+                                        </button>
+                                    </div>
+                                </details>
                             </div>
                         </details>
                     </div>

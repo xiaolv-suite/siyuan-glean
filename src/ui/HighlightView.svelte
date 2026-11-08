@@ -410,6 +410,7 @@ async function pushToCards(item: HighlightItem): Promise<void> {
             tags: item.tags,
         });
         if (res.ok) {
+            enrolledFlashcardIds.add(item.id);
             showMessage(t(i18n, "reader.extractedToCards"), 2500);
         } else {
             void card(item);
@@ -897,7 +898,7 @@ function focusHighlightRow(id: string): void {
             {/if}
             <label>{t(i18n, "library.sort")}<select bind:value={sort} onchange={() => page = 1}><option value="id">{t(i18n, "action.sortTime")}</option><option value="title">{t(i18n, "library.sortTitle")}</option><option value="site">{t(i18n, "library.filterSite")}</option></select></label>
             <button class="glean-filter-dir" aria-pressed={direction === "asc"} aria-label={`${t(i18n, "library.toggleDirection")}: ${t(i18n, direction === "asc" ? "library.directionAscending" : "library.directionDescending")}`} title={`${t(i18n, "library.toggleDirection")}: ${t(i18n, direction === "asc" ? "library.directionAscending" : "library.directionDescending")}`} onclick={() => { direction = direction === "asc" ? "desc" : "asc"; page = 1; }}><span class="glean-filter-dir__icon" aria-hidden="true"><svg class="glean-icon glean-icon--xs"><use href={direction === "asc" ? "#iconGleanArrowUp" : "#iconGleanArrowDown"} /></svg></span><span class="glean-filter-dir__label">{t(i18n, "library.toggleDirection")}</span></button>
-            <button onclick={clearFilters}>{t(i18n, "library.clearFilters")}</button>
+            <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm" onclick={clearFilters}>{t(i18n, "library.clearFilters")}</button>
         </div>
     </details>
     {#if loading && items.length === 0}
@@ -910,7 +911,7 @@ function focusHighlightRow(id: string): void {
         </div>
     {/if}
     {#if loadError}
-        <div class="glean-highlights__error" role="alert"><p>{loadError}</p><button disabled={loading} onclick={refresh}>{t(i18n, "action.retry")}</button></div>
+        <div class="glean-highlights__error" role="alert"><p>{loadError}</p><button type="button" class="glean-btn glean-btn--ghost glean-btn--sm" disabled={loading} onclick={refresh}>{t(i18n, "action.retry")}</button></div>
     {/if}
     <div class="glean-highlights__tools glean-highlights__tools--selection" class:glean-highlights__tools--has-selection={selected.length > 0}>
         <div class="glean-highlights__selection-actions" role="group" aria-label={t(i18n, "action.selected")}>
@@ -949,9 +950,9 @@ function focusHighlightRow(id: string): void {
             <p>{session.hpath}</p>
             <pre>{session.markdown}</pre>
             <div class="glean-highlights__tools">
-                {#if session.state === "ready" || session.state === "created"}<button disabled={exportBusy} onclick={() => void save()}>{t(i18n, session.state === "created" ? "highlight.retryMark" : "highlight.confirm")}</button>{/if}
-                {#if session.createdDocId}<button onclick={() => openDoc(session!.createdDocId)}>{t(i18n, "action.openDoc")}</button>{/if}
-                <button disabled={exportBusy} onclick={() => { session = null; exportError = ""; exportStatus = ""; }}>{t(i18n, "action.close")}</button>
+                {#if session.state === "ready" || session.state === "created"}<button type="button" class="glean-btn glean-btn--pri glean-btn--sm" disabled={exportBusy} onclick={() => void save()}>{t(i18n, session.state === "created" ? "highlight.retryMark" : "highlight.confirm")}</button>{/if}
+                {#if session.createdDocId}<button type="button" class="glean-btn glean-btn--ghost glean-btn--sm" onclick={() => openDoc(session!.createdDocId)}>{t(i18n, "action.openDoc")}</button>{/if}
+                <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm" disabled={exportBusy} onclick={() => { session = null; exportError = ""; exportStatus = ""; }}>{t(i18n, "action.close")}</button>
             </div>
         </section>
     {/if}

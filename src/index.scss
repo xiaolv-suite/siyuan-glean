@@ -6372,6 +6372,31 @@ mark.glean-search-highlight {
     }
 }
 
+.glean-kanban__filter-notice {
+    display: flex;
+    align-items: center;
+    gap: var(--glean-space-2);
+    padding: var(--glean-space-1-5) var(--glean-space-3);
+    margin: 0 var(--glean-space-3) var(--glean-space-1-5);
+    background: color-mix(in srgb, var(--glean-color-action) 8%, var(--b3-theme-surface));
+    border: 1px solid color-mix(in srgb, var(--glean-color-action) 22%, transparent);
+    border-radius: var(--glean-radius-pill);
+    font-size: var(--glean-text-xs);
+    color: var(--b3-theme-on-surface);
+
+    .glean-linkish {
+        margin-left: auto;
+        color: var(--glean-color-action);
+        font-weight: var(--glean-weight-600);
+        cursor: pointer;
+        text-decoration: underline;
+
+        &:hover {
+            opacity: 0.8;
+        }
+    }
+}
+
 /* 看板（仅桌面画布；UI-STANDARD §5.3） */
 .glean-kanban {
     flex: 1;
@@ -13671,7 +13696,7 @@ body.b3-theme-dark .glean-panel--mobile,
 }
 
 .glean-reader__toolbar-title {
-    max-width: 260px;
+    max-width: min(560px, 46vw);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -13684,6 +13709,13 @@ body.b3-theme-dark .glean-panel--mobile,
     font-size: 11px;
     opacity: 0.65;
     white-space: nowrap;
+}
+
+@media (max-width: 960px) {
+    .glean-reader__toolbar-zen,
+    .glean-reader__toolbar-fav {
+        display: none !important;
+    }
 }
 
 /* 弹出式外观排版面板 */
@@ -13728,6 +13760,29 @@ body.b3-theme-dark .glean-panel--mobile,
     border-left: 1px solid var(--glean-border-soft);
     background: var(--b3-theme-background);
     overflow: hidden;
+    container-type: inline-size;
+    container-name: glean-reader-side;
+}
+
+@container glean-reader-side (max-width: 320px) {
+    .glean-reader__side-nav-btn {
+        padding: 4px 6px;
+        gap: 0;
+
+        span {
+            display: none;
+        }
+    }
+}
+
+.glean-reader__section-title--flat {
+    cursor: default;
+    user-select: text;
+    list-style: none;
+
+    &::-webkit-details-marker {
+        display: none;
+    }
 }
 
 .glean-reader__side-nav {

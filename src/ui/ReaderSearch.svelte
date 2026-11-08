@@ -120,6 +120,17 @@
             oninput={onQueryInput}
             onkeydown={onKeyDown}
         />
+        {#if searchState.keyword}
+            <button
+                type="button"
+                class="glean-reader-search__clear"
+                title={t(i18n, "panel.searchClear")}
+                aria-label={t(i18n, "panel.searchClear")}
+                onclick={() => { controller.search(""); focusInput(); }}
+            >
+                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanClose" /></svg>
+            </button>
+        {/if}
         <span
             class="glean-reader-search__count"
             class:glean-reader-search__count--empty={searchState.keyword.trim().length > 0 && searchState.totalMatches === 0}

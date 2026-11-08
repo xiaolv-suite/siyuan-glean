@@ -3922,6 +3922,13 @@ $effect(() => {
                 <span>{t(i18n, "panel.loading")}</span>
             </div>
         {:else if isTabCanvas && layoutMode === "kanban"}
+            {#if filterChips.length > 0}
+                <div class="glean-kanban__filter-notice" role="status">
+                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSearch" /></svg>
+                    <span>{t(i18n, "library.filteredNotice", { count: totalKanbanCount })}</span>
+                    <button type="button" class="glean-linkish" onclick={clearFilters}>{t(i18n, "library.clearFilters")}</button>
+                </div>
+            {/if}
             <div class="glean-kanban">
                 {#each visibleKanbanCols as col (col.status)}
                     <div
