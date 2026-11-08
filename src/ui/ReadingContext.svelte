@@ -38,7 +38,7 @@
     let loadError = $state(false);
     let busy = $state(false);
     let maintenanceOpen = $state(false);
-    let pillMode = $state(false);
+    let pillMode = $state(untrack(() => Boolean(facade.isMobile)));
 
     function togglePillMode(): void {
         pillMode = !pillMode;

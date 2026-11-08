@@ -302,12 +302,32 @@ test("Mobile Spec v1: 手机端自有面板唤起走全屏 Dialog (100vw/100dvh 
     const dialog = read("src/libs/dialog.ts");
     const styles = read("src/index.scss");
     assert.match(index, /openMobileWorkbenchSingleton/);
-    assert.match(index, /containerClass:\s*"glean-tab-root glean-mobile-fullscreen-dialog"/);
+    assert.match(index, /containerClass:\s*"glean-mobile-fullscreen-dialog"/);
+    assert.doesNotMatch(index, /glean-tab-root\s+glean-mobile-fullscreen-dialog/);
+    assert.match(dialog, /glean-dialog--fullscreen/);
+    assert.match(dialog, /header\.style\.setProperty\("display",\s*"none",\s*"important"\)/);
+    assert.match(dialog, /dialogBody\.style\.setProperty\("padding",\s*"0",\s*"important"\)/);
     assert.match(dialog, /args\.width === "100vw" \|\| args\.height === "100dvh"/);
     assert.match(dialog, /diffY > 70 && diffY > diffX \* 1\.5 && touchStartY < 120/);
     assert.match(styles, /\.glean-mobile-fullscreen-dialog\s*\{[\s\S]*width:\s*100vw[\s\S]*height:\s*100dvh/);
     assert.match(styles, /env\(safe-area-inset-top/);
     assert.match(styles, /touch-action:\s*manipulation/);
+});
+
+test("Mobile Fix: 切断 isTabCanvas 误触发、横幅移入列表滚动区、软键盘隐藏底栏与 ReadingContext 默认胶囊态", () => {
+    const dock = read("src/ui/DockPanel.svelte");
+    const readingContext = read("src/ui/ReadingContext.svelte");
+    const highlightView = read("src/ui/HighlightView.svelte");
+    const styles = read("src/index.scss");
+
+    assert.match(dock, /initialView\?:\s*string/);
+    assert.match(dock, /if \(facade\.isMobile\)\s*\{\s*isTabCanvas = false;/);
+    assert.match(dock, /\{#if !facade\.isMobile && isTabCanvas\}\s*<div class="glean-libbar">/);
+    assert.match(dock, /class="glean-mobile-topbar__close"/);
+    assert.match(dock, /<div class="glean-list">\s*\{#if facade\.isMobile\}\s*<div class="glean-mobile-list-banners">/);
+    assert.match(styles, /\.glean-panel--mobile\[data-glean-keyboard-open\][\s\S]*?\.glean-mobile-nav\s*\{\s*display:\s*none\s*!important;/);
+    assert.match(readingContext, /let pillMode = \$state\(untrack\(\(\) => Boolean\(facade\.isMobile\)\)\)/);
+    assert.match(highlightView, /class="glean-highlights__export-more"/);
 });
 
 test("Mobile Spec v1: 手机阅读注入五态快捷悬浮条 (≥44px、毛玻璃、safe-area、单手流转、触感)", () => {

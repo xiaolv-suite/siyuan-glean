@@ -819,7 +819,7 @@ function focusHighlightRow(id: string): void {
 
 <div class="glean-panel glean-highlights" tabindex="-1" bind:this={rootEl} aria-busy={loading || exportBusy} aria-labelledby={titleId}>
     <div class="glean-highlights__head">
-        <div>
+        <div class:glean-sr-only={facade.isMobile}>
             <h2 id={titleId} class="glean-highlights__title">{t(i18n, "highlight.title")}</h2>
             <p class="glean-highlights__subtitle">{scope === "current" ? t(i18n, "highlight.current") : t(i18n, "highlight.allLibrary")}</p>
         </div>
@@ -923,17 +923,22 @@ function focusHighlightRow(id: string): void {
         </div>
         <div class="glean-highlights__export-actions" role="group" aria-label={t(i18n, "highlight.exportTitle")} style:display={selected.length > 0 ? "flex" : "none"}>
             <button class="glean-btn glean-btn--ghost glean-btn--sm" disabled={loading || exportBusy || !selected.length} onclick={() => void runExport("copy")}>{t(i18n, "highlight.copy")}</button>
-            <button class="glean-btn glean-btn--ghost glean-btn--sm" disabled={loading || exportBusy || !selected.length} onclick={() => void copySelectedHighlightBlockRefs()} title={t(i18n, "action.copyBlockRef")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg> <span>{t(i18n, "action.copyBlockRef")}</span></button>
-            <div class="glean-citation-group" role="group" aria-label={t(i18n, "citation.formatGroup")}>
-                <button class="glean-btn glean-btn--ghost glean-btn--sm" disabled={loading || exportBusy || !selected.length} onclick={() => void copySelectedHighlightCitations("gbt")} title={t(i18n, "citation.copyGBT")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg> <span>{t(i18n, "citation.copyGBT")}</span></button>
-                <button class="glean-btn glean-btn--ghost glean-btn--sm" disabled={loading || exportBusy || !selected.length} onclick={() => void copySelectedHighlightCitations("bibtex")} title={t(i18n, "citation.copyBibTeX")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArchive" /></svg> <span>BibTeX</span></button>
-                <button class="glean-btn glean-btn--ghost glean-btn--sm" disabled={loading || exportBusy || !selected.length} onclick={() => void copySelectedHighlightCitations("apa")} title={t(i18n, "citation.copyAPA")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanLocal" /></svg> <span>APA</span></button>
-                <button class="glean-btn glean-btn--ghost glean-btn--sm" disabled={loading || exportBusy || !selected.length} onclick={() => void copySelectedHighlightCitations("mla")} title={t(i18n, "citation.copyMLA")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg> <span>MLA</span></button>
-            </div>
-            <button class="glean-btn glean-btn--ghost glean-btn--sm" disabled={loading || exportBusy || !selected.length} onclick={() => void runExport("csv")}>{t(i18n, "highlight.csv")}</button>
-            <button class="glean-btn glean-btn--ghost glean-btn--sm" disabled={loading || exportBusy || !selected.length} onclick={() => void runExport("markdown")}>{t(i18n, "highlight.markdown")}</button>
-            <button class="glean-btn glean-btn--ghost glean-btn--sm glean-highlights__zettel-btn" disabled={loading || exportBusy || !selected.length} onclick={() => void exportColorCardsZettelkasten()}>{t(i18n, "highlight.exportZettel")}</button>
             <button class="glean-btn glean-btn--pri glean-btn--sm glean-highlights__preview-action" disabled={loading || exportBusy || !selected.length || !!session} onclick={() => void runExport("preview")}>{t(i18n, "highlight.preview")}</button>
+            <details class="glean-highlights__export-more" open={!facade.isMobile}>
+                <summary class="glean-btn glean-btn--ghost glean-btn--sm glean-highlights__export-more-summary">{t(i18n, "library.moreActions")}</summary>
+                <div class="glean-highlights__export-more-body">
+                    <button class="glean-btn glean-btn--ghost glean-btn--sm" disabled={loading || exportBusy || !selected.length} onclick={() => void copySelectedHighlightBlockRefs()} title={t(i18n, "action.copyBlockRef")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg> <span>{t(i18n, "action.copyBlockRef")}</span></button>
+                    <div class="glean-citation-group" role="group" aria-label={t(i18n, "citation.formatGroup")}>
+                        <button class="glean-btn glean-btn--ghost glean-btn--sm" disabled={loading || exportBusy || !selected.length} onclick={() => void copySelectedHighlightCitations("gbt")} title={t(i18n, "citation.copyGBT")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg> <span>{t(i18n, "citation.copyGBT")}</span></button>
+                        <button class="glean-btn glean-btn--ghost glean-btn--sm" disabled={loading || exportBusy || !selected.length} onclick={() => void copySelectedHighlightCitations("bibtex")} title={t(i18n, "citation.copyBibTeX")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArchive" /></svg> <span>BibTeX</span></button>
+                        <button class="glean-btn glean-btn--ghost glean-btn--sm" disabled={loading || exportBusy || !selected.length} onclick={() => void copySelectedHighlightCitations("apa")} title={t(i18n, "citation.copyAPA")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanLocal" /></svg> <span>APA</span></button>
+                        <button class="glean-btn glean-btn--ghost glean-btn--sm" disabled={loading || exportBusy || !selected.length} onclick={() => void copySelectedHighlightCitations("mla")} title={t(i18n, "citation.copyMLA")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg> <span>MLA</span></button>
+                    </div>
+                    <button class="glean-btn glean-btn--ghost glean-btn--sm" disabled={loading || exportBusy || !selected.length} onclick={() => void runExport("csv")}>{t(i18n, "highlight.csv")}</button>
+                    <button class="glean-btn glean-btn--ghost glean-btn--sm" disabled={loading || exportBusy || !selected.length} onclick={() => void runExport("markdown")}>{t(i18n, "highlight.markdown")}</button>
+                    <button class="glean-btn glean-btn--ghost glean-btn--sm glean-highlights__zettel-btn" disabled={loading || exportBusy || !selected.length} onclick={() => void exportColorCardsZettelkasten()}>{t(i18n, "highlight.exportZettel")}</button>
+                </div>
+            </details>
         </div>
     </div>
     {#if exportError}

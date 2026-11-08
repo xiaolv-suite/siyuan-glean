@@ -56,10 +56,12 @@ import { applySavedView, createSavedView, deleteSavedView, displayTagAlias, gove
 interface Props {
     facade: GleanFacade;
     initialPreviewId?: string;
+    initialView?: string;
     tabId?: string;
+    onClose?: () => void;
 }
 
-let { facade, initialPreviewId = "", tabId = "" }: Props = $props();
+let { facade, initialPreviewId = "", initialView = "", tabId = "", onClose }: Props = $props();
 
 const i18n = $derived(facade.i18n);
 let currentTime = $state(new Date());
@@ -85,7 +87,15 @@ function syncDayClock(): void {
 }
 
 type PanelView = "resurface" | "library" | "stats" | "highlights";
-let view = $state<PanelView>("resurface");
+
+function resolveInitialPanelView(raw?: string): PanelView | null {
+    if (raw === "resurface" || raw === "library" || raw === "stats" || raw === "highlights") return raw;
+    if (raw === "home") return "resurface";
+    return null;
+}
+
+const explicitInitialView = untrack(() => resolveInitialPanelView(initialView));
+let view = $state<PanelView>(explicitInitialView ?? "resurface");
 let loading = $state(true);
 let quickCaptureBusy = $state(false);
 let loadError = $state(false);
@@ -301,7 +311,7 @@ let savedViewName = $state("");
 let prefsLoading = $state(true);
 let prefsError = $state(false);
 let prefsLoadFailed = $state(false);
-let prefsUserTouched = false;
+let prefsUserTouched = Boolean(explicitInitialView);
 let applyingPrefs = false;
 let governanceMuted = $state<GovernanceMuted>({ quota: "", stale: "", candidates: "" });
 
@@ -376,13 +386,22 @@ const mobileTitleKey = $derived(views.find((item) => item.key === view)?.labelKe
 type MobileTaskState = "loading" | "error" | "offline" | "ready";
 const mobileTaskState = $derived<MobileTaskState>(loading ? "loading" : offline ? "offline" : loadError ? "error" : "ready");
 
+function closeMobileHost() {
+    mobileMoreOpen = false;
+    if (onClose) {
+        onClose();
+        return;
+    }
+    const dialogRoot = rootEl?.closest(".b3-dialog__container")?.parentElement;
+    const closeBtn = dialogRoot?.querySelector<HTMLButtonElement>(".b3-dialog__close");
+    if (closeBtn) {
+        closeBtn.click();
+    }
+}
+
 function mobileBack() {
     if (view === "resurface") {
-        const dialogRoot = rootEl?.closest(".b3-dialog__container")?.parentElement;
-        const closeBtn = dialogRoot?.querySelector<HTMLButtonElement>(".b3-dialog__close");
-        if (closeBtn) {
-            closeBtn.click();
-        }
+        closeMobileHost();
         return;
     }
     view = "resurface";
@@ -1634,6 +1653,18 @@ onMount(() => {
 });
 
 $effect(() => {
+    const requestedView = resolveInitialPanelView(initialView);
+    if (requestedView) {
+        prefsUserTouched = true;
+        view = requestedView;
+    }
+});
+
+$effect(() => {
+    if (facade.isMobile) {
+        isTabCanvas = false;
+        return;
+    }
     if (rootEl?.closest(".glean-tab-root")) {
         isTabCanvas = true;
         const pending = tabId ? facade.consumeLibraryFocus(tabId) : "";
@@ -3341,6 +3372,20 @@ $effect(() => {
                     </span>
                 </span>
                 {/if}
+                {#if view === "library"}
+                    <button
+                        type="button"
+                        bind:this={searchToggle}
+                        class="glean-mobile-topbar__search-btn glean-icon-btn"
+                        class:glean-icon-btn--active={searchOpen || Boolean(keyword.trim())}
+                        title={t(i18n, searchOpen ? "panel.searchClose" : "panel.searchPlaceholder")}
+                        aria-label={t(i18n, searchOpen ? "panel.searchClose" : "panel.searchPlaceholder")}
+                        aria-expanded={searchOpen}
+                        onclick={() => { if (searchOpen) closeSearch(); else searchOpen = true; }}
+                    >
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 3a7.5 7.5 0 0 1 5.9 12.1l4.2 4.2a1 1 0 0 1-1.4 1.4l-4.2-4.2A7.5 7.5 0 1 1 10.5 3zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11z"/></svg>
+                    </button>
+                {/if}
                 <div class="glean-mobile-topbar__more">
                     <button
                         type="button"
@@ -3395,6 +3440,17 @@ $effect(() => {
                         </div>
                     {/if}
                 </div>
+                {#if onClose}
+                    <button
+                        type="button"
+                        class="glean-mobile-topbar__close"
+                        title={t(i18n, "action.close")}
+                        aria-label={t(i18n, "action.close")}
+                        onclick={closeMobileHost}
+                    >
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#iconGleanClose" /></svg>
+                    </button>
+                {/if}
             </div>
         {:else}
             <div class="glean-brand">
@@ -3485,7 +3541,7 @@ $effect(() => {
         {/if}
 
         {#if view === "library"}
-            {#if isTabCanvas || searchOpen}
+            {#if (!facade.isMobile && isTabCanvas) || searchOpen}
                 <div class="glean-search">
                     <svg class="glean-search__icon" viewBox="0 0 24 24"><path d="M10.5 3a7.5 7.5 0 0 1 5.9 12.1l4.2 4.2a1 1 0 0 1-1.4 1.4l-4.2-4.2A7.5 7.5 0 1 1 10.5 3zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11z"/></svg>
                     <input
@@ -3505,7 +3561,7 @@ $effect(() => {
                             onclick={() => { markPrefsInteraction(); keyword = ""; searchInput?.focus(); }}
                         ><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanClose" /></svg></button>
                     {/if}
-                    {#if !isTabCanvas}
+                    {#if !isTabCanvas || facade.isMobile}
                         <button
                             type="button"
                             class="glean-search__close"
@@ -3515,7 +3571,7 @@ $effect(() => {
                         ><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanClose" /></svg></button>
                     {/if}
                 </div>
-            {:else}
+            {:else if !facade.isMobile}
                 <button
                     bind:this={searchToggle}
                     class="glean-icon-btn"
@@ -3558,7 +3614,9 @@ $effect(() => {
     {/if}
 
     {#if view === "library"}
-        <InboxSection {facade} onMutated={() => void reload()} />
+        {#if !facade.isMobile}
+            <InboxSection {facade} onMutated={() => void reload()} />
+        {/if}
         <AiBatchPanel {facade} bind:open={aiBatchOpen} docIds={aiBatchIds} />
 
         <div class="glean-queues-row">
@@ -3640,7 +3698,7 @@ $effect(() => {
             </details>
         {/if}
 
-        {#if isTabCanvas}
+        {#if !facade.isMobile && isTabCanvas}
             <div class="glean-libbar">
                 {#if layoutMode === "list" && railCollapsed}
                     <button
@@ -3708,7 +3766,7 @@ $effect(() => {
             </details>
         {/if}
 
-        {#if filterChips.length > 0}
+        {#if !facade.isMobile && filterChips.length > 0}
             <div class="glean-filter-chips" aria-label={t(i18n, "library.filters")}>
                 {#each filterChips as chip (chip.key)}
                     <button class="glean-filter-chip" title={filterChipText(chip.key, chip.value)} aria-label={t(i18n, "library.removeFilter", { name: filterChipText(chip.key, chip.value) })} onclick={() => removeFilterChip(chip.key)}><span class="glean-filter-chip__label">{filterChipText(chip.key, chip.value)}</span><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanClose" /></svg></button>
@@ -3828,92 +3886,98 @@ $effect(() => {
             </div>
         {/if}
 
-        {#if authorTimeline && selectedAuthor}<p class="glean-author-timeline" role="status">{t(i18n, "author.timeline", { author: selectedAuthor })}</p>{/if}
-        {#if currentViewWechatWithoutAuthor.length > 0}
-            <div class="glean-quota glean-wechat-banner" role="status">
-                <svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanSpark" /></svg>
-                <span class="glean-banner__text">{t(i18n, "wechat.unrecognizedBanner", { n: currentViewWechatWithoutAuthor.length })}</span>
-                <button
-                    type="button"
-                    class="glean-cap-btn glean-cap-btn--pri"
-                    disabled={wechatScanning}
-                    aria-busy={wechatScanning}
-                    onclick={() => void startBatchWechatScan()}
-                >
-                    {wechatScanning ? wechatScanProgressText : t(i18n, "wechat.startAutoRecognize")}
-                </button>
-            </div>
-        {/if}
-        {#if governanceCueCount > 1 && !governanceExpanded}
-            <div class="glean-governance-summary" role="status">
-                <svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanSpark" /></svg>
-                <span class="glean-banner__text">{t(i18n, "panel.governanceSummary", { n: governanceCueCount })}</span>
-                <button type="button" class="glean-cap-btn" aria-expanded={governanceExpanded} onclick={() => (governanceExpanded = true)}>
-                    {t(i18n, "panel.governanceExpand")}
-                </button>
-            </div>
-        {/if}
-        {#if governanceDetailsVisible}
-            {#if governanceCueCount > 1}
-                <div class="glean-governance-collapse">
-                    <button type="button" class="glean-linkish" aria-expanded={governanceExpanded} onclick={() => (governanceExpanded = false)}>
-                        {t(i18n, "panel.governanceCollapse")}
+        {#snippet libraryContextBanners()}
+            {#if authorTimeline && selectedAuthor}<p class="glean-author-timeline" role="status">{t(i18n, "author.timeline", { author: selectedAuthor })}</p>{/if}
+            {#if currentViewWechatWithoutAuthor.length > 0}
+                <div class="glean-quota glean-wechat-banner" role="status">
+                    <svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanSpark" /></svg>
+                    <span class="glean-banner__text">{t(i18n, "wechat.unrecognizedBanner", { n: currentViewWechatWithoutAuthor.length })}</span>
+                    <button
+                        type="button"
+                        class="glean-cap-btn glean-cap-btn--pri"
+                        disabled={wechatScanning}
+                        aria-busy={wechatScanning}
+                        onclick={() => void startBatchWechatScan()}
+                    >
+                        {wechatScanning ? wechatScanProgressText : t(i18n, "wechat.startAutoRecognize")}
                     </button>
                 </div>
             {/if}
-            {#if overQuota && activeQueue === "inbox" && !authorTimeline && !governanceCueMuted("quota", governanceMuted)}
-                <div class="glean-quota">
-                    <svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanInbox" /></svg>
-                    <span class="glean-banner__text">{t(i18n, "panel.quotaOver", { total: inboxTotal, quota: facade.settings.inboxQuota })}</span>
-                    <button class="glean-linkish" onclick={() => void muteGovernanceCue("quota")}>{t(i18n, "panel.governanceMuteToday")}</button>
+            {#if governanceCueCount > 1 && !governanceExpanded}
+                <div class="glean-governance-summary" role="status">
+                    <svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanSpark" /></svg>
+                    <span class="glean-banner__text">{t(i18n, "panel.governanceSummary", { n: governanceCueCount })}</span>
+                    <button type="button" class="glean-cap-btn" aria-expanded={governanceExpanded} onclick={() => (governanceExpanded = true)}>
+                        {t(i18n, "panel.governanceExpand")}
+                    </button>
                 </div>
             {/if}
-            {#if stalePool.length > 0 && (activeQueue === "inbox" || activeQueue === "later") && !governanceCueMuted("stale", governanceMuted)}
-            <div class="glean-quota">
-                <svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanArchive" /></svg>
-                <span class="glean-banner__text">{t(i18n, "panel.staleCandidates", { n: stalePool.length })}</span>
-                <button class="glean-cap-btn" onclick={() => toggleStalePreview()}>
-                    {stalePreviewOpen ? t(i18n, "panel.staleHide") : t(i18n, "panel.archiveStale")}
-                </button>
-                <button class="glean-linkish" onclick={() => void muteGovernanceCue("stale")}>{t(i18n, "panel.governanceMuteToday")}</button>
-            </div>
-            {#if stalePreviewOpen}
-                <div class="glean-stale-preview">
-                    <div class="glean-stale-preview__hint">{t(i18n, "panel.staleHint", { n: facade.settings.staleDays })}</div>
-                    {#each stalePool as entry (entry.id)}
-                        <label class="glean-stale-preview__row">
-                            <input
-                                type="checkbox"
-                                checked={staleSelected.has(entry.id)}
-                                disabled={archivingStale}
-                                onchange={() => toggleStalePick(entry.id)}
-                            />
-                            <span class="glean-stale-preview__title" title={entry.title}>{entry.title || t(i18n, "panel.untitled")}</span>
-                            <span class="glean-stale-preview__meta">{entry.site || sourceFallback(entry)} · {t(i18n, "panel.staleDays", { n: ageDays(entry.time) })}</span>
-                        </label>
-                    {/each}
-                    <div class="glean-stale-preview__ops">
-                        <button class="glean-cap-btn" disabled={archivingStale} onclick={() => { staleSelected = new Set(stalePool.map((entry) => entry.id)); }}>
-                            {t(i18n, "panel.staleSelectAll")}
+            {#if governanceDetailsVisible}
+                {#if governanceCueCount > 1}
+                    <div class="glean-governance-collapse">
+                        <button type="button" class="glean-linkish" aria-expanded={governanceExpanded} onclick={() => (governanceExpanded = false)}>
+                            {t(i18n, "panel.governanceCollapse")}
                         </button>
-                        <button
-                            class="glean-cap-btn glean-cap-btn--pri"
-                            disabled={archivingStale || staleSelected.size === 0}
-                            aria-busy={archivingStale}
-                            onclick={() => void doArchiveStale()}
-                        >{archivingStale ? t(i18n, "panel.loading") : t(i18n, "panel.staleConfirm", { n: staleSelected.size })}</button>
                     </div>
+                {/if}
+                {#if overQuota && activeQueue === "inbox" && !authorTimeline && !governanceCueMuted("quota", governanceMuted)}
+                    <div class="glean-quota">
+                        <svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanInbox" /></svg>
+                        <span class="glean-banner__text">{t(i18n, "panel.quotaOver", { total: inboxTotal, quota: facade.settings.inboxQuota })}</span>
+                        <button class="glean-linkish" onclick={() => void muteGovernanceCue("quota")}>{t(i18n, "panel.governanceMuteToday")}</button>
+                    </div>
+                {/if}
+                {#if stalePool.length > 0 && (activeQueue === "inbox" || activeQueue === "later") && !governanceCueMuted("stale", governanceMuted)}
+                <div class="glean-quota">
+                    <svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanArchive" /></svg>
+                    <span class="glean-banner__text">{t(i18n, "panel.staleCandidates", { n: stalePool.length })}</span>
+                    <button class="glean-cap-btn" onclick={() => toggleStalePreview()}>
+                        {stalePreviewOpen ? t(i18n, "panel.staleHide") : t(i18n, "panel.archiveStale")}
+                    </button>
+                    <button class="glean-linkish" onclick={() => void muteGovernanceCue("stale")}>{t(i18n, "panel.governanceMuteToday")}</button>
                 </div>
+                {#if stalePreviewOpen}
+                    <div class="glean-stale-preview">
+                        <div class="glean-stale-preview__hint">{t(i18n, "panel.staleHint", { n: facade.settings.staleDays })}</div>
+                        {#each stalePool as entry (entry.id)}
+                            <label class="glean-stale-preview__row">
+                                <input
+                                    type="checkbox"
+                                    checked={staleSelected.has(entry.id)}
+                                    disabled={archivingStale}
+                                    onchange={() => toggleStalePick(entry.id)}
+                                />
+                                <span class="glean-stale-preview__title" title={entry.title}>{entry.title || t(i18n, "panel.untitled")}</span>
+                                <span class="glean-stale-preview__meta">{entry.site || sourceFallback(entry)} · {t(i18n, "panel.staleDays", { n: ageDays(entry.time) })}</span>
+                            </label>
+                        {/each}
+                        <div class="glean-stale-preview__ops">
+                            <button class="glean-cap-btn" disabled={archivingStale} onclick={() => { staleSelected = new Set(stalePool.map((entry) => entry.id)); }}>
+                                {t(i18n, "panel.staleSelectAll")}
+                            </button>
+                            <button
+                                class="glean-cap-btn glean-cap-btn--pri"
+                                disabled={archivingStale || staleSelected.size === 0}
+                                aria-busy={archivingStale}
+                                onclick={() => void doArchiveStale()}
+                            >{archivingStale ? t(i18n, "panel.loading") : t(i18n, "panel.staleConfirm", { n: staleSelected.size })}</button>
+                        </div>
+                    </div>
+                {/if}
+                {/if}
+                {#if candidateCount > 0 && !governanceCueMuted("candidates", governanceMuted)}
+                <div class="glean-candidates" role="status" aria-live="polite" aria-atomic="true">
+                    <svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanInbox" /></svg>
+                    <span class="glean-banner__text">{t(i18n, "panel.candidatesDetected", { n: candidateCount })}</span>
+                    <button class="glean-cap-btn" onclick={openCandidateQueue}>{t(i18n, "panel.viewCandidates")}</button>
+                    <button class="glean-linkish" onclick={() => void muteGovernanceCue("candidates")}>{t(i18n, "panel.governanceMuteToday")}</button>
+                </div>
+                {/if}
             {/if}
-            {/if}
-            {#if candidateCount > 0 && !governanceCueMuted("candidates", governanceMuted)}
-            <div class="glean-candidates" role="status" aria-live="polite" aria-atomic="true">
-                <svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanInbox" /></svg>
-                <span class="glean-banner__text">{t(i18n, "panel.candidatesDetected", { n: candidateCount })}</span>
-                <button class="glean-cap-btn" onclick={openCandidateQueue}>{t(i18n, "panel.viewCandidates")}</button>
-                <button class="glean-linkish" onclick={() => void muteGovernanceCue("candidates")}>{t(i18n, "panel.governanceMuteToday")}</button>
-            </div>
-            {/if}
+        {/snippet}
+
+        {#if !facade.isMobile}
+            {@render libraryContextBanners()}
         {/if}
 
         {#if loading && !index.updatedAt}
@@ -3921,7 +3985,7 @@ $effect(() => {
                 <span class="glean-panel__loading-dot" aria-hidden="true"></span>
                 <span>{t(i18n, "panel.loading")}</span>
             </div>
-        {:else if isTabCanvas && layoutMode === "kanban"}
+        {:else if !facade.isMobile && isTabCanvas && layoutMode === "kanban"}
             {#if filterChips.length > 0}
                 <div class="glean-kanban__filter-notice" role="status">
                     <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSearch" /></svg>
@@ -4091,7 +4155,7 @@ $effect(() => {
                     <button class="glean-btn glean-btn--ghost" onclick={loadMoreRows}>{t(i18n, "library.loadMore")}</button>
                 </div>
             {/if}
-        {:else if isTabCanvas && layoutMode === "list"}
+        {:else if !facade.isMobile && isTabCanvas && layoutMode === "list"}
             <div
                 class="glean-lib"
                 class:glean-lib--preview={Boolean(previewEntry)}
@@ -4404,6 +4468,19 @@ $effect(() => {
             </div>
         {:else}
             <div class="glean-list">
+                {#if facade.isMobile}
+                    <div class="glean-mobile-list-banners">
+                        {#if filterChips.length > 0}
+                            <div class="glean-filter-chips" aria-label={t(i18n, "library.filters")}>
+                                {#each filterChips as chip (chip.key)}
+                                    <button class="glean-filter-chip" title={filterChipText(chip.key, chip.value)} aria-label={t(i18n, "library.removeFilter", { name: filterChipText(chip.key, chip.value) })} onclick={() => removeFilterChip(chip.key)}><span class="glean-filter-chip__label">{filterChipText(chip.key, chip.value)}</span><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanClose" /></svg></button>
+                                {/each}
+                            </div>
+                        {/if}
+                        <InboxSection {facade} onMutated={() => void reload()} />
+                        {@render libraryContextBanners()}
+                    </div>
+                {/if}
                 {#if rows.length === 0}
                     <div class="glean-empty" role="status">
                         <div class="glean-empty__art"><svg aria-hidden="true"><use href="#iconGleanWheat" /></svg></div>

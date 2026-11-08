@@ -111,7 +111,7 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
             props: { facade: this, initialView },
             width: "100vw",
             height: "100dvh",
-            containerClass: "glean-tab-root glean-mobile-fullscreen-dialog",
+            containerClass: "glean-mobile-fullscreen-dialog",
             callback: onClose,
         }),
     );

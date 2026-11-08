@@ -57,6 +57,7 @@ export const simpleDialog = (args: {
     closeLabel?: string,
     canClose?: () => boolean,
     width?: string, height?: string,
+    containerClass?: string,
     callback?: () => void;
 }) => {
     let disposeViewport = () => {};
@@ -99,8 +100,26 @@ export const simpleDialog = (args: {
             requestClose();
         }
     });
-    const isFullscreen = args.width === "100vw" || args.height === "100dvh" || (isMobileFrontend() && (args.width === "100%" || !args.width));
+    const isMobileFullscreenDialog = Boolean(args.containerClass?.split(/\s+/).includes("glean-mobile-fullscreen-dialog"));
+    const isFullscreen = isMobileFullscreenDialog || args.width === "100vw" || args.height === "100dvh" || (isMobileFrontend() && (args.width === "100%" || !args.width));
     const modalRoot = dialog.element.querySelector<HTMLElement>(".b3-dialog__container") ?? dialog.element;
+    if (isMobileFullscreenDialog) {
+        modalRoot.classList.add("glean-dialog--fullscreen");
+        const header = dialog.element.querySelector<HTMLElement>(".b3-dialog__header");
+        if (header) {
+            header.style.setProperty("display", "none", "important");
+        }
+        const dialogBody = dialog.element.querySelector<HTMLElement>(".b3-dialog__body")
+            ?? dialog.element.querySelector<HTMLElement>(".b3-dialog__content");
+        if (dialogBody) {
+            dialogBody.style.setProperty("padding", "0", "important");
+            dialogBody.style.flex = "1 1 auto";
+            dialogBody.style.minHeight = "0";
+            dialogBody.style.overflow = "hidden";
+            dialogBody.style.display = "flex";
+            dialogBody.style.flexDirection = "column";
+        }
+    }
     if (isFullscreen) {
         modalRoot.style.maxWidth = "100vw";
         modalRoot.style.maxHeight = "100dvh";
@@ -122,6 +141,9 @@ export const simpleDialog = (args: {
     };
     const closeIcon = dialog.element.querySelector<SVGElement>(".b3-dialog__close");
     if (closeIcon) {
+        if (isMobileFullscreenDialog) {
+            closeIcon.style.setProperty("display", "none", "important");
+        }
         closeIcon.setAttribute("role", "button");
         closeIcon.setAttribute("aria-label", args.closeLabel ?? args.title);
         closeIcon.setAttribute("tabindex", "0");
@@ -136,7 +158,7 @@ export const simpleDialog = (args: {
             event.stopPropagation();
             requestClose();
         });
-    } else if (isMobileFrontend() || isFullscreen) {
+    } else if (!isMobileFullscreenDialog && (isMobileFrontend() || isFullscreen)) {
         // 真机审计修复：手机端原生 Dialog 无关闭按钮，主动补齐可见 ✕ 关闭按钮
         const header = dialog.element.querySelector<HTMLElement>(".b3-dialog__header");
         if (header) {
@@ -206,8 +228,18 @@ export const svelteDialog = (args: {
     callback?: () => void;
 }) => {
     let container = document.createElement("div");
+    const isMobileFullscreenDialog = Boolean(args.containerClass?.split(/\s+/).includes("glean-mobile-fullscreen-dialog"));
     container.className = ["glean-dialog-root", args.containerClass ?? ""].filter(Boolean).join(" ");
-    container.style.display = "contents";
+    if (isMobileFullscreenDialog) {
+        container.style.display = "flex";
+        container.style.flexDirection = "column";
+        container.style.flex = "1 1 auto";
+        container.style.minHeight = "0";
+        container.style.width = "100%";
+        container.style.height = "100%";
+    } else {
+        container.style.display = "contents";
+    }
 
     let closeDialog: (() => void) | undefined;
     let closeGuard: (() => boolean) | undefined;

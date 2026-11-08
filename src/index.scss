@@ -763,10 +763,13 @@ body.b3-theme-dark {
 }
 
 .glean-mobile-topbar__back,
-.glean-mobile-topbar__more-btn {
+.glean-mobile-topbar__search-btn,
+.glean-mobile-topbar__more-btn,
+.glean-mobile-topbar__close {
     width: 44px;
     min-width: 44px;
     height: 44px;
+    min-height: 44px;
     border: 0;
     border-radius: var(--glean-radius-md);
     display: grid;
@@ -13834,17 +13837,268 @@ body.b3-theme-dark .glean-panel--mobile,
 
 /* ============ 手机端全屏面板 (Mobile Spec v1 Fullscreen Dialog) ============ */
 
+.b3-dialog__container.glean-dialog--fullscreen {
+    position: fixed;
+    inset: 0;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: var(--glean-visual-viewport-height, 100dvh) !important;
+    max-height: var(--glean-visual-viewport-height, 100dvh) !important;
+    margin: var(--glean-space-0) !important;
+    padding: var(--glean-space-0) !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    box-sizing: border-box;
+
+    > .b3-dialog__header,
+    > .b3-dialog__close {
+        display: none !important;
+    }
+
+    > .b3-dialog__body,
+    > .b3-dialog__content {
+        padding: var(--glean-space-0) !important;
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+}
+
 .glean-mobile-fullscreen-dialog {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
     width: 100vw !important;
     height: 100dvh !important;
-    max-width: 100vw !important;
-    max-height: 100dvh !important;
-    padding-top: env(safe-area-inset-top, 0);
-    padding-bottom: env(safe-area-inset-bottom, 0);
-    padding-left: env(safe-area-inset-left, 0);
-    padding-right: env(safe-area-inset-right, 0);
+    max-width: 100% !important;
+    max-height: 100% !important;
+    min-width: 0;
+    min-height: 0;
+    padding: var(--glean-space-0);
     box-sizing: border-box;
     touch-action: manipulation;
+}
+
+/* 手机端固定头压缩（顶栏 + 5态队列条 + 筛选摘要条总高 <= 132px）与软键盘收起底栏 */
+.glean-panel--mobile {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+
+    .glean-panel__body {
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    .glean-panel__head {
+        flex-shrink: 0;
+        padding-bottom: var(--glean-space-0);
+        gap: var(--glean-space-1);
+    }
+
+    .glean-mobile-topbar {
+        min-height: 44px;
+        padding: var(--glean-space-0);
+    }
+
+    .glean-queues-row {
+        flex-shrink: 0;
+        margin-block: var(--glean-space-0);
+        min-height: 34px;
+    }
+
+    .glean-queues {
+        padding: var(--glean-space-0-5) calc(var(--glean-space-3) + var(--glean-safe-right, var(--glean-space-0))) var(--glean-space-0-5) calc(var(--glean-space-3) + var(--glean-safe-left, var(--glean-space-0)));
+        gap: var(--glean-space-1);
+    }
+
+    .glean-q {
+        min-height: 30px;
+        padding: var(--glean-space-0-5) var(--glean-space-2-5);
+        font-size: var(--glean-text-xs);
+    }
+
+    .glean-mobile-filter-summary {
+        flex-shrink: 0;
+        padding-top: var(--glean-space-0);
+        padding-bottom: var(--glean-space-0-5);
+    }
+
+    .glean-mobile-filter-trigger {
+        min-height: 32px;
+        padding: var(--glean-space-0-5) var(--glean-space-2-5);
+        font-size: var(--glean-text-xs);
+    }
+
+    .glean-list {
+        gap: var(--glean-space-2);
+    }
+
+    .glean-mobile-list-banners {
+        display: flex;
+        flex-direction: column;
+        gap: var(--glean-space-1);
+
+        &:empty {
+            display: none;
+        }
+
+        :where(.glean-quota, .glean-wechat-banner, .glean-governance-summary, .glean-candidates) {
+            margin: var(--glean-space-0);
+            padding: var(--glean-space-1) var(--glean-space-2-5);
+            min-height: 32px;
+            flex-wrap: nowrap;
+            gap: var(--glean-space-1-5);
+            border-radius: var(--glean-radius-pill);
+            font-size: var(--glean-text-xs);
+
+            .glean-banner__text {
+                flex: 1 1 auto;
+                min-width: 0;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            :where(.glean-cap-btn, .glean-linkish) {
+                flex-shrink: 0;
+                min-height: 28px;
+                padding: var(--glean-space-0-5) var(--glean-space-2);
+                white-space: nowrap;
+            }
+        }
+    }
+
+    .glean-card {
+        padding: var(--glean-space-2) var(--glean-space-2-5);
+
+        .glean-card__title {
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            padding-right: var(--glean-space-8, 32px);
+            font-size: var(--glean-text-sm);
+            line-height: var(--glean-leading-snug);
+        }
+
+        .glean-card__meta {
+            margin-top: var(--glean-space-0-5);
+            gap: var(--glean-space-1);
+            flex-wrap: wrap;
+        }
+
+        .glean-snap-badge {
+            display: none;
+        }
+
+        .glean-card__tags-row {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--glean-space-1);
+        }
+
+        .glean-card__foot {
+            margin-top: var(--glean-space-1);
+            padding-top: var(--glean-space-1);
+
+            .glean-btn,
+            .glean-action-popover__trigger {
+                min-height: 32px;
+                height: 32px;
+                padding: var(--glean-space-0) var(--glean-space-2-5);
+            }
+        }
+    }
+}
+
+.glean-dialog--fullscreen .glean-panel--mobile .glean-panel__head {
+    padding-top: calc(var(--glean-space-0-5) + var(--glean-safe-top, var(--glean-space-0)));
+}
+
+.glean-panel--mobile[data-glean-keyboard-open],
+[data-glean-keyboard-open] .glean-panel--mobile {
+    --glean-mobile-nav-space: var(--glean-space-0);
+    padding-bottom: var(--glean-space-0);
+
+    .glean-mobile-nav {
+        display: none !important;
+    }
+}
+
+.glean-highlights__export-more {
+    display: contents;
+
+    > .glean-highlights__export-more-summary {
+        display: none;
+    }
+
+    > .glean-highlights__export-more-body {
+        display: contents;
+    }
+}
+
+.glean-panel--mobile .glean-highlights {
+    .glean-highlights__head {
+        padding-bottom: var(--glean-space-1);
+    }
+
+    .glean-highlights__tools--scope {
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scrollbar-width: none;
+        gap: var(--glean-space-1-5);
+
+        &::-webkit-scrollbar {
+            display: none;
+        }
+
+        button {
+            flex: 0 0 auto;
+            min-height: 36px;
+            padding: var(--glean-space-1) var(--glean-space-2-5);
+            white-space: nowrap;
+        }
+    }
+
+    .glean-highlights__export-more {
+        display: block;
+        grid-column: 1 / -1;
+
+        > .glean-highlights__export-more-summary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            min-height: 38px;
+            list-style: none;
+            cursor: pointer;
+
+            &::-webkit-details-marker {
+                display: none;
+            }
+        }
+
+        > .glean-highlights__export-more-body {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: var(--glean-space-1-5);
+            margin-top: var(--glean-space-2);
+
+            .glean-citation-group {
+                grid-column: 1 / -1;
+                display: flex;
+                overflow-x: auto;
+            }
+        }
+    }
 }
 
 /* ============ 手机端原生查看器字号与行距生效 ============ */
