@@ -978,11 +978,14 @@ test("列表行尾操作与看板选择框平滑微交互契约：默认低透�
     assert.match(freshReadingContext, /bind:this=\{rootEl\}/);
 
     // 65. 全局快捷与入口增强：漫游盲盒指令、顶栏右键快捷菜单与新手引导活动文档起步（BL-26/BL-27/BL-45）
+    // BL-27 已迁移至官方 addTopBar contextMenu 通道：右键菜单并入思源原生顶栏条目菜单，
+    // 严禁回退为自建 contextmenu 监听 + preventDefault（会拦掉 3.8.x 的固定/隐藏条目管理）
     assert.match(freshIndexTs, /langKey:\s*"cmd\.roamingPick"/);
     assert.match(freshIndexTs, /async triggerRoamingPick\(\)/);
-    assert.match(freshIndexTs, /this\.topBarContextMenuHandler\s*=/);
-    assert.match(freshIndexTs, /this\.topBarElement\.addEventListener\("contextmenu"/);
-    assert.match(freshIndexTs, /showTopBarContextMenu/);
+    assert.match(freshIndexTs, /contextMenu:\s*\(menu\)\s*=>\s*this\.appendTopBarContextMenuItems\(menu\)/);
+    assert.match(freshIndexTs, /appendTopBarContextMenuItems\(menu: subMenu\)/);
+    assert.doesNotMatch(freshIndexTs, /topBarContextMenuHandler/);
+    assert.doesNotMatch(freshIndexTs, /addEventListener\("contextmenu"/);
     assert.match(freshIndexTs, /topbarMenu\.resurface/);
     assert.match(freshIndexTs, /topbarMenu\.library/);
     assert.match(freshIndexTs, /topbarMenu\.highlights/);

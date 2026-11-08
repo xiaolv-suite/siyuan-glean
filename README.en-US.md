@@ -182,6 +182,11 @@ In just 3 minutes, transform scattered clippings into structured knowledge asset
 - **Real-Environment Acceptance**:
   - Automated tests and architectural gates pass 100%. Device-specific touch behaviors, external AI integrations, and real-environment acceptance boundaries are detailed in the [capability matrix](docs/CAPABILITY-MATRIX.md) and [known blockers](docs/BLOCKERS.md).
 
+## v1.4.6 update (2026-11-08)
+
+- **Official topbar context menu**: The right-click quick menu (Later / Library / Highlights / Stats / Roaming / Settings) now merges into SiYuan's native topbar entry menu instead of hijacking it, keeping 3.8.x entry pin/hide management fully available;
+- **Compass & layer governance**: Adopts ecosystem Protocol v1.7.6 — native topbar entry citizenship plus `#barMore` re-sort anchor for the compass, and dynamic z-index tracking for notification layers and the launchpad popover.
+
 ## v1.4.5 update (2026-11-04)
 
 This update delivers 【Xiaolv Ecosystem · Mobile Spec v1】, achieving a full-lifecycle mobile experience:

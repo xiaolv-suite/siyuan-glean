@@ -2,7 +2,7 @@
  * 小驴拾遗插件入口（薄壳）：生命周期、UI 挂载、收录入口三件套。
  * 业务编排在 services/，内核交互在 api/，纯函数在 domain/，组件只依赖 types.ts 门面。
  */
-import { Plugin, getFrontend, openTab, openMobileFileById, showMessage, getAllEditor, Menu } from "siyuan";
+import { Plugin, getFrontend, openTab, openMobileFileById, showMessage, getAllEditor, type subMenu } from "siyuan";
 import { mount, unmount } from "svelte";
 import "./index.scss";
 
@@ -82,7 +82,6 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
     private readonly destroyedReaderTabIds = new Set<string>();
     private readerOpenRequest = 0;
     private topBarElement?: HTMLElement;
-    private topBarContextMenuHandler?: (event: MouseEvent) => void;
     private noticeHubCleaner?: () => void;
     private backupCleaner?: () => void;
     private launchpadCleaner?: () => void;
@@ -543,14 +542,11 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
             title: t(this.i18n, "pluginName"),
             position: "right",
             callback: () => this.openPanel(),
+            // 官方 contextMenu 通道（BL-27）：右键快捷菜单并入思源原生顶栏条目菜单，
+            // 不再自建 contextmenu 监听拦截原生菜单（3.8.x 的固定/隐藏条目管理得以保留）
+            contextMenu: (menu) => this.appendTopBarContextMenuItems(menu),
         });
         this.registerLaunchpad();
-        this.topBarContextMenuHandler = (event: MouseEvent) => {
-            event.preventDefault();
-            event.stopPropagation();
-            this.showTopBarContextMenu(event);
-        };
-        this.topBarElement.addEventListener("contextmenu", this.topBarContextMenuHandler);
     }
 
     /**
@@ -611,10 +607,6 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
         this.eventBus.off("sync-end", this.onSyncEnd);
         this.disposeReadingContext?.();
         this.disposeReadingContext = null;
-        if (this.topBarElement && this.topBarContextMenuHandler) {
-            this.topBarElement.removeEventListener("contextmenu", this.topBarContextMenuHandler);
-            this.topBarContextMenuHandler = undefined;
-        }
         this.topBarElement = undefined;
         // dock/tab 的 Svelte 实例由 addDock/addTab 的 destroy 回调负责卸载
     }
@@ -1417,8 +1409,9 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
         }
     }
 
-    private showTopBarContextMenu(event: MouseEvent): void {
-        const menu = new Menu("glean-topbar-context-menu");
+    /** 顶栏右键快捷菜单条目（BL-27）：由官方 addTopBar contextMenu 通道注入思源原生菜单 */
+    private appendTopBarContextMenuItems(menu: subMenu): void {
+        if (!menu || typeof menu.addItem !== "function") return;
         menu.addItem({
             iconHTML: "",
             label: t(this.i18n, "topbarMenu.resurface"),
@@ -1451,7 +1444,6 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
             label: t(this.i18n, "topbarMenu.settings"),
             click: () => this.openSettings(),
         });
-        menu.open({ x: event.clientX, y: event.clientY });
     }
 
     private cardSelection(): { quote: string; docId: string; blockId: string } | null {
