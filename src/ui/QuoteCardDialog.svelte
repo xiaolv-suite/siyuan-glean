@@ -701,6 +701,7 @@
     .glean-quote-card-opts {
         display: flex;
         align-items: center;
+        flex-wrap: wrap;
         gap: var(--glean-space-2);
     }
 
@@ -946,6 +947,11 @@
     }
 
     @media (max-width: 560px) {
+        .glean-quote-card-dialog {
+            overflow-y: auto;
+            gap: var(--glean-space-2);
+        }
+
         .glean-quote-card-header-bar {
             flex-direction: column;
             align-items: stretch;
@@ -954,18 +960,24 @@
 
         .glean-quote-card-themes {
             width: 100%;
-            justify-content: space-between;
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 4px;
+            box-sizing: border-box;
         }
 
         .glean-quote-card-theme-btn {
-            flex: 1 1 0;
+            min-width: 0;
             min-height: 44px;
+            padding: 4px 6px;
+            font-size: 12px;
             justify-content: center;
         }
 
         .glean-quote-card-opts {
             width: 100%;
             justify-content: space-between;
+            flex-wrap: wrap;
         }
 
         .glean-quote-card-font-group {
@@ -985,62 +997,57 @@
             min-height: 44px;
         }
 
+        .glean-quote-card-seal-input {
+            flex: 1 1 100%;
+            width: 100%;
+            min-height: 40px;
+        }
+
         .glean-quote-card-actions {
-            justify-content: stretch;
-            gap: var(--glean-space-1-5);
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 6px;
         }
 
         .glean-quote-card-btn {
-            flex: 1 1 calc(50% - var(--glean-space-1));
+            min-width: 0;
             min-height: 44px;
+            padding: 0 8px;
+            font-size: 12px;
             justify-content: center;
         }
 
         .glean-quote-card-stage {
             padding: var(--glean-space-2);
-            min-height: 220px;
+            min-height: 160px;
+            flex: 1 1 auto;
         }
 
         .glean-quote-card-preview {
-            padding: 20px 16px;
+            padding: 18px 14px;
             border-radius: 16px;
+            max-width: 100%;
+            overflow: hidden;
+        }
+
+        .glean-quote-card-kbdhint {
+            display: none;
         }
     }
 
     @media (max-width: 360px) {
         .glean-quote-card-themes {
-            display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: var(--glean-space-1);
         }
 
         .glean-quote-card-opts {
             flex-direction: column;
             align-items: stretch;
-            gap: var(--glean-space-1-5);
-        }
-
-        .glean-quote-card-font-group {
-            width: 100%;
-        }
-
-        .glean-quote-card-wm-btn {
-            width: 100%;
-            justify-content: center;
         }
 
         .glean-quote-card-preview {
-            padding: 16px 12px;
+            padding: 14px 12px;
             border-radius: 12px;
-        }
-
-        .glean-quote-card-actions {
-            display: grid;
-            grid-template-columns: 1fr;
-        }
-
-        .glean-quote-card-kbdhint {
-            display: none;
         }
     }
 

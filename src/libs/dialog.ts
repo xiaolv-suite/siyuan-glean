@@ -15,6 +15,19 @@ function isMobileFrontend(): boolean {
     return frontend === "mobile" || frontend === "browser-mobile";
 }
 
+function isMobileDialogViewport(): boolean {
+    if (isMobileFrontend()) return true;
+    try {
+        if (typeof document !== "undefined" && document.body?.classList?.contains("body--mobile")) return true;
+        if (typeof window !== "undefined" && typeof window.innerWidth === "number" && window.innerWidth > 0 && window.innerWidth <= 640) {
+            return true;
+        }
+    } catch {
+        // ignore
+    }
+    return false;
+}
+
 /**
  * 统领规范：为思源原生 Dialog 标题栏装配统一的品牌标题栏规范（.lv-dialog-title-wrap）。
  * 包含 22×22 青绿底白麦穗标 + 标题 + 版本胶囊，保持幂等。
@@ -127,6 +140,12 @@ export const simpleDialog = (args: {
         modalRoot.style.height = "100dvh";
         modalRoot.style.borderRadius = "0";
         modalRoot.style.margin = "0";
+    } else if (isMobileDialogViewport()) {
+        modalRoot.classList.add("glean-mobile-modal");
+        modalRoot.style.maxWidth = "100vw";
+        modalRoot.style.maxHeight = "100dvh";
+        modalRoot.style.width = "100vw";
+        modalRoot.style.margin = "0";
     } else {
         modalRoot.style.maxWidth = "94vw";
         modalRoot.style.maxHeight = "88vh";
@@ -158,10 +177,15 @@ export const simpleDialog = (args: {
             event.stopPropagation();
             requestClose();
         });
-    } else if (!isMobileFullscreenDialog && (isMobileFrontend() || isFullscreen)) {
-        // 真机审计修复：手机端原生 Dialog 无关闭按钮，主动补齐可见 ✕ 关闭按钮
+    }
+    if (!isMobileFullscreenDialog) {
         const header = dialog.element.querySelector<HTMLElement>(".b3-dialog__header");
-        if (header) {
+        const headerHasMobileClose = header?.querySelector(".glean-mobile-dialog-close");
+        const headerNativeClose = header?.querySelector<HTMLElement | SVGElement>(".b3-dialog__close:not(.glean-mobile-dialog-close)");
+        if (header && !headerHasMobileClose && (isMobileDialogViewport() || !headerNativeClose)) {
+            if (headerNativeClose) {
+                headerNativeClose.style.setProperty("display", "none", "important");
+            }
             const mobileCloseBtn = document.createElement("button");
             mobileCloseBtn.type = "button";
             mobileCloseBtn.className = "b3-dialog__close glean-mobile-dialog-close";
@@ -171,6 +195,8 @@ export const simpleDialog = (args: {
             mobileCloseBtn.innerHTML = `<svg viewBox="0 0 24 24" style="width: 20px; height: 20px;" aria-hidden="true"><use xlink:href="#iconGleanClose"></use></svg>`;
             mobileCloseBtn.style.minWidth = "44px";
             mobileCloseBtn.style.minHeight = "44px";
+            mobileCloseBtn.style.width = "44px";
+            mobileCloseBtn.style.height = "44px";
             mobileCloseBtn.style.display = "inline-flex";
             mobileCloseBtn.style.alignItems = "center";
             mobileCloseBtn.style.justifyContent = "center";
@@ -178,6 +204,7 @@ export const simpleDialog = (args: {
             mobileCloseBtn.style.border = "none";
             mobileCloseBtn.style.color = "var(--b3-theme-on-surface)";
             mobileCloseBtn.style.cursor = "pointer";
+            mobileCloseBtn.style.flexShrink = "0";
             mobileCloseBtn.addEventListener("click", () => requestClose());
             header.appendChild(mobileCloseBtn);
         }

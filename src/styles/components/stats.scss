@@ -338,6 +338,9 @@
     align-items: end;
     gap: var(--glean-space-1-25);
     min-height: 132px;
+    max-width: 100%;
+    overflow-x: auto;
+    box-sizing: border-box;
     padding: var(--glean-space-3) var(--glean-space-4) var(--glean-space-2);
     border: none;
     border-radius: var(--glean-radius-lg);
@@ -659,6 +662,16 @@
         gap: var(--glean-space-3);
     }
 
+    .glean-stats__trend {
+        grid-auto-columns: minmax(3px, 1fr);
+        gap: 2px;
+        padding: var(--glean-space-2) var(--glean-space-2-5);
+    }
+
+    .glean-stats__trend-bar {
+        min-width: 3px;
+    }
+
     .glean-stats__metrics {
         grid-template-columns: repeat(2, 1fr);
     }
@@ -730,6 +743,16 @@
     .glean-stats {
         padding: 8px 10px !important;
         gap: 8px !important;
+    }
+
+    .glean-stats__trend {
+        grid-auto-columns: minmax(3px, 1fr) !important;
+        gap: 2px !important;
+        padding: 8px 10px !important;
+    }
+
+    .glean-stats__trend-bar {
+        min-width: 3px !important;
     }
 
     .glean-stats__metrics {

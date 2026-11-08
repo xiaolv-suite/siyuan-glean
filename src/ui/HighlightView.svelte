@@ -1591,6 +1591,7 @@ function focusHighlightRow(id: string): void {
         margin-left: auto;
         display: flex;
         align-items: center;
+        flex-wrap: wrap;
         gap: var(--glean-space-1-5);
     }
 
@@ -1598,5 +1599,21 @@ function focusHighlightRow(id: string): void {
         margin-top: var(--glean-space-3);
         padding-top: var(--glean-space-3);
         border-top: 1px dashed var(--glean-border-soft);
+    }
+
+    @media (max-width: 640px) {
+        .glean-highlights {
+            padding: 12px;
+            gap: 12px;
+        }
+
+        .glean-highlights__title {
+            font-size: 20px;
+        }
+
+        .glean-highlights__item,
+        .glean-highlights__preview {
+            padding: 14px;
+        }
     }
 </style>

@@ -2595,6 +2595,18 @@ import { aiFailureKey } from "../libs/ai-feedback";
                 {/if}
 
                 <ActionPopover label={t(i18n, "reader.moreActions")} compact>
+                    <button type="button" class="glean-btn glean-btn--ghost" onclick={() => setMode(mode === "read" ? "edit" : "read")}>
+                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanEdit" /></svg>
+                        <span>{t(i18n, mode === "read" ? "reader.modeEdit" : "reader.modeRead")} (Alt+E)</span>
+                    </button>
+                    <button type="button" class="glean-btn glean-btn--ghost" onclick={() => { searchOpen = !searchOpen; }}>
+                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSearch" /></svg>
+                        <span>{t(i18n, "reader.searchTitle")} (Ctrl+F)</span>
+                    </button>
+                    <button type="button" class="glean-btn glean-btn--ghost" onclick={toggleFoldReader}>
+                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg>
+                        <span>{t(i18n, "foldReader.navTitle")} (Alt+Z)</span>
+                    </button>
                     {#if context}
                         <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void toggleFavorite()}>
                             <svg class="glean-icon glean-icon--xs" class:glean-icon--fav={context.favorite} aria-hidden="true"><use href={context.favorite ? "#iconGleanHeart" : "#iconGleanHeartOutline"} /></svg>
@@ -2925,7 +2937,18 @@ import { aiFailureKey } from "../libs/ai-feedback";
     </div>
     {#if docId}
         <aside id={sidebarId} class="glean-reader__side" hidden={sidebarCollapsed || immersive} aria-labelledby={sidebarTitleId}>
-            <div id={sidebarTitleId} class="glean-reader__title">{t(i18n, "reader.companionTitle")}</div>
+            <div id={sidebarTitleId} class="glean-reader__title">
+                <span>{t(i18n, "reader.companionTitle")}</span>
+                <button
+                    type="button"
+                    class="glean-icon-btn glean-reader__side-close"
+                    title={t(i18n, "action.close")}
+                    aria-label={t(i18n, "action.close")}
+                    onclick={toggleCompanion}
+                >
+                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanClose" /></svg>
+                </button>
+            </div>
             <div class="glean-reader__side-nav" role="tablist" aria-label={t(i18n, "reader.companionTitle")}>
                 <button
                     type="button"

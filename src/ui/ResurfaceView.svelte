@@ -1144,7 +1144,7 @@ async function exportPicksToDailyNote(): Promise<void> {
         {#if picks.length > 0}
             <div class="glean-surf-ops-bar">
                 <span class="glean-surf-ops-bar__label">{t(i18n, "resurface.subtitle", { n: picks.length })}</span>
-                <div class="glean-surf-ops-bar__actions" style="display: flex; align-items: center; gap: var(--glean-space-1-5);">
+                <div class="glean-surf-ops-bar__actions" style="display: flex; align-items: center; flex-wrap: wrap; gap: var(--glean-space-1-5);">
                     {#if cardsDueCount > 0}
                         <button
                             type="button"
