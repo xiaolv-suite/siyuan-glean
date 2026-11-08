@@ -129,19 +129,13 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
         const frontend = getFrontend();
         this.isMobile = frontend === "mobile" || frontend === "browser-mobile";
 
-        this.addIcons(`<symbol id="iconGleanWheat" viewBox="0 0 32 32">
-  <path d="M5 24c4-1.8 8-1 11 1 3-2 7-2.8 11-1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-  <path d="M16 8v16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
-  <path d="M16 11c2.8-1.5 5.5 0 5.5 2s-2.7 2-5.5 2M16 16c2.8-1.5 5.5 0 5.5 2s-2.7 2-5.5 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-  <path d="M16 13.5c-2.8-1.5-5.5 0-5.5 2s2.7 2 5.5 2M16 18.5c-2.8-1.5-5.5 0-5.5 2s2.7 2 5.5 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-  <circle cx="16" cy="5" r="2.5" fill="currentColor"/>
+        this.addIcons(`<symbol id="iconGleanWheat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M12 7v14" fill="none"/>
+  <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" fill="none"/>
 </symbol>
-<symbol id="icon-lv-glean" viewBox="0 0 32 32">
-  <path d="M5 24c4-1.8 8-1 11 1 3-2 7-2.8 11-1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-  <path d="M16 8v16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
-  <path d="M16 11c2.8-1.5 5.5 0 5.5 2s-2.7 2-5.5 2M16 16c2.8-1.5 5.5 0 5.5 2s-2.7 2-5.5 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-  <path d="M16 13.5c-2.8-1.5-5.5 0-5.5 2s2.7 2 5.5 2M16 18.5c-2.8-1.5-5.5 0-5.5 2s2.7 2 5.5 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-  <circle cx="16" cy="5" r="2.5" fill="currentColor"/>
+<symbol id="icon-lv-glean" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M12 7v14" fill="none"/>
+  <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" fill="none"/>
 </symbol>
 <symbol id="iconGleanGear" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
   <path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"/><circle cx="12" cy="12" r="3"/>

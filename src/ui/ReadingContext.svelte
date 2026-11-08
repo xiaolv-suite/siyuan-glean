@@ -89,8 +89,11 @@
     }
 
     $effect(() => {
+        return installMobileViewportVars(rootEl, facade.isMobile);
+    });
+
+    $effect(() => {
         const id = docId;
-        const cleanupViewport = installMobileViewportVars(rootEl, facade.isMobile);
         mounted = true;
         settled = false;
         context = null;
@@ -110,7 +113,6 @@
             reloadToken += 1;
             document.removeEventListener("glean:data-changed", handler);
             document.removeEventListener("glean:reading-context-refresh", refreshHandler);
-            cleanupViewport();
         };
     });
 

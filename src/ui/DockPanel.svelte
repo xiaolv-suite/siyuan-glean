@@ -1637,7 +1637,10 @@ const reload = createRefreshQueue(async () => {
     if (!index.updatedAt) loading = true;
     try {
         const cached = await loadIndex(facade.pluginInstance);
-        if (cached.updatedAt) index = cached;
+        if (cached.updatedAt) {
+            index = cached;
+            loading = false;
+        }
         index = await reconcileIndex(facade.pluginInstance, facade.settings);
         loadError = false;
     } catch (error) {
@@ -3344,7 +3347,7 @@ $effect(() => {
                     {#if view === "resurface"}
                         <span class="glean-mobile-topbar__mark" aria-hidden="true"><svg><use href="#iconGleanWheat" /></svg></span>
                     {:else}
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14.7 5.3-6.7 6.7 6.7 6.7 1.4-1.4-5.3-5.3 5.3-5.3-1.4-1.4Z" /></svg>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#iconGleanArrowLeft" /></svg>
                     {/if}
                 </button>
                 <div class="glean-mobile-topbar__copy">
@@ -3383,7 +3386,7 @@ $effect(() => {
                         aria-expanded={searchOpen}
                         onclick={() => { if (searchOpen) closeSearch(); else searchOpen = true; }}
                     >
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 3a7.5 7.5 0 0 1 5.9 12.1l4.2 4.2a1 1 0 0 1-1.4 1.4l-4.2-4.2A7.5 7.5 0 1 1 10.5 3zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11z"/></svg>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#iconGleanSearch" /></svg>
                     </button>
                 {/if}
                 <div class="glean-mobile-topbar__more">
@@ -3398,7 +3401,7 @@ $effect(() => {
                         aria-expanded={mobileMoreOpen}
                         onclick={() => mobileMoreOpen ? closeMobileMore() : openMobileMore()}
                     >
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 10.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3Zm7 0a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3Zm7 0a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3Z" /></svg>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="fill:none!important;stroke:currentColor!important;" aria-hidden="true"><circle cx="12" cy="12" r="1" fill="none"/><circle cx="19" cy="12" r="1" fill="none"/><circle cx="5" cy="12" r="1" fill="none"/></svg>
                     </button>
                     {#if mobileMoreOpen}
                         <div id="glean-mobile-more-menu" class="glean-mobile-more" bind:this={mobileMoreMenu} role="menu" tabindex="-1" aria-orientation="vertical" aria-label={t(i18n, "mobile.moreLabel")} onkeydown={mobileMoreKeydown}>
@@ -3543,7 +3546,7 @@ $effect(() => {
         {#if view === "library"}
             {#if (!facade.isMobile && isTabCanvas) || searchOpen}
                 <div class="glean-search">
-                    <svg class="glean-search__icon" viewBox="0 0 24 24"><path d="M10.5 3a7.5 7.5 0 0 1 5.9 12.1l4.2 4.2a1 1 0 0 1-1.4 1.4l-4.2-4.2A7.5 7.5 0 1 1 10.5 3zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11z"/></svg>
+                    <svg class="glean-search__icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#iconGleanSearch" /></svg>
                     <input
                         bind:this={searchInput}
                         type="text"
@@ -3579,7 +3582,7 @@ $effect(() => {
                     aria-label={t(i18n, "panel.searchPlaceholder")}
                     onclick={() => (searchOpen = true)}
                 >
-                    <svg class="glean-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 3a7.5 7.5 0 0 1 5.9 12.1l4.2 4.2a1 1 0 0 1-1.4 1.4l-4.2-4.2A7.5 7.5 0 1 1 10.5 3zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11z"/></svg>
+                    <svg class="glean-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#iconGleanSearch" /></svg>
                 </button>
             {/if}
         {/if}
@@ -3677,7 +3680,7 @@ $effect(() => {
                     aria-expanded={mobileFilterOpen}
                     onclick={openMobileFilters}
                 >
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13a1.5 1.5 0 0 1 1.2 2.4l-5.2 6.9v5.2a1.5 1.5 0 0 1-.8 1.3l-2.5 1.2a1.5 1.5 0 0 1-2.2-1.3v-6.4L3.3 6.4A1.5 1.5 0 0 1 4 5.5Zm1.5.5 5 6.7v5l1-.5v-4.5l5-6.7h-11Z" /></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="fill:none!important;stroke:currentColor!important;" aria-hidden="true"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" fill="none"/></svg>
                     <span>{t(i18n, "library.filters")}</span>
                     {#if activeFilterCount > 0}<span class="glean-mobile-filter-badge">{activeFilterCount}</span>{/if}
                 </button>
@@ -4775,16 +4778,19 @@ $effect(() => {
                     aria-label={t(i18n, item.labelKey)}
                     onclick={() => selectMobileNav(item.key)}
                 >
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="fill:none!important;stroke:currentColor!important;" aria-hidden="true">
                         {#if item.key === "home"}
-                            <path d="M3 10.7 12 3l9 7.7v8.1a1.2 1.2 0 0 1-1.2 1.2h-5.1v-6.2H9.3V20H4.2A1.2 1.2 0 0 1 3 18.8v-8.1Z" />
+                            <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" fill="none" />
+                            <path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="none" />
                         {:else if item.key === "library"}
-                            <path d="M5 4.2A2.2 2.2 0 0 1 7.2 2h10.6A2.2 2.2 0 0 1 20 4.2v15.6a2.2 2.2 0 0 1-2.2 2.2H7.2A2.2 2.2 0 0 1 5 19.8V4.2Zm2.4 0v15.6c0 .3.2.5.5.5h10.4V3.7H7.9c-.3 0-.5.2-.5.5Zm2.3 2.1h6.8v1.6H9.7V6.3Zm0 3.4h6.8v1.6H9.7V9.7Z" />
+                            <path d="M12 7v14" fill="none" />
+                            <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" fill="none" />
                         {:else if item.key === "highlights"}
-                            <path d="M5 3.5h14A2.5 2.5 0 0 1 21.5 6v8A2.5 2.5 0 0 1 19 16.5h-7.1L7.2 20v-3.5H5A2.5 2.5 0 0 1 2.5 14V6A2.5 2.5 0 0 1 5 3.5Zm1.6 4.1v2.2h2.2V7.6H6.6Zm4.3 0v2.2h2.2V7.6h-2.2Zm4.3 0v2.2h2.2V7.6h-2.2Z" />
+                            <path d="m9 11-6 6v3h3l6-6" fill="none" />
+                            <path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4" fill="none" />
                         {:else}
-                            <path d="M12 2.8a2 2 0 0 1 2 2v.5a7.6 7.6 0 0 1 2.2.9l.4-.4a2 2 0 1 1 2.8 2.8l-.4.4c.4.7.7 1.4.9 2.2h.5a2 2 0 1 1 0 4h-.5a7.6 7.6 0 0 1-.9 2.2l.4.4a2 2 0 1 1-2.8 2.8l-.4-.4a7.6 7.6 0 0 1-2.2.9v.5a2 2 0 1 1-4 0v-.5a7.6 7.6 0 0 1-2.2-.9l-.4.4a2 2 0 1 1-2.8-2.8l.4-.4a7.6 7.6 0 0 1-.9-2.2h-.5a2 2 0 1 1 0-4h.5c.2-.8.5-1.5.9-2.2l-.4-.4a2 2 0 1 1 2.8-2.8l.4.4A7.6 7.6 0 0 1 10 5.3v-.5a2 2 0 0 1 2-2Zm0 6.1a3.3 3.3 0 1 0 0 6.6 3.3 3.3 0 0 0 0-6.6Z" />
-                    {/if}
+                            <use href="#iconGleanGear" />
+                        {/if}
                     </svg>
                     <span>{t(i18n, item.labelKey)}</span>
                 </button>
