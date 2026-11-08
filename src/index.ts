@@ -522,8 +522,10 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
             });
         }
 
-        // Epoch 7 Phase 5 / Mobile Spec v1: 统一手机端入口挂载（小驴罗盘顶栏+悬浮球双入口）
-        if (typeof lvLaunchpad?.ensureMobileEntry === "function") {
+        // Epoch 7 Phase 5 / Protocol v1.7.5: 统一全端入口挂载（小驴罗盘顶栏+悬浮球双入口收敛）
+        if (typeof lvLaunchpad?.ensureUnifiedEntry === "function") {
+            this.mobileEntryCleaner = lvLaunchpad.ensureUnifiedEntry();
+        } else if (typeof lvLaunchpad?.ensureMobileEntry === "function") {
             this.mobileEntryCleaner = lvLaunchpad.ensureMobileEntry();
         }
 
@@ -542,6 +544,7 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
             position: "right",
             callback: () => this.openPanel(),
         });
+        this.registerLaunchpad();
         this.topBarContextMenuHandler = (event: MouseEvent) => {
             event.preventDefault();
             event.stopPropagation();
@@ -760,6 +763,7 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
             badge: unread > 0 ? `${unread} 篇未读` : undefined,
             badgeType: "primary",
             actions: ["今日阅读池", "继续上次阅读", "稍后读收件箱", "剪藏剪贴板内容"],
+            topBarElement: this.topBarElement,
             onClick: () => this.openInbox(),
             onAction: (action) => void this.handleQuickAction(action),
         });
