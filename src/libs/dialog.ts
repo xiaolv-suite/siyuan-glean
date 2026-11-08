@@ -182,9 +182,12 @@ export const simpleDialog = (args: {
         const header = dialog.element.querySelector<HTMLElement>(".b3-dialog__header");
         const headerHasMobileClose = header?.querySelector(".glean-mobile-dialog-close");
         const headerNativeClose = header?.querySelector<HTMLElement | SVGElement>(".b3-dialog__close:not(.glean-mobile-dialog-close)");
-        if (header && !headerHasMobileClose && (isMobileDialogViewport() || !headerNativeClose)) {
+        if (header && !headerHasMobileClose && (isMobileDialogViewport() || !closeIcon)) {
             if (headerNativeClose) {
                 headerNativeClose.style.setProperty("display", "none", "important");
+            }
+            if (closeIcon && closeIcon !== headerNativeClose) {
+                closeIcon.style.setProperty("display", "none", "important");
             }
             const mobileCloseBtn = document.createElement("button");
             mobileCloseBtn.type = "button";
