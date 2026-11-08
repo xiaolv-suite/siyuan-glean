@@ -70,3 +70,79 @@ export function resolveLatestReadingPosition(
     if (!Number.isFinite(timeB)) return validA;
     return timeB > timeA ? validB : validA;
 }
+
+export type ReadingMilestonePhase = "unread" | "browsing" | "indepth" | "concluding" | "completed";
+
+export interface ReadingMilestoneInfo {
+    phase: ReadingMilestonePhase;
+    label: string;
+    badge: string;
+    isCompleted: boolean;
+    progressPercentage: number;
+}
+
+/**
+ * 依据阅读进度百分比派生阅读里程碑阶段（对标微信读书 / Readwise 阅读内化阶梯）
+ */
+export function deriveReadingMilestone(progress: number | null | undefined): ReadingMilestoneInfo {
+    const p = typeof progress === "number" && Number.isFinite(progress) ? Math.min(100, Math.max(0, Math.round(progress))) : 0;
+
+    if (p >= 100) {
+        return {
+            phase: "completed",
+            label: "已读完",
+            badge: "✅",
+            isCompleted: true,
+            progressPercentage: 100,
+        };
+    }
+    if (p >= 75) {
+        return {
+            phase: "concluding",
+            label: "即将读完",
+            badge: "🏁",
+            isCompleted: false,
+            progressPercentage: p,
+        };
+    }
+    if (p >= 25) {
+        return {
+            phase: "indepth",
+            label: "深入研读",
+            badge: "📖",
+            isCompleted: false,
+            progressPercentage: p,
+        };
+    }
+    if (p > 0) {
+        return {
+            phase: "browsing",
+            label: "导读起步",
+            badge: "🛫",
+            isCompleted: false,
+            progressPercentage: p,
+        };
+    }
+    return {
+        phase: "unread",
+        label: "未读",
+        badge: "⚪",
+        isCompleted: false,
+        progressPercentage: 0,
+    };
+}
+
+/**
+ * 格式化接续上次阅读断点的轻量反馈提示文本
+ */
+export function formatReadPointResumeNotice(
+    position: ReadingPosition | null | undefined,
+    ratio: number | null = null
+): string {
+    const valid = parseReadingPosition(position);
+    if (!valid) return "";
+
+    const pctStr = (typeof ratio === "number" && ratio > 0) ? `（已读 ${ratio}%）` : "";
+    return `已为您自动接续至上次阅读位置${pctStr}`;
+}
+

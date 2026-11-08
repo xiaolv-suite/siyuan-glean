@@ -252,30 +252,105 @@ export function toggleNodeFold(node: FoldNode): FoldNode {
 }
 
 /**
- * 将当前阶数的折叠大纲节点格式化为 Markdown 笔记草稿（BL-35）
+ * 获取单个节点在指定折叠层级下的呈现文本
+ */
+export function resolveNodeDisplayContent(node: FoldNode, level: FoldLevel): string {
+    if (level === 1) return node.fullText;
+    if (level === 2) return node.brief || node.fullText;
+    if (level === 3) return (node.points && node.points.length > 0) ? node.points.join("；") : (node.brief || node.fullText);
+    if (level === 4) return node.gist || node.brief || node.fullText;
+    return node.concept || node.gist || node.brief || node.fullText;
+}
+
+export interface FoldMetricsResult {
+    /** 当前折叠层级 (1~5) */
+    level: FoldLevel;
+    /** 全文原始总字符数（Level 1） */
+    totalOriginalChars: number;
+    /** 当前折叠呈现字符数 */
+    foldedChars: number;
+    /** 字符保留率（0 ~ 1.0） */
+    retentionRatio: number;
+    /** 篇幅浓缩/节省百分比（0 ~ 100） */
+    savedPercentage: number;
+    /** 原文预估阅读分钟数（按 400 字/分钟） */
+    originalMinutes: number;
+    /** 当前层级预估速读分钟数 */
+    foldedMinutes: number;
+    /** 节省的预估阅读分钟数 */
+    savedMinutes: number;
+}
+
+/**
+ * 计算当前阶数语义折叠下的篇幅压缩率与时间节省度量看板指标
+ */
+export function calculateFoldLevelMetrics(
+    nodes: readonly FoldNode[],
+    level: FoldLevel,
+    wordsPerMinute = 400
+): FoldMetricsResult {
+    if (!nodes || nodes.length === 0) {
+        return {
+            level,
+            totalOriginalChars: 0,
+            foldedChars: 0,
+            retentionRatio: 1,
+            savedPercentage: 0,
+            originalMinutes: 0,
+            foldedMinutes: 0,
+            savedMinutes: 0,
+        };
+    }
+
+    let origChars = 0;
+    let foldChars = 0;
+
+    for (const node of nodes) {
+        const fullLen = (node.fullText || "").length;
+        const dispText = resolveNodeDisplayContent(node, level);
+        const dispLen = (dispText || "").length;
+
+        origChars += fullLen;
+        foldChars += dispLen;
+    }
+
+    const safeOrig = Math.max(1, origChars);
+    const retentionRatio = Math.min(1, Math.max(0, foldChars / safeOrig));
+    const savedPercentage = Math.round((1 - retentionRatio) * 100);
+
+    const origMins = Math.max(1, Math.ceil(origChars / wordsPerMinute));
+    const foldMins = foldChars > 0 ? Math.max(1, Math.ceil(foldChars / wordsPerMinute)) : 0;
+    const savedMins = Math.max(0, origMins - foldMins);
+
+    return {
+        level,
+        totalOriginalChars: origChars,
+        foldedChars: foldChars,
+        retentionRatio: Number(retentionRatio.toFixed(3)),
+        savedPercentage,
+        originalMinutes: origMins,
+        foldedMinutes: foldMins,
+        savedMinutes: savedMins,
+    };
+}
+
+/**
+ * 将当前阶数的折叠大纲节点格式化为 Markdown 笔记草稿（BL-35，支持大纲标题分层导出）
  */
 export function formatFoldNodesToMarkdown(nodes: readonly FoldNode[], level: FoldLevel): string {
     const lines: string[] = [];
     for (const node of nodes) {
-        let content = "";
-        if (level === 1) {
-            content = node.fullText;
-        } else if (level === 2) {
-            content = node.brief || node.fullText;
-        } else if (level === 3) {
-            content = (node.points && node.points.length > 0) ? node.points.join("；") : (node.brief || node.fullText);
-        } else if (level === 4) {
-            content = node.gist || node.brief || node.fullText;
-        } else {
-            content = node.concept || node.gist || node.brief || node.fullText;
-        }
+        const content = resolveNodeDisplayContent(node, level);
         if (content && content.trim()) {
-            if (node.blockId) {
+            const isHeading = node.type === "NodeHeading";
+            if (isHeading) {
+                lines.push(`\n### ${content.trim()}\n`);
+            } else if (node.blockId) {
                 lines.push(`- ${content.trim()} ((${node.blockId} '*'))`);
             } else {
                 lines.push(`- ${content.trim()}`);
             }
         }
     }
-    return lines.join("\n");
+    return lines.join("\n").trim();
 }
