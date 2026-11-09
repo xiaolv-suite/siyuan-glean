@@ -1467,7 +1467,7 @@
   "reader.companionNavTools": "档案工具",
   "reader.moreActions": "更多操作",
   "reader.outlineFilterPlaceholder": "过滤大纲标题…",
-  "reader.copyAllHighlights": "复制本文全部批注",
+  "reader.copyAllHighlights": "复制全部批注",
   "reader.filterByColor": "按颜色筛选批注",
   "reader.cycleColorHint": "点击切换高亮颜色",
   "reader.filterColorItem": "筛选 ${color}",
@@ -1479,7 +1479,7 @@
   "reader.cardGhostHint": "💡 安装小驴闪卡后可一键制卡",
   "reader.extractToCards": "摘录到闪卡",
   "reader.extractToCardsHint": "摘录到小驴闪卡 (Alt+X)",
-  "reader.extractedToCards": "已摘录到小驴闪卡",
+  "reader.extractedToCards": "已存入小驴闪卡材料收件箱，提炼后再加入复习",
   "reader.examGhostHint": "💡 安装小驴考试后可一键出题",
   "wechat.rescanAuthor": "重新识别公众号",
   "wechat.authorRecognized": "已识别公众号：${name}",
@@ -1530,7 +1530,6 @@
   "library.batchRangeError": "请输入 0 到 5 之间的数字",
   "reader.shortcutNextHighlight": "跳转到下一处批注",
   "reader.shortcutPrevHighlight": "跳转到上一处批注",
-  "reader.copyAllHighlights": "复制全部批注",
   "reader.allHighlightsCopied": "已复制本文全部批注（Markdown 格式）",
   "quoteCard.title": "金句卡片生成器",
   "quoteCard.action": "金句卡片",
@@ -1749,5 +1748,7 @@
   "library.onboardingGuideDesc": "重新检查或切换存放长文剪藏的笔记本范围",
   "library.summaryAuthor": "*作者: ${author}*",
   "library.summarySite": "*来源: ${site}*",
-  "rail.resizeHandle": "调整侧栏宽度"
+  "rail.resizeHandle": "调整侧栏宽度",
+  "reader.extractFailed": "摘录未交接成功，选区已保留，请检查闪卡目标后重试。",
+  "reader.extractPending": "交接结果待确认。请在闪卡材料收件箱核对；重试会使用原请求身份。"
 }

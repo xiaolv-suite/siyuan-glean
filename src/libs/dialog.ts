@@ -185,7 +185,7 @@ export const simpleDialog = (args: {
         const headerHasMobileClose = header?.querySelector(".glean-mobile-dialog-close");
         const headerNativeClose = header?.querySelector<HTMLElement | SVGElement>(".b3-dialog__close:not(.glean-mobile-dialog-close)");
         if (header && !headerHasMobileClose && !headerNativeClose) {
-            if (closeIcon && closeIcon !== headerNativeClose) {
+            if (closeIcon) {
                 closeIcon.style.setProperty("display", "none", "important");
             }
             const mobileCloseBtn = document.createElement("button");

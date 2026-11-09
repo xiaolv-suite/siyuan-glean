@@ -6,7 +6,9 @@
 import { showMessage } from "siyuan";
 import type { GleanFacade } from "../types.ts";
 import { t } from "../libs/i18n.ts";
-import { lvAutomation, lvLaunchpad, lvActivity } from "../libs/notice.ts";
+import { lvLaunchpad, lvActivity } from "../libs/notice.ts";
+import { createCardSafely } from "../libs/ecosystem-bridge-kit.ts";
+import { extractDeliveryKey } from "../domain/extract-delivery.ts";
 import { formatFlashcardMarkdown, type HighlightFlashcardPayload } from "../domain/highlight-pipeline.ts";
 
 export interface PipelineDispatchResult {
@@ -20,26 +22,18 @@ export async function dispatchHighlightToFlashcard(
 ): Promise<PipelineDispatchResult> {
     const i18n = facade.i18n;
 
-    // 1. 尝试全生态自动化事件总线广播
-    try {
-        if (typeof lvAutomation?.trigger === "function") {
-            const res = await lvAutomation.trigger("siyuan-glean", "create-card-request", payload);
-            if (res && res.triggered > 0 && res.success > 0) {
-                if (typeof lvLaunchpad?.haptic === "function") lvLaunchpad.haptic(10);
-                if (typeof lvActivity?.record === "function") {
-                    lvActivity.record({
-                        source: "拾遗",
-                        category: "clip",
-                        title: `高亮转闪卡: ${payload.sourceTitle}`,
-                        linkBlockId: payload.sourceBlockId,
-                    });
-                }
-                showMessage(t(i18n, "pipeline.cardCreatedSuccess"), 2500);
-                return { success: true, mode: "automated" };
-            }
-        }
-    } catch (err) {
-        console.debug("[glean] lvAutomation.trigger 未命中或跳过:", err);
+    const receipt = await createCardSafely({ front: payload.front, back: payload.back,
+        tags: payload.tags, sourceBlockId: payload.sourceBlockId, deckName: payload.sourceTitle,
+        requestId: extractDeliveryKey("", payload.sourceBlockId, payload.front + "\n" + payload.back) });
+    if (receipt.ok && receipt.createdBlockID) {
+        lvLaunchpad?.haptic?.(10);
+        lvActivity?.record?.({ source: "拾遗", category: "clip", title: `高亮转闪卡: ${payload.sourceTitle}`, linkBlockId: receipt.createdBlockID });
+        showMessage(t(i18n, "pipeline.cardCreatedSuccess"), 2500);
+        return { success: true, mode: "automated" };
+    }
+    if (receipt.state === "unknown") {
+        showMessage(t(i18n, "reader.extractPending"), 4000);
+        return { success: false, mode: "failed" };
     }
 
     // 2. 闪卡未安装或无规则消费时，优雅降级为复制闪卡 Markdown 到剪贴板

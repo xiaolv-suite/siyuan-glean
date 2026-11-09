@@ -15194,3 +15194,10 @@ body:has(.b3-dialog--open, #lv-launchpad-sheet-mask, .lvct-dialog-mask, .sw__mob
     }
 }
 
+
+// Touch targets override desktop compact density, including its legacy important rules.
+@media (max-width: 600px), (pointer: coarse) {
+    .glean-panel .glean-filters.glean-filters--compact :is(button.glean-filter-dir, button.glean-filter-clear, button.glean-action-popover__trigger) {
+        min-width: 44px !important; min-height: 44px !important; height: auto !important; line-height: 1.4 !important; padding-block: 8px !important;
+    }
+}

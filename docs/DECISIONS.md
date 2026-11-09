@@ -2993,3 +2993,6 @@ T-3416 承接方向五（有依据的阅读 AI）与同类产品对标（Readwis
 4. **三视图一致性与本地 v1.4.1 发版（U-01）**：
    - 补齐 `DockPanel.svelte` 紧凑/移动卡片（`.glean-card`）的 `.glean-snap-badge` 快照健康度徽标；收口未翻译中文与 `:root` 令牌声明；
    - 同步 `package.json`、`plugin.json`、双语 `README` 与 `src/domain/schema.ts` 的 `PLUGIN_VERSION = "1.4.1"`，保留 `output/release-v1.4.0-rollback/package.zip` 回滚包，完成本地 tag `v1.4.1` 锚定，严格不执行任何远程操作。
+
+## D-0424（2026-11-09）阅读交接只认确切回执（T-3546）
+桥传输与事件事实分开：摘录接收和原子卡创建有不同kind/enrolled。Reader await结果并绑定原文章上下文；失败/未知不标已创建、不自动切第二写通道。完整选区身份区分同块不同摘录。移动compact触屏目标保留44px。

@@ -58,7 +58,7 @@ test("小驴闪卡（siyuan-lv-cards）：未安装时静默降级，已安装�
         hasCapability: (name) => ["receiveExtract", "due", "openReview"].includes(name),
         receiveExtract: async (envelope) => {
             receivedExtractPayload = envelope;
-            return { ok: true, data: { blockID: "card-block-999", enrolled: true } };
+            return { ok: true, data: { createdBlockID: "card-block-999", blockID: "card-block-999", kind: "extract", enrolled: false } };
         },
         getDueSummary: async () => ({
             ok: true,
@@ -85,7 +85,7 @@ test("小驴闪卡（siyuan-lv-cards）：未安装时静默降级，已安装�
 
     const successDue = await getCardsDueSummarySafely();
     assert.equal(successDue.ok, true);
-    assert.equal(successDue.unreviewedCount, 10); // 5 + 3 + 2 = 10
+    assert.equal(successDue.unreviewedCount, 5); // total already includes new=3 and old=2
     assert.equal(successDue.todayReviewedCount, 10);
 });
 

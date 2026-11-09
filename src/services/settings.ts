@@ -123,6 +123,7 @@ export function normalizeSettings(raw: unknown): GleanSettings {
         anchorNotebooks: Array.isArray(input.anchorNotebooks)
             ? input.anchorNotebooks.filter((id): id is string => typeof id === "string" && id.length > 0)
             : [],
+        ...(typeof input.rootPath === "string" && input.rootPath.trim() ? { rootPath: input.rootPath.trim() } : {}),
         snapshotOnCapture: typeof input.snapshotOnCapture === "boolean" ? input.snapshotOnCapture : false,
         ai: {
             // 兼容旧版布尔 enrichOnCapture：true→auto，false→manual
@@ -164,12 +165,25 @@ export function cloneSettings(settings: GleanSettings): GleanSettings {
     return normalizeSettings(settings);
 }
 
+/** A configured anchor wins; fallback is restricted to the explicit XiaoLv notebook. */
+export function resolveDefaultAnchorNotebook(notebooks: Array<{ id: string; name: string; closed?: boolean }>, anchors: string[]): string | undefined {
+    return notebooks.find(n => !n.closed && anchors.includes(n.id))?.id
+        ?? notebooks.find(n => !n.closed && /^(小驴空间|小驴笔记本|小驴生态统一测试空间)$/.test(n.name))?.id;
+}
+
+export function resolveGleanRootPrefix(settings: GleanSettings, notebooks: Array<{ id: string; name: string }>, notebookId: string): string {
+    const configured = settings.rootPath?.trim();
+    if (configured) return `/${configured.split("/").filter(part => part && part !== "." && part !== "..").join("/")}`;
+    return notebooks.some(n => n.id === notebookId && /^(小驴空间|小驴笔记本|小驴生态统一测试空间)$/.test(n.name)) ? "/04-小驴拾遗" : "/小驴拾遗";
+}
+
 export function mergeSettingsDraft(current: GleanSettings, draft: GleanSettings): GleanSettings {
     const saved = normalizeSettings(current);
     const edited = normalizeSettings(draft);
     return normalizeSettings({
         ...saved,
         anchorNotebooks: edited.anchorNotebooks,
+        rootPath: edited.rootPath,
         snapshotOnCapture: edited.snapshotOnCapture,
         ai: { ...saved.ai, ...edited.ai },
         resurface: { ...saved.resurface, ...edited.resurface },

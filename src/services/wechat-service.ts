@@ -108,7 +108,7 @@ export async function batchRecognizeWechatAuthors(
     const bizAuthorMap = new Map<string, string>();
     for (const entry of entries) {
         const cleanAuth = displayWechatAuthor(entry.author);
-        const biz = extractWechatBiz(entry.url);
+        const biz = extractWechatBiz(entry.url ?? "");
         if (cleanAuth && biz && !bizAuthorMap.has(biz)) {
             bizAuthorMap.set(biz, cleanAuth);
         }
@@ -138,7 +138,7 @@ export async function batchRecognizeWechatAuthors(
                         url: target.url,
                         site: target.site,
                     });
-                    const biz = extractWechatBiz(target.url);
+                    const biz = extractWechatBiz(target.url ?? "");
                     if (detected) {
                         detectedCount += 1;
                         updatedIds.push(target.id);

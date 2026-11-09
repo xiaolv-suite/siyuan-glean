@@ -1479,7 +1479,7 @@
   "reader.cardGhostHint": "💡 Install Lv Cards to create flashcards",
   "reader.extractToCards": "Extract to Cards",
   "reader.extractToCardsHint": "Extract to Lv Cards (Alt+X)",
-  "reader.extractedToCards": "Extracted to Lv Cards",
+  "reader.extractedToCards": "Saved to the Cards material inbox. Refine it before scheduled review.",
   "reader.examGhostHint": "💡 Install Lv Exam to generate quiz questions",
   "wechat.rescanAuthor": "Rescan publisher",
   "wechat.authorRecognized": "Recognized publisher: ${name}",
@@ -1530,7 +1530,6 @@
   "library.batchRangeError": "Please enter a number between 0 and 5",
   "reader.shortcutNextHighlight": "Jump to next highlight",
   "reader.shortcutPrevHighlight": "Jump to previous highlight",
-  "reader.copyAllHighlights": "Copy all highlights",
   "reader.allHighlightsCopied": "All highlights copied in Markdown",
   "quoteCard.title": "Quote Card Generator",
   "quoteCard.action": "Quote Card",
@@ -1749,5 +1748,7 @@
   "library.onboardingGuideDesc": "Review or change notebooks designated for long-form clips",
   "library.summaryAuthor": "*Author: ${author}*",
   "library.summarySite": "*Source: ${site}*",
-  "rail.resizeHandle": "Resize sidebar width"
+  "rail.resizeHandle": "Resize sidebar width",
+  "reader.extractFailed": "Extract delivery failed. Your selection is preserved; check the Cards target and retry.",
+  "reader.extractPending": "Delivery is unconfirmed. Check the Cards material inbox; retry keeps the same request identity."
 }

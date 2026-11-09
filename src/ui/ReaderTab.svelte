@@ -68,7 +68,6 @@ import { aiFailureKey } from "../libs/ai-feedback";
         searchPersonSafely,
         sendExtractToCardsSafely,
         type ContactsPerson,
-        type IncrementalExtractPayload,
         type TaskHorizonActionPayload,
     } from "../libs/ecosystem-bridge-kit";
     import { createReadPointObserver, scrollAndPulseReadPoint, type ReadPointObserverHandle } from "../libs/read-point-observer";
@@ -91,6 +90,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
     import type { RecentReadingEntry } from "../domain/recent-reading";
     import { buildHighlightFlashcardPayload } from "../domain/highlight-pipeline";
     import { dispatchHighlightToFlashcard } from "../services/highlight-pipeline-service";
+    import { extractDeliveryKey } from "../domain/extract-delivery";
 
     interface Props {
         facade: GleanFacade;
@@ -859,33 +859,17 @@ import { aiFailureKey } from "../libs/ai-feedback";
     }
 
     async function pushHighlightToCards(hl: HighlightItem): Promise<void> {
-        if (!hl.text || !context) return;
-        const res = await sendExtractToCardsSafely({
-            content: hl.text,
-            sourceBlockId: hl.id,
-            sourceDocId: context.id,
-            sourceTitle: context.title,
-            tags: context.tags || [],
-        });
-        if (typeof window !== "undefined") {
-            window.dispatchEvent(new CustomEvent("lv-cards:incremental-extract", {
-                detail: {
-                    text: hl.text,
-                    sourceBlockId: hl.id,
-                    docId: context.id,
-                    docTitle: context.title,
-                    sourceUrl: context.url,
-                    tags: context.tags || [],
-                    createdAt: new Date().toISOString(),
-                }
-            }));
-        }
-        if (res.ok) {
-            enrolledFlashcardKeys.add(hl.id);
-            showMessage(t(i18n, "reader.extractedToCards"), 2500);
-        } else {
-            void cardFromHighlight(hl);
-        }
+        if (!hl.text || !context || flashcardPipelineBusy) return;
+        const sourceDocId = context.id;
+        flashcardPipelineBusy = true;
+        try {
+            const res = await sendExtractToCardsSafely({ content: hl.text, sourceBlockId: hl.id,
+                sourceDocId, sourceTitle: context.title, tags: context.tags || [],
+                requestId: extractDeliveryKey(sourceDocId, hl.id, hl.text) });
+            if (context?.id !== sourceDocId) return;
+            if (res.ok) { enrolledFlashcardKeys.add(hl.id); showMessage(t(i18n, "reader.extractedToCards"), 2500); }
+            else showMessage(t(i18n, res.state === "unknown" ? "reader.extractPending" : "reader.extractFailed"), 4000);
+        } finally { flashcardPipelineBusy = false; }
     }
 
     async function saveHighlightToCommon(hl: HighlightItem): Promise<void> {
@@ -1814,39 +1798,23 @@ import { aiFailureKey } from "../libs/ai-feedback";
 
     /** 渐进阅读快捷划词摘录到小驴闪卡（Issue #17 标准，Alt+E） */
     async function incrementalExtractToCards(): Promise<void> {
-        if (!excerpt?.text || !context || context.id !== docId) return;
-        const payload: IncrementalExtractPayload = {
-            text: excerpt.text,
-            sourceBlockId: excerpt.blockId || "",
-            docId: context.id,
-            docTitle: context.title,
-            sourceUrl: context.url,
-            tags: context.tags || [],
-            createdAt: new Date().toISOString(),
-        };
-        if (hasCardsInstalled) {
-            void sendExtractToCardsSafely({
-                content: excerpt.text,
-                sourceBlockId: excerpt.blockId || docId,
-                sourceDocId: context.id,
-                sourceTitle: context.title,
-                tags: context.tags || [],
-            });
-            if (typeof window !== "undefined") {
-                window.dispatchEvent(new CustomEvent("lv-cards:incremental-extract", { detail: payload }));
-            }
-            if (excerpt.blockId) {
-                enrolledFlashcardKeys.add(excerpt.blockId);
-                enrolledFlashcardKeys.add(`${excerpt.blockId}_${excerpt.text.slice(0, 30)}`);
-            }
-            showMessage(t(i18n, "reader.extractedToCards"), 2500);
-        } else {
-            try {
-                makeQuoteCardPreview(facade, { title: context.title, quote: excerpt.text, docId: context.id, blockId: excerpt.blockId });
-            } catch {
-                showMessage(t(i18n, "reader.cardGhostHint"), 3000);
-            }
+        if (!excerpt?.text || !context || context.id !== docId || flashcardPipelineBusy) return;
+        if (!hasCardsInstalled) {
+            makeQuoteCardPreview(facade, { title: context.title, quote: excerpt.text, docId: context.id, blockId: excerpt.blockId });
+            return;
         }
+        const sourceDocId = context.id;
+        const text = excerpt.text;
+        const sourceBlockId = excerpt.blockId || docId;
+        const requestId = extractDeliveryKey(sourceDocId, sourceBlockId, text);
+        flashcardPipelineBusy = true;
+        try {
+            const res = await sendExtractToCardsSafely({ content: text, sourceBlockId, sourceDocId,
+                sourceTitle: context.title, tags: context.tags || [], requestId });
+            if (context?.id !== sourceDocId) return;
+            if (res.ok) { enrolledFlashcardKeys.add(requestId); showMessage(t(i18n, "reader.extractedToCards"), 2500); }
+            else showMessage(t(i18n, res.state === "unknown" ? "reader.extractPending" : "reader.extractFailed"), 4000);
+        } finally { flashcardPipelineBusy = false; }
     }
 
     /** 划词提炼下一步行动待办（Task Horizon 联动） */
@@ -1916,7 +1884,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
         if (!excerpt?.text || !excerpt.blockId || flashcardPipelineBusy) return;
         flashcardPipelineBusy = true;
         const blockId = excerpt.blockId;
-        const key = `${blockId}_${excerpt.text.slice(0, 30)}`;
+        const key = extractDeliveryKey(context?.id || docId || "", blockId, excerpt.text);
         try {
             const payload = buildHighlightFlashcardPayload({
                 highlightText: excerpt.text,
@@ -1926,9 +1894,8 @@ import { aiFailureKey } from "../libs/ai-feedback";
                 docTags: context?.tags || [],
             });
             const res = await dispatchHighlightToFlashcard(facade, payload);
-            if (res.success) {
+            if (res.success && res.mode === "automated") {
                 enrolledFlashcardKeys.add(key);
-                enrolledFlashcardKeys.add(blockId);
             }
         } finally {
             flashcardPipelineBusy = false;
@@ -2767,16 +2734,16 @@ import { aiFailureKey } from "../libs/ai-feedback";
                     <button
                         type="button"
                         class="glean-btn glean-btn--ghost glean-reader__selection-btn glean-reader__pipeline-btn"
-                        class:glean-reader__selection-btn--enrolled={excerpt?.blockId && (enrolledFlashcardKeys.has(excerpt.blockId) || enrolledFlashcardKeys.has(`${excerpt.blockId}_${excerpt.text.slice(0, 30)}`))}
+                        class:glean-reader__selection-btn--enrolled={excerpt?.blockId && enrolledFlashcardKeys.has(extractDeliveryKey(context?.id || docId, excerpt.blockId, excerpt.text))}
                         disabled={excerptBusy || flashcardPipelineBusy}
                         onclick={() => void makeFlashcardFromExcerpt()}
-                        title={excerpt?.blockId && (enrolledFlashcardKeys.has(excerpt.blockId) || enrolledFlashcardKeys.has(`${excerpt.blockId}_${excerpt.text.slice(0, 30)}`)) ? t(i18n, "pipeline.cardCreatedBadge") : t(i18n, "pipeline.makeFlashcard")}
-                        aria-label={excerpt?.blockId && (enrolledFlashcardKeys.has(excerpt.blockId) || enrolledFlashcardKeys.has(`${excerpt.blockId}_${excerpt.text.slice(0, 30)}`)) ? t(i18n, "pipeline.cardCreatedBadge") : t(i18n, "pipeline.makeFlashcard")}
+                        title={excerpt?.blockId && enrolledFlashcardKeys.has(extractDeliveryKey(context?.id || docId, excerpt.blockId, excerpt.text)) ? t(i18n, "pipeline.cardCreatedBadge") : t(i18n, "pipeline.makeFlashcard")}
+                        aria-label={excerpt?.blockId && enrolledFlashcardKeys.has(extractDeliveryKey(context?.id || docId, excerpt.blockId, excerpt.text)) ? t(i18n, "pipeline.cardCreatedBadge") : t(i18n, "pipeline.makeFlashcard")}
                     >
                         <svg class="glean-icon glean-icon--xs" aria-hidden="true">
-                            <use href={excerpt?.blockId && (enrolledFlashcardKeys.has(excerpt.blockId) || enrolledFlashcardKeys.has(`${excerpt.blockId}_${excerpt.text.slice(0, 30)}`)) ? "#iconGleanCheck" : "#iconGleanCard"} />
+                            <use href={excerpt?.blockId && enrolledFlashcardKeys.has(extractDeliveryKey(context?.id || docId, excerpt.blockId, excerpt.text)) ? "#iconGleanCheck" : "#iconGleanCard"} />
                         </svg>
-                        <span>{excerpt?.blockId && (enrolledFlashcardKeys.has(excerpt.blockId) || enrolledFlashcardKeys.has(`${excerpt.blockId}_${excerpt.text.slice(0, 30)}`)) ? t(i18n, "pipeline.cardCreatedBadge") : t(i18n, "pipeline.makeFlashcard")}</span>
+                        <span>{excerpt?.blockId && enrolledFlashcardKeys.has(extractDeliveryKey(context?.id || docId, excerpt.blockId, excerpt.text)) ? t(i18n, "pipeline.cardCreatedBadge") : t(i18n, "pipeline.makeFlashcard")}</span>
                     </button>
                     <ActionPopover label={t(i18n, "library.moreActions")} compact>
                         <button

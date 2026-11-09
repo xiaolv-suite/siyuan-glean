@@ -430,3 +430,6 @@ AI 设置遵循逐功能默认关闭（D-0070，T-3228）：新用户的 dedupOn
 4. **视口浮动微胶囊与键盘中断**：
    - 阅读器浮动进度胶囊与悬浮音频播放控制器严格遵守轻量微动效与 `pointer-events: none`（纯信息类）或极小触摸区（控制类）设计，绝不干扰正文选区划词；
    - 划词悬浮条及 Memo 输入框与 Escape 全局中断联动，保证键盘流即刻收拢，避免焦点滞留屏幕中央。
+
+## 2026-11-09 外部摘录回执（D-0424）
+receiveExtract请求使用全文选区+来源身份生成稳定requestId。只有单层ActionResult确认createdBlockID且kind=extract才标交接成功；enrolled=false表示已进入材料收件箱，绝不等价写入失败。失败保留选区；unknown不得自动触发另一写通道。只使用公开桥一次，不同时广播DOM写事件。原子制卡使用createCard与新卡回执，复制草稿不标“已创建”。无新增拾遗saveData正文侧车。

@@ -35,9 +35,9 @@ const dummyPayload = buildHighlightFlashcardPayload({
     docTags: ["学习方法"],
 });
 
-test("highlight-pipeline-service: lvAutomation 成功命中消费规则时以 automated 模式派发", async () => {
+test("highlight-pipeline-service: public atomic receipt confirms creation", async () => {
     const originalWindow = globalThis.window;
-    (globalThis as any).window = { addEventListener: () => {}, removeEventListener: () => {} };
+    (globalThis as any).window = { addEventListener: () => {}, removeEventListener: () => {}, xiaolvCards: { protocol: 1, capabilities: ["createCard"], whenReady: async () => true, hasCapability: () => true, createCard: async () => ({ok:true,data:{createdBlockID:"new-card",kind:"atomic",enrolled:true}}) } };
 
     // 注册一条模拟闪卡规则
     const unregister = lvAutomation.registerRule({

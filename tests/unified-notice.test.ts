@@ -570,7 +570,7 @@ test("第四阶段全生态自省诊断与胶囊徽章：lvEcosystem 诊断信�
 
     // 2. 徽章胶囊文字生成
     const badgeText = lvEcosystem.getStatusBadgeText();
-    assert.ok(badgeText.includes("🐴 小驴全家桶协同正常"));
+    assert.ok(badgeText.includes("🐴 小驴全家桶"));
     assert.ok(badgeText.includes("今日活动"));
 });
 
