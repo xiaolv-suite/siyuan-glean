@@ -433,3 +433,6 @@ AI 设置遵循逐功能默认关闭（D-0070，T-3228）：新用户的 dedupOn
 
 ## 2026-11-09 外部摘录回执（D-0424）
 receiveExtract请求使用全文选区+来源身份生成稳定requestId。只有单层ActionResult确认createdBlockID且kind=extract才标交接成功；enrolled=false表示已进入材料收件箱，绝不等价写入失败。失败保留选区；unknown不得自动触发另一写通道。只使用公开桥一次，不同时广播DOM写事件。原子制卡使用createCard与新卡回执，复制草稿不标“已创建”。无新增拾遗saveData正文侧车。
+
+## 2026-11-09 二轮上下文与展示（D-0425）
+收藏请求保存确切docId和Reader会话代次；成功或失败的投影更新只允许作用于仍匹配的上下文。A文章迟到回执不能改写B文章界面。导入预览保留内部status枚举作数据属性，用户文案统一通过status.*翻译键呈现，无存储契约变更。

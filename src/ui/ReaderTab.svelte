@@ -1172,16 +1172,20 @@ import { aiFailureKey } from "../libs/ai-feedback";
     }
 
     async function toggleFavorite(): Promise<void> {
-        if (!context || !docId || statusBusy) return;
+        if (!context || !docId || context.id !== docId || statusBusy) return;
         statusBusy = true;
+        const sourceDocId = docId;
+        const generation = sessionGeneration;
         const current = Boolean(context.favorite);
         const next = !current;
         context = { ...context, favorite: next };
         try {
-            await writeClip(facade.pluginInstance, docId, { favorite: next }, { force: true });
+            await writeClip(facade.pluginInstance, sourceDocId, { favorite: next }, { force: true });
+            if (docId !== sourceDocId || context?.id !== sourceDocId || sessionGeneration !== generation) return;
             showMessage(t(i18n, next ? "roaming.favoriteAdded" : "roaming.favoriteRemoved"), 2000);
             facade.notifyDataChanged();
         } catch (error) {
+            if (docId !== sourceDocId || context?.id !== sourceDocId || sessionGeneration !== generation) return;
             context = { ...context, favorite: current };
             console.warn("[glean] 收藏切换失败:", error);
             showMessage(t(i18n, "msg.actionFailed"), 2500);

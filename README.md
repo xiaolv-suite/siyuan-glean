@@ -1,8 +1,10 @@
 # 小驴拾遗 (Lv Glean)
 
+> 当前源码与验收边界：[唯一当前状态入口](docs/CURRENT-STATUS.md)。本轮修改未发布；以下版本历史不能代表当前安装或全部能力已验收。
+
 [![Quality gates](https://github.com/ai68298100/siyuan-glean/actions/workflows/ci.yml/badge.svg)](https://github.com/ai68298100/siyuan-glean/actions/workflows/ci.yml) [![CodeQL](https://github.com/ai68298100/siyuan-glean/actions/workflows/codeql.yml/badge.svg)](https://github.com/ai68298100/siyuan-glean/actions/workflows/codeql.yml) [![Latest release](https://img.shields.io/github/v/release/ai68298100/siyuan-glean?label=latest%20release)](https://github.com/ai68298100/siyuan-glean/releases/latest)
 
-> 围绕思源剪藏，提供候选确认、稍后读、阅读管理与文章库（读库）；满足相应条件后，也可迁入思源收件箱内容并回顾阅读记录。
+> 围绕思源剪藏，提供候选确认、稍后读、阅读管理；满足相应条件后，也可迁入思源收件箱内容并收归文章读库，回顾阅读记录。
 
 小驴拾遗管理思源中已有的剪藏与文章。它不抓取网页，也不会因为普通笔记位于某个笔记本就自动收录；每篇文章都由你核对来源并确认后进入读库。
 

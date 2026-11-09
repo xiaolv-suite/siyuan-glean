@@ -1,5 +1,7 @@
 # 阻塞与风险（BLOCKERS）
 
+> 唯一当前状态入口：[CURRENT-STATUS.md](CURRENT-STATUS.md)。下列历史基线、完成数量与版本不自动代表当前源码/安装/发布；未勾选项应先与当前实现对账。
+
 > v1.0.4 的核心用户流程存在内部 P0 断点，按 [PRODUCT-REPLAN.md](PRODUCT-REPLAN.md) S1 修复；它们不依赖作者输入。以下保留需真实环境或作者参与的验收项。**逐项操作指引见 [ACCEPTANCE.md](ACCEPTANCE.md)**（作者真机验收手册，含环境准备、步骤、预期与发布预检）。新阻塞按 B-xxx 编号追加，解决后移入“已解除”。
 
 ## 一周真机主链走查脚本（10 步最小闭环 · 已支持 `node scripts/e2e-isolated.mjs` 一键自测）

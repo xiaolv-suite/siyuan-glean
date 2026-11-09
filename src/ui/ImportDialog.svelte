@@ -508,7 +508,7 @@ $effect(() => {
         {#if preview.rows.length > 0}
         <div class="glean-mtable glean-import__table">
             {#each pagedRows as row (row.url)}
-                <div class="glean-mrow" class:glean-mrow--duplicate={row.duplicate} data-status={row.duplicate ? "duplicate" : row.status}>
+                <div class="glean-mrow" class:glean-mrow--duplicate={row.duplicate} data-status={row.duplicate ? "duplicate" : t(i18n, `status.${row.status}`)}>
                     <span class="glean-mrow__ti" title={row.title || row.url}>{row.title || row.url}</span>
                     <span class="glean-mrow__url">{row.site || "—"}</span>
                     <span class="glean-mrow__st" class:glean-mrow__st--skip={row.duplicate}>
