@@ -2746,6 +2746,22 @@ mark.glean-search-highlight {
     box-shadow: var(--glean-shadow-float);
     backdrop-filter: blur(8px);
     animation: glean-slide-up 0.18s var(--glean-ease-spring);
+
+    @media (max-width: 640px) {
+        bottom: max(16px, calc(12px + env(safe-area-inset-bottom))) !important;
+        max-width: calc(100% - 16px) !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        scrollbar-width: none !important;
+        padding: 6px 10px !important;
+        justify-content: flex-start !important;
+        -webkit-overflow-scrolling: touch;
+        .glean-btn, .glean-reader__selection-btn {
+            min-height: 38px !important;
+            min-width: 38px !important;
+            flex-shrink: 0 !important;
+        }
+    }
 }
 
 .glean-reader__selection-memo {
