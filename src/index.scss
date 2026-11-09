@@ -15201,3 +15201,24 @@ body:has(.b3-dialog--open, #lv-launchpad-sheet-mask, .lvct-dialog-mask, .sw__mob
         min-width: 44px !important; min-height: 44px !important; height: auto !important; line-height: 1.4 !important; padding-block: 8px !important;
     }
 }
+
+@media (max-width: 640px) {
+    .b3-dialog__container:has([class*="glean-"]) {
+        width: 100vw !important;
+        max-width: 100vw !important;
+        height: 100dvh !important;
+        max-height: 100dvh !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+    }
+    .glean-reader__toolbar {
+        padding-bottom: max(8px, env(safe-area-inset-bottom));
+        :where(.glean-btn, .glean-seg__btn) {
+            min-height: 38px !important;
+        }
+    }
+    .glean-tile__v, .glean-stats__metric > dd {
+        font-size: 18px !important;
+        font-variant-numeric: tabular-nums !important;
+    }
+}
