@@ -15238,4 +15238,7 @@ body:has(.b3-dialog--open, #lv-launchpad-sheet-mask, .lvct-dialog-mask, .sw__mob
         font-size: 18px !important;
         font-variant-numeric: tabular-nums !important;
     }
+    :is(.b3-text-field, .b3-select, input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+        font-size: 16px !important;
+    }
 }
