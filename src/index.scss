@@ -14187,7 +14187,10 @@ body.b3-theme-dark .glean-panel--mobile,
 
     .glean-mobile-topbar {
         min-height: 44px;
-        padding: var(--glean-space-0);
+        padding: var(--glean-space-0) var(--glean-space-1-5);
+        background: var(--b3-theme-background, #ffffff);
+        border: 1px solid rgba(15, 23, 42, 0.075);
+        box-shadow: 0 2px 8px -2px rgba(15, 23, 42, 0.05);
     }
 
     .glean-queues-row {
@@ -14232,6 +14235,12 @@ body.b3-theme-dark .glean-panel--mobile,
             display: none;
         }
 
+        /* 手机端优先突出文章阅读与分拣，批量识别公众号等重型整理提示仅在桌面端展示 */
+        .glean-wechat-banner,
+        .glean-governance-summary {
+            display: none !important;
+        }
+
         :where(.glean-quota, .glean-wechat-banner, .glean-governance-summary, .glean-candidates) {
             margin: var(--glean-space-0);
             padding: var(--glean-space-1) var(--glean-space-2-5);
@@ -14260,11 +14269,18 @@ body.b3-theme-dark .glean-panel--mobile,
 
     .glean-card {
         padding: var(--glean-space-2) var(--glean-space-2-5);
+        background: var(--b3-theme-background, #ffffff);
+        border: 1px solid rgba(15, 23, 42, 0.075);
+        box-shadow: 0 2px 6px -1px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(15, 23, 42, 0.02);
+
+        &:not(.glean-card--selected) .glean-card__check {
+            display: none !important;
+        }
 
         .glean-card__title {
             -webkit-line-clamp: 2;
             line-clamp: 2;
-            padding-right: var(--glean-space-8, 32px);
+            padding-right: var(--glean-space-1, 4px);
             font-size: var(--glean-text-sm);
             line-height: var(--glean-leading-snug);
         }
