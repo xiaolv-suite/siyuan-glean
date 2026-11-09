@@ -512,7 +512,7 @@ $effect(() => {
                     <span class="glean-mrow__ti" title={row.title || row.url}>{row.title || row.url}</span>
                     <span class="glean-mrow__url">{row.site || "—"}</span>
                     <span class="glean-mrow__st" class:glean-mrow__st--skip={row.duplicate}>
-                        {row.duplicate ? t(i18n, "import.dupLabel") : row.status}
+                        {row.duplicate ? t(i18n, "import.dupLabel") : t(i18n, `status.${row.status}`)}
                     </span>
                 </div>
             {/each}

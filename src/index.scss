@@ -1997,9 +1997,10 @@ body.b3-theme-dark,
 }
 
 /* 微信公众号剪藏内容自适应排版防御（防止内联硬编码宽度撑破容器产生横向溢出） */
-.glean-reader__host .protyle-wysiwyg :where(section, figure, div, table, img, svg) {
+.glean-reader__host .protyle-wysiwyg :where(section, figure, div, table, img, svg, pre, code) {
     max-width: 100% !important;
     box-sizing: border-box !important;
+    overflow-x: auto;
 }
 
 .glean-reader__host .protyle-wysiwyg img {
