@@ -815,7 +815,14 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
             }
 
             const isUrl = /^https?:\/\//i.test(text);
-            const targetNotebook = this.settings.anchorNotebooks[0] || (await (await import("./api/client")).listNotebooks())[0]?.id;
+            const openNbs = await (await import("./api/client")).listNotebooks();
+            const hubNb = openNbs.find(
+                (n) =>
+                    n.name.includes("小驴空间") ||
+                    n.name.includes("小驴笔记本") ||
+                    n.name.includes("小驴生态统一测试空间"),
+            );
+            const targetNotebook = this.settings.anchorNotebooks[0] || hubNb?.id || openNbs[0]?.id;
             if (!targetNotebook) {
                 showNotice("未配置读库笔记本锚点，请在设置中选择读库笔记本", 4000, "warn");
                 return;
@@ -827,9 +834,14 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
             const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}-${String(now.getHours()).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}`;
             const title = isUrl ? `剪藏 ${dateStr}` : (text.slice(0, 30).replace(/[/\\:<>|?*"~\p{Cc}\p{Cf}\r\n]+/gu, " ").trim() || `剪藏 ${dateStr}`);
             const md = isUrl ? `[来源链接](${text})\n\n> 剪藏自系统剪贴板` : `${text}\n\n> 剪藏自系统剪贴板`;
+            const rootPrefix = this.settings.rootPath
+                ? this.settings.rootPath.trim().replace(/\/+$/, "")
+                : targetNotebook === hubNb?.id
+                  ? "/04-小驴拾遗"
+                  : "";
 
             try {
-                const docId = await createDocWithMd(targetNotebook, `/剪藏/${title}`, md);
+                const docId = await createDocWithMd(targetNotebook, `${rootPrefix}/剪藏/${title}`, md);
                 if (docId) {
                     await captureDocument(this, docId, { src: "manual", url: isUrl ? text : undefined });
                     if (typeof lvLaunchpad?.haptic === "function") lvLaunchpad.haptic(10);

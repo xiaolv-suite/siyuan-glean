@@ -145,6 +145,8 @@ export const simpleDialog = (args: {
         modalRoot.style.maxWidth = "100vw";
         modalRoot.style.maxHeight = "100dvh";
         modalRoot.style.width = "100vw";
+        modalRoot.style.height = "100dvh";
+        modalRoot.style.borderRadius = "0";
         modalRoot.style.margin = "0";
     } else {
         modalRoot.style.maxWidth = "94vw";

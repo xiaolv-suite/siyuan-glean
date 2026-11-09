@@ -3449,10 +3449,12 @@ $effect(() => {
                                 <svg class="glean-mobile-more__icon" aria-hidden="true"><use href="#iconGleanRefresh" /></svg>
                                 {t(i18n, "action.refresh")}
                             </button>
+                            {#if !onClose}
                             <button type="button" class="glean-mobile-more__item" role="menuitem" onclick={() => { closeMobileMore(); openPopup(); }}>
                                 <svg class="glean-mobile-more__icon" aria-hidden="true"><use href="#iconGleanPopup" /></svg>
                                 {t(i18n, "panel.popup")}
                             </button>
+                            {/if}
                             <button type="button" class="glean-mobile-more__item" role="menuitem" onclick={() => { closeMobileMore(); triggerRoamingRead(); }}>
                                 <svg class="glean-mobile-more__icon" aria-hidden="true"><use href="#iconGleanRefresh" /></svg>
                                 {t(i18n, "roaming.button")}

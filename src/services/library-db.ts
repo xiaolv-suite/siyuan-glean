@@ -64,11 +64,15 @@ export async function ensureLibraryAnchor(settings: GleanSettings, plugin: Plugi
     if (!notebookId) throw new Error("请先设置读库笔记本");
     let hostDoc = await findDocByTitle(notebookId, LIBRARY_DOC_TITLE);
     if (!hostDoc) {
-        const created = await createDocWithMd(notebookId, `/${LIBRARY_DOC_TITLE}`, `# ${LIBRARY_DOC_TITLE}\n\n`);
+        const rawRoot = settings.rootPath ? settings.rootPath.trim().replace(/\/+$/, "") : "";
+        const targetHPath = rawRoot
+            ? `${rawRoot.startsWith("/") ? rawRoot : `/${rawRoot}`}/${LIBRARY_DOC_TITLE}`
+            : `/${LIBRARY_DOC_TITLE}`;
+        const created = await createDocWithMd(notebookId, targetHPath, `# ${LIBRARY_DOC_TITLE}\n\n`);
         if (!created) throw new Error("创建读库数据库宿主文档失败");
         // 仅对本次新建的插件宿主打标；旧同名文档仍由路径/标题回退识别，避免误标用户文档。
         await writeClip(plugin, created, { internal: true });
-        hostDoc = { id: created, content: LIBRARY_DOC_TITLE, hpath: `/${LIBRARY_DOC_TITLE}`, box: notebookId, updated: "" };
+        hostDoc = { id: created, content: LIBRARY_DOC_TITLE, hpath: targetHPath, box: notebookId, updated: "" };
     }
     let av = await findAvWithRetry(hostDoc.id);
     if (!av) {

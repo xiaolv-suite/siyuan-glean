@@ -9,6 +9,8 @@ export interface GleanSettings {
     version: 1;
     /** 读库笔记本（主锚点），notebook id 列表 */
     anchorNotebooks: string[];
+    /** 统一小驴空间下的拾遗子目录根路径（如 "/04-小驴拾遗"） */
+    rootPath?: string;
     snapshotOnCapture: boolean;
     ai: {
         /** 富化触发模式：off=关闭 / manual=仅手动(✨) / auto=收录时自动。token 消耗的主开关。 */
