@@ -923,13 +923,15 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
             }
 
             showNotice(`正在抓取网页全文并收录至思源: ${url.slice(0, 36)}...`, 3000, "info");
-            const targetNotebook = this.settings.anchorNotebooks[0] || (await (await import("./api/client")).listNotebooks())[0]?.id;
+            const { listNotebooks, createDocWithMd } = await import("./api/client");
+            const { resolveDefaultAnchorNotebook, resolveGleanRootPrefix } = await import("./services/settings");
+            const notebooks = await listNotebooks().catch(() => []);
+            const targetNotebook = resolveDefaultAnchorNotebook(notebooks, this.settings.anchorNotebooks);
             if (!targetNotebook) {
                 showNotice("未配置读库笔记本锚点，请在设置中选择读库笔记本", 4000, "warn");
                 return;
             }
 
-            const { createDocWithMd } = await import("./api/client");
             const { captureDocument } = await import("./services/clip-store");
             const now = new Date();
             const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}-${String(now.getHours()).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}`;
@@ -937,7 +939,8 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
             const md = `[来源网页](${url})\n\n> 正在等待后台网页正文抓取与快照归档...\n\n- 目标链接: ${url}`;
 
             try {
-                const docId = await createDocWithMd(targetNotebook, `/剪藏/${title}`, md);
+                const rootPrefix = resolveGleanRootPrefix(this.settings, notebooks, targetNotebook);
+                const docId = await createDocWithMd(targetNotebook, `${rootPrefix}/剪藏/${title}`, md);
                 if (docId) {
                     await captureDocument(this, docId, { src: "manual", url });
                     notifyClipSuccess({

@@ -14998,6 +14998,16 @@ body:has(.b3-dialog--open, #lv-launchpad-sheet-mask, .lvct-dialog-mask, .sw__mob
         min-height: 88px !important;
     }
 
+    .b3-dialog__container :is(.glean-settings, .glean-migrate, .glean-formatting, .glean-backup, .glean-flashcard) {
+        padding-top: var(--glean-space-2-5) !important;
+    }
+
+    .glean-panel--mobile .glean-tile__v,
+    .glean-panel--mobile .glean-stats__metric > dd:not(.glean-stats__metric-hint) {
+        font-size: 20px !important;
+        line-height: 1.2 !important;
+    }
+
     .glean-preview-sheet {
         padding-top: 12px !important;
     }

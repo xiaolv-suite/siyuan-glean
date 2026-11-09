@@ -89,10 +89,6 @@
     }
 
     $effect(() => {
-        return installMobileViewportVars(rootEl, facade.isMobile);
-    });
-
-    $effect(() => {
         const id = docId;
         mounted = true;
         settled = false;
@@ -114,6 +110,10 @@
             document.removeEventListener("glean:data-changed", handler);
             document.removeEventListener("glean:reading-context-refresh", refreshHandler);
         };
+    });
+
+    $effect(() => {
+        return installMobileViewportVars(rootEl, facade.isMobile);
     });
 
     function carrierLabel(value: string | undefined): string {

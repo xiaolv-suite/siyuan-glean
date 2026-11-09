@@ -72,12 +72,15 @@ export async function flushPendingClips(facade: GleanFacade): Promise<number> {
     let syncedCount = 0;
 
     try {
-        const { createDocWithMd } = await import("../api/client");
+        const { createDocWithMd, listNotebooks } = await import("../api/client");
         const { captureDocument } = await import("./clip-store");
+        const { resolveGleanRootPrefix } = await import("./settings");
+        const notebooks = await listNotebooks().catch(() => []);
 
         for (const item of items) {
             try {
-                const docId = await createDocWithMd(item.notebookId, `/剪藏/${item.title}`, item.md);
+                const rootPrefix = resolveGleanRootPrefix(facade.settings, notebooks, item.notebookId);
+                const docId = await createDocWithMd(item.notebookId, `${rootPrefix}/剪藏/${item.title}`, item.md);
                 if (docId) {
                     const captured = await captureDocument(facade.pluginInstance, docId, {
                         src: "manual",

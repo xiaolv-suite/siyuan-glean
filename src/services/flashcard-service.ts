@@ -192,7 +192,8 @@ async function prepareFlashcardDeck(settings: GleanSettings, plugin: Plugin): Pr
     const existing = await querySql<{ id: string }>(`SELECT id FROM blocks WHERE type='d' AND box='${notebookId.replace(/'/g, "'" + "'")}' AND content='${DECK_DOC_TITLE}' LIMIT 1`);
     let hostDocId = existing[0]?.id ?? "";
     if (!hostDocId) {
-        hostDocId = await createDocWithMd(notebookId, `/${DECK_DOC_TITLE}`, `# ${DECK_DOC_TITLE}\n\n`);
+        const rootPrefix = settings.rootPath ? `/${settings.rootPath.replace(/^\/+|\/+$/g, "")}` : "";
+        hostDocId = await createDocWithMd(notebookId, `${rootPrefix}/${DECK_DOC_TITLE}`, `# ${DECK_DOC_TITLE}\n\n`);
         if (!NODE_ID_PATTERN.test(hostDocId)) throw new Error("创建拾遗卡片宿主文档失败");
         // 宿主只是插件容器，不应进入“待确认候选”；属性写入统一经 clip-store。
         await writeClip(plugin, hostDocId, { internal: true });
