@@ -14449,6 +14449,16 @@ body.b3-theme-dark .glean-panel--mobile,
     }
 }
 
+/* 当任何插件全屏弹窗或罗盘弹射坞打开时，自动隐藏底部伴生阅读栏与悬浮胶囊，严防遮挡弹窗底栏点击 */
+body:has(.b3-dialog--open, #lv-launchpad-sheet-mask, .lvct-dialog-mask, .sw__mobile-sheet-overlay, .lv-peek-drawer) {
+    .glean-mobile-reading-bar,
+    .glean-reading-context,
+    .glean-reading-context-host {
+        display: none !important;
+        pointer-events: none !important;
+    }
+}
+
 .glean-mobile-reading-bar__divider {
     width: 1px;
     height: 22px;
