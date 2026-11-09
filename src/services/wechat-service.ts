@@ -1,6 +1,6 @@
 import type { Plugin } from "siyuan";
 import { exportMdContent } from "../api/client";
-import { extractWechatAuthor, isWechatUrl, extractWechatDescription, extractWechatSeries, cleanWechatNoise, repairWechatContent } from "../domain/wechat";
+import { extractWechatAuthor, isWechatUrl, extractWechatDescription, extractWechatSeries, cleanWechatNoise, repairWechatContent, displayWechatAuthor, extractWechatBiz } from "../domain/wechat";
 import { countWords, estimateMinutes } from "../domain/schema";
 import { readClip, writeClip } from "./clip-store";
 
@@ -33,7 +33,8 @@ export async function scanAndFillWechatAuthor(
 
     try {
         const clip = await readClip(docId);
-        if (clip.author?.trim()) return clip.author.trim();
+        const validAuthor = displayWechatAuthor(clip.author);
+        if (validAuthor) return validAuthor;
         targetUrl = targetUrl || clip.url;
         targetSite = targetSite || clip.site;
         existingSummary = clip.summary || "";
@@ -58,10 +59,12 @@ export async function scanAndFillWechatAuthor(
 
     if (!contentToScan.trim()) return null;
 
-    // 截取前 3500 字符进行高密度模式提取
-    const snippet = contentToScan.slice(0, 3500);
+    // 兼顾首部元信息与文末二维码/来源署名（长文拼接前 3800 字符与后 3200 字符）
+    const snippet = contentToScan.length > 7000
+        ? `${contentToScan.slice(0, 3800)}\n${contentToScan.slice(-3200)}`
+        : contentToScan;
     const detected = extractWechatAuthor(snippet);
-    const desc = extractWechatDescription(snippet);
+    const desc = extractWechatDescription(contentToScan.slice(0, 3500));
     const series = extractWechatSeries(snippet);
 
     const patch: { author?: string; summary?: string; aiTags?: string[] } = {};
@@ -102,10 +105,19 @@ export async function batchRecognizeWechatAuthors(
     entries: Array<{ id: string; url?: string; site?: string; author?: string }>,
     onProgress?: (processed: number, total: number, detectedCount: number) => void,
 ): Promise<{ processed: number; detectedCount: number; updatedIds: string[] }> {
-    // 仅筛选微信文章且作者为空的待处理目标
+    const bizAuthorMap = new Map<string, string>();
+    for (const entry of entries) {
+        const cleanAuth = displayWechatAuthor(entry.author);
+        const biz = extractWechatBiz(entry.url);
+        if (cleanAuth && biz && !bizAuthorMap.has(biz)) {
+            bizAuthorMap.set(biz, cleanAuth);
+        }
+    }
+
+    // 仅筛选微信文章且无有效作者（含脏 URL 作者）的待处理目标
     const targets = entries.filter((entry) => {
         const isWechat = isWechatUrl(entry.url) || isWechatUrl(entry.site);
-        return isWechat && (!entry.author || !entry.author.trim());
+        return isWechat && !displayWechatAuthor(entry.author);
     });
 
     const total = targets.length;
@@ -114,6 +126,7 @@ export async function batchRecognizeWechatAuthors(
     let processed = 0;
     let detectedCount = 0;
     const updatedIds: string[] = [];
+    const unresolvedByBiz: Array<{ id: string; biz: string }> = [];
     const batchSize = 5;
 
     for (let i = 0; i < targets.length; i += batchSize) {
@@ -125,9 +138,15 @@ export async function batchRecognizeWechatAuthors(
                         url: target.url,
                         site: target.site,
                     });
+                    const biz = extractWechatBiz(target.url);
                     if (detected) {
                         detectedCount += 1;
                         updatedIds.push(target.id);
+                        if (biz && !bizAuthorMap.has(biz)) {
+                            bizAuthorMap.set(biz, detected);
+                        }
+                    } else if (biz) {
+                        unresolvedByBiz.push({ id: target.id, biz });
                     }
                 } catch {
                     // 单篇失败不阻断整体批量
@@ -137,6 +156,20 @@ export async function batchRecognizeWechatAuthors(
                 }
             })
         );
+    }
+
+    // 同 __biz 公众号跨篇归并回填
+    for (const item of unresolvedByBiz) {
+        const mappedAuthor = bizAuthorMap.get(item.biz);
+        if (mappedAuthor) {
+            try {
+                await writeClip(plugin, item.id, { author: mappedAuthor }, { force: true });
+                detectedCount += 1;
+                updatedIds.push(item.id);
+            } catch {
+                // ignore
+            }
+        }
     }
 
     return { processed, detectedCount, updatedIds };

@@ -191,6 +191,74 @@ export function extractWechatAuthor(markdown: string): string | null {
         }
     }
 
+    // 策略 6：微信文末二维码关注区（"微信扫一扫 \n 关注该公众号 \n <公众号名称>"）
+    const qrFollowMatch = /关注该公众号\s*[\r\n]+\s*([^\r\n!<>\[\]]{2,28})/i.exec(markdown);
+    if (qrFollowMatch) {
+        const candidate = qrFollowMatch[1].trim();
+        if (candidate && !candidate.startsWith("可在")) {
+            const cleaned = cleanExtractedName(candidate);
+            if (cleaned) return cleaned;
+        }
+    }
+
+    // 策略 7：微信转载标头（"以下文章来源于xxx，作者yyy"）
+    const repostMatch = /以下文章来源于\s*([^，,。\r\n!<>\[\]]{2,28})/i.exec(markdown);
+    if (repostMatch) {
+        const cleaned = cleanExtractedName(repostMatch[1]);
+        if (cleaned) return cleaned;
+    }
+
+    // 策略 8：全文首尾行的来源/出品/发布机构声明（支持文末 "来源：招商引资内参" 等）
+    const allNonEmpty = markdown.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    const headAndTail = [...allNonEmpty.slice(0, 40), ...allNonEmpty.slice(-35)];
+    const sourceLinePattern = /^(?:[-*+>]\s*)?(?:\*\*)?(?:公众号|微信公众号|来源|文章来源|出品|发布机构)(?:\*\*)?[：:\s]+(?:\*\*)?([^\r\n*_[\]()]{2,28})(?:\*\*)?$/i;
+    for (const line of headAndTail) {
+        const m = sourceLinePattern.exec(line);
+        if (m) {
+            const rawVal = m[1].replace(/^[|#\s]+/, "").replace(/^.*由([\u4e00-\u9fa5A-Za-z0-9_·-]{2,20})整编.*$/, "$1").trim();
+            const cleaned = cleanExtractedName(rawVal);
+            if (cleaned) return cleaned;
+        }
+    }
+
+    // 策略 9：文末破折号机构落款（如 "—广东粤财基金管理有限公司—"）
+    for (const line of allNonEmpty.slice(-25)) {
+        const dashOrgMatch = /[—─-]{1,4}\s*([\u4e00-\u9fa5A-Za-z0-9（）()·]{3,24}(?:公司|基金|中心|研究院|协会|资本|创投|律所|智库|集团|学会|委员会|办公室))\s*[—─-]{1,4}/.exec(line);
+        if (dashOrgMatch) {
+            const cleaned = cleanExtractedName(dashOrgMatch[1]);
+            if (cleaned) return cleaned;
+        }
+    }
+
+    // 策略 10：正文中明确提及 "xxx官方公众号" 或 "关注「xxx」公众号"
+    const officialAcctMatch = /([\u4e00-\u9fa5A-Za-z0-9]{2,20})官方(?:微信)?公众号/.exec(markdown)
+        || /关注[“"「【]([\u4e00-\u9fa5A-Za-z0-9_·-]{2,20})[”"」】](?:微信)?公众号/.exec(markdown);
+    if (officialAcctMatch) {
+        const cleaned = cleanExtractedName(officialAcctMatch[1]);
+        if (cleaned) return cleaned;
+    }
+
+    // 策略 11：摘要导语行 "- xxx说：..."（如 "- 基小律说：近期证监会..."）
+    for (const line of allNonEmpty.slice(0, 12)) {
+        const sayMatch = /^-\s*([\u4e00-\u9fa5A-Za-z0-9]{2,12})说[：:]/.exec(line);
+        if (sayMatch) {
+            const cleaned = cleanExtractedName(sayMatch[1]);
+            if (cleaned) return cleaned;
+        }
+    }
+
+    // 策略 12：文末日期行上方的机构署名行（如 "国务院办公厅 \n 2026年6月3日"）
+    const tailSlice = allNonEmpty.slice(-12);
+    for (let i = 0; i < tailSlice.length - 1; i++) {
+        if (/^20\d{2}年\d{1,2}月\d{1,2}日$/.test(tailSlice[i + 1])) {
+            const cand = tailSlice[i].replace(/[*_~#]/g, "").trim();
+            if (cand.length >= 2 && cand.length <= 24 && !/[。，；：？！]/.test(cand)) {
+                const cleaned = cleanExtractedName(cand);
+                if (cleaned) return cleaned;
+            }
+        }
+    }
+
     return null;
 }
 

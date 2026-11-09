@@ -106,19 +106,55 @@ let keyword = $state("");
 let wechatScanning = $state(false);
 let wechatScanProgressText = $state("");
 let autoWechatScanTimer: number | null = null;
+const WECHAT_ATTEMPTED_STORAGE_KEY = "lv-glean-wechat-attempted-v2";
+let wechatAttemptedIds = $state<Set<string>>((() => {
+    try {
+        const raw = typeof sessionStorage !== "undefined" ? sessionStorage.getItem(WECHAT_ATTEMPTED_STORAGE_KEY) : null;
+        if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) return new Set(parsed.filter((x) => typeof x === "string"));
+        }
+    } catch {
+        // ignore
+    }
+    return new Set<string>();
+})());
+
+function markWechatAttempted(ids: readonly string[]): void {
+    if (!ids.length) return;
+    const next = new Set(wechatAttemptedIds);
+    let changed = false;
+    for (const id of ids) {
+        if (id && !next.has(id)) {
+            next.add(id);
+            changed = true;
+        }
+    }
+    if (!changed) return;
+    wechatAttemptedIds = next;
+    try {
+        if (typeof sessionStorage !== "undefined") {
+            sessionStorage.setItem(WECHAT_ATTEMPTED_STORAGE_KEY, JSON.stringify([...next].slice(-500)));
+        }
+    } catch {
+        // ignore
+    }
+}
 
 function triggerSilentWechatScan(): void {
     if (wechatScanning || autoWechatScanTimer !== null || disposed) return;
     autoWechatScanTimer = window.setTimeout(async () => {
         autoWechatScanTimer = null;
         if (wechatScanning || disposed || !rootEl) return;
-        const targets = libraryItems.filter((entry) => isWechatEntry(entry) && (!entry.author || !entry.author.trim()));
+        const targets = libraryItems.filter((entry) => isWechatEntry(entry) && !displayWechatAuthor(entry.author) && !wechatAttemptedIds.has(entry.id));
         if (targets.length === 0) return;
 
-        // 取前 6 篇进行静默批处理，避免抢占主操作
+        // 取前 6 篇进行静默批处理，并附带全量已识别条目供 __biz 归并，同时记录已尝试 ID 杜绝死循环
         const batch = targets.slice(0, 6);
+        markWechatAttempted(batch.map((b) => b.id));
         try {
-            const result = await batchRecognizeWechatAuthors(facade.pluginInstance, batch);
+            const knownWithAuthors = libraryItems.filter((entry) => isWechatEntry(entry) && Boolean(displayWechatAuthor(entry.author)));
+            const result = await batchRecognizeWechatAuthors(facade.pluginInstance, [...knownWithAuthors, ...batch]);
             if (result.detectedCount > 0 && !disposed && rootEl) {
                 notifySilentTask(`后台自动识别微信公众号作者：已完成 ${result.detectedCount} 篇`, "wechat-auto-scan");
                 facade.notifyDataChanged();
@@ -534,10 +570,10 @@ function isWechatEntry(entry: { url?: string; site?: string }): boolean {
 }
 
 const wechatArticlesWithoutAuthor = $derived(
-    libraryItems.filter((entry) => isWechatEntry(entry) && (!entry.author || !entry.author.trim()))
+    libraryItems.filter((entry) => isWechatEntry(entry) && !displayWechatAuthor(entry.author) && !wechatAttemptedIds.has(entry.id))
 );
 const currentViewWechatWithoutAuthor = $derived(
-    rows.filter((entry) => isWechatEntry(entry) && (!entry.author || !entry.author.trim()))
+    rows.filter((entry) => isWechatEntry(entry) && !displayWechatAuthor(entry.author) && !wechatAttemptedIds.has(entry.id))
 );
 
 async function startBatchWechatScan(): Promise<void> {
@@ -550,21 +586,25 @@ async function startBatchWechatScan(): Promise<void> {
     wechatScanning = true;
     wechatScanProgressText = t(i18n, "wechat.scanningProgress", { current: 0, total: targets.length });
     try {
+        const knownWithAuthors = libraryItems.filter((entry) => isWechatEntry(entry) && Boolean(displayWechatAuthor(entry.author)));
         const result = await batchRecognizeWechatAuthors(
             facade.pluginInstance,
-            targets,
+            [...knownWithAuthors, ...targets],
             (processed, total, detectedCount) => {
                 wechatScanProgressText = `${processed}/${total} (${detectedCount})`;
                 notifyBatchProgress(`正在识别微信作者 (${processed}/${total})...`, "wechat-batch-scan");
             }
         );
+        markWechatAttempted(targets.map((item) => item.id));
         facade.notifyDataChanged();
         await reload();
         lvNotify.card({
             source: "小驴拾遗",
             category: "wechat-scan-done",
             title: "微信作者识别完成",
-            message: t(i18n, "wechat.batchScanDone", { count: result.detectedCount }),
+            message: result.detectedCount > 0
+                ? t(i18n, "wechat.batchScanDone", { count: result.detectedCount })
+                : `已扫描全部 ${targets.length} 篇微信文章（其余文章剪藏正文未含公众号署名，已隐藏横幅提示）`,
             level: "success",
             duration: 5000,
         });
@@ -4056,7 +4096,7 @@ $effect(() => {
                                     {/if}
                                     {#if entry.site || isWechatEntry(entry)}<button type="button" class="glean-meta-icon glean-meta-btn" class:glean-source-wechat={isWechatEntry(entry)} onclick={(event) => { event.stopPropagation(); handleSiteClick(entry); }} title={entry.site || siteDisplayLabel(entry)}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg>{siteDisplayLabel(entry)}</button>{/if}
                                     {#if displayWechatAuthor(entry.author)}<button class="glean-source-author" onclick={(event) => { event.stopPropagation(); selectAuthor(entry.author!); }}>· {displayWechatAuthor(entry.author)}</button>{/if}
-                                    {#if isWechatEntry(entry) && (!entry.author || !entry.author.trim())}
+                                    {#if isWechatEntry(entry) && !displayWechatAuthor(entry.author) && !wechatAttemptedIds.has(entry.id)}
                                         <button
                                             type="button"
                                             class="glean-mini-tag glean-mini-tag--ai"
@@ -4064,6 +4104,7 @@ $effect(() => {
                                             onclick={async (e) => {
                                                 e.stopPropagation();
                                                 const res = await scanAndFillWechatAuthor(facade.pluginInstance, entry.id, { url: entry.url, site: entry.site });
+                                                markWechatAttempted([entry.id]);
                                                 if (res) {
                                                     facade.notifyDataChanged();
                                                     await reload();
@@ -4324,7 +4365,7 @@ $effect(() => {
                                                     <span class="glean-badge glean-badge--match" title={badge}>{badge}</span>
                                                 {/if}
                                                 <span class="glean-drow__site" class:glean-source-wechat={isWechatEntry(entry)} title={entry.site || sourceFallback(entry)}><button type="button" class="glean-source-site" onclick={(event) => { event.stopPropagation(); handleSiteClick(entry); }}>{siteDisplayLabel(entry)}</button>{#if displayWechatAuthor(entry.author)}<button class="glean-source-author" onclick={(event) => { event.stopPropagation(); selectAuthor(entry.author!); }}>· {displayWechatAuthor(entry.author)}</button>{/if}</span>
-                                                {#if isWechatEntry(entry) && (!entry.author || !entry.author.trim())}
+                                                {#if isWechatEntry(entry) && !displayWechatAuthor(entry.author) && !wechatAttemptedIds.has(entry.id)}
                                                     <button
                                                         type="button"
                                                         class="glean-mini-tag glean-mini-tag--ai"
@@ -4332,6 +4373,7 @@ $effect(() => {
                                                         onclick={async (e) => {
                                                             e.stopPropagation();
                                                             const res = await scanAndFillWechatAuthor(facade.pluginInstance, entry.id, { url: entry.url, site: entry.site });
+                                                            markWechatAttempted([entry.id]);
                                                             if (res) {
                                                                 facade.notifyDataChanged();
                                                                 await reload();
@@ -4563,7 +4605,7 @@ $effect(() => {
                                         <span title={entry.url || entry.hpath}>{entry.site || candidateEvidence(entry)}</span>
                                     {/if}
                                     {#if entry.kind === "clip" && displayWechatAuthor(entry.author)}<button class="glean-source-author" onclick={(event) => { event.stopPropagation(); selectAuthor(entry.author!); }}>· {displayWechatAuthor(entry.author)}</button>{/if}
-                                    {#if entry.kind === "clip" && isWechatEntry(entry) && (!entry.author || !entry.author.trim())}
+                                    {#if entry.kind === "clip" && isWechatEntry(entry) && !displayWechatAuthor(entry.author) && !wechatAttemptedIds.has(entry.id)}
                                         <button
                                             type="button"
                                             class="glean-mini-tag glean-mini-tag--ai"
@@ -4571,6 +4613,7 @@ $effect(() => {
                                             onclick={async (e) => {
                                                 e.stopPropagation();
                                                 const res = await scanAndFillWechatAuthor(facade.pluginInstance, entry.id, { url: entry.url, site: entry.site });
+                                                markWechatAttempted([entry.id]);
                                                 if (res) {
                                                     facade.notifyDataChanged();
                                                     await reload();

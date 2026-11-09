@@ -2727,17 +2727,21 @@ mark.glean-search-highlight {
 
 .glean-reader__selection-bar {
     position: absolute;
-    bottom: 28px;
+    bottom: 24px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 40;
+    width: max-content;
+    max-width: calc(100% - 24px);
     display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
     align-items: center;
-    gap: var(--glean-space-1);
-    padding: var(--glean-space-1) var(--glean-space-2);
+    gap: 6px;
+    padding: 6px 12px;
     background: var(--b3-theme-surface);
     border: 1px solid var(--b3-border-color);
-    border-radius: var(--glean-radius-pill);
+    border-radius: 14px;
     box-shadow: var(--glean-shadow-float);
     backdrop-filter: blur(8px);
     animation: glean-slide-up 0.18s var(--glean-ease-spring);
@@ -2747,6 +2751,7 @@ mark.glean-search-highlight {
     display: inline-flex;
     align-items: center;
     gap: var(--glean-space-1);
+    flex-shrink: 0;
 }
 
 .glean-reader__selection-memo-input {
@@ -2773,6 +2778,8 @@ mark.glean-search-highlight {
     display: inline-flex;
     align-items: center;
     gap: var(--glean-space-1);
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
 
     &--close {
         padding: 0 var(--glean-space-1);
@@ -5717,6 +5724,8 @@ mark.glean-search-highlight {
     min-height: var(--glean-btn-height-md);
     border-radius: var(--glean-btn-radius);
     cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
     background: var(--b3-theme-background-light);
     color: var(--b3-theme-on-background);
     transition: transform var(--glean-duration-fast) var(--glean-ease-out), box-shadow var(--glean-duration-fast) var(--glean-ease-out), background-color var(--glean-duration-fast) var(--glean-ease-out), border-color var(--glean-duration-fast) var(--glean-ease-out), color var(--glean-duration-fast) var(--glean-ease-out), opacity var(--glean-duration-fast) ease;
@@ -11053,8 +11062,33 @@ mark.glean-search-highlight {
 
 .glean-reader__section-title {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    min-height: 20px;
+    justify-content: space-between;
+    gap: 6px 8px;
+    min-height: 24px;
+
+    > span:first-child {
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+}
+
+.glean-reader__outline-head-ops {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+
+    .glean-btn,
+    .glean-reader__slice-btn {
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
+        padding: 2px 8px !important;
+        min-height: 24px !important;
+        height: 24px !important;
+        font-size: 11px !important;
+    }
 }
 
 @media (max-width: 560px) {

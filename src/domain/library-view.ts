@@ -314,7 +314,9 @@ export function libraryFacets(items: readonly LibraryItem[], includeCandidates =
             continue;
         }
         addFacet(sites, item.site);
-        addFacet(authors, item.author);
+        if (item.author && !/^https?:\/\//i.test(item.author.trim()) && !item.author.includes("weixin.qq.com") && !item.author.includes("/")) {
+            addFacet(authors, item.author);
+        }
         for (const tag of item.tags ?? []) addFacet(tags, tag);
         for (const tag of item.aiTags ?? []) addFacet(aiTags, tag);
         addFacet(sources, item.src);
