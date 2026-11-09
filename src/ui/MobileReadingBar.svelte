@@ -245,9 +245,7 @@
         const hasInputFocus = isInputElement(document.activeElement);
 
         const shouldHide = viewportKeyboardOpen || hasInputFocus;
-        if (keyboardHidden !== shouldHide) {
-            keyboardHidden = shouldHide;
-        }
+        keyboardHidden = shouldHide;
     }
 
     // 键盘检测与输入框聚焦避让（实时重算 + DOM 变动监听）
@@ -285,7 +283,6 @@
             document.removeEventListener("pointerdown", handleInteraction);
             observer?.disconnect();
             if (saveTimer !== null) clearTimeout(saveTimer);
-            keyboardHidden = false; // 销毁钩子主动复位
         };
     });
 </script>

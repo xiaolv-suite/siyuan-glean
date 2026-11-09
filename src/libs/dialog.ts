@@ -182,10 +182,7 @@ export const simpleDialog = (args: {
         const header = dialog.element.querySelector<HTMLElement>(".b3-dialog__header");
         const headerHasMobileClose = header?.querySelector(".glean-mobile-dialog-close");
         const headerNativeClose = header?.querySelector<HTMLElement | SVGElement>(".b3-dialog__close:not(.glean-mobile-dialog-close)");
-        if (header && !headerHasMobileClose && (isMobileDialogViewport() || !closeIcon)) {
-            if (headerNativeClose) {
-                headerNativeClose.style.setProperty("display", "none", "important");
-            }
+        if (header && !headerHasMobileClose && !headerNativeClose) {
             if (closeIcon && closeIcon !== headerNativeClose) {
                 closeIcon.style.setProperty("display", "none", "important");
             }
@@ -196,10 +193,11 @@ export const simpleDialog = (args: {
             mobileCloseBtn.setAttribute("aria-label", args.closeLabel ?? args.title);
             mobileCloseBtn.setAttribute("tabindex", "0");
             mobileCloseBtn.innerHTML = `<svg viewBox="0 0 24 24" style="width: 20px; height: 20px;" aria-hidden="true"><use xlink:href="#iconGleanClose"></use></svg>`;
-            mobileCloseBtn.style.minWidth = "44px";
-            mobileCloseBtn.style.minHeight = "44px";
-            mobileCloseBtn.style.width = "44px";
-            mobileCloseBtn.style.height = "44px";
+            const btnSize = isMobileDialogViewport() ? "44px" : "32px";
+            mobileCloseBtn.style.minWidth = btnSize;
+            mobileCloseBtn.style.minHeight = btnSize;
+            mobileCloseBtn.style.width = btnSize;
+            mobileCloseBtn.style.height = btnSize;
             mobileCloseBtn.style.display = "inline-flex";
             mobileCloseBtn.style.alignItems = "center";
             mobileCloseBtn.style.justifyContent = "center";
