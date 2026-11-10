@@ -2638,6 +2638,7 @@ function togglePreview(): void {
     previewEnabled = !previewEnabled;
     if (!previewEnabled) closePreview();
     void savePreviewPrefs({ workbenchPreviewEnabled: previewEnabled });
+    showNotice(previewEnabled ? "已开启双栏阅读预览" : "已恢复单栏纯净列表", 2000, "info");
 }
 
 function resizePreview(event: PointerEvent): void {
