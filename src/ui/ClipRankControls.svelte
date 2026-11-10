@@ -1,0 +1,60 @@
+<script lang="ts">
+    /** 显式的优先级/评分入口（T-1708）。修改由父组件经 clip-store 写回文档属性。 */
+    import type { I18nBundle } from "../libs/i18n";
+    import { t } from "../libs/i18n";
+
+    interface Props {
+        i18n: I18nBundle;
+        priority?: number;
+        rating?: number;
+        disabled?: boolean;
+        onPriority: (value: number) => void | Promise<void>;
+        onRating: (value: number) => void | Promise<void>;
+    }
+
+    let { i18n, priority, rating, disabled = false, onPriority, onRating }: Props = $props();
+
+</script>
+
+<div class="glean-rank-controls" role="group" aria-label={t(i18n, "action.rankActions")} aria-busy={disabled}>
+    <label class="glean-rank-controls__field">
+        <span>{t(i18n, "action.priority")}</span>
+        <select
+            class="b3-select"
+            aria-label={t(i18n, "action.priority")}
+            value={priority ?? 0}
+            disabled={disabled}
+            onclick={(event) => event.stopPropagation()}
+            onchange={(event) => { event.stopPropagation(); void onPriority(Number((event.currentTarget as HTMLSelectElement).value)); }}
+        >
+            <option value={0}>—</option>
+            {#each [1, 2, 3, 4, 5] as value}
+                <option value={value}>P{value}</option>
+            {/each}
+        </select>
+    </label>
+    <div class="glean-rank-controls__field glean-rank-stars-field">
+        <span>{t(i18n, "action.rating")}</span>
+        <div class="glean-stars-picker" role="radiogroup" aria-label={t(i18n, "action.rating")}>
+            {#each [1, 2, 3, 4, 5] as star}
+                <button
+                    type="button"
+                    class="glean-star-btn"
+                    class:glean-star-btn--on={(rating ?? 0) >= star}
+                    role="radio"
+                    aria-checked={(rating ?? 0) === star}
+                    title={`${star} ★`}
+                    aria-label={`${star} ★`}
+                    disabled={disabled}
+                    onclick={(event) => {
+                        event.stopPropagation();
+                        const next = (rating === star) ? 0 : star;
+                        void onRating(next);
+                    }}
+                >
+                    <svg class="glean-icon glean-icon--xs" class:glean-icon--star={(rating ?? 0) >= star} aria-hidden="true"><use href={(rating ?? 0) >= star ? "#iconGleanStar" : "#iconGleanStarOutline"} /></svg>
+                </button>
+            {/each}
+        </div>
+    </div>
+</div>

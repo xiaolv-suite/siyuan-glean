@@ -1,0 +1,250 @@
+/** domain/reader 纯函数单测（T-1730d/e，D-0030）：摘录 DOM 与伴读 prompt。 */
+import test from "node:test";
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+
+import {
+    buildAiCalloutBlockDom,
+    buildQuoteBlockDom,
+    buildSummarizePrompt,
+    buildTranslatePrompt,
+    clampExcerpt,
+    EXCERPT_MAX_LENGTH,
+} from "../src/domain/reader.ts";
+import { chunkSpeechText, clampSpeechRate, normalizeSpeechText, speechLanguage } from "../src/domain/speech.ts";
+import { readerShortcut, type ReaderKeyInput, type ReaderShortcut } from "../src/domain/reader-shortcuts.ts";
+import { createLatestRequestGate } from "../src/libs/latest-request.ts";
+
+const escape = (value: string) => value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+
+test("clampExcerpt：压缩空白并截断", () => {
+    assert.equal(clampExcerpt("  a\n\n b  "), "a b");
+    assert.equal(clampExcerpt("x".repeat(EXCERPT_MAX_LENGTH + 10)).length, EXCERPT_MAX_LENGTH);
+    assert.equal(clampExcerpt("   "), "");
+});
+
+test("buildQuoteBlockDom：引述块 DOM，逐行段落，空文本拒绝", () => {
+    const dom = buildQuoteBlockDom("第一行\n\n第二行 <b>", escape);
+    assert.ok(dom.startsWith('<div data-type="NodeBlockquote" class="bq">'));
+    assert.ok(dom.includes(escape("第一行")));
+    assert.ok(dom.includes("&lt;b&gt;"));
+    assert.equal((dom.match(/NodeParagraph/g) ?? []).length, 2);
+    assert.equal(buildQuoteBlockDom("   \n  ", escape), "");
+});
+
+test("buildSummarizePrompt / buildTranslatePrompt：只输出正文的指令式 prompt", () => {
+    const summarize = buildSummarizePrompt("深度文章", "正文内容");
+    assert.ok(summarize.includes("《深度文章》"));
+    assert.ok(summarize.includes("正文内容"));
+    assert.ok(!buildSummarizePrompt("", "内容").includes("《》"));
+    const translate = buildTranslatePrompt("hello world");
+    assert.ok(translate.includes("hello world"));
+    assert.ok(translate.includes("只输出译文"));
+});
+
+test("speech：规范化文本并按句子拆分，长句不会超过上限", () => {
+    assert.equal(normalizeSpeechText("  第一行\n\n 第二行  "), "第一行 第二行");
+    assert.deepEqual(chunkSpeechText("第一句。第二句！", 20), ["第一句。 第二句！"]);
+    assert.deepEqual(chunkSpeechText("一二三四五六七八", 3), ["一二三", "四五六", "七八"]);
+});
+
+test("speech：朗读速度限制在支持的档位", () => {
+    assert.equal(clampSpeechRate(Number.NaN), 1);
+    assert.equal(clampSpeechRate(0.1), 0.75);
+    assert.equal(clampSpeechRate(1.13), 1.25);
+    assert.equal(clampSpeechRate(2), 1.5);
+});
+
+test("speech：按当前段落选择中英文 voice 语言", () => {
+    assert.equal(speechLanguage("这是中文文章"), "zh-CN");
+    assert.equal(speechLanguage("This is an English article"), "en-US");
+});
+
+const readerKey: ReaderKeyInput = { key: "j", mode: "read", focused: true, blocked: false };
+
+test("阅读单键：只在当前阅读页签焦点内执行映射", () => {
+    const mappings: Array<[string, ReaderShortcut]> = [
+        ["j", "scrollDown"], ["k", "scrollUp"], ["e", "edit"],
+        ["m", "done"], ["a", "later"], ["o", "openSource"], ["x", "excerpt"], ["?", "help"],
+        ["F", "toggleImmersive"],
+        ["y", "copyBlockRef"],
+    ];
+    for (const [key, action] of mappings) {
+        assert.equal(readerShortcut({ ...readerKey, key }), action);
+        assert.equal(readerShortcut({ ...readerKey, key, focused: false }), null);
+        assert.equal(readerShortcut({ ...readerKey, key, mode: "edit" }), null);
+        assert.equal(readerShortcut({ ...readerKey, key, blocked: true }), null);
+    }
+    for (const key of ["J", "M", "Enter", "ArrowDown", " ", "/", "Escape", "Unidentified"]) {
+        assert.equal(readerShortcut({ ...readerKey, key }), null);
+    }
+});
+
+test("阅读单键：IME、宿主已处理事件和组合修饰键不会写入或滚动", () => {
+    for (const patch of [
+        { isComposing: true }, { keyCode: 229 }, { defaultPrevented: true },
+        { ctrlKey: true }, { altKey: true }, { metaKey: true }, { shiftKey: true },
+    ]) {
+        for (const key of ["j", "k", "e", "m", "a", "o", "x", "h"]) {
+            assert.equal(readerShortcut({ ...readerKey, key, ...patch }), null);
+        }
+        if (!patch.shiftKey) {
+            assert.equal(readerShortcut({ ...readerKey, key: "H", ...patch }), null);
+        }
+    }
+    assert.equal(readerShortcut({ ...readerKey, key: "h" }), "nextHighlight");
+    assert.equal(readerShortcut({ ...readerKey, key: "H", shiftKey: true }), "prevHighlight");
+    assert.equal(readerShortcut({ ...readerKey, key: "?", shiftKey: true }), "help");
+    assert.equal(readerShortcut({ ...readerKey, key: "?", shiftKey: true, ctrlKey: true }), null);
+});
+
+test("阅读单键：长按只允许滚动，不重复状态、编辑和摘录动作", () => {
+    assert.equal(readerShortcut({ ...readerKey, repeat: true }), "scrollDown");
+    assert.equal(readerShortcut({ ...readerKey, key: "k", repeat: true }), "scrollUp");
+    for (const key of ["e", "m", "a", "o", "x", "?", "h", "H"]) {
+        assert.equal(readerShortcut({ ...readerKey, key, repeat: true }), null);
+    }
+});
+
+test("上下文请求：迟到的旧文响应不能覆盖新文，卸载使当前请求失效", async () => {
+    const requests = createLatestRequestGate();
+    let displayed = "";
+    let completeOld: (value: string) => void = () => undefined;
+    const oldResponse = new Promise<string>((resolve) => { completeOld = resolve; });
+    const oldCurrent = requests.begin();
+    const oldRead = oldResponse.then((value) => { if (oldCurrent()) displayed = value; });
+    const newCurrent = requests.begin();
+    if (newCurrent()) displayed = "new-document";
+    completeOld("old-document");
+    await oldRead;
+    assert.equal(displayed, "new-document");
+    requests.invalidate();
+    assert.equal(newCurrent(), false);
+    assert.equal(requests.begin()(), true);
+    assert.equal(oldCurrent(), false);
+});
+
+test("ReaderTab 快捷键接线：稍后读(A)、打开原文(O)与帮助浮层Escape关闭（T-3401）", () => {
+    const tab = readFileSync(new URL("../src/ui/ReaderTab.svelte", import.meta.url), "utf8");
+    assert.match(tab, /if \(action === "later"\) \{[\s\S]*?void writeStatus\("later"\);/);
+    assert.match(tab, /if \(action === "openSource"\) \{[\s\S]*?openSource\(\);/);
+    assert.match(tab, /if \(event\.key === "Escape"\) \{[\s\S]*?shortcutHelp = false;/);
+    assert.match(tab, /<div><dt><kbd>a<\/kbd><\/dt><dd>\{t\(i18n, "reader\.shortcutLater"\)\}<\/dd><\/div>/);
+    assert.match(tab, /<div><dt><kbd>o<\/kbd><\/dt><dd>\{t\(i18n, "reader\.shortcutOpenSource"\)\}<\/dd><\/div>/);
+    assert.match(tab, /<div><dt><kbd>Esc<\/kbd><\/dt><dd>\{t\(i18n, "reader\.shortcutEscape"\)\}<\/dd><\/div>/);
+});
+
+test("ReaderTab 伴读 AI 结果卡片可关闭与问答输入 Escape 清空（T-3402）", () => {
+    const tab = readFileSync(new URL("../src/ui/ReaderTab.svelte", import.meta.url), "utf8");
+    assert.match(tab, /if \(aiResult \|\| questionResult\) \{[\s\S]*?aiResult = null;[\s\S]*?questionResult = null;/);
+    assert.match(tab, /if \(immersive\) \{[\s\S]*?void exitImmersive\(\);/);
+    assert.match(tab, /if \(event\.key === "Escape" && question\) \{ event\.stopPropagation\(\); question = ""; \}/);
+    assert.match(tab, /onclick=\{\(\) => \{ aiResult = null; \}\}>[\s\S]*?\{t\(i18n, "action\.close"\)\}/);
+    assert.match(tab, /onclick=\{\(\) => \{ questionResult = null; \}\}>[\s\S]*?\{t\(i18n, "action\.close"\)\}/);
+});
+
+test("buildAiCalloutBlockDom 格式化与 ReaderTab 插入正文开头接线（T-3416）", () => {
+    const dom = buildAiCalloutBlockDom("第一段核心观点。\n第二段补充说明。", {
+        title: "全文总结",
+        source: "Claude 3.5",
+    }, escape);
+    assert.ok(dom.includes('<div data-type="NodeBlockquote" class="bq">'));
+    assert.ok(dom.includes('<strong>✨ 全文总结（Claude 3.5）</strong>'));
+    assert.ok(dom.includes('<div data-type="NodeParagraph" class="p">第一段核心观点。</div>'));
+    assert.ok(dom.includes('<div data-type="NodeParagraph" class="p">第二段补充说明。</div>'));
+
+    // 空文本安全返回空串
+    assert.equal(buildAiCalloutBlockDom("", { title: "空" }, escape), "");
+    assert.equal(buildAiCalloutBlockDom("   \n\n  ", { title: "空" }, escape), "");
+
+    const tab = readFileSync(new URL("../src/ui/ReaderTab.svelte", import.meta.url), "utf8");
+    assert.match(tab, /insertAiCalloutToDocument/);
+    assert.match(tab, /insertAiResultCallout/);
+    assert.match(tab, /insertQuestionCallout/);
+    assert.match(tab, /\{t\(i18n, "reader\.aiInsertCallout"\)\}/);
+});
+
+test("ReaderTab 正文搜索与高亮批注伴生栏接线（T-3419 与批注优化）", () => {
+    const tab = readFileSync(new URL("../src/ui/ReaderTab.svelte", import.meta.url), "utf8");
+    assert.match(tab, /import ReaderSearch from "\.\/ReaderSearch\.svelte";/);
+    assert.match(tab, /import \{ isFindShortcut \} from "\.\.\/domain\/reader-search";/);
+    assert.match(tab, /import \{ listDocHighlights, type HighlightItem \} from "\.\.\/services\/highlights";/);
+    assert.match(tab, /import \{ estimateReadingPercentage \} from "\.\.\/domain\/reading-position";/);
+    assert.match(tab, /<ReaderSearch bind:open=\{searchOpen\}/);
+    assert.match(tab, /class="glean-reader__progress-bar"/);
+    assert.match(tab, /class="glean-reader__highlights-list"/);
+    assert.match(tab, /scrollToHighlight\(hl\.id\)/);
+    assert.match(tab, /class="glean-reader__selection-bar"/);
+    assert.match(tab, /\{t\(i18n, "reader\.selectionToolbar"\)\}/);
+    assert.match(tab, /class="[^"]*glean-reader__toolbar-theme[^"]*"/);
+    assert.match(tab, /\{t\(i18n, "reader\.themeToggle"\)\}/);
+    assert.match(tab, /class="glean-wechat-publisher"/);
+    assert.match(tab, /class="glean-wechat-publisher__head"/);
+    assert.match(tab, /\{t\(i18n, "wechat\.badge"\)\}/);
+    assert.match(tab, /\{t\(i18n, "reader\.openWeread"\)\}/);
+    assert.match(tab, /\{t\(i18n, "reader\.copyCleanUrl"\)\}/);
+    assert.match(tab, /\{t\(i18n, "wechat\.moreFromAuthor", \{ n: authorArticles\.length \}\)\}/);
+    assert.match(tab, /\{t\(i18n, "wechat\.seriesTitle", \{ n: seriesArticles\.length \}\)\}/);
+    assert.match(tab, /onclick=\{\(\) => startSpeech\("selection"\)\}/);
+    assert.match(tab, /class="glean-reader__side-nav"/);
+    assert.match(tab, /class="glean-reader__preset-prompts"/);
+    assert.match(tab, /\{t\(i18n, "reader\.quickPromptPoints"\)\}/);
+    assert.match(tab, /\{t\(i18n, "reader\.copyAllHighlights"\)\}/);
+    assert.match(tab, /class="glean-reader__metric-capsule"/);
+    assert.match(tab, /class="glean-reader__tags-bar"/);
+    assert.match(tab, /class="glean-reader__highlight-dot-btn"/);
+    assert.match(tab, /class="glean-reader__back-to-top"/);
+    assert.match(tab, /\{t\(i18n, "reader\.backToTop"\)\}/);
+    assert.match(tab, /onclick=\{scrollToTop\}/);
+    assert.match(tab, /glean-wechat-publisher__rescan-btn/);
+    assert.match(tab, /\{t\(i18n, "wechat\.rescanAuthor"\)\}/);
+    assert.match(tab, /\{t\(i18n, "reader\.highlightFilterPlaceholder"\)\}/);
+    assert.match(tab, /examFromHighlight\(hl\)/);
+    assert.match(tab, /class="glean-reader__floating-progress"/);
+    assert.match(tab, /\{t\(i18n, "reader\.remainingMinutes", \{ n: remainingMinutes \}\)\}/);
+    assert.match(tab, /if \(excerpt \|\| memoInputOpen\) \{/);
+    assert.match(tab, /class="glean-reader__floating-speech"/);
+    assert.match(tab, /class="glean-reader__speech-pulse"/);
+    assert.match(tab, /onclick=\{toggleSpeechPause\}/);
+    assert.match(tab, /class="glean-reader__selection-colors"/);
+    assert.match(tab, /class="glean-reader__selection-color-btn"/);
+    assert.match(tab, /onclick=\{\(\) => void quoteExcerpt\(undefined, color\)\}/);
+    assert.match(tab, /action === "nextHighlight"/);
+    assert.match(tab, /action === "prevHighlight"/);
+    assert.match(tab, /onclick=\{stopSpeech\}/);
+});
+
+test("ReaderTab 顶栏红心收藏按钮、Alt+F/Alt+C 快捷键与帮助说明（T-3498 / T-3516）", () => {
+    const tab = readFileSync(new URL("../src/ui/ReaderTab.svelte", import.meta.url), "utf8");
+    assert.match(tab, /glean-reader__toolbar-fav/);
+    assert.match(tab, /toggleFavorite/);
+    assert.match(tab, /event\.altKey && \(event\.key === "f" \|\| event\.key === "F"\)/);
+    assert.match(tab, /event\.altKey && \(event\.key === "c" \|\| event\.key === "C"\)/);
+    assert.match(tab, /copyCitation\("bibtex"\)/);
+    assert.match(tab, /copyCitation\("gbt"\)/);
+    assert.match(tab, /event\.altKey && \(event\.key === "s" \|\| event\.key === "S"\)/);
+    assert.match(tab, /event\.altKey && \(event\.key === "p" \|\| event\.key === "P"\)/);
+    assert.match(tab, /event\.altKey && \(event\.key === "e" \|\| event\.key === "E"\)/);
+    assert.match(tab, /event\.altKey && \(event\.key === "q" \|\| event\.key === "Q"\)/);
+    assert.match(tab, /quoteCardFromExcerpt/);
+    assert.match(tab, /cycleTheme\(\)/);
+    assert.match(tab, /<kbd>Alt\+F<\/kbd>/);
+    assert.match(tab, /<kbd>Alt\+C<\/kbd>/);
+    assert.match(tab, /<kbd>Alt\+Shift\+C<\/kbd>/);
+    assert.match(tab, /<kbd>Alt\+Q<\/kbd>/);
+    assert.match(tab, /<kbd>Alt\+S<\/kbd>/);
+    assert.match(tab, /<kbd>Alt\+P<\/kbd>/);
+    assert.match(tab, /<kbd>Alt\+E<\/kbd>/);
+});
+
+test("ReaderTab 大纲项章节块引用复制与过滤框 Escape 清空接线（T-3506）", () => {
+    const tab = readFileSync(new URL("../src/ui/ReaderTab.svelte", import.meta.url), "utf8");
+    assert.match(tab, /copyOutlineBlockRef/);
+    assert.match(tab, /glean-reader__outline-copy-ref/);
+    assert.match(tab, /glean-reader__outline-row/);
+    assert.match(tab, /if \(e\.key === "Escape" && outlineFilter\)/);
+});

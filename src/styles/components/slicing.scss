@@ -1,0 +1,416 @@
+/* 渐进阅读长文切片（Doc Slicing）样式 · 严格作用域内 */
+.glean-reader__outline-head-ops {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.glean-reader__slice-btn {
+    margin-left: auto;
+    font-size: var(--glean-text-meta);
+    padding: 2px 10px;
+    border-radius: var(--glean-radius-pill);
+    color: var(--glean-color-action);
+    background: var(--glean-primary-soft);
+    border: 1px solid color-mix(in srgb, var(--glean-color-action) 30%, transparent);
+    cursor: pointer;
+    transition: background-color var(--glean-duration-fast) var(--glean-ease-enter), transform var(--glean-duration-fast) var(--glean-ease-enter);
+}
+.glean-reader__slice-btn:hover {
+    background: color-mix(in srgb, var(--glean-color-action) 20%, transparent);
+    transform: translateY(-1px);
+}
+
+.glean-slicing-dialog {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: var(--glean-space-4, 16px);
+    box-sizing: border-box;
+    gap: var(--glean-space-3, 12px);
+    color: var(--b3-theme-on-background);
+}
+
+.glean-slicing-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--glean-space-3, 12px);
+    padding-bottom: var(--glean-space-3, 12px);
+    border-bottom: 1px solid var(--glean-border-soft, var(--b3-border-color));
+}
+
+.glean-slicing-durations {
+    display: flex;
+    align-items: center;
+    gap: var(--glean-space-2, 8px);
+}
+
+.glean-slicing-label {
+    font-size: var(--glean-text-sm, 13px);
+    color: var(--b3-theme-on-surface);
+}
+
+.glean-slicing-pills {
+    display: inline-flex;
+    background: var(--glean-inset-surface, var(--b3-theme-surface));
+    border-radius: var(--glean-radius-pill);
+    padding: 2px;
+    border: 1px solid var(--glean-border-soft, var(--b3-border-color));
+}
+
+.glean-slicing-pill {
+    background: transparent;
+    border: none;
+    padding: 3px 12px;
+    font-size: var(--glean-text-xs, 12px);
+    border-radius: var(--glean-radius-pill);
+    color: var(--b3-theme-on-surface);
+    cursor: pointer;
+    font-variant-numeric: tabular-nums;
+    transition: all 140ms ease;
+
+    &:focus-visible {
+        outline: 2px solid var(--glean-color-action);
+        outline-offset: 2px;
+    }
+}
+
+.glean-slicing-pill--active {
+    background: var(--glean-color-action);
+    color: var(--b3-theme-on-primary);
+    font-weight: 600;
+
+    @media (forced-colors: active) {
+        border: 1px solid Highlight;
+        color: Highlight;
+    }
+}
+
+.glean-slicing-summary {
+    font-size: var(--glean-text-xs, 12px);
+    color: var(--b3-theme-on-surface);
+    opacity: 0.88;
+    font-variant-numeric: tabular-nums;
+}
+
+.glean-slicing-hint-empty {
+    font-size: var(--glean-text-xs, 12px);
+    color: var(--b3-theme-on-surface);
+    background: var(--glean-section-surface, var(--b3-theme-surface));
+    padding: var(--glean-space-2, 8px) var(--glean-space-3, 12px);
+    border-radius: var(--glean-radius-md, 8px);
+    border: 1px dashed var(--glean-border-soft, var(--b3-border-color));
+    display: flex;
+    align-items: center;
+    gap: var(--glean-space-1-5, 6px);
+}
+
+.glean-slicing-list {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--glean-space-2, 8px);
+}
+
+.glean-slicing-card {
+    background: var(--glean-card-surface, var(--b3-theme-surface));
+    border: 1px solid var(--glean-border-soft);
+    border-radius: var(--glean-radius-lg, 16px);
+    padding: var(--glean-space-3-5, 14px);
+    display: flex;
+    flex-direction: column;
+    gap: var(--glean-space-2, 8px);
+    box-shadow: var(--glean-shadow-card);
+    transition: transform var(--glean-duration-fast) var(--glean-ease-enter), box-shadow var(--glean-duration-fast) var(--glean-ease-enter);
+
+    &:hover {
+        transform: translateY(-1px);
+        box-shadow: var(--glean-shadow-card-hover);
+    }
+
+    @media (forced-colors: active) {
+        border: 1px solid CanvasText;
+    }
+}
+
+.glean-slicing-card__head {
+    display: flex;
+    align-items: center;
+    gap: var(--glean-space-2, 8px);
+}
+
+.glean-slicing-card__badge {
+    background: var(--glean-primary-soft);
+    color: var(--glean-color-action);
+    font-size: var(--glean-text-xs, 12px);
+    font-weight: var(--glean-weight-semibold);
+    font-variant-numeric: tabular-nums;
+    width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 1px solid color-mix(in srgb, var(--glean-color-action) 30%, transparent);
+
+    @media (forced-colors: active) {
+        border: 1px solid Highlight;
+        color: Highlight;
+    }
+}
+
+.glean-slicing-card__title {
+    font-size: var(--glean-text-sm, 13px);
+    font-weight: 600;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.glean-slicing-card__time {
+    font-size: var(--glean-text-xs, 12px);
+    color: var(--b3-theme-on-surface);
+    opacity: 0.88;
+    font-variant-numeric: tabular-nums;
+}
+
+.glean-slicing-card__sections {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--glean-space-1, 4px);
+}
+
+.glean-slicing-card__sec-chip {
+    font-size: 11px;
+    background: var(--glean-inset-surface, var(--b3-theme-surface));
+    border: 1px solid var(--glean-border-soft);
+    padding: 1px 8px;
+    border-radius: var(--glean-radius-pill);
+    color: var(--b3-theme-on-surface);
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    @media (forced-colors: active) {
+        border: 1px solid ButtonBorder;
+    }
+}
+
+.glean-slicing-card__ops .glean-btn {
+    border-radius: var(--glean-radius-pill);
+    padding: var(--glean-space-1) var(--glean-space-2-5);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--glean-space-1, 4px);
+}
+
+.glean-slicing-footer {
+    padding-top: var(--glean-space-2, 8px);
+    display: flex;
+    justify-content: flex-end;
+}
+
+.glean-slicing-create-btn {
+    min-width: 160px;
+    border-radius: var(--glean-radius-pill);
+    box-shadow: var(--glean-shadow-accent);
+}
+
+.glean-reader__outline-slice-marker {
+    display: flex;
+    align-items: center;
+    padding: var(--glean-space-1, 4px) 0;
+    margin-top: var(--glean-space-1-5, 6px);
+}
+
+.glean-reader__outline-slice-pill {
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 1px 8px;
+    border-radius: var(--glean-radius-pill);
+    background: var(--glean-primary-soft);
+    color: var(--glean-color-action);
+    border: 1px dashed color-mix(in srgb, var(--glean-color-action) 40%, transparent);
+    letter-spacing: 0.02em;
+}
+
+.glean-read-point-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 0 8px;
+    height: 20px;
+    line-height: 20px;
+    border-radius: var(--glean-radius-pill);
+    background: color-mix(in srgb, var(--glean-color-action) 12%, var(--b3-theme-surface));
+    color: var(--glean-color-action);
+    border: 1px solid color-mix(in srgb, var(--glean-color-action) 28%, transparent);
+}
+
+/* 交互式五星评分微组件（Interactive 5-Star Picker） */
+.glean-stars-picker {
+    display: inline-flex;
+    align-items: center;
+    gap: 1px;
+}
+
+.glean-star-btn {
+    border: none;
+    background: transparent;
+    padding: 0 1px;
+    font-size: 13px;
+    line-height: 1;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.45;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform var(--glean-motion-fast) var(--glean-ease-out), opacity var(--glean-motion-fast) ease, color var(--glean-motion-fast) ease;
+
+    .glean-icon {
+        width: 13px;
+        height: 13px;
+        flex-shrink: 0;
+    }
+
+    &:hover:not(:disabled) {
+        transform: scale(1.15);
+        opacity: 1;
+        color: var(--glean-st-inbox);
+    }
+
+    &:active:not(:disabled) {
+        transform: scale(0.95);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--glean-color-action);
+        outline-offset: 2px;
+        box-shadow: var(--glean-shadow-focus);
+        border-radius: var(--glean-radius-pill);
+    }
+
+    &:disabled {
+        opacity: 0.25;
+        cursor: not-allowed;
+    }
+}
+
+.glean-star-btn--on {
+    color: var(--glean-st-inbox);
+    opacity: 1;
+}
+
+/* 伴生栏微型圆环进度条（Circular Progress Ring） */
+.glean-progress-ring {
+    transform: rotate(-90deg);
+    margin-right: 4px;
+    flex-shrink: 0;
+
+    &__bg {
+        fill: none;
+        stroke: var(--glean-border-soft, rgba(0, 0, 0, 0.12));
+        stroke-width: 2.2;
+    }
+
+    &__bar {
+        fill: none;
+        stroke: var(--glean-color-action);
+        stroke-width: 2.2;
+        stroke-linecap: round;
+        transition: stroke-dashoffset 200ms ease;
+    }
+}
+
+@media (max-width: 560px) {
+    .glean-slicing-dialog {
+        padding: var(--glean-space-3, 12px);
+    }
+
+    .glean-slicing-head {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--glean-space-2, 8px);
+    }
+
+    .glean-slicing-durations {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .glean-slicing-pills {
+        flex: 1 1 auto;
+    }
+
+    .glean-slicing-pill {
+        flex: 1 1 0;
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .glean-slicing-card__ops .glean-btn {
+        min-height: 44px;
+        width: 100%;
+        justify-content: center;
+    }
+
+    .glean-slicing-create-btn {
+        width: 100%;
+        min-height: 44px;
+    }
+
+    .glean-star-btn {
+        min-width: 28px;
+        min-height: 28px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 360px) {
+    .glean-slicing-durations {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .glean-slicing-card__head {
+        flex-wrap: wrap;
+    }
+
+    .glean-slicing-card__title {
+        width: 100%;
+        order: 2;
+    }
+
+    .glean-slicing-card__time {
+        order: 3;
+        font-size: 11px;
+    }
+
+    .glean-slicing-pills {
+        width: 100%;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .glean-reader__slice-btn,
+    .glean-slicing-card,
+    .glean-star-btn,
+    .glean-slicing-pill,
+    .glean-slicing-create-btn {
+        transition: var(--glean-motion-none) !important;
+        transform: none !important;
+    }
+}

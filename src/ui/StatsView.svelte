@@ -1,0 +1,1240 @@
+<script lang="ts">
+// 宽屏布局按 src/index.scss 的 glean-content 内容容器计算（扣除工作台导航）；
+// @container glean-content (min-width: 760px)
+// 下 .glean-stats__metrics 有四列基础网格；本页首屏覆盖为三张主卡和 30 天趋势，
+// 其余指标、全年热力图与分布收进可展开区，避免统计页一打开就被次要数字淹没。
+// .glean-stats__distributions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }，
+// .glean-stats__distribution { min-width: 0; }。
+import { onDestroy, tick } from "svelte";
+import { showMessage } from "siyuan";
+import type { GleanFacade } from "../types";
+import DistributionList from "./DistributionList.svelte";
+import ActionPopover from "./ActionPopover.svelte";
+import { t } from "../libs/i18n";
+import type { GleanIndex } from "../services/index-store";
+import { buildReadingReview, previewReadingReview, resolveUnknownReadingReview, saveReadingReviewReport, type ReadingReviewSession } from "../services/stats-service";
+import { exportSelectedClipsCsv } from "../services/library-export-service";
+import { buildReadingReviewMarkdown, computeConversionFunnel, computeReadingMilestones, filterCompletedItems, parseReviewDate, reviewDateInput, type ReadingReviewLabels, type ReviewPeriodKind } from "../domain/stats";
+import { formatBibTeX, formatGBT7714, formatCitation, citationSuccessKey, type CitationFormat, type CitationItem } from "../domain/citation";
+
+interface Props {
+    facade: GleanFacade;
+    index: GleanIndex;
+    currentTime: Date;
+    onCaptured?: () => void;
+    loading?: boolean;
+    loadError?: boolean;
+    onRetry?: () => void;
+}
+
+let { facade, index, currentTime, onCaptured, loading = false, loadError = false, onRetry }: Props = $props();
+
+const i18n = $derived(facade.i18n);
+const instanceId = $props.id();
+const idPrefix = `glean-stats-${instanceId}`;
+const idFor = (part: string) => `${idPrefix}-${part}`;
+const freshnessStamp = $derived(Number.isFinite(Date.parse(index.updatedAt))
+    ? new Date(index.updatedAt).toLocaleString()
+    : index.updatedAt.slice(0, 40));
+
+let period = $state<ReviewPeriodKind>("week");
+let referenceDate = $state(reviewDateInput());
+let selectedDayDate = $state("");
+let completedListOpen = $state(false);
+
+$effect(() => {
+    if (selectedDayDate) completedListOpen = true;
+});
+let session = $state.raw<ReadingReviewSession | null>(null);
+let saveState = $state<ReadingReviewSession["state"]>("ready");
+let busy = $state(false);
+let message = $state("");
+let completedSearch = $state("");
+let searchInputEl = $state<HTMLInputElement | null>(null);
+let disposed = false;
+const reference = $derived(parseReviewDate(referenceDate));
+const liveReview = $derived(buildReadingReview(index, { period, reference: reference ?? currentTime, now: currentTime }));
+const review = $derived(session?.review ?? liveReview);
+const stats = $derived(review.stats);
+const maxHeat = $derived(Math.max(1, ...stats.heatmap.map((day) => day.count)));
+const heatmapPadding = $derived((new Date(`${stats.heatmap[0].date}T12:00:00`).getDay() + 6) % 7);
+const recentDays = $derived(stats.recentCompletionTrend);
+const visibleCompletedItems = $derived(filterCompletedItems(review.completedItems, { dateStamp: selectedDayDate, search: completedSearch }));
+const funnel = $derived(computeConversionFunnel(index.clips, index.candidates));
+const readingMilestones = $derived(computeReadingMilestones(stats));
+const maxRecent = $derived(Math.max(1, ...recentDays.map((day) => day.count)));
+const distributions = $derived([
+    { key: "review.bySite", counts: stats.periodBySite },
+    { key: "review.byAuthor", counts: stats.periodByAuthor },
+    { key: "review.byUserTag", counts: stats.periodByUserTag },
+    { key: "review.byAiTag", counts: stats.periodByAiTag },
+]);
+const primaryMetrics = $derived([
+    { key: "review.completed", count: stats.periodCompleted, hint: "review.completedHint" },
+    { key: "stats.total", count: stats.total, hint: "stats.totalHint" },
+    { key: "review.candidateMetric", count: review.candidateCount, hint: "review.candidateHint" },
+]);
+const supplementaryMetrics = $derived([
+    { key: "review.completionStreak", count: stats.completionStreak, hint: "review.completionStreakHint" },
+    { key: "review.doneState", count: stats.done },
+    { key: "review.archived", count: stats.archived },
+    { key: "review.libraryWords", count: stats.totalWords },
+    { key: "review.captured", count: stats.periodCaptured },
+    { key: "review.unknownDoneTime", count: stats.unknownDoneTime },
+    { key: "review.archivedUnknown", count: stats.archivedWithoutCompletion },
+]);
+
+onDestroy(() => { disposed = true; });
+
+function reportLabels(): ReadingReviewLabels {
+    return {
+        title: t(i18n, "review.title"), scope: t(i18n, "review.scope"), snapshot: t(i18n, "review.snapshot"),
+        period: t(i18n, "review.period"), total: t(i18n, "stats.total"), done: t(i18n, "review.doneState"),
+        archived: t(i18n, "review.archived"), reading: t(i18n, "status.reading"), words: t(i18n, "review.libraryWords"),
+        completed: t(i18n, "review.completed"), captured: t(i18n, "review.captured"),
+        unknownDoneTime: t(i18n, "review.unknownDoneTime"), archivedWithoutCompletion: t(i18n, "review.archivedUnknown"),
+        candidates: t(i18n, "review.candidates"), bySite: t(i18n, "review.bySite"),
+        byAuthor: t(i18n, "review.byAuthor"), authorUnknown: t(i18n, "review.authorUnknownLabel"),
+        byUserTag: t(i18n, "review.byUserTag"), byAiTag: t(i18n, "review.byAiTag"),
+        completedList: t(i18n, "review.completedList"), noCompleted: t(i18n, "review.noCompleted"), untitled: t(i18n, "review.untitled"),
+    };
+}
+
+async function preview(): Promise<void> {
+    if (busy || session) return;
+    if (!reference) {
+        message = t(i18n, "review.invalidDate");
+        return;
+    }
+    busy = true;
+    message = "";
+    try {
+        const next = await previewReadingReview(facade.pluginInstance, facade.settings, { period, reference, labels: reportLabels() });
+        if (disposed) return;
+        session = next;
+        saveState = next.state;
+        message = next.state === "unknown"
+            ? t(i18n, "review.save.createUnknown", { id: "", path: next.path })
+            : next.state === "created"
+                ? t(i18n, "review.save.resumed", { id: next.createdDocId })
+                : "";
+    } catch (error) {
+        console.warn("[glean] 回顾预览失败:", error);
+        if (!disposed) message = t(i18n, "review.previewFailed");
+    } finally {
+        if (!disposed) busy = false;
+    }
+}
+
+async function save(): Promise<void> {
+    if (!session || busy || saveState === "unknown" || saveState === "saved") return;
+    const saving = session;
+    busy = true;
+    message = "";
+    try {
+        const outcome = await saveReadingReviewReport(facade.pluginInstance, saving, true);
+        const resultMessage = outcome.ok
+            ? t(i18n, "review.saved", { id: outcome.docId ?? "" })
+            : outcome.reason === "sessionPending"
+                ? t(i18n, "review.save.sessionPending")
+                : outcome.reason === "sessionStale"
+                    ? t(i18n, "review.save.sessionStale")
+                    : outcome.reason === "sessionReleased"
+                        ? t(i18n, "review.save.sessionReleased")
+                        : t(i18n, `review.save.${outcome.reason ?? "readFailed"}`, { id: outcome.docId ?? saving.createdDocId, path: saving.path });
+        if (outcome.ok) {
+            facade.notifyDataChanged();
+            onCaptured?.();
+        }
+        if (disposed) {
+            showMessage(resultMessage, 10000);
+            return;
+        }
+        saveState = saving.state;
+        if (outcome.reason === "sessionPending" || outcome.reason === "sessionStale" || outcome.reason === "sessionReleased") {
+            session = null;
+            saveState = "ready";
+        }
+        message = resultMessage;
+    } catch (error) {
+        console.warn("[glean] 阅读回顾保存失败:", error);
+        if (!disposed) message = t(i18n, "msg.actionFailed");
+    } finally {
+        if (!disposed) busy = false;
+    }
+}
+
+function discard(): void {
+    if (busy || saveState === "created" || saveState === "unknown") return;
+    session = null;
+    saveState = "ready";
+    message = "";
+}
+
+function resolveUnknown(): void {
+    if (!session || busy || saveState !== "unknown") return;
+    if (!resolveUnknownReadingReview(facade.pluginInstance, session)) {
+        if (session.state === "released" || session.state === "saved") {
+            session = null;
+            saveState = "ready";
+            message = t(i18n, "review.save.sessionReleased");
+        }
+        return;
+    }
+    session = null;
+    saveState = "ready";
+    message = t(i18n, "review.unknownReleased");
+}
+
+function downloadCsv(): void {
+    if (!session || busy) return;
+    const url = URL.createObjectURL(new Blob(["\uFEFF", session.csv], { type: "text/csv;charset=utf-8" }));
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `reading-review-${session.review.stats.period.start}-${session.review.stats.period.end}.csv`;
+    document.body.append(anchor);
+    anchor.click();
+    anchor.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+async function copyReportMarkdown(): Promise<void> {
+    if (busy) return;
+    try {
+        const md = buildReadingReviewMarkdown(review, reportLabels());
+        await navigator.clipboard.writeText(md);
+        showMessage(t(i18n, "stats.reportCopied"), 2500);
+    } catch {
+        showMessage(t(i18n, "msg.actionFailed"), 2500);
+    }
+}
+
+async function copyCompletedBlockRef(item: { id: string; title: string }): Promise<void> {
+    const title = item.title || t(i18n, "review.untitled");
+    const refText = `((${item.id} '${title}'))`;
+    try {
+        await navigator.clipboard.writeText(refText);
+        showMessage(t(i18n, "reader.blockRefCopied"), 2000);
+    } catch {
+        showMessage(t(i18n, "msg.actionFailed"), 2000);
+    }
+}
+
+async function copyCompletedCitation(item: { id: string; title: string }, format: CitationFormat = "gbt"): Promise<void> {
+    const clip = index.clips[item.id];
+    const citItem: CitationItem = {
+        id: item.id,
+        title: item.title,
+        author: clip?.author,
+        site: clip?.site,
+        url: clip?.url,
+        time: clip?.time,
+    };
+    const citText = formatCitation(citItem, format);
+    const msgKey = citationSuccessKey(format);
+    try {
+        await navigator.clipboard.writeText(citText);
+        showMessage(t(i18n, msgKey), 2000);
+    } catch {
+        showMessage(t(i18n, "msg.actionFailed"), 2000);
+    }
+}
+
+async function copyCompletedListCitations(format: CitationFormat = "gbt"): Promise<void> {
+    if (visibleCompletedItems.length === 0) return;
+    const blocks: string[] = [];
+    visibleCompletedItems.forEach((item, indexNum) => {
+        const clip = index.clips[item.id];
+        const citItem: CitationItem = {
+            id: item.id,
+            title: item.title,
+            author: clip?.author,
+            site: clip?.site,
+            url: clip?.url,
+            time: clip?.time,
+        };
+        if (format === "bibtex") {
+            blocks.push(formatBibTeX(citItem));
+        } else if (format === "apa") {
+            blocks.push(`[${indexNum + 1}] ${formatCitation(citItem, "apa")}`);
+        } else if (format === "mla") {
+            blocks.push(`[${indexNum + 1}] ${formatCitation(citItem, "mla")}`);
+        } else {
+            blocks.push(`[${indexNum + 1}] ${formatGBT7714(citItem)}`);
+        }
+    });
+    const sep = format === "bibtex" ? "\n\n" : "\n";
+    const msgKey = format === "bibtex"
+        ? "library.batchBibtexCopied"
+        : (format === "apa"
+            ? "library.batchApaCopied"
+            : (format === "mla"
+                ? "library.batchMlaCopied"
+                : "library.batchCitationsCopied"));
+    try {
+        await navigator.clipboard.writeText(blocks.join(sep));
+        showMessage(t(i18n, msgKey, { n: visibleCompletedItems.length }), 2500);
+    } catch {
+        showMessage(t(i18n, "msg.actionFailed"), 2500);
+    }
+}
+
+async function copyCompletedListMarkdown(): Promise<void> {
+    if (visibleCompletedItems.length === 0) return;
+    const lines = visibleCompletedItems.map((item) => {
+        const title = item.title || t(i18n, "review.untitled");
+        const dateStr = item.doneTime ? `${item.doneTime.slice(0, 4)}-${item.doneTime.slice(4, 6)}-${item.doneTime.slice(6, 8)}` : "";
+        return `- ((${item.id} '${title}'))${dateStr ? ` · ${dateStr}` : ""}`;
+    });
+    try {
+        await navigator.clipboard.writeText(lines.join("\n"));
+        showMessage(t(i18n, "stats.completedListCopied"), 2500);
+    } catch {
+        showMessage(t(i18n, "msg.actionFailed"), 2500);
+    }
+}
+
+async function copyCompletedSummaryList(): Promise<void> {
+    if (visibleCompletedItems.length === 0) return;
+    const lines = visibleCompletedItems.map((item) => {
+        const clip = index.clips[item.id];
+        const title = item.title || t(i18n, "review.untitled");
+        const dateStr = item.doneTime ? `${item.doneTime.slice(0, 4)}-${item.doneTime.slice(4, 6)}-${item.doneTime.slice(6, 8)}` : "";
+        const parts = [`- **[${title}](siyuan://blocks/${item.id})**`];
+        if (dateStr) parts.push(`*已读: ${dateStr}*`);
+        if (clip?.author) parts.push(`*作者: ${clip.author}*`);
+        if (clip?.site) parts.push(`*来源: ${clip.site}*`);
+        if (clip?.minutes) parts.push(`*⏱️ ${clip.minutes}m*`);
+        if (clip?.tags?.length) parts.push(`#${clip.tags.join(" #")}`);
+        let line = parts.join(" · ");
+        if (clip?.summary) {
+            line += `\n  > ${clip.summary.trim()}`;
+        }
+        return line;
+    });
+    try {
+        await navigator.clipboard.writeText(lines.join("\n\n"));
+        showMessage(t(i18n, "library.batchSummaryListCopied", { n: visibleCompletedItems.length }), 2500);
+    } catch {
+        showMessage(t(i18n, "msg.actionFailed"), 2000);
+    }
+}
+
+async function exportCompletedCsv(): Promise<void> {
+    if (visibleCompletedItems.length === 0 || busy) return;
+    const ids = visibleCompletedItems.map((item) => item.id);
+    try {
+        const csvContent = await exportSelectedClipsCsv(facade.pluginInstance, facade.settings, ids);
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        const parsedRef = parseReviewDate(referenceDate);
+        const dateStr = (parsedRef || new Date()).toISOString().slice(0, 10);
+        a.download = `glean-completed-${period}-${dateStr}.csv`;
+        document.body.append(a);
+        a.click();
+        a.remove();
+        window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+        showMessage(t(i18n, "stats.completedCsvExported", { n: ids.length }), 2500);
+    } catch (err) {
+        console.warn("[LvGlean] 导出已完成 CSV 失败:", err);
+        showMessage(t(i18n, "msg.actionFailed"), 2500);
+    }
+}
+
+function hasBlockingOverlay(): boolean {
+    if (typeof document === "undefined") return false;
+    const overlays = document.querySelectorAll<HTMLElement>(".b3-menu, .b3-dialog, dialog[open], [role='dialog'][aria-modal='true'], .glean-dialog");
+    return Array.from(overlays).some((element) => element.getClientRects().length > 0);
+}
+
+let rootEl = $state<HTMLElement | null>(null);
+
+function onWindowKeyDown(event: KeyboardEvent): void {
+    if (event.defaultPrevented || event.isComposing || event.keyCode === 229 || event.repeat) return;
+    if (hasBlockingOverlay()) return;
+    if (!rootEl || rootEl.getClientRects().length === 0) return;
+    const evtTarget = event.target instanceof Node ? event.target : null;
+    if (!rootEl.contains(evtTarget) && !rootEl.contains(document.activeElement)) return;
+    const target = event.target instanceof Element ? event.target : null;
+    const textEntry = Boolean(target?.closest("input, textarea, select, [contenteditable]:not([contenteditable='false'])"));
+    if ((event.ctrlKey || event.metaKey) && (event.key === "f" || event.key === "F")) {
+        if (!textEntry) {
+            event.preventDefault();
+            event.stopPropagation();
+            if (!completedListOpen) completedListOpen = true;
+            void tick().then(() => {
+                searchInputEl?.focus();
+                searchInputEl?.select();
+            });
+            return;
+        }
+    }
+    if (event.key === "Escape") {
+        if (completedSearch) {
+            event.preventDefault();
+            event.stopPropagation();
+            completedSearch = "";
+            return;
+        }
+        if (session && !busy && (saveState === "ready" || saveState === "saved")) {
+            event.preventDefault();
+            event.stopPropagation();
+            discard();
+            return;
+        }
+        if (selectedDayDate) {
+            event.preventDefault();
+            event.stopPropagation();
+            selectedDayDate = "";
+            return;
+        }
+    }
+    if (textEntry || event.ctrlKey || event.metaKey || event.altKey) return;
+    if (event.key === "/") {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!completedListOpen) completedListOpen = true;
+        void tick().then(() => {
+            searchInputEl?.focus();
+            searchInputEl?.select();
+        });
+        return;
+    }
+    const lower = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+    if (lower === "p" && !session && !busy && reference) {
+        event.preventDefault();
+        event.stopPropagation();
+        void preview();
+    } else if (lower === "m" && !busy) {
+        event.preventDefault();
+        event.stopPropagation();
+        void copyReportMarkdown();
+    } else if (lower === "y" && !busy && visibleCompletedItems.length > 0) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (event.shiftKey) void copyCompletedSummaryList();
+        else void copyCompletedListMarkdown();
+    } else if (lower === "c" && !busy && visibleCompletedItems.length > 0) {
+        event.preventDefault();
+        event.stopPropagation();
+        void copyCompletedListCitations(event.shiftKey ? "bibtex" : "gbt");
+    }
+}
+</script>
+
+<svelte:window onkeydown={onWindowKeyDown} />
+
+<div class="glean-stats" bind:this={rootEl} tabindex="-1" aria-busy={busy}>
+    {#if loading && !index.updatedAt}
+        <div class="glean-stats__load-state" role="status" aria-live="polite" aria-busy="true">
+            <div class="glean-empty__art" aria-hidden="true"><svg><use href="#iconGleanSpark" /></svg></div>
+            <p>{t(i18n, "review.indexLoading")}</p>
+        </div>
+    {:else if loadError && !index.updatedAt}
+        <div class="glean-stats__load-state glean-stats__load-state--error" role="alert" aria-live="assertive">
+            <div class="glean-empty__art" aria-hidden="true"><svg><use href="#iconGleanClose" /></svg></div>
+            <p>{t(i18n, "review.indexLoadFailed")}</p>
+            {#if onRetry}<button class="glean-btn" aria-busy={loading} disabled={loading} onclick={onRetry}>{t(i18n, "review.retryLoad")}</button>{/if}
+        </div>
+    {:else}
+        {#if loadError}
+            <div class="glean-stats__freshness glean-stats__freshness--stale" role="alert" aria-live="assertive">
+                <span>{t(i18n, "review.cachedStale", { at: freshnessStamp })}</span>
+                {#if onRetry}<button class="glean-btn" aria-busy={loading} disabled={loading} onclick={onRetry}>{t(i18n, "review.retryLoad")}</button>{/if}
+            </div>
+        {:else if index.updatedAt}
+            <p class="glean-stats__freshness" role="status">{t(i18n, "review.indexUpdated", { at: freshnessStamp })}</p>
+        {/if}
+    <section class="glean-stats__overview" aria-labelledby={idFor("overview-title")}>
+        <div class="glean-stats__intro">
+            <div>
+                <h2 id={idFor("overview-title")}>{t(i18n, "review.title")}</h2>
+                <p class="glean-stats__hint">{t(i18n, "review.scopeShort")}</p>
+            </div>
+            <div class="glean-stats__toolbar glean-stats__toolbar--filters">
+                <label>
+                    {t(i18n, "review.period")}
+                    <select class="glean-stats__field" bind:value={period} disabled={busy || !!session}>
+                        <option value="week">{t(i18n, "review.week")}</option>
+                        <option value="month">{t(i18n, "review.month")}</option>
+                        <option value="year">{t(i18n, "review.year")}</option>
+                    </select>
+                </label>
+                <label>
+                    {t(i18n, "review.referenceDate")}
+                    <input class="glean-stats__field" type="date" min="0001-01-01" max="9998-12-31" bind:value={referenceDate} disabled={busy || !!session} />
+                </label>
+            </div>
+        </div>
+        <div class="glean-stats__toolbar glean-stats__toolbar--actions">
+            {#if !session}
+                <button class="glean-btn glean-btn--pri" disabled={busy || !reference} onclick={() => void preview()} title="{t(i18n, 'review.preview')} (P)">{t(i18n, "review.preview")}</button>
+                <button type="button" class="glean-btn glean-btn--ghost" disabled={busy} onclick={() => void copyReportMarkdown()} title="{t(i18n, 'stats.copyReport')} (M)"><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg> <span>{t(i18n, "stats.copyReport")}</span></button>
+            {:else}
+                <button class="glean-btn glean-btn--ghost" disabled={busy} onclick={downloadCsv}>{t(i18n, "review.csv")}</button>
+                <button type="button" class="glean-btn glean-btn--ghost" disabled={busy} onclick={() => void copyReportMarkdown()} title="{t(i18n, 'stats.copyReport')} (M)"><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg> <span>{t(i18n, "stats.copyReport")}</span></button>
+                {#if saveState === "ready" || saveState === "created"}
+                    <button class="glean-btn glean-btn--pri" disabled={busy} onclick={() => void save()}>{t(i18n, saveState === "created" ? "review.retryMark" : "review.confirm")}</button>
+                {/if}
+                {#if session.createdDocId}
+                    <button class="glean-btn glean-btn--ghost" disabled={busy} onclick={() => facade.openReadingDocument(session!.createdDocId)}>{t(i18n, "review.openReport")}</button>
+                {/if}
+                {#if saveState === "ready" || saveState === "saved"}
+                    <button class="glean-btn glean-btn--ghost" disabled={busy} onclick={discard}>{t(i18n, "review.discard")}</button>
+                {/if}
+                {#if saveState === "unknown"}
+                    <button class="glean-btn glean-btn--ghost" disabled={busy} onclick={resolveUnknown}>{t(i18n, "review.resolveUnknown")}</button>
+                {/if}
+            {/if}
+        </div>
+        <details class="glean-stats__scope">
+            <summary>{t(i18n, "review.scopeDetails")}</summary>
+            <p>{t(i18n, "review.scope")}</p>
+            {#if review.snapshotAt}<p>{t(i18n, "review.snapshot")}: {review.snapshotAt}</p>{/if}
+        </details>
+        <p class="glean-stats__period">{t(i18n, "review.period")}: {stats.period.label}</p>
+        {#if !reference}<p class="glean-stats__warning">{t(i18n, "review.invalidDate")}</p>{/if}
+        <dl class="glean-stats__metrics">
+            {#each primaryMetrics as metric (metric.key)}
+                <div class="glean-stats__metric"><dt>{t(i18n, metric.key)}</dt><dd>{metric.count}</dd><dd class="glean-stats__metric-hint">{t(i18n, metric.hint)}</dd></div>
+            {/each}
+        </dl>
+        <div class="glean-stats__milestones" role="region" aria-label={t(i18n, "stats.milestonesTitle")}>
+            <div class="glean-stats__milestones-title">{t(i18n, "stats.milestonesTitle")}</div>
+            <div class="glean-stats__milestones-grid">
+                {#each readingMilestones as ms (ms.id)}
+                    <div class="glean-milestone-chip" class:glean-milestone-chip--unlocked={ms.unlocked} title={ms.desc}>
+                        <span class="glean-milestone-chip__icon" aria-hidden="true">{ms.icon}</span>
+                        <div class="glean-milestone-chip__content">
+                            <span class="glean-milestone-chip__name">{ms.title}</span>
+                            <span class="glean-milestone-chip__desc">{ms.desc}</span>
+                        </div>
+                    </div>
+                {/each}
+            </div>
+        </div>
+        <div class="glean-stats__funnel" role="region" aria-label={t(i18n, "stats.funnel.title")}>
+            <div class="glean-stats__funnel-head">
+                <span class="glean-stats__funnel-title">{t(i18n, "stats.funnel.title")}</span>
+                <span class="glean-stats__funnel-desc">{t(i18n, "stats.funnel.desc")}</span>
+            </div>
+            <div class="glean-stats__funnel-stages">
+                <div class="glean-stats__funnel-stage">
+                    <span class="glean-stats__funnel-label">{t(i18n, "stats.funnel.candidate")}</span>
+                    <span class="glean-stats__funnel-count">{funnel.candidateCount}</span>
+                </div>
+                <div class="glean-stats__funnel-arrow" aria-hidden="true"><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArrowRight" /></svg></div>
+                <div class="glean-stats__funnel-stage">
+                    <span class="glean-stats__funnel-label">{t(i18n, "stats.funnel.captured")}</span>
+                    <span class="glean-stats__funnel-count">{funnel.capturedCount}</span>
+                </div>
+                <div class="glean-stats__funnel-arrow" aria-hidden="true"><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArrowRight" /></svg></div>
+                <div class="glean-stats__funnel-stage">
+                    <span class="glean-stats__funnel-label">{t(i18n, "stats.funnel.done")}</span>
+                    <span class="glean-stats__funnel-count">{funnel.doneCount}</span>
+                    <span class="glean-badge glean-badge--pri" title={t(i18n, "stats.funnel.completionRate")}>{(funnel.completionRate * 100).toFixed(1)}%</span>
+                </div>
+                <div class="glean-stats__funnel-stage glean-stats__funnel-stage--archived">
+                    <span class="glean-stats__funnel-label">{t(i18n, "stats.funnel.archived")}</span>
+                    <span class="glean-stats__funnel-count">{funnel.archivedCount}</span>
+                    <span class="glean-badge" title={t(i18n, "stats.funnel.archiveRate")}>{(funnel.archiveRate * 100).toFixed(1)}%</span>
+                </div>
+            </div>
+        </div>
+        <details class="glean-stats__supplement">
+            <summary>{t(i18n, "review.moreMetrics")}</summary>
+            <dl class="glean-stats__metrics glean-stats__metrics--supplemental">
+                {#each supplementaryMetrics as metric (metric.key)}
+                    <div class="glean-stats__metric"><dt>{t(i18n, metric.key)}</dt><dd>{metric.count}</dd>{#if metric.hint}<dd class="glean-stats__metric-hint">{t(i18n, metric.hint)}</dd>{/if}</div>
+                {/each}
+            </dl>
+        </details>
+    </section>
+    <section class="glean-stats__activity" aria-labelledby={idFor("activity-title")}>
+        <h3 id={idFor("activity-title")}>{t(i18n, "review.recentTrend")}</h3>
+        <div class="glean-stats__trend" role="group" aria-label={t(i18n, "review.recentTrend")}>
+            {#each recentDays as day (day.date)}
+                <span class="glean-stats__trend-bar" class:glean-stats__trend-bar--empty={day.count === 0} role="img" aria-label={t(i18n, "review.heatmapDay", { date: day.date, n: day.count })} data-tooltip={`${day.date}: ${day.count}`} title={`${day.date}: ${day.count}`} style={`--glean-trend-height:${day.count ? Math.max(12, Math.round(112 * day.count / maxRecent)) : 3}px`}></span>
+            {/each}
+        </div>
+        <div class="glean-stats__trend-meta" aria-hidden="true">
+            <span>{recentDays[0]?.date ?? referenceDate}</span>
+            <span>{recentDays.at(-1)?.date ?? referenceDate}</span>
+        </div>
+        <details class="glean-stats__detail">
+            <summary>{t(i18n, "review.detailedActivity")}</summary>
+            <div class="glean-stats__heatmap-scroll" role="group" aria-label={t(i18n, "review.heatmap", { year: reference?.getFullYear() ?? new Date().getFullYear() })}>
+                <div class="glean-stats__heatmap">
+                    {#each Array.from({ length: heatmapPadding }, (_, index) => index) as padding (padding)}<span></span>{/each}
+                    {#each stats.heatmap as day (day.date)}
+                        <span class="glean-stats__day" role="button" aria-pressed={selectedDayDate === day.date} aria-label={t(i18n, "review.heatmapDay", { date: day.date, n: day.count })} class:glean-stats__day--selected={selectedDayDate === day.date} tabindex="0" onclick={() => selectedDayDate = selectedDayDate === day.date ? "" : day.date} onkeydown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); selectedDayDate = selectedDayDate === day.date ? "" : day.date; } }} data-tooltip={`${day.date}: ${day.count}`} title={`${day.date}: ${day.count}`} style={`background:${day.count ? `color-mix(in srgb, var(--glean-color-data, var(--b3-theme-primary)) ${Math.round(25 + 75 * day.count / maxHeat)}%, var(--b3-theme-surface))` : "var(--b3-theme-surface)"}`}></span>
+                    {/each}
+                </div>
+                <div class="glean-stats__heatmap-legend" aria-hidden="true">
+                    <span class="glean-stats__heatmap-legend-label">0</span>
+                    <i class="glean-stats__legend-swatch glean-stats__legend-swatch--0"></i>
+                    <i class="glean-stats__legend-swatch glean-stats__legend-swatch--1"></i>
+                    <i class="glean-stats__legend-swatch glean-stats__legend-swatch--2"></i>
+                    <i class="glean-stats__legend-swatch glean-stats__legend-swatch--3"></i>
+                    <span class="glean-stats__heatmap-legend-label">{maxHeat}</span>
+                </div>
+            </div>
+            <details class="glean-stats__days">
+                <summary>{t(i18n, "review.dailyList")}</summary>
+                <div class="glean-stats__table-scroll">
+                    <table>
+                        <caption>{t(i18n, "review.heatmap", { year: reference?.getFullYear() ?? new Date().getFullYear() })}</caption>
+                        <thead><tr><th scope="col">{t(i18n, "review.date")}</th><th scope="col">{t(i18n, "review.completed")}</th></tr></thead>
+                        <tbody>{#each stats.heatmap as day (day.date)}<tr class:glean-stats__day-row--selected={selectedDayDate === day.date}><th scope="row"><button type="button" class="glean-stats__link" onclick={() => selectedDayDate = selectedDayDate === day.date ? "" : day.date}>{day.date}</button></th><td>{day.count}</td></tr>{/each}</tbody>
+                    </table>
+                </div>
+            </details>
+        </details>
+    </section>
+    <details class="glean-stats__analysis">
+      <summary>{t(i18n, "review.detailedAnalysis")}</summary>
+      <section class="glean-stats__breakdown" aria-labelledby={idFor("breakdown-title")}>
+        <h3 id={idFor("breakdown-title")} class="glean-sr-only">{t(i18n, "review.bySite")}</h3>
+        <div class="glean-stats__distributions">
+        {#each distributions as distribution, distributionIndex (distribution.key)}
+            <section class="glean-stats__distribution" aria-labelledby={idFor(`distribution-${distributionIndex}`)}>
+            <h3 id={idFor(`distribution-${distributionIndex}`)}>{t(i18n, distribution.key)}</h3>
+            <DistributionList {i18n} counts={distribution.counts}>
+                {#snippet detailsFor(group)}
+                    {#if distribution.key === "review.bySite"}
+                        {@const site = stats.periodSiteAuthors.find((entry) => entry.site === group.name)}
+                        <details class="glean-stats__site-authors">
+                            <summary>{t(i18n, "review.siteAuthors")}</summary>
+                            <DistributionList {i18n} counts={site?.authors ?? []} />
+                            <p>{t(i18n, "review.authorUnknown", { n: site?.unknownAuthorCount ?? 0 })}</p>
+                        </details>
+                    {/if}
+                {/snippet}
+            </DistributionList>
+            {#if distribution.key === "review.byAuthor"}<p>{t(i18n, "review.authorUnknown", { n: stats.periodAuthorUnknown })}</p>{/if}
+            </section>
+        {/each}
+        </div>
+        <p class="glean-stats__hint">{t(i18n, "review.authorHint")}</p>
+      </section>
+    </details>
+    <details class="glean-stats__completed-detail" bind:open={completedListOpen}>
+        <summary>{t(i18n, "review.completedList")}</summary>
+        <section class="glean-stats__completed-section" aria-labelledby={idFor("completed-title")}>
+            <h3 id={idFor("completed-title")} class="glean-sr-only">{t(i18n, "review.completedList")}</h3>
+            <div class="glean-stats__completed-header">
+                <div class="glean-stats__completed-header-search-wrap">
+                    <div class="glean-stats__completed-search">
+                        <input
+                            bind:this={searchInputEl}
+                            type="search"
+                            class="glean-stats__field"
+                            bind:value={completedSearch}
+                            placeholder={t(i18n, "stats.searchCompletedPlaceholder")}
+                            aria-label={t(i18n, "action.search")}
+                            onkeydown={(e) => {
+                                if (e.key === "Escape" && completedSearch) {
+                                    e.stopPropagation();
+                                    completedSearch = "";
+                                }
+                            }}
+                        />
+                        {#if completedSearch}
+                            <button
+                                type="button"
+                                class="glean-stats__search-clear"
+                                onclick={() => { completedSearch = ""; searchInputEl?.focus(); }}
+                                title={t(i18n, "library.clearFilters")}
+                                aria-label={t(i18n, "library.clearFilters")}
+                            >
+                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanClose" /></svg>
+                            </button>
+                        {/if}
+                    </div>
+                    {#if selectedDayDate}
+                        <div class="glean-stats__completed-filter-banner glean-stats__completed-filter-banner--tight" role="status">
+                            <span>{t(i18n, "review.filterDay", { date: selectedDayDate })} ({visibleCompletedItems.length})</span>
+                            <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm" onclick={() => selectedDayDate = ""}>{t(i18n, "review.clearDayFilter")}</button>
+                        </div>
+                    {/if}
+                </div>
+                {#if visibleCompletedItems.length > 0}
+                    <div class="glean-stats__completed-header-actions">
+                        <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm glean-stats__copy-completed-btn" onclick={() => void copyCompletedListMarkdown()} title="{t(i18n, 'stats.copyCompletedList')} (Y)">
+                            {t(i18n, "stats.copyCompletedList")}
+                        </button>
+                        <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm glean-stats__copy-summary-btn" onclick={() => void copyCompletedSummaryList()} title="{t(i18n, 'stats.copyCompletedSummary')} (Shift+Y)">
+                            {t(i18n, "stats.copyCompletedSummary")}
+                        </button>
+                        <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm glean-stats__copy-citations-btn" onclick={() => void copyCompletedListCitations("gbt")} title="{t(i18n, 'citation.copyGBT')} (C)">
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg> <span>{t(i18n, "citation.copyGBT")}</span>
+                        </button>
+                        <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm glean-stats__copy-bibtex-btn" onclick={() => void copyCompletedListCitations("bibtex")} title="{t(i18n, 'citation.copyBibTeX')} (Shift+C)">
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArchive" /></svg> <span>BibTeX</span>
+                        </button>
+                        <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm glean-stats__copy-apa-btn" onclick={() => void copyCompletedListCitations("apa")} title={t(i18n, "citation.copyAPA")}>
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanLocal" /></svg> <span>APA</span>
+                        </button>
+                        <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm glean-stats__copy-mla-btn" onclick={() => void copyCompletedListCitations("mla")} title={t(i18n, "citation.copyMLA")}>
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg> <span>MLA</span>
+                        </button>
+                        <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm glean-stats__export-csv-btn" onclick={() => void exportCompletedCsv()} title={t(i18n, "library.batchExportCsv")}>
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanDownload" /></svg> <span>{t(i18n, "library.batchExportCsv")}</span>
+                        </button>
+                    </div>
+                {/if}
+            </div>
+            <ul class="glean-stats__completed">
+                {#each visibleCompletedItems as item (item.id)}
+                    <li>
+                        <button class="glean-stats__link" title={item.title || t(i18n, "review.untitled")} onclick={() => facade.openReadingDocument(item.id)}>{item.title || t(i18n, "review.untitled")}</button>
+                        <span>{item.doneTime.slice(0, 4)}-{item.doneTime.slice(4, 6)}-{item.doneTime.slice(6, 8)}</span>
+                        <div class="glean-stats__completed-acts">
+                            <button type="button" class="glean-btn glean-btn--ghost glean-btn--xs" onclick={() => void copyCompletedBlockRef(item)} title={t(i18n, "action.copyBlockRef")} aria-label={t(i18n, "action.copyBlockRef")}>
+                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
+                            </button>
+                            <ActionPopover label={t(i18n, "library.moreActions")} compact>
+                                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCompletedCitation(item, "gbt")} title={t(i18n, "citation.copyGBT")} aria-label={t(i18n, "citation.copyGBT")}>
+                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg>
+                                    <span>{t(i18n, "citation.copyGBT")}</span>
+                                </button>
+                                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCompletedCitation(item, "bibtex")} title={t(i18n, "citation.copyBibTeX")} aria-label={t(i18n, "citation.copyBibTeX")}>
+                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArchive" /></svg>
+                                    <span>BibTeX</span>
+                                </button>
+                                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCompletedCitation(item, "apa")} title={t(i18n, "citation.copyAPA")} aria-label={t(i18n, "citation.copyAPA")}>
+                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanLocal" /></svg>
+                                    <span>APA</span>
+                                </button>
+                                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCompletedCitation(item, "mla")} title={t(i18n, "citation.copyMLA")} aria-label={t(i18n, "citation.copyMLA")}>
+                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg>
+                                    <span>MLA</span>
+                                </button>
+                            </ActionPopover>
+                        </div>
+                    </li>
+                {:else}
+                    <li class="glean-stats__completed-empty">
+                        {completedSearch || selectedDayDate ? t(i18n, "stats.noCompletedMatch") : t(i18n, "review.noCompleted")}
+                    </li>
+                {/each}
+            </ul>
+        </section>
+    </details>
+    <p class="glean-stats__status" role="status" aria-live="polite" aria-busy={busy}>{busy ? t(i18n, "panel.loading") : message}</p>
+    {#if session}
+        <label class="glean-stats__preview">
+            {t(i18n, "review.preview")}
+            <textarea class="glean-stats__field" readonly value={session.markdown} spellcheck="false"></textarea>
+        </label>
+    {/if}
+    {#if !facade.isMobile}
+        <details class="glean-kbdhint-fold">
+            <summary class="glean-kbdhint-fold__summary"><kbd>?</kbd> <span>{t(i18n, "reader.shortcuts")}</span></summary>
+            <div class="glean-kbdhint">
+                <span class="glean-kbdhint__keys" aria-hidden="true">
+                    <kbd>P</kbd> {t(i18n, "review.preview")}
+                    <kbd>M</kbd> {t(i18n, "stats.copyReport")}
+                    <kbd>Y</kbd> {t(i18n, "action.copyBlockRef")}
+                    <kbd>Shift+Y</kbd> {t(i18n, "stats.copyCompletedSummary")}
+                    <kbd>C</kbd> {t(i18n, "citation.copyGBT")}
+                    <kbd>Shift+C</kbd> BibTeX
+                    <kbd>/</kbd> {t(i18n, "action.search")}
+                    <kbd>Esc</kbd> {t(i18n, "library.keyboardExit")}
+                </span>
+            </div>
+        </details>
+    {/if}
+    {/if}
+</div>
+
+<style>
+    .glean-stats__completed-header-search-wrap {
+        display: flex;
+        align-items: center;
+        gap: var(--glean-space-2);
+        flex-wrap: wrap;
+    }
+
+    .glean-stats__completed-header-actions {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--glean-space-1);
+        flex-wrap: wrap;
+    }
+
+    .glean-stats__completed-filter-banner--tight {
+        margin-bottom: 0 !important;
+    }
+
+    .glean-stats {
+        min-height: 0;
+        padding: 24px;
+        gap: 20px;
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+    .glean-stats__load-state,
+    .glean-stats__freshness {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: var(--glean-space-3);
+        min-width: 0;
+        padding: var(--glean-space-3) var(--glean-space-4);
+        border: 1px solid var(--glean-border-soft);
+        border-radius: var(--glean-radius-md);
+        background: var(--glean-status-surface);
+        overflow-wrap: anywhere;
+    }
+
+    .glean-stats__load-state {
+        min-height: 190px;
+        flex-direction: column;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .glean-stats__load-state p,
+    .glean-stats__freshness { margin: 0; }
+
+    .glean-stats__load-state--error,
+    .glean-stats__freshness--stale {
+        color: var(--b3-theme-error);
+        border-color: color-mix(in srgb, var(--b3-theme-error) 30%, var(--glean-border-soft));
+        background: var(--glean-error-surface);
+    }
+
+    .glean-stats__overview {
+        padding: 0;
+        gap: 16px;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+    }
+
+    .glean-stats__overview h2 {
+        font-size: 26px;
+        font-weight: 700;
+        line-height: 1.35;
+        letter-spacing: 0;
+    }
+
+    .glean-stats__overview .glean-stats__hint {
+        margin-top: 8px;
+        font-size: 13px;
+        line-height: 1.7;
+    }
+
+    .glean-stats__activity {
+        padding: 20px;
+        border: 1px solid var(--glean-border-soft);
+        border-radius: 16px;
+        background: var(--b3-theme-surface);
+        box-shadow: none;
+    }
+
+    .glean-stats__activity h3 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 650;
+        line-height: 1.5;
+    }
+
+    .glean-stats__metric,
+    .glean-stats__metric:hover {
+        min-height: 96px;
+        padding: 14px 18px;
+        border: none;
+        border-right: 1px solid color-mix(in srgb, var(--b3-border-color) 25%, transparent);
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+        transform: none;
+        transition: none;
+    }
+
+    .glean-stats__metric dt {
+        font-size: 13px;
+        font-weight: 500;
+        line-height: 1.5;
+    }
+
+    .glean-stats__metric > dd:not(.glean-stats__metric-hint) {
+        margin: 8px 0 0;
+        color: var(--b3-theme-on-background);
+        background: none;
+        -webkit-text-fill-color: currentColor;
+        font-size: 28px;
+        font-weight: 680;
+        line-height: 1.25;
+        letter-spacing: 0;
+    }
+
+    .glean-stats__metric dd.glean-stats__metric-hint {
+        margin: 8px 0 0;
+        font-size: 12px;
+        line-height: 1.6;
+        opacity: 1;
+    }
+
+    .glean-stats__metrics {
+        gap: 12px;
+        margin: 0;
+    }
+
+    .glean-stats__analysis,
+    .glean-stats__completed-detail {
+        border-radius: 16px;
+        background: var(--b3-theme-surface);
+        box-shadow: none;
+    }
+
+    .glean-stats__analysis > summary,
+    .glean-stats__completed-detail > summary,
+    .glean-stats__detail > summary {
+        min-height: 44px;
+        font-size: 13px;
+        font-weight: 550;
+    }
+
+    .glean-stats__completed-section {
+        background: transparent;
+        border: 0;
+        box-shadow: none;
+    }
+
+    .glean-stats__toolbar .glean-btn {
+        min-height: 36px;
+        box-shadow: none;
+        font-size: 13px;
+    }
+
+    .glean-stats__intro {
+        align-items: flex-start;
+    }
+
+    .glean-stats__overview .glean-stats__toolbar--filters label {
+        flex: 0 1 160px;
+        min-width: 0;
+        color: var(--b3-theme-on-surface);
+        font-size: 12px;
+        font-weight: 650;
+        line-height: 1.35;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    .glean-stats__overview .glean-stats__toolbar--filters {
+        display: grid;
+        flex: 0 1 320px;
+        width: min(100%, 320px);
+        min-width: 0;
+        max-width: 100%;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 136px), 1fr));
+        gap: var(--glean-space-2);
+        align-items: start;
+    }
+
+    .glean-stats__overview .glean-stats__field {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        min-height: 36px;
+        margin-top: 4px;
+        padding: 7px 10px;
+        border-radius: 10px;
+        font-size: 13px;
+        box-shadow: none;
+    }
+
+    .glean-stats__supplement {
+        min-width: 0;
+    }
+
+    .glean-stats__scope {
+        margin: calc(var(--glean-space-1) * -1) 0 0;
+        color: var(--b3-theme-on-surface);
+        font-size: var(--glean-text-xs);
+    }
+
+    .glean-stats__scope > summary {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        color: var(--b3-theme-on-surface);
+        cursor: pointer;
+    }
+
+    .glean-stats__scope > summary:hover,
+    .glean-stats__scope[open] > summary {
+        color: var(--b3-theme-primary);
+    }
+
+    .glean-stats__scope > p {
+        max-width: 88ch;
+        margin: var(--glean-space-1) 0 0;
+        line-height: 1.55;
+    }
+
+    .glean-stats__overview > .glean-stats__metrics {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        background: var(--b3-theme-surface);
+        border-radius: var(--glean-radius-lg);
+        padding: var(--glean-space-2) var(--glean-space-3);
+        border: 1px solid color-mix(in srgb, var(--b3-border-color) 20%, transparent);
+    }
+
+    .glean-stats__overview > .glean-stats__metrics > .glean-stats__metric {
+        background: transparent;
+        border: none;
+        border-right: 1px solid color-mix(in srgb, var(--b3-border-color) 25%, transparent);
+    }
+
+    .glean-stats__overview > .glean-stats__metrics > .glean-stats__metric:last-child {
+        border-right: none;
+    }
+
+    .glean-stats__supplement > summary {
+        display: flex;
+        align-items: center;
+        min-height: 40px;
+        padding: 0 var(--glean-space-3);
+        border: 1px solid var(--glean-border-soft);
+        border-radius: var(--glean-radius-sm);
+        background: var(--b3-theme-surface);
+        color: var(--b3-theme-on-surface);
+        cursor: pointer;
+        transition: color 160ms var(--glean-ease-out), border-color 160ms var(--glean-ease-out), background-color 160ms var(--glean-ease-out);
+    }
+
+    .glean-stats__supplement > summary:hover {
+        border-color: color-mix(in srgb, var(--b3-theme-primary) 28%, var(--glean-border-soft));
+        color: var(--b3-theme-primary);
+    }
+
+    .glean-stats__supplement > summary::before,
+    .glean-stats__scope > summary::before {
+        content: "›";
+        display: inline-block;
+        margin-right: var(--glean-space-2);
+        font-size: 17px;
+        line-height: 1;
+        transform: rotate(0deg);
+        transition: transform 160ms var(--glean-ease-out);
+    }
+
+    .glean-stats__supplement[open] > summary::before,
+    .glean-stats__scope[open] > summary::before {
+        transform: rotate(90deg);
+    }
+
+    .glean-stats__metrics--supplemental {
+        margin-top: var(--glean-space-3);
+    }
+
+    .glean-stats__metrics--supplemental .glean-stats__metric,
+    .glean-stats__metrics--supplemental .glean-stats__metric:nth-child(-n + 3) {
+        min-height: 72px;
+        padding: var(--glean-space-3);
+        border-color: var(--glean-border-soft);
+        background: var(--glean-section-surface);
+        box-shadow: none;
+    }
+
+    .glean-stats__metrics--supplemental .glean-stats__metric dd {
+        font-size: 19px;
+    }
+
+    .glean-stats__metrics--supplemental .glean-stats__metric > dd:not(.glean-stats__metric-hint) {
+        font-size: 22px;
+    }
+
+    .glean-stats__period {
+        margin: 0;
+        align-self: flex-start;
+        font-weight: 600;
+    }
+
+    .glean-stats__days summary,
+    .glean-stats__site-authors summary {
+        display: flex;
+        align-items: center;
+        min-height: 36px;
+        border-radius: var(--glean-radius-sm);
+        transition: color 160ms var(--glean-ease-out), background-color 160ms var(--glean-ease-out);
+    }
+
+    .glean-stats__days summary:hover,
+    .glean-stats__site-authors summary:hover {
+        background: var(--glean-inset-surface);
+        color: var(--b3-theme-primary);
+    }
+
+    .glean-stats__table-scroll {
+        scrollbar-gutter: stable;
+        border: 1px solid var(--glean-border-soft);
+        border-radius: var(--glean-radius-md);
+        background: var(--glean-inset-surface);
+    }
+
+    .glean-stats table thead {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        background: var(--glean-inset-surface);
+    }
+
+    .glean-stats th {
+        color: var(--b3-theme-on-surface);
+        font-size: var(--glean-text-xs);
+        font-weight: 700;
+    }
+
+    .glean-stats td,
+    .glean-stats th {
+        border-bottom-color: var(--glean-border-soft);
+    }
+
+    .glean-stats__status:not(:empty) {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--glean-space-2);
+        width: fit-content;
+        max-width: 100%;
+        color: var(--b3-theme-on-surface);
+    }
+
+    .glean-stats__status:not(:empty)::before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        flex: 0 0 auto;
+        border-radius: 50%;
+        background: var(--b3-theme-primary);
+    }
+
+    .glean-stats__completed li {
+        min-height: 34px;
+        box-sizing: border-box;
+    }
+
+    .glean-stats__completed .glean-stats__link {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    @media (max-width: 560px) {
+        .glean-stats__overview .glean-stats__toolbar--filters {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .glean-stats__overview .glean-stats__field {
+            width: 100%;
+            min-width: 0;
+            min-height: 44px;
+        }
+
+        .glean-stats__overview > .glean-stats__metrics {
+            grid-template-columns: 1fr;
+        }
+
+        .glean-stats__overview .glean-stats__toolbar--filters label {
+            flex: 1 1 0;
+            white-space: normal;
+        }
+
+        .glean-stats__metrics--supplemental {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .glean-stats__metric,
+        .glean-stats__metric:nth-child(n + 4) {
+            min-width: 0;
+            padding: var(--glean-space-3);
+        }
+
+        .glean-stats__metric dt {
+            min-height: 2.7em;
+            line-height: 1.35;
+        }
+
+        .glean-stats__metric > dd:not(.glean-stats__metric-hint) {
+            font-size: 20px;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .glean-stats__overview .glean-stats__toolbar--filters {
+            flex: 0 1 auto;
+            width: 100%;
+        }
+
+        .glean-stats__overview .glean-stats__toolbar--filters label {
+            flex: 1 1 0;
+            white-space: normal;
+        }
+    }
+
+    @container glean-workbench (max-width: 640px) {
+        .glean-stats__overview .glean-stats__toolbar--filters {
+            flex: 0 1 auto;
+            width: 100%;
+        }
+
+        .glean-stats__overview .glean-stats__toolbar--filters label {
+            flex: 1 1 0;
+            white-space: normal;
+        }
+    }
+
+    @container glean-workbench (max-width: 560px) {
+        .glean-stats {
+            padding: 16px;
+            gap: 16px;
+        }
+
+        .glean-stats__overview h2 {
+            font-size: 24px;
+        }
+
+        .glean-stats__activity {
+            padding: 16px;
+        }
+
+        .glean-stats__overview .glean-stats__toolbar--filters {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .glean-stats__overview > .glean-stats__metrics {
+            grid-template-columns: 1fr;
+        }
+
+        .glean-stats__overview .glean-stats__field {
+            width: 100%;
+            min-width: 0;
+            min-height: 44px;
+        }
+
+        .glean-stats__metric,
+        .glean-stats__metric:hover {
+            min-height: 0;
+            padding: 16px;
+        }
+
+        .glean-stats__metric > dd:not(.glean-stats__metric-hint) {
+            font-size: 24px;
+        }
+
+        .glean-stats__toolbar .glean-btn {
+            min-height: 44px;
+        }
+    }
+</style>

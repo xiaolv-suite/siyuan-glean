@@ -1,0 +1,357 @@
+/* 5 阶语义折叠交互阅读器（Folded Reader）样式 · 严格作用域内 */
+
+.glean-fold-reader {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    background: var(--glean-app-background);
+    padding: var(--glean-space-3);
+    gap: var(--glean-space-2-5);
+    box-sizing: border-box;
+    color: var(--b3-theme-on-background);
+}
+
+.glean-fold-reader__head {
+    display: flex;
+    flex-direction: column;
+    gap: var(--glean-space-2);
+    padding-bottom: var(--glean-space-2);
+    border-bottom: 1px solid var(--glean-border-soft);
+}
+
+.glean-fold-reader__levels-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--glean-space-2);
+    flex-wrap: wrap;
+}
+
+.glean-fold-reader__levels {
+    display: inline-flex;
+    background: var(--glean-inset-surface, var(--b3-theme-surface));
+    border-radius: var(--glean-radius-pill);
+    padding: var(--glean-space-0-5);
+    border: 1px solid var(--glean-border-soft);
+    gap: var(--glean-space-0-5);
+}
+
+.glean-fold-reader__pill {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--glean-space-1);
+    border: none;
+    background: transparent;
+    padding: var(--glean-space-0-75) var(--glean-space-2-5);
+    border-radius: var(--glean-radius-pill);
+    font-size: var(--glean-text-xs, 12px);
+    color: var(--b3-theme-on-surface);
+    cursor: pointer;
+    font-variant-numeric: tabular-nums;
+    transition: all var(--glean-duration-fast) var(--glean-ease-out);
+
+    &:hover {
+        background: color-mix(in srgb, var(--b3-theme-on-surface) 6%, transparent);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--glean-color-action);
+        outline-offset: 2px;
+    }
+}
+
+.glean-fold-reader__pill--active {
+    background: var(--glean-color-action);
+    color: var(--b3-theme-on-primary);
+    font-weight: var(--glean-weight-semibold);
+
+    @media (forced-colors: active) {
+        border: 1px solid Highlight;
+        color: Highlight;
+    }
+}
+
+.glean-fold-reader__pill-num {
+    font-weight: var(--glean-weight-semibold);
+    font-variant-numeric: tabular-nums;
+    opacity: 0.95;
+}
+
+.glean-fold-reader__desc-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: var(--glean-text-caption);
+    color: var(--b3-theme-on-surface);
+    opacity: 0.88;
+    gap: var(--glean-space-2);
+    flex-wrap: wrap;
+}
+
+.glean-fold-reader__verbatim-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--glean-space-1);
+    font-size: var(--glean-text-caption);
+    font-weight: var(--glean-weight-semibold);
+    padding: var(--glean-space-micro) var(--glean-space-2);
+    border-radius: var(--glean-radius-pill);
+    background: color-mix(in srgb, var(--glean-color-data) 12%, var(--b3-theme-surface));
+    color: var(--glean-st-done-text);
+    border: 1px solid color-mix(in srgb, var(--glean-color-data) 30%, transparent);
+
+    @media (forced-colors: active) {
+        border: 1px solid Highlight;
+        color: Highlight;
+    }
+}
+
+.glean-fold-reader__list {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--glean-space-2);
+    padding-right: var(--glean-space-0-5);
+}
+
+.glean-fold-card {
+    background: var(--glean-card-surface, var(--b3-theme-surface));
+    border: 1px solid var(--glean-border-soft);
+    border-radius: var(--glean-radius-lg, 16px);
+    padding: var(--glean-space-3) var(--glean-space-3-5);
+    box-shadow: var(--glean-shadow-card);
+    transition: transform var(--glean-duration-fast) var(--glean-ease-enter), box-shadow var(--glean-duration-fast) var(--glean-ease-enter), border-color var(--glean-duration-fast) ease;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: var(--glean-space-1-5, 6px);
+    position: relative;
+
+    &:hover {
+        transform: translateY(-1px);
+        box-shadow: var(--glean-shadow-card-hover);
+        border-color: color-mix(in srgb, var(--glean-color-action) 35%, transparent);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--glean-color-action);
+        outline-offset: 2px;
+    }
+
+    @media (forced-colors: active) {
+        border: 1px solid CanvasText;
+    }
+}
+
+.glean-fold-card--expanded {
+    border-color: color-mix(in srgb, var(--glean-color-action) 45%, transparent);
+    background: color-mix(in srgb, var(--glean-color-action) 2%, var(--glean-card-surface, var(--b3-theme-surface)));
+}
+
+.glean-fold-card__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--glean-space-2);
+}
+
+.glean-fold-card__meta {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--glean-space-1-5);
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.glean-fold-card__idx {
+    font-size: var(--glean-text-caption);
+    font-weight: var(--glean-weight-semibold);
+    color: var(--glean-color-action);
+    background: var(--glean-primary-soft);
+    padding: var(--glean-space-micro) var(--glean-space-1-75);
+    border-radius: var(--glean-radius-pill);
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+}
+
+.glean-fold-card__concept {
+    font-size: var(--glean-text-caption);
+    font-weight: var(--glean-weight-semibold);
+    color: var(--b3-theme-on-surface);
+    background: color-mix(in srgb, var(--glean-color-action) 10%, var(--b3-theme-surface));
+    padding: var(--glean-space-micro) var(--glean-space-2);
+    border-radius: var(--glean-radius-pill);
+    border: 1px solid color-mix(in srgb, var(--glean-color-action) 25%, transparent);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    @media (forced-colors: active) {
+        border: 1px solid Highlight;
+        color: Highlight;
+    }
+}
+
+.glean-fold-card__ops {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--glean-space-1);
+    flex-shrink: 0;
+}
+
+.glean-fold-card__btn {
+    border: none;
+    background: transparent;
+    padding: var(--glean-space-0-5) var(--glean-space-1-5);
+    border-radius: var(--glean-radius-pill);
+    color: var(--b3-theme-on-surface);
+    opacity: 0.6;
+    cursor: pointer;
+    font-size: var(--glean-text-caption);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--glean-space-0-5);
+    transition: all var(--glean-duration-fast) ease;
+
+    &:hover {
+        opacity: 1;
+        background: color-mix(in srgb, var(--glean-color-action) 12%, transparent);
+        color: var(--glean-color-action);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--glean-color-action);
+        outline-offset: 1px;
+    }
+}
+
+.glean-fold-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--glean-space-1-5);
+}
+
+.glean-fold-card__text-full {
+    font-size: var(--glean-text-base);
+    line-height: var(--glean-leading-body);
+    color: var(--b3-theme-on-surface);
+    word-break: break-word;
+    margin: var(--glean-space-0);
+    white-space: pre-wrap;
+
+    /* 长代码行横向滚动：内嵌 pre 不撑爆移动端外层容器宽度 */
+    pre {
+        overflow-x: auto;
+        overscroll-behavior-x: contain;
+        padding: var(--glean-space-2);
+        border-radius: var(--glean-radius-md, 8px);
+        background: var(--b3-theme-background-light, #f6f7f9);
+        white-space: pre;
+        word-break: normal;
+    }
+}
+
+.glean-fold-card__brief {
+    font-size: var(--glean-text-sm);
+    line-height: var(--glean-leading-normal);
+    font-weight: var(--glean-weight-medium);
+    color: var(--b3-theme-on-surface);
+    border-left: 3px solid var(--glean-color-action);
+    padding: var(--glean-space-1-5) var(--glean-space-3);
+    background: color-mix(in srgb, var(--glean-color-action) 5%, transparent);
+    border-radius: var(--glean-radius-none) var(--glean-radius-md, 8px) var(--glean-radius-md, 8px) var(--glean-radius-none);
+    font-style: normal;
+}
+
+.glean-fold-card__points {
+    margin: var(--glean-space-0);
+    padding-left: var(--glean-space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--glean-space-1);
+    font-size: var(--glean-text-sm);
+    line-height: var(--glean-leading-normal);
+    color: var(--b3-theme-on-surface);
+}
+
+.glean-fold-card__gist {
+    font-size: var(--glean-text-sm);
+    line-height: var(--glean-leading-normal);
+    color: var(--b3-theme-on-surface);
+    opacity: 0.92;
+}
+
+.glean-fold-card__concept-view {
+    display: flex;
+    align-items: center;
+    gap: var(--glean-space-2);
+    font-size: var(--glean-text-sm);
+    color: var(--b3-theme-on-surface);
+}
+
+.glean-fold-reader__empty,
+.glean-fold-reader__loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--glean-space-5, 24px);
+    text-align: center;
+    gap: var(--glean-space-2);
+    color: var(--b3-theme-on-surface);
+    opacity: 0.7;
+    font-size: var(--glean-text-sm, 13px);
+}
+
+@media (max-width: 560px) {
+    .glean-fold-reader {
+        padding: var(--glean-space-2);
+    }
+
+    .glean-fold-reader__levels-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .glean-fold-reader__levels {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .glean-fold-reader__pill {
+        flex: 1 1 0;
+        min-height: 44px;
+        justify-content: center;
+    }
+
+    .glean-fold-card__btn {
+        min-width: 44px;
+        min-height: 44px;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 360px) {
+    .glean-fold-reader__levels {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 3px;
+        border-radius: 12px;
+    }
+
+    .glean-fold-card__head {
+        flex-wrap: wrap;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .glean-fold-reader__pill,
+    .glean-fold-card,
+    .glean-fold-card__btn {
+        transition: var(--glean-motion-none) !important;
+        transform: none !important;
+    }
+}

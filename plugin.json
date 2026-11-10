@@ -1,0 +1,53 @@
+{
+  "name": "siyuan-glean",
+  "author": "xiaolv-suite",
+  "url": "https://github.com/xiaolv-suite/siyuan-glean",
+  "version": "1.4.6",
+  "minAppVersion": "3.8.4",
+  "settingsWindow": true,
+  "disabledInPublish": false,
+  "backends": [
+    "all"
+  ],
+  "frontends": [
+    "desktop",
+    "mobile",
+    "browser-desktop",
+    "browser-mobile",
+    "desktop-window"
+  ],
+  "displayName": {
+    "default": "Lv Glean",
+    "zh-CN": "小驴拾遗"
+  },
+  "description": {
+    "default": "Organize SiYuan clippings and imports into a document-attribute reading library with status triage and daily resurfacing. Optional AI enrichment is manual and requires a configured provider.",
+    "zh-CN": "小驴拾遗：把思源剪藏和导入文章整理为基于文档属性的读库，支持状态分拣和每日重浮；AI 富化可选且默认手动，需要配置模型。"
+  },
+  "readme": {
+    "default": "README.md",
+    "en-US": "README.en-US.md"
+  },
+  "icon": "icon.png",
+  "preview": "preview.png",
+  "keywords": [
+    "小驴",
+    "小驴拾遗",
+    "xiaolv",
+    "lv",
+    "剪藏",
+    "稍后读",
+    "阅读管理",
+    "收件箱",
+    "文章库",
+    "读库",
+    "收藏管理",
+    "网页剪藏",
+    "阅读队列",
+    "重浮",
+    "web clipper",
+    "read later",
+    "reading list",
+    "inbox"
+  ]
+}
