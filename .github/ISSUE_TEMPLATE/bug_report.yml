@@ -8,7 +8,7 @@ body:
     attributes:
       value: |
         感谢反馈。请先确认问题发生在真实思源宿主中，并尽量附上脱敏截图、录屏或日志。
-        提交前可查看 [反馈闭环](https://github.com/ai68298100/siyuan-glean/blob/HEAD/docs/FEEDBACK-LOOP.md)、[能力矩阵](https://github.com/ai68298100/siyuan-glean/blob/HEAD/docs/CAPABILITY-MATRIX.md) 和 [恢复矩阵](https://github.com/ai68298100/siyuan-glean/blob/HEAD/docs/RECOVERY-MATRIX.md)。
+        提交前可查看 [反馈闭环](https://github.com/xiaolv-suite/siyuan-glean/blob/HEAD/docs/FEEDBACK-LOOP.md)、[能力矩阵](https://github.com/xiaolv-suite/siyuan-glean/blob/HEAD/docs/CAPABILITY-MATRIX.md) 和 [恢复矩阵](https://github.com/xiaolv-suite/siyuan-glean/blob/HEAD/docs/RECOVERY-MATRIX.md)。
   - type: input
     id: plugin-version
     attributes:

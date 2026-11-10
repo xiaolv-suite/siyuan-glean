@@ -308,7 +308,7 @@ test("Mobile Spec v1: 手机端自有面板唤起走全屏 Dialog (100vw/100dvh 
     assert.match(dialog, /header\.style\.setProperty\("display",\s*"none",\s*"important"\)/);
     assert.match(dialog, /dialogBody\.style\.setProperty\("padding",\s*"0",\s*"important"\)/);
     assert.match(dialog, /args\.width === "100vw" \|\| args\.height === "100dvh"/);
-    assert.match(dialog, /diffY > 70 && diffY > diffX \* 1\.5 && touchStartY < 120/);
+    assert.match(dialog, /diffY > 80 && diffY > diffX \* 2 && touchStartY < 120/);
     assert.match(styles, /\.glean-mobile-fullscreen-dialog\s*\{[\s\S]*width:\s*100vw[\s\S]*height:\s*100dvh/);
     assert.match(styles, /env\(safe-area-inset-top/);
     assert.match(styles, /touch-action:\s*manipulation/);

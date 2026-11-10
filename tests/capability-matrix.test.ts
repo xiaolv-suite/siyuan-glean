@@ -61,16 +61,22 @@ test("README 和集市描述引用同一能力边界", () => {
     assert.doesNotMatch(manifest.description.default, /automatic AI|AI summaries on every capture/i);
 });
 
-test("双语 README 展示待发布摘要、系列插件和折叠历史", () => {
-    const currentUpdate = readme.search(new RegExp(`## v${manifest.version.replace(".", "\\.")} 更新（\\d{4}-\\d{2}-\\d{2}）`));
-    const historyStart = readme.indexOf("<details>", currentUpdate);
-    const v131History = readme.indexOf("### v1.3.1（2026-10-09）", historyStart);
-    const historyEnd = readme.indexOf("</details>", historyStart);
-    assert.ok(currentUpdate >= 0 && currentUpdate < historyStart && historyStart < v131History && v131History < historyEnd);
+test("双语 README 展示最近更新摘要、系列插件与变更日志链接", () => {
+    const updatesStart = readme.indexOf("## 📝 最近更新");
+    const historyLink = readme.indexOf("完整版本历史见 [CHANGELOG.md](CHANGELOG.md)", updatesStart);
+    assert.ok(updatesStart >= 0 && historyLink > updatesStart);
+    assert.ok(readme.includes(`**v${manifest.version}（`));
     assert.match(readme.slice(0, 700), /剪藏[\s\S]*稍后读[\s\S]*阅读管理[\s\S]*收件箱[\s\S]*读库/);
-    const familyStart = readme.indexOf("## 小驴系列插件", currentUpdate);
-    const familySection = readme.slice(familyStart, historyStart);
-    assert.ok(familyStart > currentUpdate && familyStart < historyStart);
+
+    const updatesStartEn = readmeEn.indexOf("## 📝 Recent Updates");
+    const historyLinkEn = readmeEn.indexOf("Full version history: [CHANGELOG.md](CHANGELOG.md)", updatesStartEn);
+    assert.ok(updatesStartEn >= 0 && historyLinkEn > updatesStartEn);
+    assert.ok(readmeEn.includes(`**v${manifest.version} (`));
+
+    const familyStart = readme.indexOf("## 小驴系列插件", updatesStart);
+    const communityStart = readme.indexOf("## 社区反馈与开发指南", familyStart);
+    assert.ok(familyStart > updatesStart && communityStart > familyStart);
+    const familySection = readme.slice(familyStart, communityStart);
 
     const family = [
         ["小驴雷切", "siyuan-speed-switch"],
@@ -84,27 +90,11 @@ test("双语 README 展示待发布摘要、系列插件和折叠历史", () => 
     ] as const;
     for (const [name, repository] of family) {
         assert.ok(familySection.includes(name), `${name} should appear in the family table`);
-        assert.ok(familySection.includes(`https://github.com/ai68298100/${repository}`));
-        assert.ok(readmeEn.includes(`https://github.com/ai68298100/${repository}`));
+        assert.ok(familySection.includes(`https://github.com/xiaolv-suite/${repository}`));
+        assert.ok(readmeEn.includes(`https://github.com/xiaolv-suite/${repository}`));
     }
     assert.match(readme, /QQ 群：\*\*871707735\*\*/);
     assert.match(readme, /反馈 Bug、提交需求和交流使用体验/);
-
-    const currentUpdateEn = readmeEn.search(new RegExp(`## v${manifest.version.replace(".", "\\.")} update \\([0-9]{4}-[0-9]{2}-[0-9]{2}\\)`));
-    const historyStartEn = readmeEn.indexOf("<details>", currentUpdateEn);
-    const v131HistoryEn = readmeEn.indexOf("### v1.3.1 (2026-10-09)", historyStartEn);
-    const historyEndEn = readmeEn.indexOf("</details>", historyStartEn);
-    assert.ok(currentUpdateEn >= 0 && currentUpdateEn < historyStartEn && historyStartEn < v131HistoryEn && v131HistoryEn < historyEndEn);
-    const familyStartEn = readmeEn.indexOf("## The Lv plugin family", currentUpdateEn);
-    const familySectionEn = readmeEn.slice(familyStartEn, historyStartEn);
-    assert.ok(familyStartEn > currentUpdateEn && familyStartEn < historyStartEn);
-    for (const [name] of family) {
-        assert.ok(familySectionEn.includes(name.replace("（内测版）", "")), `${name} should appear in the English family table`);
-    }
-    for (const name of ["小驴考试", "小驴管家", "小驴闪卡", "小驴常用"]) {
-        assert.ok(familySectionEn.includes(`${name} (Beta)`), `${name} should be marked as beta in the English family table`);
-    }
-    assert.match(readmeEn, /QQ group: \*\*871707735\*\*/);
 });
 
 test("设置与首启能力卡说明 AI 前置条件和失败降级", () => {

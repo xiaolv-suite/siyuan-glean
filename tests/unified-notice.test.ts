@@ -461,7 +461,7 @@ test("第三阶段 AI 统一网关：lvAi 并发限流与全局共享配置", as
 
 test("第三阶段今日活动流：lvActivity 广播、查询与 Daily Note 汇编", () => {
     const originalWindow = globalThis.window;
-    (globalThis as any).window = { addEventListener: () => {}, removeEventListener: () => {} };
+    (globalThis as any).window = { addEventListener: () => {}, removeEventListener: () => {}, setTimeout: () => 1, clearTimeout: () => {} };
 
     let receivedItem: any = null;
     const unsub = lvActivity.onActivity((item) => {
@@ -505,7 +505,7 @@ test("第三阶段今日活动流：lvActivity 广播、查询与 Daily Note 汇
 
 test("第四阶段全生态联合灾备：lvBackup 注册、联合导出 exportFull 与联合恢复 restoreFull", async () => {
     const originalWindow = globalThis.window;
-    (globalThis as any).window = { addEventListener: () => {}, removeEventListener: () => {} };
+    (globalThis as any).window = { addEventListener: () => {}, removeEventListener: () => {}, setTimeout: () => 1, clearTimeout: () => {} };
 
     let restoredGleanData: any = null;
     let restoredCardsData: any = null;
@@ -609,7 +609,7 @@ test("第五阶段小驴罗盘：lvLaunchpad 注册、三态呈现、状态切�
     const originalWindow = globalThis.window;
     const originalLocalStorage = globalThis.localStorage;
     const mockStorage = new Map<string, string>();
-    (globalThis as any).window = { addEventListener: () => {}, removeEventListener: () => {}, dispatchEvent: () => true };
+    (globalThis as any).window = { addEventListener: () => {}, removeEventListener: () => {}, dispatchEvent: () => true, setTimeout: () => 1, clearTimeout: () => {} };
     (globalThis as any).localStorage = {
         getItem: (k: string) => mockStorage.get(k) ?? null,
         setItem: (k: string, v: string) => { mockStorage.set(k, String(v)); },
@@ -691,7 +691,7 @@ test("第五阶段小驴罗盘：lvLaunchpad 注册、三态呈现、状态切�
 
 test("第七阶段全局万物穿透搜索：lvOmnisearch 提供者注册、跨插件检索与剪藏直达", async () => {
     const originalWindow = globalThis.window;
-    (globalThis as any).window = { addEventListener: () => {}, removeEventListener: () => {} };
+    (globalThis as any).window = { addEventListener: () => {}, removeEventListener: () => {}, setTimeout: () => 1, clearTimeout: () => {} };
 
     let openedDocId = "";
 
