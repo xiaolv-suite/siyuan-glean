@@ -213,26 +213,54 @@ export const simpleDialog = (args: {
         }
     }
 
-    // 移动端/全屏弹层顶部下拉手势关闭
+    // 移动端/全屏弹层顶部下拉手势关闭（严格过滤表单输入与软键盘状态，杜绝输入中意外关闭）
     if ((isMobileFrontend() || isFullscreen) && typeof dialog.element?.addEventListener === "function") {
         let touchStartY = 0;
         let touchStartX = 0;
+        let validTouch = false;
+
+        const isInputTarget = (target: EventTarget | null): boolean => {
+            if (typeof document !== "undefined" && document.activeElement) {
+                const tag = document.activeElement.tagName?.toLowerCase();
+                if (tag === "input" || tag === "textarea" || tag === "select" || document.activeElement.getAttribute("contenteditable") === "true") {
+                    return true;
+                }
+            }
+            if (target instanceof HTMLElement) {
+                return Boolean(target.closest("input, textarea, select, [contenteditable='true'], form, .b3-text-field"));
+            }
+            return false;
+        };
+
         dialog.element.addEventListener("touchstart", (e: TouchEvent) => {
+            if (isInputTarget(e.target)) {
+                validTouch = false;
+                return;
+            }
             const touch = e.touches[0];
-            if (touch) {
+            if (touch && touch.clientY < 120) {
                 touchStartY = touch.clientY;
                 touchStartX = touch.clientX;
+                validTouch = true;
+            } else {
+                validTouch = false;
             }
         }, { passive: true });
+
         dialog.element.addEventListener("touchend", (e: TouchEvent) => {
+            if (!validTouch || isInputTarget(e.target)) {
+                validTouch = false;
+                return;
+            }
             const touch = e.changedTouches[0];
             if (touch) {
                 const diffY = touch.clientY - touchStartY;
                 const diffX = Math.abs(touch.clientX - touchStartX);
-                if (diffY > 70 && diffY > diffX * 1.5 && touchStartY < 120) {
+                if (diffY > 80 && diffY > diffX * 2 && touchStartY < 120) {
                     requestClose();
                 }
             }
+            validTouch = false;
         }, { passive: true });
     }
 

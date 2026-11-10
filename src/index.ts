@@ -1048,12 +1048,23 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
         void this.openReaderTab(docId);
     }
 
+    closeMobileWorkbench(): void {
+        this.openMobileWorkbenchSingleton.close();
+    }
+
     private async openNativeReadingDocument(docId: string, focusBlockId?: string): Promise<void> {
         const request = ++this.readerOpenRequest;
         try {
             if (this.isMobile) {
                 // SDK 返回 void，只能捕获调用异常，不能把调用返回视作正文已打开。
                 openMobileFileById(this.app, focusBlockId || docId);
+                try {
+                    lvLaunchpad.haptic(10);
+                } catch {
+                    /* soft */
+                }
+                // 移动端：打开文章后自动关闭全屏拾遗工作台，让底层已就绪的正文清晰呈现在用户眼前
+                this.closeMobileWorkbench();
                 return;
             }
             await openTab({ app: this.app, doc: { id: focusBlockId || docId }, keepCursor: false });
