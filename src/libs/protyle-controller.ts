@@ -17,7 +17,7 @@ interface ControllerOptions {
     mode: ProtyleMode;
     create: (mount: HTMLElement, ready: (instance: ProtyleInstance) => void) => ProtyleInstance;
     observe?: (host: HTMLElement, resize: () => void) => () => void;
-    onReady?: () => void;
+    onReady?: (instance?: any) => void;
     onError?: (error: unknown) => void;
 }
 
@@ -68,7 +68,11 @@ export function createProtyleController(options: ControllerOptions): ProtyleCont
             }
             instance = current;
             ready = true;
-            options.onReady?.();
+            try {
+                options.onReady?.(current);
+            } catch (err) {
+                console.error("[ProtyleController] onReady error:", err);
+            }
             controller.setMode(mode);
             controller.resize();
         });

@@ -86,6 +86,21 @@
         let active = true;
         stage = "loading";
         const timeout = window.setTimeout(() => { if (active && stage === "loading") stage = "failed"; }, 15000);
+        // 关键自愈守卫：若内核已向容器注入 protyle DOM 内容（如 .protyle-wysiwyg 或 [data-node-id]），立即将 stage 自愈切换为 ready
+        const readyCheckTimer = window.setInterval(() => {
+            if (!active) {
+                window.clearInterval(readyCheckTimer);
+                return;
+            }
+            if (stage === "loading" && element.querySelector(".protyle-wysiwyg, .protyle-content, [data-node-id]")) {
+                stage = "ready";
+                window.clearTimeout(timeout);
+                window.clearInterval(readyCheckTimer);
+                try {
+                    patchWechatImages(element);
+                } catch {}
+            }
+        }, 100);
         const current = createProtyleController({
             host: element,
             mode: untrack(() => mode),
@@ -103,19 +118,25 @@
             onReady: () => {
                 if (active) {
                     window.clearTimeout(timeout);
+                    window.clearInterval(readyCheckTimer);
                     stage = "ready";
                     patchWechatImages(element);
                 }
             },
             onError: (error) => {
                 console.debug("[glean] Protyle lifecycle failed:", error);
-                if (active) { window.clearTimeout(timeout); stage = "failed"; }
+                if (active) {
+                    window.clearTimeout(timeout);
+                    window.clearInterval(readyCheckTimer);
+                    stage = "failed";
+                }
             },
         });
         controller = current;
         return () => {
             active = false;
             window.clearTimeout(timeout);
+            window.clearInterval(readyCheckTimer);
             current.destroy();
             if (controller === current) controller = null;
         };

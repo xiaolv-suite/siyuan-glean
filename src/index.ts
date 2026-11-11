@@ -1078,6 +1078,7 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
         }
         try {
             await openTab({ app: this.app, doc: { id: focusBlockId || docId }, keepCursor: false });
+            try { this.openWorkbenchPopupSingleton.close(); } catch { /* soft */ }
         } catch {
             if (this.loaded && request === this.readerOpenRequest) showMessage(t(this.i18n, "msg.actionFailed"), 3500);
         }
@@ -1095,6 +1096,7 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
                 },
                 keepCursor: false,
             });
+            try { this.openWorkbenchPopupSingleton.close(); } catch { /* soft */ }
             if (!this.loaded || request !== this.readerOpenRequest || this.destroyedReaderTabIds.has(tab.id)) return;
             // openTab 的公开返回值给出确切目标；隐藏页签和其他分屏不能抢走此次打开请求。
             this.pendingReaderDocIds.set(tab.id, docId);
