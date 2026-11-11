@@ -3359,7 +3359,7 @@ $effect(() => {
 });
 </script>
 
-<svelte:window ondragend={() => { if (dragId || dragOverCol) { dragId = ""; dragOverCol = null; } }} />
+<svelte:window ondragend={() => { if (dragId || dragOverCol) { dragId = ""; dragOverCol = null; } }} onkeydown={(e) => { if (e.key === "Escape" && tagAliasManagerOpen) { e.preventDefault(); closeTagAliasManager(); } }} />
 
 <div class="glean-panel-host" bind:this={hostEl}>
     {#if isExternalDragActive}
