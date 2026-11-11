@@ -2223,7 +2223,7 @@ $effect(() => {
             return;
         }
         if (!target.isConnected) return;
-        target.scrollIntoView({ block: "nearest", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+        target.scrollIntoView({ block: "nearest", behavior: (typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches) ? "auto" : "smooth" });
         target.querySelector<HTMLElement>(".glean-drow__ti, .glean-kcard__t, .glean-card__title")?.focus({ preventScroll: true });
         focusFlashTarget?.classList.remove("glean-focus-flash");
         target.classList.add("glean-focus-flash");

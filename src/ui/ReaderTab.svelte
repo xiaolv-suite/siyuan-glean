@@ -468,7 +468,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
         for (const el of blocks) {
             if (el.textContent && el.textContent.includes(snippet)) {
                 el.classList.add("glean-tts-reading-pulse");
-                el.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "nearest" });
+                el.scrollIntoView({ behavior: (typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches) ? "auto" : "smooth", block: "nearest" });
                 activeTtsEl = el;
                 break;
             }
@@ -660,7 +660,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
         const escaped = typeof CSS !== "undefined" && typeof CSS.escape === "function" ? CSS.escape(item.id) : item.id;
         const target = protyleHost?.querySelector<HTMLElement>(`[data-node-id="${escaped}"]`);
         if (target) {
-            target.scrollIntoView({ block: "center", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+            target.scrollIntoView({ block: "center", behavior: (typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches) ? "auto" : "smooth" });
             target.focus({ preventScroll: true });
             target.classList.add("glean-pulse-highlight");
             window.setTimeout(() => target.classList.remove("glean-pulse-highlight"), 1200);
@@ -812,7 +812,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
         const escaped = typeof CSS !== "undefined" && typeof CSS.escape === "function" ? CSS.escape(id) : id;
         const target = protyleHost?.querySelector<HTMLElement>(`[data-node-id="${escaped}"]`);
         if (target) {
-            target.scrollIntoView({ block: "center", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+            target.scrollIntoView({ block: "center", behavior: (typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches) ? "auto" : "smooth" });
             target.focus({ preventScroll: true });
             target.classList.add("glean-pulse-highlight");
             setTimeout(() => target?.classList.remove("glean-pulse-highlight"), 1200);
@@ -823,7 +823,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
 
     function scrollToTop(): void {
         const scroller = protyleHost?.querySelector<HTMLElement>(".protyle-content, .protyle-wysiwyg") ?? protyleHost;
-        scroller?.scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+        scroller?.scrollTo({ top: 0, behavior: (typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches) ? "auto" : "smooth" });
     }
 
     async function cardFromHighlight(item: HighlightItem): Promise<void> {
@@ -1423,7 +1423,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
             event.stopPropagation();
             const scroller = Array.from(protyleHost?.querySelectorAll<HTMLElement>(".protyle-content, .protyle-preview, .protyle-wysiwyg") ?? [])
                 .find((element) => element.clientHeight > 0 && element.scrollHeight > element.clientHeight + 1) ?? protyleHost;
-            scroller?.scrollBy({ top: (event.shiftKey ? -1 : 1) * Math.max(200, (scroller.clientHeight || 600) * 0.8), behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+            scroller?.scrollBy({ top: (event.shiftKey ? -1 : 1) * Math.max(200, (scroller.clientHeight || 600) * 0.8), behavior: (typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches) ? "auto" : "smooth" });
             return;
         }
         const action = readerShortcut({

@@ -153,7 +153,7 @@ export function scrollAndPulseReadPoint(host: HTMLElement | null, blockId: strin
     const target = host.querySelector<HTMLElement>(`[data-node-id="${escaped}"]`);
     if (!target) return false;
 
-    target.scrollIntoView({ block: "center", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    target.scrollIntoView({ block: "center", behavior: (typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches) ? "auto" : "smooth" });
     target.classList.add("glean-pulse-highlight");
     setTimeout(() => {
         target.classList.remove("glean-pulse-highlight");

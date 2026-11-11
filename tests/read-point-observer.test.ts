@@ -3,6 +3,11 @@ import assert from "node:assert/strict";
 import { createReadPointObserver, scrollAndPulseReadPoint } from "../src/libs/read-point-observer.ts";
 import { ATTR, parseClipAttrs, serializePatch } from "../src/domain/schema.ts";
 
+// Node 测试环境无 matchMedia：打桩为「未开启减弱动态」，走平滑滚动分支
+if (typeof (globalThis as any).matchMedia === "undefined") {
+    (globalThis as any).matchMedia = (query: string) => ({ matches: false, media: query });
+}
+
 test("ATTR.readPoint 契约与序列化符合小驴生态 Issue #17 规范", () => {
     assert.equal(ATTR.readPoint, "custom-lv-read-point");
 
@@ -89,6 +94,21 @@ test("scrollAndPulseReadPoint 在目标块存在时触发平滑滚动与高亮�
     assert.equal(ok, true);
     assert.deepEqual(block.scrollIntoViewOpts, { block: "center", behavior: "smooth" });
     assert.equal(block.classList.has("glean-pulse-highlight"), true);
+});
+
+test("scrollAndPulseReadPoint 在系统开启减弱动态时降级为即时滚动", () => {
+    const previous = (globalThis as any).matchMedia;
+    (globalThis as any).matchMedia = (query: string) => ({ matches: true, media: query });
+    try {
+        const host = new MockElement();
+        const block = new MockElement();
+        block.setAttribute("data-node-id", "20261027120000-abc9999");
+        host.appendChild(block);
+        scrollAndPulseReadPoint(host as unknown as HTMLElement, "20261027120000-abc9999");
+        assert.deepEqual(block.scrollIntoViewOpts, { block: "center", behavior: "auto" });
+    } finally {
+        (globalThis as any).matchMedia = previous;
+    }
 });
 
 test("createReadPointObserver 遵循 1000ms 驻留防抖契约并在非浏览器环境下安全返回", async () => {

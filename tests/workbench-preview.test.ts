@@ -9,6 +9,9 @@ import { normalizePreviewRatio, previewRatioFromPointer, nextPreviewId } from ".
 import { normalizeUiPrefs, loadUiPrefs, saveUiPrefs } from "../src/services/prefs.ts";
 import { createProtyleController, type ProtyleInstance } from "../src/libs/protyle-controller.ts";
 
+// Node 测试环境无 matchMedia（DockPanel 脚本片段在 vm 沙箱中执行）：打桩为「未开启减弱动态」
+(globalThis as any).matchMedia = (globalThis as any).matchMedia ?? ((query: string) => ({ matches: false, media: query }));
+
 function navigationHarness() {
     const dock = readFileSync(resolve(import.meta.dirname, "../src/ui/DockPanel.svelte"), "utf8");
     const script = dock.match(/<script lang="ts">([\s\S]*?)<\/script>/)![1];
