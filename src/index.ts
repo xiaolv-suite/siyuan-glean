@@ -1107,6 +1107,7 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
             if (!this.loaded || request !== this.readerOpenRequest) return;
             try {
                 await openTab({ app: this.app, doc: { id: focusBlockId || docId }, keepCursor: false });
+                try { this.openWorkbenchPopupSingleton.close(); } catch { /* soft */ }
             } catch {
                 if (this.loaded && request === this.readerOpenRequest) showMessage(t(this.i18n, "msg.actionFailed"), 3500);
             }
