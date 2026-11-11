@@ -1411,6 +1411,19 @@ async function doMountBoard() {
         font-weight: 650;
     }
 
+    /* 激活页签左缘微点指示：悬浮于内边距区，不挤压图标对齐 */
+    .glean-settings__tab--on::before {
+        content: "";
+        position: absolute;
+        left: 6px;
+        top: 50%;
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: var(--glean-color-action);
+        transform: translateY(-50%);
+    }
+
     .glean-settings__tab--on .glean-settings__tab-icon {
         opacity: 1;
         color: var(--glean-color-action);
