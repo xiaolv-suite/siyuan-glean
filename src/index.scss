@@ -2438,7 +2438,7 @@ mark.glean-search-highlight {
 }
 
 .glean-reader__outline-tag {
-    font-size: 9.5px;
+    font-size: 10.5px;
     font-weight: var(--glean-weight-bold);
     padding: 1px 5px;
     border-radius: var(--glean-radius-pill);
@@ -15437,5 +15437,17 @@ body:has(.b3-dialog--open, #lv-launchpad-sheet-mask, .lvct-dialog-mask, .sw__mob
     :is(select, .b3-select) :is(option, optgroup) {
         background-color: var(--glean-card-surface, var(--b3-theme-background));
         color: var(--glean-ink, var(--b3-theme-on-background));
+    }
+}
+
+/* ══════════ 文字专项：等宽数字对齐 / 行高节奏 / 换行保护 ══════════ */
+/* 阅读器正文预览（.glean-reader）除外：正文保持比例数字的自然排版 */
+:is(.glean-panel, .glean-tab-root, .glean-dialog-root, .glean-dialog) {
+    font-variant-numeric: tabular-nums;
+
+    .glean-set-row__desc,
+    .glean-settings__page-desc {
+        line-height: 1.65;
+        overflow-wrap: anywhere;
     }
 }
