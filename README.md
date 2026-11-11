@@ -114,7 +114,9 @@
 - **本地存储位置**：`data/storage/petal/siyuan-glean/`
   - `settings.json`：伴读排版偏好、视图配置与自定义分类；
   - `candidates.json`：剪藏收件箱候选队列；
-  - `annotations.json`：边距注记与高亮批注跨文档索引。
+  - `daily-backup-index.json`：每日复盘快照索引；
+  - `ai-usage.json` / `ai-batch.json`：AI 用量记录与批处理作业日志。
+- **批注不另存索引**：边距注记与高亮批注本身是原生思源块（元数据 `custom-clip-*`），随文档保存，不存在 `annotations.json` 这类跨文档索引文件。
 - **正文纯本地**：所有被拾遗管理文章均为思源原生文档，元数据通过标准块属性（`custom-clip-*`）存储，随工作空间自由备份。
 - **零遥测与网络安全**：无任何外部服务器回传。AI 摘要、TTS 朗读与翻译能力完全在本地运行或按需调用思源内置 AI 接口。
 

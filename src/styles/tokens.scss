@@ -31,10 +31,11 @@
     --glean-color-status-archived: #64748B; /* 归档石板灰 */
     --glean-color-wechat: #07C160;          /* 微信生态绿 */
 
-    /* 品牌底色关系：同族极浅底托底（饱和度 3.5%、明度 97%）与内容白卡浮起双层结构 */
-    --glean-app-background: color-mix(in srgb, var(--lv-brand) 3.5%, var(--b3-theme-background));
-    --glean-card-surface: var(--b3-theme-surface, #ffffff);
-    --glean-card-surface-elevated: color-mix(in srgb, var(--b3-theme-surface) 97%, var(--lv-brand-soft));
+    /* 品牌底色关系：同族极浅底托底（饱和度 3.5%、明度 97%）与内容白卡浮起双层结构。
+       固定浅色板，独立于思源宿主主题，避免换主题时界面被污染。 */
+    --glean-app-background: color-mix(in srgb, var(--lv-brand) 3.5%, #ffffff);
+    --glean-card-surface: #ffffff;
+    --glean-card-surface-elevated: color-mix(in srgb, #ffffff 97%, var(--lv-brand-soft));
 
     /* 重点对比块（视觉重音）：主题色相深色近黑卡片（明度 11%~13%，拒绝死黑），配数据语义色点缀 */
     --glean-surface-dark-contrast: color-mix(in srgb, var(--lv-brand) 12%, #0B1317);
@@ -45,7 +46,7 @@
     --glean-accent-a: var(--lv-brand);
     --glean-accent-b: var(--lv-brand-hover);
     --glean-grad: var(--glean-color-action);
-    --glean-grad-soft: color-mix(in srgb, var(--glean-color-action) 12%, var(--b3-theme-surface));
+    --glean-grad-soft: color-mix(in srgb, var(--glean-color-action) 12%, #ffffff);
 
     /* 状态与文本映射 */
     --glean-st-inbox: var(--glean-color-status-inbox);
@@ -65,8 +66,8 @@
     --glean-duration-exit: 110ms;
 
     /* 严格数学递减圆角层级：外层 20px -> 卡片 16px -> 内嵌分组 12px -> 控件 8px -> 胶囊 999px */
-    --glean-glass: color-mix(in srgb, var(--b3-theme-surface) 88%, transparent);
-    --glean-glass-border: color-mix(in srgb, var(--b3-border-color) 45%, transparent);
+    --glean-glass: color-mix(in srgb, #ffffff 88%, transparent);
+    --glean-glass-border: color-mix(in srgb, rgba(15, 23, 42, 0.1) 45%, transparent);
     --glean-radius-xl: 20px;
     --glean-radius-20: var(--glean-radius-xl);
     --glean-radius: 16px;
@@ -75,7 +76,7 @@
     --glean-radius-sm: 8px;
     --glean-radius-xs: 4px;
     --glean-radius-pill: 999px;
-    --glean-badge-bg: color-mix(in srgb, var(--b3-theme-on-surface) 8%, transparent);
+    --glean-badge-bg: color-mix(in srgb, #475569 8%, transparent);
 
     /* 双层复合软投影：统一向下，近距小模糊 + 远距大模糊叠合，拒绝内阴影 */
     --glean-shadow-card: 0 1px 3px rgba(15, 23, 42, 0.03), 0 8px 20px -4px rgba(15, 23, 42, 0.05);
@@ -99,4 +100,33 @@ body.b3-theme-dark {
     --glean-surface-dark-contrast: #0b1114;
     --glean-shadow-card: 0 2px 8px rgba(0, 0, 0, 0.32), 0 12px 28px -6px rgba(0, 0, 0, 0.45);
     --glean-shadow-float: 0 4px 12px rgba(0, 0, 0, 0.4), 0 20px 48px -8px rgba(0, 0, 0, 0.6);
+}
+
+/**
+ * 插件作用域宿主变量别名（颜色独立性）
+ * 组件内遗留的 var(--b3-*) 颜色引用，在拾遗自有根容器内解析到上方固定色板，
+ * 思源宿主切换主题不再影响插件界面；别名仅作用于插件 DOM 子树，不污染宿主全局。
+ * 例外（有意保留宿主变量）：渲染进思源编辑器文档内的划线/批注（--b3-protyle-inline-mark-*）、
+ * 字体族（--b3-font-family*）与弹窗外框阴影（--b3-dialog-shadow），它们需要与宿主文档/窗口 chrome 融合。
+ */
+.glean-tab-root,
+.glean-dialog-root,
+.glean-panel,
+.glean-mobile-modal {
+    --b3-theme-primary: var(--glean-color-action);
+    --b3-theme-on-primary: var(--glean-on-action);
+    --b3-theme-primary-light: color-mix(in srgb, var(--glean-color-action) 12%, transparent);
+    --b3-theme-background: var(--glean-app-background);
+    --b3-theme-background-light: var(--glean-app-background);
+    --b3-theme-surface: var(--glean-card-surface);
+    --b3-theme-surface-light: var(--glean-card-surface-elevated);
+    --b3-theme-surface-lighter: color-mix(in srgb, var(--glean-ink) 6%, var(--glean-card-surface));
+    --b3-theme-on-background: var(--glean-ink);
+    --b3-theme-on-surface: var(--glean-ink-2);
+    --b3-theme-on-surface-light: var(--glean-ink-3);
+    --b3-border-color: var(--glean-line);
+    --b3-theme-error: var(--glean-danger);
+    --b3-theme-on-error: var(--glean-on-danger, #ffffff);
+    --b3-theme-success: var(--glean-ok);
+    --b3-list-hover: color-mix(in srgb, var(--glean-color-action) 8%, var(--glean-card-surface));
 }

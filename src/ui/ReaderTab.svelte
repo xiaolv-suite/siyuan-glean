@@ -8,7 +8,8 @@
      * 按真实成功数反馈。编辑/标注经 Protyle 走内核事务，插件不另存正文副本。
      */
     import { showMessage, openTab } from "siyuan";
-    import { exportMdContent } from "../api/client";
+    import { isNativeDockVisible, showDocTreeNativeMenu, toggleNativeDock } from "../libs/lv-notice-kit";
+    import { exportMdContent, querySql } from "../api/client";
     import type { ProtyleController } from "../libs/protyle-controller";
     import ProtyleHost from "./ProtyleHost.svelte";
     import ReadingPositionControls from "./ReadingPositionControls.svelte";
@@ -132,14 +133,33 @@ import { aiFailureKey } from "../libs/ai-feedback";
     let zenMode = $state(false);
 
     let prevSidebarCollapsed = false;
+    let prevLeftDock = false;
+    let prevRightDock = false;
+    let prevBottomDock = false;
 
     function toggleZenMode(): void {
         zenMode = !zenMode;
         if (zenMode) {
             prevSidebarCollapsed = sidebarCollapsed;
             sidebarCollapsed = true;
+            try {
+                prevLeftDock = Boolean(isNativeDockVisible("Left"));
+                prevRightDock = Boolean(isNativeDockVisible("Right"));
+                prevBottomDock = Boolean(isNativeDockVisible("Bottom"));
+                if (prevLeftDock) toggleNativeDock("Left", false);
+                if (prevRightDock) toggleNativeDock("Right", false);
+                if (prevBottomDock) toggleNativeDock("Bottom", false);
+            } catch {}
         } else {
             sidebarCollapsed = prevSidebarCollapsed;
+            try {
+                if (prevLeftDock) toggleNativeDock("Left", true);
+                if (prevRightDock) toggleNativeDock("Right", true);
+                if (prevBottomDock) toggleNativeDock("Bottom", true);
+            } catch {}
+            prevLeftDock = false;
+            prevRightDock = false;
+            prevBottomDock = false;
         }
     }
 
@@ -147,6 +167,14 @@ import { aiFailureKey } from "../libs/ai-feedback";
         if (zenMode) {
             zenMode = false;
             sidebarCollapsed = prevSidebarCollapsed;
+            try {
+                if (prevLeftDock) toggleNativeDock("Left", true);
+                if (prevRightDock) toggleNativeDock("Right", true);
+                if (prevBottomDock) toggleNativeDock("Bottom", true);
+            } catch {}
+            prevLeftDock = false;
+            prevRightDock = false;
+            prevBottomDock = false;
         }
     }
     let sidebarBusy = $state(false);
@@ -1566,6 +1594,9 @@ import { aiFailureKey } from "../libs/ai-feedback";
         window.addEventListener("focus", onWindowFocus);
         window.addEventListener("blur", onWindowBlur);
         return () => {
+            if (prevLeftDock || prevRightDock || prevBottomDock) {
+                exitZenMode();
+            }
             document.removeEventListener("glean:focus-reader", onFocus);
             document.removeEventListener("glean:recent-reading-changed", onRecentReading);
             document.removeEventListener("glean:reader-resize", onResize);
@@ -2415,7 +2446,33 @@ import { aiFailureKey } from "../libs/ai-feedback";
                     <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArrowLeft" /></svg>
                 </button>
                 <div class="glean-reader__toolbar-heading">
-                    <span class="glean-reader__toolbar-title" title={context?.title}>{context?.title || t(i18n, "panel.untitled")}</span>
+                    <button
+                        type="button"
+                        class="glean-reader__toolbar-title glean-linkish"
+                        style="background: transparent; border: none; padding: 0; text-align: left; cursor: pointer;"
+                        title={`${context?.title || t(i18n, "panel.untitled")}（点击打开，右键呼出原生菜单）`}
+                        onclick={() => { if (docId) void openTab({ app: facade.pluginInstance.app, doc: { id: docId } }); }}
+                        oncontextmenu={async (e) => {
+                            if (docId) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                let box = context?.location?.box;
+                                if (!box) {
+                                    try {
+                                        const rows = await querySql<{ box: string }>(`SELECT box FROM blocks WHERE id = '${docId.replace(/'/g, "''")}' LIMIT 1`);
+                                        if (rows && rows[0]?.box) box = rows[0].box;
+                                    } catch {}
+                                }
+                                if (box) {
+                                    await showDocTreeNativeMenu({
+                                        notebookId: box,
+                                        docId,
+                                        position: { x: e.clientX, y: e.clientY },
+                                    });
+                                }
+                            }
+                        }}
+                    >{context?.title || t(i18n, "panel.untitled")}</button>
                     {#if context}
                         <span class="glean-reader__toolbar-meta">
                             {carrierLabel(context.contentType)}{#if context.site} · {context.site}{/if}{#if context.author} · {#if authorPerson}<button type="button" class="glean-linkish glean-reader__author-contact-btn" title="小驴人脉联系人: {authorPerson.name}" onclick={openAuthorContactDoc}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanUser" /></svg> {context.author}</button>{:else}{context.author}{/if}{/if}{#if (context.words ?? 0) > 0} · {t(i18n, "panel.words", { n: context.words ?? 0 })}{/if}{#if estReadingMinutes} · 约 {estReadingMinutes}m{/if}

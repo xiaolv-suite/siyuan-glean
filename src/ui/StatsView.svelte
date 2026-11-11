@@ -1130,6 +1130,10 @@ function onWindowKeyDown(event: KeyboardEvent): void {
     }
 
     @media (max-width: 560px) {
+        .glean-stats :is(button, summary) {
+            min-height: 44px;
+        }
+
         .glean-stats__overview .glean-stats__toolbar--filters {
             display: grid;
             grid-template-columns: minmax(0, 1fr);
@@ -1195,6 +1199,10 @@ function onWindowKeyDown(event: KeyboardEvent): void {
     }
 
     @container glean-workbench (max-width: 560px) {
+        .glean-stats :is(button, summary) {
+            min-height: 44px;
+        }
+
         .glean-stats {
             padding: 16px;
             gap: 16px;

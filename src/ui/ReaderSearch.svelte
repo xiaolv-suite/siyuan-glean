@@ -272,4 +272,31 @@
     .glean-reader-search__btn--close {
         margin-left: 2px;
     }
+
+    @media (max-width: 640px), (pointer: coarse) {
+        .glean-reader-search {
+            top: 8px;
+            right: 8px;
+            left: 8px;
+            max-width: calc(100vw - 16px);
+            box-sizing: border-box;
+            flex-wrap: wrap;
+            padding: 6px 10px;
+        }
+
+        .glean-reader-search__input {
+            height: 44px;
+            min-height: 44px;
+            font-size: 16px;
+            flex: 1 1 100px;
+            width: auto;
+        }
+
+        .glean-reader-search__btn {
+            height: 44px;
+            min-height: 44px;
+            min-width: 44px;
+            padding: 0 8px;
+        }
+    }
 </style>

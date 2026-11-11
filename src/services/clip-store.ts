@@ -20,6 +20,7 @@ import {
 } from "../api/client";
 import { inspectCandidate } from "../domain/candidate-policy";
 import { withDocLock } from "../libs/notice.ts";
+import { safeDocTitleFromHPath } from "../libs/lv-notice-kit.ts";
 import {
     ATTR,
     CLIP_HIGHLIGHT_COLORS,
@@ -218,7 +219,7 @@ export async function readClipContext(docId: string): Promise<ReadingClipContext
     if (!attrs.status) return null;
     return {
         id: docId,
-        title: meta.title || meta.hpath.split("/").filter(Boolean).at(-1) || "",
+        title: safeDocTitleFromHPath(meta, meta.title || meta.hpath || ""),
         status: attrs.status,
         contentType: attrs.contentType,
         url: attrs.url ?? "",

@@ -2,6 +2,7 @@
 /** 读库 Dock 面板 v2（T-1104/T-1201/T-1202/T-1300/T-1400c）：库 / 统计 / 高亮 三视图；tab 画布 rail+行表/看板。 */
 import { onMount, tick, untrack } from "svelte";
 import { openTab, showMessage, Menu } from "siyuan";
+import { showDocTreeNativeMenu } from "../libs/lv-notice-kit";
 import type { GleanFacade } from "../types";
 import { t } from "../libs/i18n";
 import { aiFailureKey } from "../libs/ai-feedback";
@@ -50,8 +51,28 @@ import { installEscapeHandler, installModalFocus } from "../libs/modal-focus";
 import { createRefreshQueue } from "../libs/refresh-queue";
 import { THEME_PALETTES, type ThemePaletteId } from "../domain/theme-palette";
 import { applyThemePaletteToDom } from "../libs/theme-palette-controller";
-import { kernelErrorKind } from "../api/client";
+import { kernelErrorKind, querySql } from "../api/client";
 import { applySavedView, createSavedView, deleteSavedView, displayTagAlias, governanceCueMuted, localDateStamp, setDefaultSavedView, normalizeTagAliases, SMART_VIEW_PRESETS, instantiateSmartViewPreset, type GovernanceCueKey, type GovernanceMuted, type SavedView, type TagAlias } from "../domain/ui-prefs";
+
+async function openDocContextMenu(e: MouseEvent, entry: { id?: string; box?: string }): Promise<void> {
+    if (!entry?.id) return;
+    let box = entry.box;
+    if (!box) {
+        try {
+            const rows = await querySql<{ box: string }>(`SELECT box FROM blocks WHERE id = '${entry.id.replace(/'/g, "''")}' LIMIT 1`);
+            if (rows && rows[0]?.box) box = rows[0].box;
+        } catch {}
+    }
+    if (box) {
+        e.preventDefault();
+        e.stopPropagation();
+        await showDocTreeNativeMenu({
+            notebookId: box,
+            docId: entry.id,
+            position: { x: e.clientX, y: e.clientY }
+        });
+    }
+}
 
 interface Props {
     facade: GleanFacade;
@@ -4091,7 +4112,7 @@ $effect(() => {
                                 <label class="glean-kcard__select" title={t(i18n, "library.selectArticle")}>
                                     <input type="checkbox" checked={selection.has(entry.id)} aria-label={t(i18n, "library.selectArticle")} onclick={(event) => event.stopPropagation()} onchange={(event) => toggleSelect(entry.id, event)} />
                                 </label>
-                                <button type="button" class="glean-kcard__t" aria-label={articleActionLabel(entry.title)} onclick={() => openDoc(entry.id)}>{entry.title || t(i18n, "panel.untitled")}</button>
+                                <button type="button" class="glean-kcard__t" aria-label={articleActionLabel(entry.title)} title={`${entry.title || t(i18n, "panel.untitled")}（右键呼出原生菜单）`} onclick={() => openDoc(entry.id)} oncontextmenu={(e) => void openDocContextMenu(e, entry)}>{entry.title || t(i18n, "panel.untitled")}</button>
                                 <div class="glean-kcard__m">
                                     <span class={carrierClass(entry)}>{carrierLabel(entry)}</span>
                                     {#if bodyPending(entry)}
@@ -4362,7 +4383,7 @@ $effect(() => {
                                         </label>
                                         <span class={statusDotClass(entry.status)}></span>
                                         <div class="glean-drow__body">
-                                            <button type="button" class="glean-drow__ti" aria-label={articleActionLabel(entry.title, true)} title={entry.title || t(i18n, "panel.untitled")} onclick={() => selectPreview(entry.id)}>{entry.title || t(i18n, "panel.untitled")}</button>
+                                            <button type="button" class="glean-drow__ti" aria-label={articleActionLabel(entry.title, true)} title={`${entry.title || t(i18n, "panel.untitled")}（右键呼出原生菜单）`} onclick={() => selectPreview(entry.id)} oncontextmenu={(e) => void openDocContextMenu(e, entry)}>{entry.title || t(i18n, "panel.untitled")}</button>
                                             <div class="glean-drow__meta">
                                                 {#if badge}
                                                     <span class="glean-badge glean-badge--match" title={badge}>{badge}</span>
@@ -4471,7 +4492,7 @@ $effect(() => {
                                     >
                                         <span class="glean-dot glean-dot--inbox"></span>
                                         <div class="glean-drow__body">
-                                            <button type="button" class="glean-drow__ti" aria-label={articleActionLabel(entry.title, true)} title={entry.title || t(i18n, "panel.untitled")} onclick={() => selectPreview(entry.id)}>{entry.title || t(i18n, "panel.untitled")}</button>
+                                            <button type="button" class="glean-drow__ti" aria-label={articleActionLabel(entry.title, true)} title={`${entry.title || t(i18n, "panel.untitled")}（右键呼出原生菜单）`} onclick={() => selectPreview(entry.id)} oncontextmenu={(e) => void openDocContextMenu(e, entry)}>{entry.title || t(i18n, "panel.untitled")}</button>
                                             <div class="glean-drow__meta">
                                                 <span class="glean-drow__site" title={entry.url || entry.hpath}>{entry.site || candidateEvidence(entry)}</span>
                                                 {#if candidateMissing(entry)}<span class="glean-drow__len">{candidateMissing(entry)}</span>{/if}
@@ -4594,7 +4615,7 @@ $effect(() => {
                             aria-current={keyboardCursorId === entry.id ? "true" : undefined}
                         >
                             <div class="glean-card__body">
-                                <button type="button" class="glean-card__title" aria-label={articleActionLabel(entry.title, true)} title={entry.title || t(i18n, "panel.untitled")} onclick={() => selectPreview(entry.id)}>{entry.title || t(i18n, "panel.untitled")}</button>
+                                <button type="button" class="glean-card__title" aria-label={articleActionLabel(entry.title, true)} title={`${entry.title || t(i18n, "panel.untitled")}（右键呼出原生菜单）`} onclick={() => selectPreview(entry.id)} oncontextmenu={(e) => void openDocContextMenu(e, entry)}>{entry.title || t(i18n, "panel.untitled")}</button>
                                 <div class="glean-card__meta">
                                     {#if entry.kind === "clip"}
                                         <span class={statusDotClass(entry.status)}></span>

@@ -1,6 +1,8 @@
 <script lang="ts">
     import { onMount, untrack } from "svelte";
     import { openTab, showMessage } from "siyuan";
+    import { showDocTreeNativeMenu } from "../libs/lv-notice-kit";
+    import { querySql } from "../api/client";
     import type { GleanFacade } from "../types";
     import { t } from "../libs/i18n";
     import { createLatestRequestGate } from "../libs/latest-request";
@@ -444,13 +446,29 @@
             }
         }
     }
+
+    async function openDocContextMenu(e: MouseEvent) {
+        if (!entry.id) return;
+        e.preventDefault();
+        e.stopPropagation();
+        let box = (entry as any).box;
+        if (!box) {
+            try {
+                const rows = await querySql<any>(`SELECT box FROM blocks WHERE id = '${entry.id.replace(/'/g, "''")}' LIMIT 1`);
+                if (rows && rows[0]?.box) box = rows[0].box;
+            } catch {}
+        }
+        if (box) {
+            await showDocTreeNativeMenu({ notebookId: box, docId: entry.id, position: { x: e.clientX, y: e.clientY } });
+        }
+    }
 </script>
 
 <svelte:window onkeydown={onPreviewKeyDown} />
 
 <section class="glean-preview" bind:this={rootEl} tabindex="-1" aria-labelledby={titleId} aria-describedby={metaId} aria-busy={busy}>
     <div class="glean-preview__header">
-        <h2 id={titleId} title={entry.title}>{entry.title || t(i18n, "panel.untitled")}</h2>
+        <h2 id={titleId} title={`${entry.title || t(i18n, "panel.untitled")}（右键呼出原生菜单）`} oncontextmenu={openDocContextMenu}>{entry.title || t(i18n, "panel.untitled")}</h2>
         <div class="glean-preview__header-actions" role="group" aria-label={t(i18n, "preview.title")}>
             {#if onToggleWiden}
                 <button
@@ -525,8 +543,9 @@
                 <button
                     type="button"
                     class="glean-preview__source-link glean-preview__source-link--reader"
-                    title={t(i18n, "reading.openInReader")}
+                    title={`${t(i18n, "reading.openInReader")}（右键呼出原生菜单）`}
                     onclick={() => (facade.openReader ?? facade.openReadingDocument).call(facade, entry.id)}
+                    oncontextmenu={openDocContextMenu}
                 >
                     <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg> <span>{t(i18n, "reading.openInReader")}</span>
                 </button>
