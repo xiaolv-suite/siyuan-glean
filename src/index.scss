@@ -12343,11 +12343,15 @@ body.b3-theme-dark .glean-panel--mobile,
 @media (max-width: 560px) {
     .glean-preview__header-actions {
         width: 100%;
+        /* 自然宽度 + 左对齐：拉伸填充会让居中文字在大按钮里漂浮，观感散乱 */
+        justify-content: flex-start;
+        gap: var(--glean-space-1-5, 6px);
     }
 
     .glean-preview__header-actions .glean-btn {
-        flex: 1 1 120px;
+        flex: 0 1 auto;
         min-height: 44px;
+        padding-inline: 12px;
     }
 
     .glean-preview__actions[aria-busy="true"]::after {
@@ -15278,6 +15282,9 @@ body:has(.b3-dialog--open, #lv-launchpad-sheet-mask, .lvct-dialog-mask, .sw__mob
     .glean-preview__status-group {
         flex-wrap: wrap;
         gap: 6px;
+        /* 换行成多行后胶囊圆角（999px）会画出椭圆外壳：退回常规圆角与等量内边距 */
+        border-radius: var(--glean-radius-lg, 14px) !important;
+        padding: 6px !important;
     }
     .glean-preview__toolbar .glean-btn--sm {
         height: auto !important;
