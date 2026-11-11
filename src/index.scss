@@ -6333,7 +6333,8 @@ mark.glean-search-highlight {
         padding-inline: var(--glean-space-3);
         border: 1px solid var(--glean-border-soft);
         border-radius: var(--glean-radius-pill);
-        background: var(--glean-card-surface);
+        /* background-color 长写：保留 core 下拉箭头（简写会抹掉 background-image） */
+        background-color: var(--glean-card-surface);
 
         &:focus-visible {
             border-color: color-mix(in srgb, var(--glean-color-action) 45%, transparent);
@@ -9213,7 +9214,8 @@ mark.glean-search-highlight {
 .glean-settings .b3-select {
     min-height: 34px;
     border-color: var(--glean-border-soft);
-    background: var(--glean-inset-surface);
+    /* background-color 长写：保留 core 下拉箭头 */
+    background-color: var(--glean-inset-surface);
     transition: border-color var(--glean-duration-fast) var(--glean-ease-out), box-shadow var(--glean-duration-fast) var(--glean-ease-out);
 }
 
@@ -11450,7 +11452,7 @@ body.b3-theme-dark .glean-panel--mobile,
 
 .glean-dialog-root :where(input, select, textarea, .b3-select, .b3-text-field):disabled {
     border-color: var(--glean-border-soft);
-    background: color-mix(in srgb, var(--glean-card-surface) 70%, var(--glean-inset-surface));
+    background-color: color-mix(in srgb, var(--glean-card-surface) 70%, var(--glean-inset-surface));
     cursor: not-allowed;
 }
 
@@ -11488,7 +11490,8 @@ body.b3-theme-dark .glean-panel--mobile,
 
 .glean-saved-views :where(.b3-select, .b3-text-field) {
     border-color: var(--glean-border-soft);
-    background: var(--glean-card-surface);
+    /* background-color 长写：保留 core 下拉箭头 */
+    background-color: var(--glean-card-surface);
     padding: var(--glean-space-1) var(--glean-space-2-5);
     transition: border-color var(--glean-duration-fast) ease, box-shadow var(--glean-duration-fast) ease;
 
@@ -15422,5 +15425,17 @@ body:has(.b3-dialog--open, #lv-launchpad-sheet-mask, .lvct-dialog-mask, .sw__mob
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+    }
+}
+
+/* ══════════ 下拉菜单专项：选项可读性 / 光标 ══════════ */
+:is(.glean-panel, .glean-tab-root, .glean-dialog-root, .glean-reader, .glean-dialog) {
+    :is(select, .b3-select) {
+        cursor: pointer;
+    }
+
+    :is(select, .b3-select) :is(option, optgroup) {
+        background-color: var(--glean-card-surface, var(--b3-theme-background));
+        color: var(--glean-ink, var(--b3-theme-on-background));
     }
 }
