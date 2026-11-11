@@ -15359,3 +15359,45 @@ body:has(.b3-dialog--open, #lv-launchpad-sheet-mask, .lvct-dialog-mask, .sw__mob
         white-space: nowrap;
     }
 }
+
+/* ══════════ 输入框专项精修：光标 / 占位符 / 自旋钮 / 搜索清除钮 / 禁用态 ══════════ */
+:is(.glean-panel, .glean-tab-root, .glean-dialog-root, .glean-reader, .glean-dialog) {
+    :is(input[type="text"], input[type="search"], input[type="number"], input[type="time"], input[type="date"], input:not([type]), textarea, .b3-text-field) {
+        caret-color: var(--glean-color-action, var(--b3-theme-primary));
+        min-width: 0;
+    }
+
+    :is(input, textarea, .b3-text-field)::placeholder {
+        color: var(--glean-ink-2, var(--b3-theme-on-surface-light));
+        opacity: 1;
+    }
+
+    :is(input, textarea, select, .b3-text-field, .b3-select):disabled,
+    :is(input, textarea):read-only {
+        opacity: 0.55;
+        cursor: not-allowed;
+    }
+
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    input[type="number"] {
+        appearance: textfield;
+        -moz-appearance: textfield;
+    }
+
+    ::selection {
+        background: color-mix(in srgb, var(--glean-color-action, var(--b3-theme-primary)) 26%, transparent);
+    }
+}
+
+/* ══════════ 移动端键盘弹起：粘底操作栏避让（glean-settings 保存栏在文档流，无需处理）══════════ */
+:is(body.body--mobile, [data-is-mobile="true"]) .b3-dialog__container:has(.glean-settings .glean-settings__footer) {
+    /* 键盘弹起时保存栏不再抢占底部安全区，输入焦点保持可见 */
+    .glean-settings__footer {
+        padding-bottom: var(--glean-space-2, 8px) !important;
+    }
+}
