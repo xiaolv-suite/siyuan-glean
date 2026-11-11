@@ -15470,3 +15470,19 @@ body:has(.b3-dialog--open, #lv-launchpad-sheet-mask, .lvct-dialog-mask, .sw__mob
         }
     }
 }
+
+/* R14 桌面 hover 收口（触屏不生效） */
+@media (hover: hover) {
+    .glean-card__title:hover,
+    .glean-drow__ti:hover {
+        color: var(--glean-color-action, var(--b3-theme-primary));
+    }
+    .glean-stale-preview__row:hover,
+    .glean-surf-undo__dismiss:hover,
+    .glean-settings__ai-toggle:hover {
+        background: color-mix(in srgb, var(--glean-color-action, var(--b3-theme-primary)) 7%, transparent);
+    }
+    .glean-filter-clear:hover {
+        background: var(--b3-theme-surface-lighter);
+    }
+}
