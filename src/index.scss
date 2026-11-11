@@ -15324,3 +15324,38 @@ body:has(.b3-dialog--open, #lv-launchpad-sheet-mask, .lvct-dialog-mask, .sw__mob
         font-size: 16px !important;
     }
 }
+
+/* ══════════ 暗黑主题下小驴拾遗设置页与双端操作栏强化 ══════════ */
+:is([data-theme-mode="dark"], [data-appearance="dark"], body.body--dark, body.theme--dark, html.dark, body.dark) .glean-settings {
+    .glean-settings__tab--on {
+        background: color-mix(in srgb, var(--glean-pri, #0d9488) 22%, var(--glean-surface, #1e222d)) !important;
+        color: var(--glean-pri, #2dd4bf) !important;
+        font-weight: 600 !important;
+    }
+
+    .glean-set-group,
+    .glean-settings__extension-card {
+        background: color-mix(in srgb, var(--glean-surface, #1e222d) 94%, #000 6%) !important;
+        border-color: color-mix(in srgb, var(--glean-border, #333a4d) 82%, rgba(255, 255, 255, 0.08) 18%) !important;
+    }
+
+    .glean-palette-card {
+        border-color: rgba(255, 255, 255, 0.12) !important;
+
+        &--active {
+            border-color: var(--glean-pri, #2dd4bf) !important;
+            box-shadow: 0 0 0 2px color-mix(in srgb, var(--glean-pri, #2dd4bf) 30%, transparent) !important;
+        }
+    }
+}
+
+.glean-settings__footer {
+    padding-bottom: calc(var(--glean-space-3, 12px) + env(safe-area-inset-bottom, 0px)) !important;
+
+    .glean-settings__status {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
