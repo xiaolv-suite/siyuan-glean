@@ -15401,3 +15401,26 @@ body:has(.b3-dialog--open, #lv-launchpad-sheet-mask, .lvct-dialog-mask, .sw__mob
         padding-bottom: var(--glean-space-2, 8px) !important;
     }
 }
+
+/* ══════════ 按钮专项：忙碌态拦截 / 文字显示（按压反馈 glean-btn 已有） ══════════ */
+:is(.glean-panel, .glean-tab-root, .glean-dialog-root, .glean-reader, .glean-dialog) {
+    /* 忙碌态（aria-busy）：拦截连点 + 视觉降透明 */
+    button[aria-busy="true"],
+    .glean-btn[aria-busy="true"] {
+        pointer-events: none;
+        opacity: 0.72;
+    }
+
+    button {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    /* 紧凑行内的操作按钮：长文案单行截断 */
+    .glean-set-row :is(.glean-action-btn, .glean-btn--sm),
+    .glean-highlights__toolbar :is(.glean-btn, .glean-action-btn) {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
