@@ -3030,7 +3030,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
                 <div class="glean-wechat-publisher" role="region" aria-label={t(i18n, "wechat.badge")}>
                     <div class="glean-wechat-publisher__head">
                         {#if wechatAvatar}
-                            <img class="glean-wechat-publisher__avatar" src={wechatAvatar} alt={context?.author || t(i18n, "wechat.officialAccount")} referrerpolicy="no-referrer" />
+                            <img loading="lazy" decoding="async" class="glean-wechat-publisher__avatar" src={wechatAvatar} alt={context?.author || t(i18n, "wechat.officialAccount")} referrerpolicy="no-referrer" />
                         {/if}
                         <div class="glean-wechat-publisher__info">
                             <div class="glean-wechat-publisher__badge">

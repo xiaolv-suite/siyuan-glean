@@ -57,7 +57,7 @@ export function installMobileViewportVars(target: HTMLElement | null, enabled: b
     update();
     window.addEventListener("resize", update);
     visualViewport?.addEventListener("resize", update);
-    visualViewport?.addEventListener("scroll", update);
+    visualViewport?.addEventListener("scroll", update, { passive: true });
     target.addEventListener?.("focusin", update);
     target.addEventListener?.("focusout", handleFocusOut);
 

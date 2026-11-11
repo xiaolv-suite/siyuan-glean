@@ -263,7 +263,7 @@
 
         window.addEventListener("resize", recomputeKeyboardState);
         window.visualViewport?.addEventListener("resize", recomputeKeyboardState);
-        window.visualViewport?.addEventListener("scroll", recomputeKeyboardState);
+        window.visualViewport?.addEventListener("scroll", recomputeKeyboardState, { passive: true });
         document.addEventListener("focusin", handleFocusIn);
         document.addEventListener("pointerdown", handleInteraction, { passive: true });
 

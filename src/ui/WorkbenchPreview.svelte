@@ -548,7 +548,7 @@
             {#if normalizeUrl(sourceUrl)}
                 <a href={sourceUrl} target="_blank" rel="noopener noreferrer" class="glean-preview__source-link" title={sourceUrl}>
                     {#if wechatAvatar}
-                        <img class="glean-preview__avatar" src={wechatAvatar} alt="" referrerpolicy="no-referrer" />
+                        <img loading="lazy" decoding="async" class="glean-preview__avatar" src={wechatAvatar} alt="" referrerpolicy="no-referrer" />
                     {:else}
                         <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanExternal" /></svg>
                     {/if}

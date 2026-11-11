@@ -74,7 +74,7 @@
         const onBlur = () => close();
         const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(() => position()) : null;
         ro?.observe(element);
-        document.addEventListener("scroll", onScroll, true);
+        document.addEventListener("scroll", onScroll, { capture: true, passive: true });
         window.addEventListener("resize", position);
         window.addEventListener("blur", onBlur);
         return () => {
