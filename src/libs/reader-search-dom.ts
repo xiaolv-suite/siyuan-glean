@@ -412,7 +412,7 @@ export class ReaderDOMSearchController {
         try {
             const element = match.range.startContainer.parentElement;
             if (element && typeof element.scrollIntoView === "function") {
-                element.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+                element.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center", inline: "nearest" });
             }
         } catch {
             // 静默容错
