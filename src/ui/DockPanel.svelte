@@ -3194,6 +3194,10 @@ function carrierLabel(entry: ClipIndexEntry): string {
 }
 
 function openAsset(path: string) {
+    if (facade.isMobile && typeof window !== "undefined") {
+        window.open(path.startsWith("/") ? path : `/${path}`, "_blank");
+        return;
+    }
     void openTab({ app: facade.pluginInstance.app, asset: { path } });
 }
 

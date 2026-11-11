@@ -272,7 +272,11 @@ async function copyPickCitation(pick: SurfaceDisplayPick, format: CitationFormat
 async function openOrTakePickSnapshot(pick: SurfaceDisplayPick): Promise<void> {
     const snapPath = index.clips[pick.item.id]?.snapshot;
     if (snapPath) {
-        void openTab({ app: facade.pluginInstance.app, asset: { path: snapPath } });
+        if (facade.isMobile && typeof window !== "undefined") {
+            window.open(snapPath.startsWith("/") ? snapPath : `/${snapPath}`, "_blank");
+        } else {
+            void openTab({ app: facade.pluginInstance.app, asset: { path: snapPath } });
+        }
         return;
     }
     if (actingId || undoingId) return;

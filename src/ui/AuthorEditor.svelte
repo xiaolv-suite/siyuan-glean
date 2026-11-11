@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount, untrack, tick } from "svelte";
-    import { openTab, showMessage } from "siyuan";
+    import { showMessage } from "siyuan";
     import type { GleanFacade } from "../types";
     import { t } from "../libs/i18n";
     import { aiFailureKey } from "../libs/ai-feedback";
@@ -221,7 +221,8 @@
 
     function openContact(): void {
         if (!contactPerson?.docId) return;
-        void openTab({ app: facade.pluginInstance.app, doc: { id: contactPerson.docId }, keepCursor: false });
+        facade.openReadingDocument(contactPerson.docId);
+        close();
     }
 
     async function enrollContact(): Promise<void> {

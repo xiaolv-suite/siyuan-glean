@@ -93,6 +93,9 @@
 
     // 退出或卸载时自动保存最新进度断点
     onDestroy(() => {
+        if (syncNoticeTimer !== null) clearTimeout(syncNoticeTimer);
+        if (longPressTimer !== null) clearTimeout(longPressTimer);
+        if (saveTimer !== null) clearTimeout(saveTimer);
         if (!docId || !protyleElement || typeof window === "undefined") return;
         try {
             const currentPos = captureReadingPosition(protyleElement, new Date(), docId);
@@ -103,8 +106,6 @@
                 void writeClip(facade.pluginInstance, docId, { readingPosition: currentPos }).catch(() => undefined);
             }
         } catch {}
-        if (syncNoticeTimer !== null) clearTimeout(syncNoticeTimer);
-        if (longPressTimer !== null) clearTimeout(longPressTimer);
     });
 
     // 字号与行距排版偏好

@@ -378,7 +378,12 @@
     async function openOrTakeSnapshot(): Promise<void> {
         const snapPath = attrs?.snapshot || (entry.kind === "clip" ? entry.snapshot : "");
         if (snapPath) {
-            void openTab({ app: facade.pluginInstance.app, asset: { path: snapPath } });
+            if (facade.isMobile && typeof window !== "undefined") {
+                onClose();
+                window.open(snapPath.startsWith("/") ? snapPath : `/${snapPath}`, "_blank");
+            } else {
+                void openTab({ app: facade.pluginInstance.app, asset: { path: snapPath } });
+            }
             return;
         }
         if (busy || entry.kind !== "clip") return;

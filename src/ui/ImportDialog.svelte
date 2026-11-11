@@ -1,7 +1,7 @@
 <script lang="ts">
 /** 迁移导入弹窗（T-1501）：Pocket HTML/CSV、Omnivore JSON、wallabag JSON → 思源读库。 */
 import { onMount } from "svelte";
-import { openMobileFileById, openTab, showMessage } from "siyuan";
+import { showMessage } from "siyuan";
 import { listNotebooks, type NotebookMeta } from "../api/client";
 import {
     previewImport,
@@ -324,11 +324,8 @@ function resetToPick() {
 }
 
 function openProgressDocument(id: string): void {
-    if (phase === "done") {
-        onClose();
-    }
-    if (facade.isMobile) openMobileFileById(facade.pluginInstance.app, id);
-    else void openTab({ app: facade.pluginInstance.app, doc: { id } });
+    onClose();
+    facade.openReadingDocument(id);
 }
 
 function handleWindowKeydown(event: KeyboardEvent): void {

@@ -103,15 +103,6 @@
     });
 </script>
 
-<svelte:window onkeydown={(e) => {
-    if (e.repeat) return;
-    if (e.key === "Escape" && !busy) {
-        e.preventDefault();
-        e.stopPropagation();
-        onClose?.();
-    }
-}} />
-
 <div class="glean-flashcard" bind:this={rootEl} aria-labelledby="glean-flashcard-title" aria-describedby="glean-flashcard-desc" aria-busy={busy}>
     <header class="glean-flashcard__head">
         <div>
@@ -123,7 +114,7 @@
     <div class="glean-flashcard__source glean-flashcard__surface">
         <span>{t(i18n, "flashcard.source")}: {source.title || source.docId || t(i18n, "flashcard.sourceUnknown")}</span>
         {#if source.docId}
-            <button class="glean-btn glean-btn--ghost" onclick={() => facade.openReadingDocument(source.docId!)}>{t(i18n, "flashcard.source")}</button>
+            <button class="glean-btn glean-btn--ghost" onclick={() => { onClose?.(); facade.openReadingDocument(source.docId!); }}>{t(i18n, "flashcard.source")}</button>
         {/if}
     </div>
     <details class="glean-flashcard__quote glean-flashcard__surface">
@@ -157,7 +148,7 @@
             <button class="glean-btn glean-btn--pri" disabled={busy || (saveState === "ready" && !!validation)} onclick={() => void confirm()}>{t(i18n, saveState === "inserted" ? "flashcard.retryRegister" : "flashcard.confirm")}</button>
         {/if}
         {#if cardId || hostId}
-            <button class="glean-btn glean-btn--ghost" onclick={() => facade.openReadingDocument(cardId || hostId)}>{t(i18n, "flashcard.openCard")}</button>
+            <button class="glean-btn glean-btn--ghost" onclick={() => { onClose?.(); facade.openReadingDocument(cardId || hostId); }}>{t(i18n, "flashcard.openCard")}</button>
         {/if}
         <button class="glean-btn glean-btn--ghost" onclick={() => onClose?.()}>{t(i18n, saveState === "ready" && !confirming ? "action.cancel" : "action.close")}</button>
     </div>

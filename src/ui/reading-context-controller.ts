@@ -54,9 +54,12 @@ export function installReadingContext(facade: GleanFacade): () => void {
         mounted.set(element, { docId, target, instance });
     }
 
-    const onLoaded = (event: CustomEvent<{ protyle: IProtyle }>) => attach(event.detail.protyle);
+    const onLoaded = (event: CustomEvent<{ protyle: IProtyle }>) => {
+        if (event?.detail?.protyle) attach(event.detail.protyle);
+    };
     const onSwitched = (event: CustomEvent<{ protyle: IProtyle }>) => {
-        const protyle = event.detail.protyle;
+        const protyle = event?.detail?.protyle;
+        if (!protyle) return;
         const element = protyle?.element;
         const previous = element instanceof HTMLElement ? mounted.get(element) : undefined;
         attach(protyle);

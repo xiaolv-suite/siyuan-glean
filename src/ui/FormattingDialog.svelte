@@ -215,7 +215,7 @@
             <button class="glean-btn glean-btn--pri" disabled={busy || !preview.trim()} onclick={() => void save()}>{t(i18n, saveState === "created" ? "formatting.retryMark" : "formatting.save")}</button>
         {/if}
         {#if draftId}
-            <button class="glean-btn glean-btn--ghost" disabled={busy} onclick={() => facade.openReadingDocument(draftId)}>{t(i18n, "formatting.openDraft")}</button>
+            <button class="glean-btn glean-btn--ghost" disabled={busy} onclick={() => { onClose?.(); facade.openReadingDocument(draftId); }}>{t(i18n, "formatting.openDraft")}</button>
         {/if}
         <button class="glean-btn glean-btn--ghost" disabled={busy} onclick={() => onClose?.()}>{t(i18n, "action.close")}</button>
     </div>

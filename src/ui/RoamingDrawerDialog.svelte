@@ -371,7 +371,12 @@
     async function openOrTakeCurrentSnapshot(): Promise<void> {
         if (currentPick.item.snapshot) {
             onClose?.();
-            void openTab({ app: facade.pluginInstance.app, asset: { path: currentPick.item.snapshot } });
+            if (facade.isMobile && typeof window !== "undefined") {
+                const snap = currentPick.item.snapshot;
+                window.open(snap.startsWith("/") ? snap : `/${snap}`, "_blank");
+            } else {
+                void openTab({ app: facade.pluginInstance.app, asset: { path: currentPick.item.snapshot } });
+            }
             return;
         }
         if (loading) return;

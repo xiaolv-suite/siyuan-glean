@@ -2,7 +2,7 @@
  * 小驴拾遗插件入口（薄壳）：生命周期、UI 挂载、收录入口三件套。
  * 业务编排在 services/，内核交互在 api/，纯函数在 domain/，组件只依赖 types.ts 门面。
  */
-import { Plugin, getFrontend, openTab, openMobileFileById, showMessage, getAllEditor, type subMenu } from "siyuan";
+import { Plugin, getFrontend, openTab, openMobileFileById, showMessage, getAllEditor, type subMenu, type TProtyleAction } from "siyuan";
 import { mount, unmount } from "svelte";
 import "./index.scss";
 
@@ -1057,7 +1057,7 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
         if (this.isMobile) {
             // SDK 返回 void，只能捕获调用异常，不能把调用返回视作正文已打开。
             try {
-                openMobileFileById(this.app, focusBlockId || docId);
+                openMobileFileById(this.app, focusBlockId || docId, focusBlockId ? (["cb-get-focus", "cb-get-hl"] as TProtyleAction[]) : undefined);
             } catch {
                 if (this.loaded && request === this.readerOpenRequest) showMessage(t(this.i18n, "msg.actionFailed"), 3500);
                 return;
@@ -1138,6 +1138,10 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
 
     async openLibraryArticle(docId: string): Promise<void> {
         if (!docId) return;
+        if (this.isMobile) {
+            this.openPanel();
+            return;
+        }
         const request = ++this.libraryOpenRequest;
         const tabId = await this.openLibraryTab(request);
         if (!tabId || !this.loaded || request !== this.libraryOpenRequest || this.destroyedLibraryTabIds.has(tabId)) return;

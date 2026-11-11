@@ -2401,6 +2401,14 @@ mark.glean-search-highlight {
     }
 }
 
+@media (hover: none), (pointer: coarse) {
+    .glean-reader__outline-copy-ref {
+        opacity: 0.7;
+        min-width: 32px;
+        min-height: 32px;
+    }
+}
+
 .glean-reader__outline-item {
     display: flex;
     align-items: center;
@@ -14369,7 +14377,7 @@ body.b3-theme-dark .glean-panel--mobile,
         box-shadow: 0 2px 6px -1px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(15, 23, 42, 0.02);
 
         &:not(.glean-card--selected) .glean-card__check {
-            display: none !important;
+            opacity: 0.65;
         }
 
         .glean-card__title {
