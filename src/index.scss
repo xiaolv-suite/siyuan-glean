@@ -15451,3 +15451,12 @@ body:has(.b3-dialog--open, #lv-launchpad-sheet-mask, .lvct-dialog-mask, .sw__mob
         overflow-wrap: anywhere;
     }
 }
+
+/* ══════════ 手机端专项：粘滞 hover 抑制（页签底色透明系，激活态保留） ══════════ */
+@media (hover: none) and (pointer: coarse) {
+    :is(.glean-panel, .glean-tab-root, .glean-dialog-root) {
+        :is(.glean-settings__tab, .glean-tab):hover:not(.glean-settings__tab--on):not(.is-active):not([aria-selected="true"]) {
+            background: transparent;
+        }
+    }
+}
