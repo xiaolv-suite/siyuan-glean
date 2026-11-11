@@ -95,7 +95,7 @@
     padding: 2px 10px;
     border-radius: var(--glean-radius-pill);
     cursor: pointer;
-    transition: all var(--glean-duration-fast) ease;
+    transition: transform var(--glean-duration-fast) ease, background var(--glean-duration-fast) ease, border-color var(--glean-duration-fast) ease, box-shadow var(--glean-duration-fast) ease, color var(--glean-duration-fast) ease, opacity var(--glean-duration-fast) ease;
 
     &:hover {
         opacity: 1;

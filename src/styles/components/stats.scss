@@ -43,7 +43,7 @@
     border-radius: var(--glean-radius-pill);
     background: var(--b3-theme-background);
     color: var(--b3-theme-on-background);
-    transition: all var(--glean-duration-fast) ease;
+    transition: transform var(--glean-duration-fast) ease, background var(--glean-duration-fast) ease, border-color var(--glean-duration-fast) ease, box-shadow var(--glean-duration-fast) ease, color var(--glean-duration-fast) ease, opacity var(--glean-duration-fast) ease;
 
     &:focus-visible {
         outline: 2px solid var(--glean-color-action);

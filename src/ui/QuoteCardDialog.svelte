@@ -722,7 +722,7 @@
         color: var(--b3-theme-on-surface);
         font-size: var(--glean-text-xs);
         cursor: pointer;
-        transition: all var(--glean-duration-fast) ease;
+        transition: transform var(--glean-duration-fast) ease, background var(--glean-duration-fast) ease, border-color var(--glean-duration-fast) ease, box-shadow var(--glean-duration-fast) ease, color var(--glean-duration-fast) ease, opacity var(--glean-duration-fast) ease;
     }
 
     .glean-quote-card-font-btn:hover {
@@ -763,7 +763,7 @@
         color: var(--b3-theme-on-surface);
         font-size: var(--glean-text-xs-plus);
         cursor: pointer;
-        transition: all var(--glean-duration-fast) ease;
+        transition: transform var(--glean-duration-fast) ease, background var(--glean-duration-fast) ease, border-color var(--glean-duration-fast) ease, box-shadow var(--glean-duration-fast) ease, color var(--glean-duration-fast) ease, opacity var(--glean-duration-fast) ease;
     }
 
     .glean-quote-card-theme-btn:hover {
@@ -840,7 +840,7 @@
         flex-direction: column;
         gap: var(--glean-space-3);
         box-sizing: border-box;
-        transition: all var(--glean-duration-base) var(--glean-ease-out);
+        transition: transform var(--glean-duration-base) var(--glean-ease-out), background var(--glean-duration-base) var(--glean-ease-out), border-color var(--glean-duration-base) var(--glean-ease-out), box-shadow var(--glean-duration-base) var(--glean-ease-out), color var(--glean-duration-base) var(--glean-ease-out), opacity var(--glean-duration-base) var(--glean-ease-out);
     }
 
     .glean-quote-card-header {
@@ -938,7 +938,7 @@
         align-items: center;
         gap: var(--glean-space-1-5, 6px);
         justify-content: center;
-        transition: all var(--glean-duration-fast) var(--glean-ease-out);
+        transition: transform var(--glean-duration-fast) var(--glean-ease-out), background var(--glean-duration-fast) var(--glean-ease-out), border-color var(--glean-duration-fast) var(--glean-ease-out), box-shadow var(--glean-duration-fast) var(--glean-ease-out), color var(--glean-duration-fast) var(--glean-ease-out), opacity var(--glean-duration-fast) var(--glean-ease-out);
     }
 
     .glean-quote-card-btn:focus-visible {

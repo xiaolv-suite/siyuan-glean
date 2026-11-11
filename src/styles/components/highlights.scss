@@ -455,7 +455,7 @@
     border: 1px solid transparent;
     background: transparent;
     color: var(--glean-color-action);
-    transition: all var(--glean-duration-fast) var(--glean-ease-out);
+    transition: transform var(--glean-duration-fast) var(--glean-ease-out), background var(--glean-duration-fast) var(--glean-ease-out), border-color var(--glean-duration-fast) var(--glean-ease-out), box-shadow var(--glean-duration-fast) var(--glean-ease-out), color var(--glean-duration-fast) var(--glean-ease-out), opacity var(--glean-duration-fast) var(--glean-ease-out);
 }
 
 .glean-highlights__tools--card button:hover {

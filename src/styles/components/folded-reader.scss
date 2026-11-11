@@ -49,7 +49,7 @@
     color: var(--b3-theme-on-surface);
     cursor: pointer;
     font-variant-numeric: tabular-nums;
-    transition: all var(--glean-duration-fast) var(--glean-ease-out);
+    transition: transform var(--glean-duration-fast) var(--glean-ease-out), background var(--glean-duration-fast) var(--glean-ease-out), border-color var(--glean-duration-fast) var(--glean-ease-out), box-shadow var(--glean-duration-fast) var(--glean-ease-out), color var(--glean-duration-fast) var(--glean-ease-out), opacity var(--glean-duration-fast) var(--glean-ease-out);
 
     &:hover {
         background: color-mix(in srgb, var(--b3-theme-on-surface) 6%, transparent);
@@ -214,7 +214,7 @@
     display: inline-flex;
     align-items: center;
     gap: var(--glean-space-0-5);
-    transition: all var(--glean-duration-fast) ease;
+    transition: transform var(--glean-duration-fast) ease, background var(--glean-duration-fast) ease, border-color var(--glean-duration-fast) ease, box-shadow var(--glean-duration-fast) ease, color var(--glean-duration-fast) ease, opacity var(--glean-duration-fast) ease;
 
     &:hover {
         opacity: 1;

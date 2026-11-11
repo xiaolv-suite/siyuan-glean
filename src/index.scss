@@ -778,7 +778,7 @@ body.b3-theme-dark,
         background: var(--b3-theme-surface);
         color: var(--glean-ink-2);
         white-space: nowrap;
-        transition: all var(--glean-duration-fast) ease;
+        transition: transform var(--glean-duration-fast) ease, background var(--glean-duration-fast) ease, border-color var(--glean-duration-fast) ease, box-shadow var(--glean-duration-fast) ease, color var(--glean-duration-fast) ease, opacity var(--glean-duration-fast) ease;
 
         &:hover {
             background: color-mix(in srgb, var(--lv-brand) 8%, var(--glean-card-surface));
@@ -1093,7 +1093,7 @@ body.b3-theme-dark,
     padding: var(--glean-space-1-25) var(--glean-space-3);
     border-radius: var(--glean-radius-pill);
     cursor: pointer;
-    transition: all var(--glean-duration-normal) var(--glean-ease-out);
+    transition: transform var(--glean-duration-normal) var(--glean-ease-out), background var(--glean-duration-normal) var(--glean-ease-out), border-color var(--glean-duration-normal) var(--glean-ease-out), box-shadow var(--glean-duration-normal) var(--glean-ease-out), color var(--glean-duration-normal) var(--glean-ease-out), opacity var(--glean-duration-normal) var(--glean-ease-out);
 
     &.glean-views__btn--on {
         background: color-mix(in srgb, var(--glean-color-action) 12%, var(--glean-card-surface));
@@ -1319,7 +1319,7 @@ body.b3-theme-dark,
     color: var(--glean-ink-2);
     font-size: var(--glean-text-sm);
     cursor: pointer;
-    transition: all var(--glean-duration-normal) var(--glean-ease-out);
+    transition: transform var(--glean-duration-normal) var(--glean-ease-out), background var(--glean-duration-normal) var(--glean-ease-out), border-color var(--glean-duration-normal) var(--glean-ease-out), box-shadow var(--glean-duration-normal) var(--glean-ease-out), color var(--glean-duration-normal) var(--glean-ease-out), opacity var(--glean-duration-normal) var(--glean-ease-out);
 
     &.glean-q--on {
         color: var(--glean-color-action);
@@ -2341,7 +2341,7 @@ mark.glean-search-highlight {
     color: var(--glean-ink);
     font-size: var(--glean-text-meta);
     cursor: pointer;
-    transition: all 0.15s var(--glean-ease-out);
+    transition: transform 0.15s var(--glean-ease-out), background 0.15s var(--glean-ease-out), border-color 0.15s var(--glean-ease-out), box-shadow 0.15s var(--glean-ease-out), color 0.15s var(--glean-ease-out), opacity 0.15s var(--glean-ease-out);
 
     &:hover:not(:disabled) {
         background: color-mix(in srgb, var(--glean-color-action) 14%, transparent);
@@ -2386,7 +2386,7 @@ mark.glean-search-highlight {
     cursor: pointer;
     border-radius: var(--glean-radius-sm);
     color: var(--glean-ink-2);
-    transition: all var(--glean-duration-fast) ease;
+    transition: transform var(--glean-duration-fast) ease, background var(--glean-duration-fast) ease, border-color var(--glean-duration-fast) ease, box-shadow var(--glean-duration-fast) ease, color var(--glean-duration-fast) ease, opacity var(--glean-duration-fast) ease;
     flex-shrink: 0;
 
     &:hover {
@@ -3023,7 +3023,7 @@ mark.glean-search-highlight {
     border: 1px solid color-mix(in srgb, var(--glean-line) 45%, transparent);
     background: var(--glean-card-surface);
     color: var(--glean-ink-2);
-    transition: all var(--glean-duration-fast) ease;
+    transition: transform var(--glean-duration-fast) ease, background var(--glean-duration-fast) ease, border-color var(--glean-duration-fast) ease, box-shadow var(--glean-duration-fast) ease, color var(--glean-duration-fast) ease, opacity var(--glean-duration-fast) ease;
 }
 
 .glean-surf-step--done .glean-surf-step__circle {
@@ -3470,7 +3470,7 @@ mark.glean-search-highlight {
         margin: 0 auto;
         border-radius: 50% !important;
         box-shadow: 0 4px 12px -3px color-mix(in srgb, var(--lv-brand) 38%, transparent);
-        transition: all var(--glean-duration-fast) var(--glean-ease-spring);
+        transition: transform var(--glean-duration-fast) var(--glean-ease-spring), background var(--glean-duration-fast) var(--glean-ease-spring), border-color var(--glean-duration-fast) var(--glean-ease-spring), box-shadow var(--glean-duration-fast) var(--glean-ease-spring), color var(--glean-duration-fast) var(--glean-ease-spring), opacity var(--glean-duration-fast) var(--glean-ease-spring);
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
@@ -3917,7 +3917,7 @@ mark.glean-search-highlight {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    transition: all var(--glean-duration-fast) ease;
+    transition: transform var(--glean-duration-fast) ease, background var(--glean-duration-fast) ease, border-color var(--glean-duration-fast) ease, box-shadow var(--glean-duration-fast) ease, color var(--glean-duration-fast) ease, opacity var(--glean-duration-fast) ease;
 
     svg {
         flex-shrink: 0;
@@ -4801,7 +4801,7 @@ mark.glean-search-highlight {
     gap: var(--glean-space-1);
     opacity: 0;
     transform: translateY(3px);
-    transition: all var(--glean-duration-normal) var(--glean-ease-out);
+    transition: transform var(--glean-duration-normal) var(--glean-ease-out), background var(--glean-duration-normal) var(--glean-ease-out), border-color var(--glean-duration-normal) var(--glean-ease-out), box-shadow var(--glean-duration-normal) var(--glean-ease-out), color var(--glean-duration-normal) var(--glean-ease-out), opacity var(--glean-duration-normal) var(--glean-ease-out);
 }
 
 .glean-card:not(.glean-card--candidate) {
@@ -4850,7 +4850,7 @@ mark.glean-search-highlight {
     place-items: center;
     cursor: pointer;
     box-shadow: var(--glean-shadow-control);
-    transition: all var(--glean-duration-press);
+    transition: transform var(--glean-duration-press), background var(--glean-duration-press), border-color var(--glean-duration-press), box-shadow var(--glean-duration-press), color var(--glean-duration-press), opacity var(--glean-duration-press);
 
     &:hover {
         color: var(--b3-theme-on-primary);
@@ -5007,7 +5007,7 @@ mark.glean-search-highlight {
     border-radius: var(--glean-radius-pill);
     background: color-mix(in srgb, var(--glean-accent-b) 10%, transparent);
     cursor: pointer;
-    transition: all var(--glean-duration-base);
+    transition: transform var(--glean-duration-base), background var(--glean-duration-base), border-color var(--glean-duration-base), box-shadow var(--glean-duration-base), color var(--glean-duration-base), opacity var(--glean-duration-base);
 
     &:hover {
         background: var(--glean-grad);
@@ -5987,7 +5987,7 @@ mark.glean-search-highlight {
     background: var(--b3-theme-background-light);
     border: 1px solid var(--glean-border-soft);
     cursor: pointer;
-    transition: all var(--glean-duration-base);
+    transition: transform var(--glean-duration-base), background var(--glean-duration-base), border-color var(--glean-duration-base), box-shadow var(--glean-duration-base), color var(--glean-duration-base), opacity var(--glean-duration-base);
     flex-shrink: 0;
     min-width: 0;
     max-width: 100%;
@@ -6180,7 +6180,7 @@ mark.glean-search-highlight {
     color: var(--glean-ink);
     font-size: var(--glean-text-sm);
     cursor: pointer;
-    transition: all var(--glean-duration-fast) var(--glean-ease-out);
+    transition: transform var(--glean-duration-fast) var(--glean-ease-out), background var(--glean-duration-fast) var(--glean-ease-out), border-color var(--glean-duration-fast) var(--glean-ease-out), box-shadow var(--glean-duration-fast) var(--glean-ease-out), color var(--glean-duration-fast) var(--glean-ease-out), opacity var(--glean-duration-fast) var(--glean-ease-out);
 
     &:hover {
         border-color: color-mix(in srgb, var(--glean-color-action) 35%, var(--glean-border-soft));
@@ -6359,7 +6359,7 @@ mark.glean-search-highlight {
     color: var(--glean-ink);
     font-size: var(--glean-text-xl-plus);
     cursor: pointer;
-    transition: all var(--glean-duration-fast) var(--glean-ease-out);
+    transition: transform var(--glean-duration-fast) var(--glean-ease-out), background var(--glean-duration-fast) var(--glean-ease-out), border-color var(--glean-duration-fast) var(--glean-ease-out), box-shadow var(--glean-duration-fast) var(--glean-ease-out), color var(--glean-duration-fast) var(--glean-ease-out), opacity var(--glean-duration-fast) var(--glean-ease-out);
 
     &:hover {
         border-color: color-mix(in srgb, var(--glean-color-action) 35%, var(--glean-border-soft));
@@ -6407,7 +6407,7 @@ mark.glean-search-highlight {
     cursor: pointer;
     font-size: var(--glean-text-xs);
     text-align: center;
-    transition: all var(--glean-duration-fast) ease;
+    transition: transform var(--glean-duration-fast) ease, background var(--glean-duration-fast) ease, border-color var(--glean-duration-fast) ease, box-shadow var(--glean-duration-fast) ease, color var(--glean-duration-fast) ease, opacity var(--glean-duration-fast) ease;
 }
 
 .glean-filter-clear {
@@ -7019,7 +7019,7 @@ mark.glean-search-highlight {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    transition: all var(--glean-duration-fast) var(--glean-ease-out);
+    transition: transform var(--glean-duration-fast) var(--glean-ease-out), background var(--glean-duration-fast) var(--glean-ease-out), border-color var(--glean-duration-fast) var(--glean-ease-out), box-shadow var(--glean-duration-fast) var(--glean-ease-out), color var(--glean-duration-fast) var(--glean-ease-out), opacity var(--glean-duration-fast) var(--glean-ease-out);
 
     svg {
         width: 13px;
@@ -8926,7 +8926,7 @@ mark.glean-search-highlight {
     box-shadow: var(--glean-shadow-card);
     text-align: left;
     cursor: pointer;
-    transition: all 160ms var(--glean-ease-out);
+    transition: transform 160ms var(--glean-ease-out), background 160ms var(--glean-ease-out), border-color 160ms var(--glean-ease-out), box-shadow 160ms var(--glean-ease-out), color 160ms var(--glean-ease-out), opacity 160ms var(--glean-ease-out);
 
     &:hover:not(:disabled) {
         transform: translateY(-1px);
@@ -12131,7 +12131,7 @@ body.b3-theme-dark .glean-panel--mobile,
     padding: var(--glean-space-micro) var(--glean-space-1-5);
     font-size: var(--glean-text-caption);
     border: 1px solid transparent;
-    transition: all var(--glean-duration-fast) ease;
+    transition: transform var(--glean-duration-fast) ease, background var(--glean-duration-fast) ease, border-color var(--glean-duration-fast) ease, box-shadow var(--glean-duration-fast) ease, color var(--glean-duration-fast) ease, opacity var(--glean-duration-fast) ease;
 
     &--healthy {
         color: var(--glean-st-done-text);
@@ -14190,7 +14190,7 @@ body.b3-theme-dark .glean-panel--mobile,
     color: var(--glean-ink-2);
     cursor: pointer;
     white-space: nowrap;
-    transition: all var(--glean-trans-fast);
+    transition: transform var(--glean-trans-fast), background var(--glean-trans-fast), border-color var(--glean-trans-fast), box-shadow var(--glean-trans-fast), color var(--glean-trans-fast), opacity var(--glean-trans-fast);
 
     &:hover {
         background: color-mix(in srgb, var(--glean-card-surface) 80%, transparent);
@@ -14968,7 +14968,7 @@ body:has(.b3-dialog--open, #lv-launchpad-sheet-mask, .lvct-dialog-mask, .sw__mob
             border-radius: 6px;
             color: var(--glean-ink-2);
             opacity: 0.7;
-            transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), background 0.15s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s cubic-bezier(0.16, 1, 0.3, 1), color 0.15s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.15s cubic-bezier(0.16, 1, 0.3, 1);
             box-sizing: border-box;
             flex-shrink: 0;
 

@@ -139,7 +139,7 @@
     border-radius: var(--glean-radius-pill);
     background: var(--b3-theme-background-light);
     border: 1px solid var(--glean-border-soft);
-    transition: all var(--glean-duration-fast) ease;
+    transition: transform var(--glean-duration-fast) ease, background var(--glean-duration-fast) ease, border-color var(--glean-duration-fast) ease, box-shadow var(--glean-duration-fast) ease, color var(--glean-duration-fast) ease, opacity var(--glean-duration-fast) ease;
 
     &:hover {
         border-color: var(--glean-color-action);

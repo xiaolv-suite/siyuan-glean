@@ -725,7 +725,7 @@
         font: inherit;
         cursor: pointer;
         font-weight: var(--glean-weight-medium);
-        transition: all var(--glean-duration-fast) ease;
+        transition: transform var(--glean-duration-fast) ease, background var(--glean-duration-fast) ease, border-color var(--glean-duration-fast) ease, box-shadow var(--glean-duration-fast) ease, color var(--glean-duration-fast) ease, opacity var(--glean-duration-fast) ease;
 
         &:hover {
             background: color-mix(in srgb, var(--lv-brand) 18%, var(--b3-theme-surface));
