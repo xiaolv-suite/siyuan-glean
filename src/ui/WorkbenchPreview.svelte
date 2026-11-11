@@ -504,7 +504,7 @@
                     <svg class="glean-icon glean-icon--xs" class:glean-icon--fav={attrs.favorite} aria-hidden="true"><use href={attrs.favorite ? "#iconGleanHeart" : "#iconGleanHeartOutline"} /></svg>
                 </button>
             {/if}
-            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => facade.openReadingDocument(entry.id)}>{t(i18n, "preview.openDocument")}</button>
+            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => { if (facade.isMobile) onClose(); facade.openReadingDocument(entry.id); }}>{t(i18n, "preview.openDocument")}</button>
             <ActionPopover label={t(i18n, "library.moreActions")} compact>
                 <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void triggerRoaming()} title={t(i18n, "roaming.buttonHint")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanRefresh" /></svg> <span>{t(i18n, "roaming.button")}</span></button>
                 <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyBlockRef()}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg> <span>{t(i18n, "action.copyBlockRef")}</span></button>
@@ -553,7 +553,7 @@
                     type="button"
                     class="glean-preview__source-link glean-preview__source-link--reader"
                     title={`${t(i18n, "reading.openInReader")}（右键呼出原生菜单）`}
-                    onclick={() => (facade.openReader ?? facade.openReadingDocument).call(facade, entry.id)}
+                    onclick={() => { if (facade.isMobile) onClose(); (facade.openReader ?? facade.openReadingDocument).call(facade, entry.id); }}
                     oncontextmenu={openDocContextMenu}
                 >
                     <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg> <span>{t(i18n, "reading.openInReader")}</span>
