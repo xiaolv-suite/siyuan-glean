@@ -331,6 +331,9 @@ function editManual(row: MigrateRow) {
 
 function openExisting(row: MigrateRow) {
     if (!row.conflictDocId) return;
+    if (phase === "done") {
+        onClose();
+    }
     void openTab({ app: facade.pluginInstance.app, doc: { id: row.conflictDocId }, keepCursor: false });
 }
 

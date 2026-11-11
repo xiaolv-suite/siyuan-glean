@@ -370,6 +370,7 @@
 
     async function openOrTakeCurrentSnapshot(): Promise<void> {
         if (currentPick.item.snapshot) {
+            onClose?.();
             void openTab({ app: facade.pluginInstance.app, asset: { path: currentPick.item.snapshot } });
             return;
         }

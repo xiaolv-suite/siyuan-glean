@@ -324,6 +324,9 @@ function resetToPick() {
 }
 
 function openProgressDocument(id: string): void {
+    if (phase === "done") {
+        onClose();
+    }
     if (facade.isMobile) openMobileFileById(facade.pluginInstance.app, id);
     else void openTab({ app: facade.pluginInstance.app, doc: { id } });
 }
