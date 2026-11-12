@@ -8,7 +8,7 @@
 
 100% 数据主权 · 结构化阅读生命周期 · 视线同焦注记 · 划词金句海报 · 学术文献著录
 
-**当前版本：v1.4.6** ｜ [English Documentation](README.en-US.md) ｜ [更新日志](CHANGELOG.md)
+**当前版本：v1.4.7** ｜ [English Documentation](README.en-US.md) ｜ [更新日志](CHANGELOG.md)
 
 [![Quality gates](https://github.com/xiaolv-suite/siyuan-glean/actions/workflows/ci.yml/badge.svg)](https://github.com/xiaolv-suite/siyuan-glean/actions/workflows/ci.yml)
 [![思源笔记](https://img.shields.io/badge/思源笔记-%3E%3D%203.8.4-brightgreen.svg)](https://b3log.org/siyuan)
@@ -135,9 +135,19 @@
 
 ## 📝 最近更新
 
-**v1.4.6（2026-11-08）**：顶栏右键快捷菜单官方化（并入思源原生条目菜单），罗盘与弹层层级接入全生态 Protocol v1.7.6 治理；修复手机端打开文章后工作台退场闭环。
-**v1.4.5（2026-11-04）**：手机端完整体验闭环——罗盘双入口、全屏面板、五态快捷悬浮条与键盘智能避让。
-**v1.4.4（2026-11-03）**：全生态去中心化统一通知接入，伴读顶栏三区重构，兄弟插件联邦互通（闪卡/人脉/常用/打卡）。
+- **思源 3.8.10+ 原生特性适配**：进入沉浸阅读专注模式（F11）自动协同折叠原生停靠栏，退出时安全恢复；文章卡片预览标题与阅读器入口支持右键弹出思源原生文档树菜单（`showDocTreeNativeMenu`）。
+- **交互与快捷键治理**：标签别名管理器弹层支持 Escape 键退出；全生态剪贴板写入失败处理覆盖契约固化。
+- **移动端与样式打磨**：移动端状态组换行后椭圆壳自适应包裹、头部操作按钮防止拉伸散排；吸底栏补齐 iOS 安全区内边距，伴随条下拉框统一 16px 防自动缩放。
+- **性能与动效**：滚动与触摸监听全面改用 passive，微信头像列表图片懒加载；卡片标题、行与开关增加桌面端 hover 悬停高亮。
+
+<details>
+<summary>展开查看历史版本更新摘要（v1.4.6 及更早版本 · 完整记录见 <a href="./CHANGELOG.md">CHANGELOG.md</a>）</summary>
+
+- **v1.4.6（2026-11-08）**：顶栏右键快捷菜单官方化（并入思源原生条目菜单），罗盘与弹层层级接入全生态 Protocol v1.7.6 治理；修复手机端打开文章后工作台退场闭环。
+- **v1.4.5（2026-11-04）**：手机端完整体验闭环——罗盘双入口、全屏面板、五态快捷悬浮条与键盘智能避让。
+- **v1.4.4（2026-11-03）**：全生态去中心化统一通知接入，伴读顶栏三区重构，兄弟插件联邦互通（闪卡/人脉/常用/打卡）。
+
+</details>
 
 👉 完整版本历史见 [CHANGELOG.md](CHANGELOG.md)。
 

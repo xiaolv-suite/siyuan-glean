@@ -184,9 +184,19 @@ In just 3 minutes, transform scattered clippings into structured knowledge asset
 
 ## 📝 Recent Updates
 
-**v1.4.6 (2026-11-08)**: Topbar context menu now merges into SiYuan's native item menu; compass & popup layering governed by ecosystem Protocol v1.7.6.
-**v1.4.5 (2026-11-04)**: Complete mobile experience loop - dual compass entries, fullscreen panels, five-state reading action bar and smart keyboard avoidance.
-**v1.4.4 (2026-11-03)**: Decentralized ecosystem notification suite, three-zone companion reading toolbar, federated integration with sibling plugins.
+- **SiYuan 3.8.10+ Native Adaptations**: Immersive Zen reading mode (`F11`) automatically coordinates folding/restoring native docks; preview card titles and reader entry support native document tree context menus (`showDocTreeNativeMenu`).
+- **Interaction & Shortcut Hardening**: Tag alias manager modal supports Escape key dismissal; ecosystem-wide clipboard error-handling contracts enforced.
+- **Mobile & Style Polish**: Status group wraps with adaptive capsule shell; header actions avoid stretched scatter; sticky bottom bar gains iOS safe area inset; companion bar select standardized to 16px to prevent focus zoom.
+- **Performance & Motion**: Scroll and touch listeners converted to passive; WeChat avatar list images lazy-loaded; desktop hover affordances added for card titles, rows, and toggles.
+
+<details>
+<summary>View Historical Release Highlights (v1.4.6 and earlier)</summary>
+
+- **v1.4.6 (2026-11-08)**: Topbar context menu now merges into SiYuan's native item menu; compass & popup layering governed by ecosystem Protocol v1.7.6.
+- **v1.4.5 (2026-11-04)**: Complete mobile experience loop - dual compass entries, fullscreen panels, five-state reading action bar and smart keyboard avoidance.
+- **v1.4.4 (2026-11-03)**: Decentralized ecosystem notification suite, three-zone companion reading toolbar, federated integration with sibling plugins.
+
+</details>
 
 👉 Full version history: [CHANGELOG.md](CHANGELOG.md).
 
