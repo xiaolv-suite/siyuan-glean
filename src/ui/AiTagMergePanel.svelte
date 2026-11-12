@@ -1,0 +1,202 @@
+<script lang="ts">
+    import { t } from "../libs/i18n";
+    import { installEscapeHandler } from "../libs/modal-focus";
+    import { applyAiTagMerge, suggestAiTagMerges, type AiTagMergePlan } from "../services/ai-tag-service";
+    import type { GleanFacade } from "../types";
+
+    interface Props { facade: GleanFacade }
+    let { facade }: Props = $props();
+    let rootEl = $state<HTMLElement | null>(null);
+    const i18n = $derived(facade.i18n);
+    const instanceId = $props.id();
+    const titleId = `glean-ai-tag-merge-title-${instanceId}`;
+    let plans = $state<AiTagMergePlan[]>([]);
+    let keepByGroup = $state<Record<string, string>>({});
+    let busy = $state<"scan" | string | "">("");
+    let scanned = $state(false);
+    let error = $state(false);
+    let scanError = $state(false);
+    let message = $state("");
+    let confirmKey = $state("");
+
+    function keyOf(plan: AiTagMergePlan): string {
+        return plan.variants.join("\u0000");
+    }
+
+    function keepOf(plan: AiTagMergePlan): string {
+        return keepByGroup[keyOf(plan)] ?? plan.keep;
+    }
+
+    function setKeep(plan: AiTagMergePlan, event: Event): void {
+        const value = (event.currentTarget as HTMLSelectElement).value;
+        keepByGroup = { ...keepByGroup, [keyOf(plan)]: value };
+    }
+
+    async function runScan(keepPlansOnFailure = false): Promise<boolean> {
+        try {
+            plans = await suggestAiTagMerges(facade.pluginInstance);
+            keepByGroup = Object.fromEntries(plans.map((plan) => [keyOf(plan), plan.keep]));
+            scanned = true;
+            scanError = false;
+            return true;
+        } catch {
+            scanError = true;
+            // apply 后的刷新失败保留旧 plans：剩余待合并分组不应从界面上消失；手动扫描仍显示错误
+            if (keepPlansOnFailure && plans.length > 0) return false;
+            plans = [];
+            keepByGroup = {};
+            scanned = false;
+            return false;
+        }
+    }
+
+    async function scan(): Promise<void> {
+        if (busy) return;
+        busy = "scan";
+        error = false;
+        scanError = false;
+        message = "";
+        try { await runScan(); } finally { busy = ""; }
+    }
+
+    async function apply(plan: AiTagMergePlan): Promise<void> {
+        if (busy) return;
+        const keep = keepOf(plan);
+        if (!plan.variants.includes(keep)) return;
+        const key = keyOf(plan);
+        if (confirmKey !== key) {
+            confirmKey = key;
+            return;
+        }
+        confirmKey = "";
+        busy = key;
+        error = false;
+        message = "";
+        try {
+            const result = await applyAiTagMerge(facade.pluginInstance, plan.variants, keep);
+            facade.notifyDataChanged();
+            message = result.failed > 0
+                ? t(i18n, "aiTagMerge.partial", { applied: result.applied, failed: result.failed })
+                : t(i18n, "aiTagMerge.applied", { n: result.applied });
+            if (result.failed > 0) error = true;
+            // 合并已生效：随后的重扫失败只影响列表刷新（保留剩余分组），不把成功提示吞成错误
+            await runScan(true);
+        } catch {
+            error = true;
+        } finally {
+            busy = "";
+        }
+    }
+
+    function handleWindowKeydown(event: KeyboardEvent): void {
+        if (event.isComposing || event.keyCode === 229) return;
+        if (event.key === "Escape" && confirmKey && !busy) {
+            event.preventDefault();
+            event.stopPropagation();
+            confirmKey = "";
+        }
+    }
+    $effect(() => {
+        if (!rootEl) return;
+        return installEscapeHandler(rootEl, (event) => {
+            if (!confirmKey && !busy) return false;
+            handleWindowKeydown(event);
+            return true;
+        });
+    });
+</script>
+
+<svelte:window onkeydown={handleWindowKeydown} />
+
+<section class="glean-ai-tag-merge" bind:this={rootEl} aria-labelledby={titleId} aria-busy={Boolean(busy)}>
+    <div class="glean-ai-tag-merge__head">
+        <div>
+            <h3 id={titleId}>{t(i18n, "aiTagMerge.title")}</h3>
+            <p>{t(i18n, "aiTagMerge.desc")}</p>
+        </div>
+        <button class="glean-btn glean-btn--ghost" disabled={Boolean(busy)} onclick={() => void scan()}>
+            {busy === "scan" ? t(i18n, "aiTagMerge.scanning") : t(i18n, "aiTagMerge.scan")}
+        </button>
+    </div>
+
+    {#if message}
+        <p class="glean-ai-tag-merge__status" class:glean-ai-tag-merge__status--error={error} role={error ? "alert" : "status"} aria-live={error ? "assertive" : "polite"}>{message}</p>
+    {:else if error}
+        <p class="glean-ai-tag-merge__status glean-ai-tag-merge__status--error" role="alert">{t(i18n, "aiTagMerge.error")}</p>
+    {/if}
+    {#if scanError}
+        <div class="glean-ai-tag-merge__scan-error" role="alert">
+            <p>{t(i18n, "aiTagMerge.scanFailed")}</p>
+            <button class="glean-btn glean-btn--ghost" disabled={Boolean(busy)} onclick={() => void scan()}>{t(i18n, "aiTagMerge.retryScan")}</button>
+        </div>
+    {/if}
+
+    {#if scanned && plans.length === 0}
+        <p class="glean-ai-tag-merge__empty" role="status">{t(i18n, "aiTagMerge.empty")}</p>
+    {:else if plans.length > 0}
+        <div class="glean-ai-tag-merge__list">
+            {#each plans as plan (keyOf(plan))}
+                <div class="glean-ai-tag-merge__row">
+                    <div class="glean-ai-tag-merge__variants">
+                        {#each plan.variants as variant (variant)}<span class="glean-chip">{variant}</span>{/each}
+                    </div>
+                    <span class="glean-ai-tag-merge__affected">{t(i18n, "aiTagMerge.affected", { n: plan.affected })}</span>
+                    <label class="glean-ai-tag-merge__keep">
+                        <span>{t(i18n, "aiTagMerge.keep")}</span>
+                        <select class="b3-select" value={keepOf(plan)} onchange={(event) => setKeep(plan, event)} disabled={Boolean(busy)}>
+                            {#each plan.variants as variant (variant)}<option value={variant}>{variant}</option>{/each}
+                        </select>
+                    </label>
+                    <button class="glean-btn glean-btn--pri" disabled={Boolean(busy)} aria-busy={busy === keyOf(plan)} onclick={() => void apply(plan)}>
+                        {busy === keyOf(plan) ? t(i18n, "aiTagMerge.applying") : confirmKey === keyOf(plan) ? t(i18n, "aiTagMerge.confirm") : t(i18n, "aiTagMerge.apply")}
+                    </button>
+                    {#if confirmKey === keyOf(plan) && !busy}<button class="glean-btn glean-btn--ghost" onclick={() => (confirmKey = "")}>{t(i18n, "action.cancel")}</button>{/if}
+                </div>
+            {/each}
+        </div>
+    {:else}
+        <p class="glean-ai-tag-merge__hint">{t(i18n, "aiTagMerge.hint")}</p>
+    {/if}
+</section>
+
+<style>
+    .glean-ai-tag-merge { display: grid; gap: var(--glean-space-3); padding: var(--glean-space-4); min-width: 0; color: var(--b3-theme-on-background); }
+    .glean-ai-tag-merge h3, .glean-ai-tag-merge p { margin: 0; overflow-wrap: anywhere; }
+    .glean-ai-tag-merge h3 { font-size: var(--glean-text-lg); line-height: 1.35; }
+    .glean-ai-tag-merge p { color: var(--b3-theme-on-surface); font-size: var(--glean-text-sm); line-height: 1.55; }
+    .glean-ai-tag-merge__head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--glean-space-3); }
+    .glean-ai-tag-merge__head p { margin-top: var(--glean-space-1); }
+    .glean-ai-tag-merge__list { display: grid; gap: var(--glean-space-2); }
+    .glean-ai-tag-merge__row { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(150px, 190px) auto; align-items: center; gap: var(--glean-space-2); padding: var(--glean-space-3); border: 1px solid var(--glean-border-soft); border-radius: var(--glean-radius-lg, 16px); background: var(--glean-status-surface); }
+    .glean-ai-tag-merge__variants { display: flex; flex-wrap: wrap; gap: var(--glean-space-1); min-width: 0; }
+    .glean-ai-tag-merge__affected { color: var(--b3-theme-on-surface); font-size: var(--glean-text-xs); white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .glean-ai-tag-merge__keep { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: var(--glean-space-2); min-width: 0; color: var(--b3-theme-on-surface); font-size: var(--glean-text-xs); }
+    .glean-ai-tag-merge__keep select { min-width: 0; max-width: 100%; border-radius: var(--glean-radius-pill); padding-inline: var(--glean-space-2-5); }
+    .glean-ai-tag-merge .glean-btn { border-radius: var(--glean-radius-pill); }
+    .glean-ai-tag-merge :is(button, .glean-btn, select):focus-visible { outline: 2px solid var(--glean-color-action); outline-offset: 2px; }
+    .glean-ai-tag-merge__hint, .glean-ai-tag-merge__empty { padding: var(--glean-space-2) 0; }
+    .glean-ai-tag-merge__status { color: var(--glean-st-done-text) !important; }
+    .glean-ai-tag-merge__status--error { color: var(--b3-theme-error) !important; }
+    .glean-ai-tag-merge__scan-error { display: flex; flex-wrap: wrap; align-items: center; gap: var(--glean-space-2); padding: var(--glean-space-2); border: 1px solid var(--b3-theme-error); border-radius: var(--glean-radius-md); }
+    .glean-ai-tag-merge__scan-error p { color: var(--b3-theme-error); }
+    @media (forced-colors: active) {
+        .glean-ai-tag-merge__row { border: 1px solid CanvasText; }
+        .glean-ai-tag-merge__scan-error { border: 1px solid Highlight; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .glean-ai-tag-merge .glean-btn,
+        .glean-ai-tag-merge select { transition: var(--glean-motion-none) !important; transform: none !important; }
+    }
+    @media (max-width: 600px) {
+        .glean-ai-tag-merge__head { display: grid; }
+        .glean-ai-tag-merge__head button { justify-self: start; min-height: 44px; }
+        .glean-ai-tag-merge__row { grid-template-columns: minmax(0, 1fr); }
+        .glean-ai-tag-merge__affected { white-space: normal; }
+        .glean-ai-tag-merge__keep { grid-template-columns: minmax(0, 1fr); }
+        .glean-ai-tag-merge__keep select { min-height: 44px; }
+        .glean-ai-tag-merge__row > button { min-height: 44px; width: 100%; }
+    }
+    @media (max-width: 360px) {
+        .glean-ai-tag-merge__row { padding: var(--glean-space-2); }
+    }
+</style>

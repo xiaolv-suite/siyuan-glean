@@ -1,0 +1,100 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { canonicalUrlKey, isSimilarUrl, normalizeUrl } from "../src/domain/url.ts";
+import { fulltextBodyState, inspectClipMarkdown } from "../src/domain/content.ts";
+import { documentTimeFromId, parseClipAttrs, serializePatch, ATTR } from "../src/domain/schema.ts";
+
+test("URL 查重键只规范协议/主机、默认端口、fragment 和非根路径尾斜杠", () => {
+    assert.equal(normalizeUrl(" HTTPS://EXAMPLE.COM:443/Article/?q=One#section "), "https://example.com/Article?q=One");
+    assert.equal(normalizeUrl("http://Example.com:80/"), "http://example.com/");
+    assert.equal(normalizeUrl("https://example.com/A?q=1&x=2"), "https://example.com/A?q=1&x=2");
+    assert.notEqual(normalizeUrl("https://example.com/A"), normalizeUrl("https://example.com/a"));
+    assert.equal(normalizeUrl("javascript:alert(1)"), "");
+    assert.equal(normalizeUrl("garbage"), "");
+});
+
+test("正文统计不把标题、来源链接、导入说明当成全文", () => {
+    const link = "# 文章标题\n\n- [https://Example.com/A](https://Example.com/A)\n- 来源：Example.com\n- 收藏于：2026-09-29\n\n> 由迁移导入器带入。原文内容请访问来源链接。";
+    const onlyLink = inspectClipMarkdown(link);
+    assert.deepEqual(onlyLink, {
+        url: "https://Example.com/A", site: "example.com", words: 0, minutes: 0, contentType: "link",
+    });
+    const full = inspectClipMarkdown(`${link}\n\n正文内容 Hello world。`);
+    assert.equal(full.contentType, "fulltext");
+    assert.equal(full.words, 6);
+    assert.equal(full.minutes, 1);
+    assert.equal(inspectClipMarkdown("# 本地文档\n\n三行正文").contentType, "local");
+});
+
+test("中文路径来源 URL 可从模板识别；无效入口 URL 不会遮蔽正文中的有效来源", () => {
+    const url = "https://blog.effie.co/渐进式写作/";
+    const markdown = `# 渐进式写作\n\n- [${url}](${url})`;
+    assert.equal(inspectClipMarkdown(markdown).url, url);
+    assert.equal(inspectClipMarkdown(markdown, { url: "not-a-url" }).url, url);
+});
+
+test("旧时间来源呈 legacy，新时间来源与内容类型可序列化；文档 ID 时间须有效", () => {
+    assert.equal(parseClipAttrs({ [ATTR.time]: "20240102030405" }).timeSource, "legacy");
+    assert.deepEqual(serializePatch({ timeSource: "document", contentType: "fulltext", excluded: true }), {
+        [ATTR.timeSource]: "document", [ATTR.contentType]: "fulltext", [ATTR.excluded]: "true",
+    });
+    assert.equal(documentTimeFromId("20240102030405-abcd123"), "20240102030405");
+    assert.equal(documentTimeFromId("20240230030405-abcd123"), null);
+    assert.equal(documentTimeFromId("invalid"), null);
+});
+
+test("fulltextBodyState：只按已记录测量判断，不猜测（T-1727）", () => {
+    assert.equal(fulltextBodyState("fulltext", 120), "ok");
+    assert.equal(fulltextBodyState("fulltext", 0), "missing");
+    assert.equal(fulltextBodyState("fulltext", undefined), "unmeasured");
+    assert.equal(fulltextBodyState("link", 0), "na");
+    assert.equal(fulltextBodyState("local", 50), "na");
+    assert.equal(fulltextBodyState(undefined, 0), "na");
+});
+
+test("done-time 属性可解析与序列化；删除传 null（D-0028）", () => {
+    assert.deepEqual(serializePatch({ doneTime: "20260930120000" }), { [ATTR.doneTime]: "20260930120000" });
+    assert.deepEqual(serializePatch({ doneTime: null }), { [ATTR.doneTime]: null });
+    const attrs = parseClipAttrs({ [ATTR.doneTime]: "20260930120000" });
+    assert.equal(attrs.doneTime, "20260930120000");
+    assert.equal(parseClipAttrs({}).doneTime, undefined);
+});
+
+test("canonicalUrlKey：剥离常见 UTM 和微信/B站/知乎追踪参数（T-1799 / T-3372）", () => {
+    const rawWechat1 = "https://mp.weixin.qq.com/s/article123?chksm=abc&mpshare=1&scene=21";
+    const rawWechat2 = "https://mp.weixin.qq.com/s/article123?chksm=xyz&from=timeline";
+    assert.equal(canonicalUrlKey(rawWechat1), "https://mp.weixin.qq.com/s/article123");
+    assert.equal(canonicalUrlKey(rawWechat2), "https://mp.weixin.qq.com/s/article123");
+    assert.equal(isSimilarUrl(rawWechat1, rawWechat2), true);
+
+    const rawZhihu1 = "https://zhuanlan.zhihu.com/p/99999?utm_source=weibo&utm_medium=social";
+    const rawZhihu2 = "https://zhuanlan.zhihu.com/p/99999/";
+    assert.equal(canonicalUrlKey(rawZhihu1), "https://zhuanlan.zhihu.com/p/99999");
+    assert.equal(canonicalUrlKey(rawZhihu2), "https://zhuanlan.zhihu.com/p/99999");
+    assert.equal(isSimilarUrl(rawZhihu1, rawZhihu2), true);
+
+    // 保留非追踪的合法业务参数并排序
+    const bizUrl = "https://example.com/api?b=2&a=1&utm_source=test";
+    assert.equal(canonicalUrlKey(bizUrl), "https://example.com/api?a=1&b=2");
+});
+
+test("inspectClipMarkdown：微信公众号文章自动识别并填充 author", () => {
+    const wechatMd = [
+        "# 人工智能新前沿",
+        "<meta property=\"og:image\" content=\"https://mmbiz.qpic.cn/cover123.jpg\" />",
+        "<meta property=\"og:description\" content=\"本文是大模型与人工智能前沿探索综述。\" />",
+        "- [https://mp.weixin.qq.com/s/sample123](https://mp.weixin.qq.com/s/sample123)",
+        "原创 机器之心 2024-05-01",
+        "收录于合集 #大模型 5个",
+        "点击上方蓝字关注我们",
+        "这是大模型最新研究的正文内容...",
+    ].join("\n");
+    const meta = inspectClipMarkdown(wechatMd);
+    assert.equal(meta.url, "https://mp.weixin.qq.com/s/sample123");
+    assert.equal(meta.site, "mp.weixin.qq.com");
+    assert.equal(meta.author, "机器之心");
+    assert.equal(meta.series, "大模型");
+    assert.equal(meta.summary, "本文是大模型与人工智能前沿探索综述。");
+    assert.equal(meta.cover, "https://mmbiz.qpic.cn/cover123.jpg");
+    assert.equal(meta.contentType, "fulltext");
+});
