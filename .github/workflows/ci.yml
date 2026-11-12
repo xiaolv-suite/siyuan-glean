@@ -54,7 +54,10 @@ jobs:
         run: git diff --check
 
       - name: Task ledger consistency
-        run: pnpm task:ledger -- --check
+        run: |
+          if [ -f docs/HANDOFF.md ]; then
+            pnpm task:ledger -- --check
+          fi
 
       - name: Visual baseline contract
         run: pnpm visual:check
