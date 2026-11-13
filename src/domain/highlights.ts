@@ -14,6 +14,29 @@ export interface HighlightRoot {
 export type AnnotationKind = "glean" | "siyuan-comment" | "native-memo";
 export type AnnotationTag = "pinned" | "important" | "reading" | "todo" | "question";
 
+export interface AnnotationReply {
+    id: string;
+    time?: string;
+    author?: string;
+    md: string;
+}
+
+export interface AnnotationTagDef {
+    value: string;
+    label: string;
+    icon: string;
+    color?: string;
+    builtin?: boolean;
+}
+
+export const BUILTIN_ANNOTATION_TAGS: readonly AnnotationTagDef[] = [
+    { value: "pinned", label: "置顶", icon: "📌", color: "#FF9500", builtin: true },
+    { value: "important", label: "重要", icon: "⭐", color: "#FF3B30", builtin: true },
+    { value: "reading", label: "阅读", icon: "📖", color: "#34C759", builtin: true },
+    { value: "todo", label: "待办", icon: "✔️", color: "#007AFF", builtin: true },
+    { value: "question", label: "存疑", icon: "❓", color: "#AF52DE", builtin: true },
+];
+
 export interface HighlightItem extends HighlightRoot {
     rootId: string;
     text: string;
@@ -21,6 +44,15 @@ export interface HighlightItem extends HighlightRoot {
     color?: string;
     memo?: string;
     sourceBlockId?: string;
+    commentBlockId?: string;
+    commentDocId?: string;
+    underlineStyle?: string;
+    customColor?: string;
+    textBefore?: string;
+    textAfter?: string;
+    replies?: AnnotationReply[];
+    groupId?: string;
+    groupMasterId?: string;
     annotationKind?: AnnotationKind;
     annotationTag?: AnnotationTag | string;
     source: { content: string; markdown: string; type: string; highlight: string };
@@ -33,6 +65,7 @@ export interface HighlightFilter {
     aiTag?: string;
     color?: string;
     annotationTag?: string;
+    annotationKind?: "" | AnnotationKind;
     sort?: "id" | "title" | "site";
     direction?: "asc" | "desc";
 }
@@ -45,6 +78,74 @@ export interface HighlightExportLabels {
 
 export function isHighlightId(value: string): boolean {
     return typeof value === "string" && /^\d{14}-[0-9a-z]{7}$/.test(value);
+}
+
+/** 解码 siyuan-comment / 思源 IAL 属性中的 HTML 实体与 _esc_newline_ 换行标记。 */
+export function decodeSiyuanCommentIalValue(raw: string): string {
+    if (!raw) return "";
+    return raw
+        .replace(/&#(\d+);/g, (full, num) => {
+            const code = Number(num);
+            if (!Number.isSafeInteger(code) || code <= 0 || code > 0x10ffff) return full;
+            try { return String.fromCodePoint(code); } catch { return full; }
+        })
+        .replace(/&quot;/g, '"')
+        .replace(/&apos;/g, "'")
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .replace(/&amp;/g, "&")
+        .replace(/_esc_newline_/g, "\n");
+}
+
+/** 精确提取 IAL 中的指定属性值并解码，避免部分前缀误匹配。 */
+export function parseIalAttr(ial: string, attrName: string): string {
+    if (!ial || !attrName) return "";
+    const escaped = attrName.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&");
+    const match = new RegExp(`(?:^|[\\s{])${escaped}="([^"]*)"`).exec(ial);
+    if (!match) return "";
+    return decodeSiyuanCommentIalValue(match[1]).trim();
+}
+
+/** 安全解析 custom-comment-replies / custom-clip-hl-replies JSON 回复数组。 */
+export function parseSiyuanCommentReplies(rawValue: string): AnnotationReply[] {
+    if (!rawValue) return [];
+    const decoded = decodeSiyuanCommentIalValue(rawValue).trim();
+    if (!decoded) return [];
+    let parsed: unknown;
+    try {
+        parsed = JSON.parse(decoded);
+    } catch {
+        return [];
+    }
+    if (!Array.isArray(parsed)) return [];
+    const out: AnnotationReply[] = [];
+    for (const entry of parsed) {
+        if (!entry || typeof entry !== "object") continue;
+        const record = entry as Record<string, unknown>;
+        const id = typeof record.id === "string" ? record.id.trim() : "";
+        const md = typeof record.md === "string" ? record.md.trim() : "";
+        if (!id || !md) continue;
+        out.push({
+            id,
+            time: typeof record.time === "string" ? record.time.trim() : undefined,
+            author: typeof record.author === "string" ? record.author.trim() : undefined,
+            md,
+        });
+    }
+    return out;
+}
+
+export function resolveAnnotationTagDisplay(
+    tagValue: string | undefined,
+    customTags?: readonly AnnotationTagDef[],
+): AnnotationTagDef | null {
+    const val = (tagValue ?? "").trim();
+    if (!val) return null;
+    const customHit = customTags?.find((item) => item.value === val);
+    if (customHit) return customHit;
+    const builtinHit = BUILTIN_ANNOTATION_TAGS.find((item) => item.value === val);
+    if (builtinHit) return builtinHit;
+    return { value: val, label: val, icon: "🏷️" };
 }
 
 export function highlightMarker(ial: string): string {
@@ -73,7 +174,9 @@ export function filterHighlights(items: readonly HighlightItem[], filter: Highli
         if (filter.aiTag && !(item.aiTags || []).includes(filter.aiTag)) return false;
         if (filter.color && (item.color || "yellow") !== filter.color) return false;
         if (filter.annotationTag && item.annotationTag !== filter.annotationTag) return false;
-        const searchable = [item.text, item.memo || "", item.title, item.site, item.url, ...(item.tags || []), ...(item.aiTags || [])].join("\n").toLowerCase();
+        if (filter.annotationKind && (item.annotationKind ?? "glean") !== filter.annotationKind) return false;
+        const replyText = (item.replies || []).map((r) => r.md).join("\n");
+        const searchable = [item.text, item.memo || "", replyText, item.title, item.site, item.url, ...(item.tags || []), ...(item.aiTags || [])].join("\n").toLowerCase();
         return terms.every((term) => searchable.includes(term));
     });
     const field = filter.sort ?? "id";
@@ -89,6 +192,14 @@ export function highlightFacets(items: readonly HighlightItem[]): { sites: strin
         aiTags: unique(items.flatMap((item) => item.aiTags || [])),
         annotationTags: unique(items.map((item) => item.annotationTag ?? "")),
     };
+}
+
+export function highlightAnnotationKinds(items: readonly HighlightItem[]): AnnotationKind[] {
+    const set = new Set<AnnotationKind>();
+    for (const item of items) {
+        set.add(item.annotationKind ?? "glean");
+    }
+    return [...set];
 }
 
 export function pageHighlights(items: readonly HighlightItem[], page = 1, pageSize = 20): { items: HighlightItem[]; page: number; pages: number; total: number } {
@@ -128,15 +239,39 @@ function safeSourceUrl(value: string): string {
     return normalizeUrl(value) && !/[\s<>"'\\\u0000-\u001f]/.test(value) ? value : "";
 }
 
+function formatAnnotationExtrasMarkdown(item: HighlightItem): string[] {
+    const extras: string[] = [];
+    const tagDef = resolveAnnotationTagDisplay(item.annotationTag);
+    if (tagDef) {
+        extras.push(`- ${tagDef.icon} ${inlineHighlightText(tagDef.label)}`);
+    }
+    if (item.memo?.trim()) {
+        const memoLines = item.memo.trim().split(/\r?\n/).map((line, i) =>
+            i === 0 ? `> 💡 ${escapeHighlightText(line)}` : `> ${escapeHighlightText(line)}`
+        );
+        extras.push(memoLines.join("\n"));
+    }
+    if (item.replies?.length) {
+        const replyLines = item.replies.map((r) => {
+            const stamp = [r.author, r.time].filter(Boolean).join(" · ");
+            return `  - 💬 ${stamp ? `(${inlineHighlightText(stamp)}) ` : ""}${inlineHighlightText(r.md)}`;
+        });
+        extras.push(replyLines.join("\n"));
+    }
+    return extras;
+}
+
 export function renderHighlightsMarkdown(items: readonly HighlightItem[], labels: HighlightExportLabels): string {
     const sections = items.map((item) => {
         const quote = item.text.split(/\r?\n/).map((line) => `> ${escapeHighlightText(line)}`).join("\n");
         const sourceUrl = safeSourceUrl(item.url);
         const rootTitle = inlineHighlightText(item.title || item.rootId);
         const origLabel = inlineHighlightText(labels.original);
+        const targetBlockId = item.sourceBlockId && isHighlightId(item.sourceBlockId) ? item.sourceBlockId : item.id;
         return [
             quote,
-            `(( ${item.rootId} '${rootTitle}' )) [${rootTitle}](${highlightBlockLink(item.rootId)}) · (( ${item.id} '📍 ${origLabel}' )) [${origLabel}](${highlightBlockLink(item.id)})`,
+            ...formatAnnotationExtrasMarkdown(item),
+            `(( ${item.rootId} '${rootTitle}' )) [${rootTitle}](${highlightBlockLink(item.rootId)}) · (( ${targetBlockId} '📍 ${origLabel}' )) [${origLabel}](${highlightBlockLink(targetBlockId)})`,
             ...(sourceUrl ? [`${inlineHighlightText(labels.source)}: [${inlineHighlightText(new URL(sourceUrl).host)}](<${sourceUrl}>)`] : []),
         ].join("\n\n");
     });
@@ -157,6 +292,7 @@ export function renderHighlightsCsv(items: readonly HighlightItem[]): string {
 /**
  * 格式化单条摘录分享卡（T-1803）：
  * - 引述纯文本前缀 `> `；
+ * - 如有批注思考/追记，附带 `> 💡 ` 行；
  * - 来源行前缀 `> —— `，注明标题与站点；
  * - 思源确切引述块链接 `> siyuan://blocks/${item.id}`。
  */
@@ -167,10 +303,15 @@ export function formatHighlightShare(item: HighlightItem): string {
         .map((line) => line.replaceAll(String.fromCharCode(13), "").trim())
         .filter(Boolean)
         .map((line) => "> " + line);
+    const memoLines = item.memo?.trim()
+        ? item.memo.trim().split(/\r?\n/).map((line, idx) => idx === 0 ? `> 💡 ${line.trim()}` : `> ${line.trim()}`)
+        : [];
+    const targetId = item.sourceBlockId && isHighlightId(item.sourceBlockId) ? item.sourceBlockId : item.id;
     return [
         ...(quoteLines.length ? quoteLines : ["> " + item.text.trim()]),
+        ...memoLines,
         "> —— " + source,
-        "> " + highlightBlockLink(item.id),
+        "> " + highlightBlockLink(targetId),
     ].join(String.fromCharCode(10));
 }
 
@@ -246,9 +387,11 @@ export function renderArticleHighlightsMarkdown(
     const quotes = group.items.map((item, index) => {
         const quote = item.text.split(/\r?\n/).map((line) => `> ${escapeHighlightText(line)}`).join("\n");
         const origText = `${inlineHighlightText(labels.original)} #${index + 1}`;
+        const targetBlockId = item.sourceBlockId && isHighlightId(item.sourceBlockId) ? item.sourceBlockId : item.id;
         return [
             quote,
-            `(( ${item.id} '📍 ${origText}' )) [${origText}](${highlightBlockLink(item.id)})`,
+            ...formatAnnotationExtrasMarkdown(item),
+            `(( ${targetBlockId} '📍 ${origText}' )) [${origText}](${highlightBlockLink(targetBlockId)})`,
         ].join("\n\n");
     });
 

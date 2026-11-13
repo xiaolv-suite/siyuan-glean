@@ -8,7 +8,7 @@
 
 100% 数据主权 · 结构化阅读生命周期 · 视线同焦注记 · 划词金句海报 · 学术文献著录
 
-**当前版本：v1.4.7** ｜ [English Documentation](README.en-US.md) ｜ [更新日志](CHANGELOG.md)
+**当前版本：v1.4.8** ｜ [English Documentation](README.en-US.md) ｜ [更新日志](CHANGELOG.md)
 
 [![Quality gates](https://github.com/xiaolv-suite/siyuan-glean/actions/workflows/ci.yml/badge.svg)](https://github.com/xiaolv-suite/siyuan-glean/actions/workflows/ci.yml)
 [![思源笔记](https://img.shields.io/badge/思源笔记-%3E%3D%203.8.4-brightgreen.svg)](https://b3log.org/siyuan)
@@ -135,10 +135,10 @@
 
 ## 📝 最近更新
 
-**v1.4.7（2026-11-12）**：思源 3.8.10+ 原生适配（专注模式折叠原生停靠栏、预览与阅读器原生文档树菜单）、标签别名管理 Escape 退出、移动端状态组/安全区/16px 伴随条防缩放、passive 滚动与图片懒加载及全生态回归契约护航。
+**v1.4.8（2026-11-12）**：思源 3.8.10+ 原生适配（专注模式折叠原生停靠栏、预览与阅读器原生文档树菜单）、标签别名管理 Escape 退出、移动端状态组/安全区/16px 伴随条防缩放、passive 滚动与图片懒加载及全生态回归契约护航。
 
 <details>
-<summary>展开查看 v1.4.7 更新要点与历史版本摘要（完整记录见 <a href="./CHANGELOG.md">CHANGELOG.md</a>）</summary>
+<summary>展开查看 v1.4.8 更新要点与历史版本摘要（完整记录见 <a href="./CHANGELOG.md">CHANGELOG.md</a>）</summary>
 
 - **思源 3.8.10+ 原生特性适配**：进入沉浸阅读专注模式（F11）自动协同折叠原生停靠栏，退出时安全恢复；文章卡片预览标题与阅读器入口支持右键弹出思源原生文档树菜单（`showDocTreeNativeMenu`）。
 - **交互与快捷键治理**：标签别名管理器弹层支持 Escape 键退出；全生态剪贴板写入失败处理覆盖契约固化。

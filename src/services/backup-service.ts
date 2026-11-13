@@ -5,7 +5,6 @@ import { localDate } from "../domain/checkin";
 import { batchReadClipAttrs, ClipRestoreError, readClipAttributeSnapshot, reconcileIndex, restoreClipFields, type ClipAttributeSnapshot } from "./clip-store";
 import { loadSettings, normalizeSettings, saveSettings, settingsEqual, SettingsConflictError, type GleanSettings } from "./settings";
 import { loadUiPrefs, normalizeUiPrefs, saveUiPrefs, UiPrefsConflictError, type UiPrefs } from "./prefs";
-import { notifySilentTask } from "../libs/notice";
 
 export type RestoreRowState = "ready" | "missing" | "internal" | "unavailable" | "applied" | "changed" | "unknown" | "skipped" | "conflict";
 
@@ -167,7 +166,7 @@ export async function runDailyAutoBackup(
             ...snapshots,
         ].slice(0, 7);
         await plugin.saveData("daily-backup-index.json", { snapshots: nextSnapshots });
-        notifySilentTask(`每日自动本地备份已完成（${filename}）`, "auto-backup");
+        console.debug(`[LvGlean] 每日自动本地备份已完成（${filename}）`);
         return { ok: true, filename };
     } catch (error) {
         console.warn("[glean] 自动本地轮转备份失败:", error);

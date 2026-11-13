@@ -2,7 +2,7 @@
  * 小驴拾遗插件入口（薄壳）：生命周期、UI 挂载、收录入口三件套。
  * 业务编排在 services/，内核交互在 api/，纯函数在 domain/，组件只依赖 types.ts 门面。
  */
-import { Plugin, getFrontend, openTab, openMobileFileById, showMessage, getAllEditor, type subMenu, type TProtyleAction } from "siyuan";
+import { Plugin, getFrontend, openTab, openMobileFileById, getAllEditor, type subMenu, type TProtyleAction } from "siyuan";
 import { mount, unmount } from "svelte";
 import "./index.scss";
 
@@ -39,7 +39,7 @@ import type { GleanFacade } from "./types";
 import { addRecentReading, pickContinueReadingDocId, type RecentReadingEntry } from "./domain/recent-reading";
 import { docUnderHostKind } from "./services/lifecycle-service";
 import { registerRaikiriModuleSafely } from "./libs/ecosystem-bridge-kit";
-import { lvNotify, lvTicker, lvActivity, lvBackup, lvLaunchpad, lvOmnisearch, notifyClipSuccess, notifyClipProgress, showNotice } from "./libs/notice";
+import { showMessage, lvNotify, lvTicker, lvActivity, lvBackup, lvLaunchpad, lvOmnisearch, notifyClipSuccess, notifyClipProgress, showNotice } from "./libs/notice";
 
 const DOCK_TYPE = "glean-dock";
 const TAB_TYPE = "glean-library";
@@ -257,6 +257,18 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
 </symbol>
 <symbol id="iconGleanUser" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
   <path d="M17.925 20.056a6 6 0 0 0-11.851.001"/><circle cx="12" cy="11" r="4"/><circle cx="12" cy="12" r="10"/>
+</symbol>
+<symbol id="iconGleanTag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/>
+</symbol>
+<symbol id="iconGleanComment" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+</symbol>
+<symbol id="iconGleanTrash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+</symbol>
+<symbol id="iconGleanSidebar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+  <rect width="18" height="18" x="3" y="3" rx="2"/><path d="M15 3v18"/>
 </symbol>`);
 
         // 设置只在此处加载一次；面板/弹窗都读这个缓存
@@ -517,7 +529,8 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
 
         // Epoch 7 Phase 5 / Protocol v1.7.5: 统一全端入口挂载（小驴罗盘顶栏+悬浮球双入口收敛）
         if (typeof lvLaunchpad?.ensureUnifiedEntry === "function") {
-            this.mobileEntryCleaner = lvLaunchpad.ensureUnifiedEntry();
+            this.mobileEntryCleaner = lvLaunchpad.ensureUnifiedEntry(this);
+            lvLaunchpad.registerHostApi?.({ openTab, openMobileFileById, app: this.app });
         } else if (typeof lvLaunchpad?.ensureMobileEntry === "function") {
             this.mobileEntryCleaner = lvLaunchpad.ensureMobileEntry();
         }
@@ -748,6 +761,11 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
             digit: 4,
             badge: unread > 0 ? `${unread} 篇未读` : undefined,
             badgeType: "primary",
+            /* 罗盘每次打开实时拉取未读数，读完自动隐藏徽章 */
+            badgeProvider: () => {
+                const n = this.getUnreadCount();
+                return n > 0 ? `${n} 篇未读` : undefined;
+            },
             actions: ["今日阅读池", "继续上次阅读", "稍后读收件箱", "剪藏剪贴板内容"],
             topBarElement: this.topBarElement,
             onClick: () => this.openInbox(),

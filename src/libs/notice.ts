@@ -78,6 +78,14 @@ export function showNotice(
     });
 }
 
+export function showMessage(
+    message: string,
+    timeout = 3000,
+    type: "info" | "error" | "success" | "warn" = "info"
+): string {
+    return showNotice(message, timeout, type);
+}
+
 /**
  * 剪藏完成回执卡片化：使用 lvNotify.card，附带【查看文档】快捷跳转按钮
  */

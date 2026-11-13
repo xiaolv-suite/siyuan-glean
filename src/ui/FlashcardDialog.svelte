@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount, untrack } from "svelte";
-    import { showMessage } from "siyuan";
+    import { showMessage } from "../libs/notice";
     import { t } from "../libs/i18n";
     import { installEscapeHandler } from "../libs/modal-focus";
     import { aiFailureKey } from "../libs/ai-feedback";

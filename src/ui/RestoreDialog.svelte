@@ -4,7 +4,7 @@
      * 仅宿主内的文章弹出（非宿主文章恢复走既有直接动作）：仅恢复 / 恢复并移出宿主。
      * 恢复 = 状态写回 later；移出目标 = 宿主所在文件夹（从当前位置推导，无隐式状态）。
      */
-    import { showMessage } from "siyuan";
+    import { showMessage } from "../libs/notice";
     import { onMount } from "svelte";
     import type { GleanFacade } from "../types";
     import { t } from "../libs/i18n";

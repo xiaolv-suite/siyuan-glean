@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { openTab, showMessage } from "siyuan";
+    import { openTab } from "siyuan";
+    import { showMessage } from "../libs/notice";
     import type { GleanFacade } from "../types";
     import { t } from "../libs/i18n";
     import { pickRoamingArticle, type RoamingPick, type RoamingTimeBudget } from "../domain/roaming";

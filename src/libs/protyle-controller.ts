@@ -10,6 +10,7 @@ export interface ProtyleController {
     setMode(mode: ProtyleMode): void;
     resize(): void;
     destroy(): void;
+    getInstance?: () => ProtyleInstance | null;
 }
 
 interface ControllerOptions {
@@ -47,6 +48,7 @@ export function createProtyleController(options: ControllerOptions): ProtyleCont
             invoke((current) => { current.switchMode(mode); appliedMode = mode; });
         },
         resize() { invoke((current) => current.resize()); },
+        getInstance() { return disposed ? null : instance; },
         destroy() {
             if (disposed) return;
             disposed = true;

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { showMessage } from "siyuan";
+    import { showMessage } from "../libs/notice";
     import { t, type I18nBundle } from "../libs/i18n.ts";
     import {
         FOLD_LEVEL_CONFIGS,
@@ -39,6 +39,14 @@
     const activeConfig = $derived(
         FOLD_LEVEL_CONFIGS.find((c) => c.level === currentLevel) ?? FOLD_LEVEL_CONFIGS[1]
     );
+
+    function isUrlText(text: string): boolean {
+        return /^https?:\/\//i.test(text.trim());
+    }
+
+    function isDateText(text: string): boolean {
+        return /^\d{4}[-/.]\d{1,2}[-/.]\d{1,2}/.test(text.trim()) && text.trim().length <= 25;
+    }
 
     function setLevel(lvl: FoldLevel): void {
         currentLevel = lvl;
@@ -150,21 +158,18 @@
             {/if}
         </div>
         <div class="glean-fold-reader__desc-row">
-            <span>{t(i18n, activeConfig.descKey)}</span>
-            <div class="glean-fold-reader__ops-row">
-                {#if nodes.length > 0}
-                    <button
-                        type="button"
-                        class="glean-linkish glean-fold-reader__copy-btn"
-                        title={t(i18n, "foldReader.copyMarkdown")}
-                        onclick={copyCurrentOutlineMarkdown}
-                    >
-                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
-                        <span>{t(i18n, "foldReader.copyMarkdown")}</span>
-                    </button>
-                {/if}
-                <span class="glean-kbdhint" aria-hidden="true"><kbd>1-5</kbd> {t(i18n, "foldReader.desc")}</span>
-            </div>
+            <span class="glean-fold-reader__desc-text">{t(i18n, activeConfig.descKey)}</span>
+            {#if nodes.length > 0}
+                <button
+                    type="button"
+                    class="glean-btn glean-btn--ghost glean-btn--xs glean-fold-reader__copy-btn"
+                    title={t(i18n, "foldReader.copyMarkdown")}
+                    onclick={copyCurrentOutlineMarkdown}
+                >
+                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
+                    <span>{t(i18n, "foldReader.copyMarkdown")}</span>
+                </button>
+            {/if}
         </div>
     </header>
 
@@ -251,9 +256,25 @@
                         {#if effectiveLevel === 1}
                             <p class="glean-fold-card__text-full">{node.fullText}</p>
                         {:else if effectiveLevel === 2}
-                            <blockquote class="glean-fold-card__brief">“{node.brief}”</blockquote>
+                            {#if isUrlText(node.brief)}
+                                <div class="glean-fold-card__url-chip" title={node.brief}>
+                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanExternal" /></svg>
+                                    <span>{node.brief}</span>
+                                </div>
+                            {:else if isDateText(node.brief)}
+                                <div class="glean-fold-card__date-chip">{node.brief}</div>
+                            {:else}
+                                <blockquote class="glean-fold-card__brief">“{node.brief}”</blockquote>
+                            {/if}
                         {:else if effectiveLevel === 3}
-                            <div class="glean-fold-card__brief">“{node.brief}”</div>
+                            {#if isUrlText(node.brief)}
+                                <div class="glean-fold-card__url-chip" title={node.brief}>
+                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanExternal" /></svg>
+                                    <span>{node.brief}</span>
+                                </div>
+                            {:else}
+                                <div class="glean-fold-card__brief">“{node.brief}”</div>
+                            {/if}
                             {#if node.points && node.points.length > 0}
                                 <ul class="glean-fold-card__points">
                                     {#each node.points as pt}

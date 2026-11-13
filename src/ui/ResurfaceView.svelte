@@ -1,7 +1,8 @@
 <script lang="ts">
 /** 今日拾遗视图（T-1400/T-1402/T-1717）：确定性挑选，读了/改天/归档，平静原则文案。
  * 重浮是纯投影：输入是父级刚对账过的索引（T-1710），本组件不再另读缓存。 */
-import { openTab, showMessage } from "siyuan";
+import { openTab } from "siyuan";
+import { showMessage } from "../libs/notice";
 import { onDestroy, tick } from "svelte";
 import type { GleanFacade } from "../types";
 import { t } from "../libs/i18n";
@@ -1024,6 +1025,8 @@ async function exportPicksToDailyNote(): Promise<void> {
             </div>
         {/if}
 
+        {#if (completionStreak > 0 || recent7Days.some((d) => d.completed)) || activeContinue}
+        <div class="glean-surf-hero-grid" class:glean-surf-hero-grid--dual={(completionStreak > 0 || recent7Days.some((d) => d.completed)) && Boolean(activeContinue)}>
         {#if completionStreak > 0 || recent7Days.some((d) => d.completed)}
             <div class="glean-surf-banner">
                 <div class="glean-surf-streak-card">
@@ -1097,6 +1100,8 @@ async function exportPicksToDailyNote(): Promise<void> {
                     </div>
                 {/if}
             </section>
+        {/if}
+        </div>
         {/if}
 
         {#if startedToday.length > 0}

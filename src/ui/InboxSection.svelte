@@ -1,6 +1,6 @@
 <script lang="ts">
 /** 收集箱区（T-1500）：云端收集箱条目列表 → 一键迁入读库。不可用时保留原因和重试入口。 */
-import { showMessage } from "siyuan";
+import { showMessage } from "../libs/notice";
 import type { GleanFacade } from "../types";
 import { t } from "../libs/i18n";
 import { removeShorthands, type Shorthand } from "../api/inbox";

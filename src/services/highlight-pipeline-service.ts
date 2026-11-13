@@ -3,7 +3,7 @@
  * 优先通过 lvAutomation.trigger("siyuan-glean", "create-card-request", payload) 全生态广播，
  * 无规则消费/未安装闪卡时优雅降级为复制闪卡 Markdown 到剪贴板。
  */
-import { showMessage } from "siyuan";
+import { showMessage } from "../libs/notice";
 import type { GleanFacade } from "../types.ts";
 import { t } from "../libs/i18n.ts";
 import { lvLaunchpad, lvActivity } from "../libs/notice.ts";

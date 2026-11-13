@@ -165,19 +165,20 @@
 </script>
 
 <section class="glean-reading-position" aria-labelledby={titleId} aria-busy={busy}>
-    <div id={titleId} class="glean-reading-position__title" role="heading" aria-level="3">
-        {t(i18n, "reading.position.title")}
+    <div id={titleId} class="glean-reading-position__title" role="heading" aria-level="3" title={t(i18n, "reading.position.hint")}>
+        <span>{t(i18n, "reading.position.title")}</span>
         {#if estimatedRatio !== null}
             <span class="glean-badge glean-badge--pri" title={t(i18n, "reading.position.progress", { n: estimatedRatio })}>
                 {t(i18n, "reading.position.progress", { n: estimatedRatio })}
             </span>
         {/if}
     </div>
-    <p class="glean-reading-position__hint">{t(i18n, "reading.position.hint")}</p>
     <div class="glean-reading-position__actions" role="group" aria-label={t(i18n, "reading.position.title")}>
         <button class="glean-btn glean-btn--ghost" disabled={busy || !snapshot} onclick={() => void remember()}>{t(i18n, "reading.position.remember")}</button>
         <button class="glean-btn glean-btn--ghost" disabled={busy || !snapshot?.position} onclick={() => void restore()}>{t(i18n, "reading.position.restore")}</button>
-        <button class="glean-btn glean-btn--ghost" disabled={busy} onclick={() => void reload()}>{t(i18n, "reading.position.reload")}</button>
+        <button class="glean-icon-btn glean-reading-position__reload-btn" disabled={busy} title={t(i18n, "reading.position.reload")} aria-label={t(i18n, "reading.position.reload")} onclick={() => void reload()}>
+            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanRefresh" /></svg>
+        </button>
         {#if blockFallback?.docId === docId}
             <button class="glean-btn glean-btn--ghost" disabled={busy} onclick={() => void openSavedBlock()}>{t(i18n, "reading.position.openBlock")}</button>
         {/if}
@@ -185,13 +186,14 @@
             <button class="glean-btn glean-btn--ghost" disabled={busy} onclick={() => facade.openReadingDocument(docId)}>{t(i18n, "reading.position.openDocument")}</button>
         {/if}
     </div>
-    <div class="glean-reading-position__status" class:glean-reading-position__status--visible={busy || Boolean(messageKey)} class:glean-reading-position__status--error={/(Failed|Missing)$/.test(messageKey) || messageKey.endsWith("Missing") || messageKey.endsWith("changed")} class:glean-reading-position__status--success={messageKey === "reading.position.saved" || messageKey === "reading.position.restored"} role="status" aria-live="polite">{busy ? t(i18n, "panel.loading") : messageKey ? t(i18n, messageKey) : ""}</div>
+    {#if messageKey && messageKey !== "reading.position.none" && messageKey !== "reading.position.ready"}
+        <div class="glean-reading-position__status" class:glean-reading-position__status--visible={busy || Boolean(messageKey)} class:glean-reading-position__status--error={/(Failed|Missing)$/.test(messageKey) || messageKey.endsWith("Missing") || messageKey.endsWith("changed")} class:glean-reading-position__status--success={messageKey === "reading.position.saved" || messageKey === "reading.position.restored"} role="status" aria-live="polite">{busy ? t(i18n, "panel.loading") : messageKey ? t(i18n, messageKey) : ""}</div>
+    {/if}
 </section>
 
 <style>
     .glean-reading-position { margin-top: var(--glean-space-3); padding: var(--glean-space-3); border: 1px solid var(--glean-border-soft); border-radius: var(--glean-radius-lg, 16px); color: var(--b3-theme-on-background); background: var(--glean-inset-surface); }
     .glean-reading-position__title { font-size: var(--glean-text-sm); font-weight: 700; }
-    .glean-reading-position__hint { margin: var(--glean-space-1) 0 var(--glean-space-2); color: var(--b3-theme-on-surface); font-size: var(--glean-text-xs); line-height: 1.6; overflow-wrap: anywhere; }
     .glean-reading-position__actions { display: flex; flex-wrap: wrap; gap: var(--glean-space-2); }
     .glean-reading-position__actions :global(button) { min-width: 0; border-radius: var(--glean-radius-pill); padding: var(--glean-space-1) var(--glean-space-3); transition: background-color 160ms var(--glean-ease-out), border-color 160ms var(--glean-ease-out), transform 120ms var(--glean-ease-out); }
     .glean-reading-position__actions :global(button:active:not(:disabled)) { transform: translateY(1px); }

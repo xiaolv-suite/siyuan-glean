@@ -122,6 +122,12 @@ export async function markGleanHighlight(blockId: string, color?: string): Promi
     await setBlockAttrs(blockId, patch);
 }
 
+/** 统一封装批注块扩展属性写入（tags / memo / replies / whale 双向写回），遵守 clip-store 单点属性写边界。 */
+export async function writeAnnotationAttrs(blockId: string, attrs: Record<string, string | null>): Promise<void> {
+    if (!/^\d{14}-[0-9a-z]{7}$/.test(blockId)) return;
+    await setBlockAttrs(blockId, attrs);
+}
+
 /** 为指定块写入思源原生 memo 属性（备注一等公民） */
 export async function writeBlockMemo(blockId: string, memo: string): Promise<void> {
     if (!/^\d{14}-[0-9a-z]{7}$/.test(blockId)) return;

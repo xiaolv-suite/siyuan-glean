@@ -1,7 +1,7 @@
 <script lang="ts">
 /** 迁移导入弹窗（T-1501）：Pocket HTML/CSV、Omnivore JSON、wallabag JSON → 思源读库。 */
 import { onMount } from "svelte";
-import { showMessage } from "siyuan";
+import { showMessage } from "../libs/notice";
 import { listNotebooks, type NotebookMeta } from "../api/client";
 import {
     previewImport,

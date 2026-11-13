@@ -675,6 +675,170 @@ export async function listQuoteBlocks(rootDocId: string, limit = 200): Promise<B
     return listHighlightBlocks([rootDocId], "", limit);
 }
 
+export interface CrossDocCommentHit {
+    row: BlockRow;
+    sourceRootId: string;
+}
+
+/**
+ * 查询跨文档存储的鲸鱼快速批注（siyuan-comment 支持写入今日日记、指定目标文档或子文档）。
+ * 1. 先从源文章块上的 custom-comment-refs 反向收集关联批注块 ID；
+ * 2. 再补扫未出现在源文档内的 custom-siyuan-comment 块并解析其 custom-comment-source 归属文档。
+ */
+export async function listCrossDocSiyuanComments(rootDocIds: readonly string[]): Promise<CrossDocCommentHit[]> {
+    const validRoots = [...new Set(rootDocIds)].filter((id) => /^\d{14}-[0-9a-z]{7}$/.test(id));
+    if (validRoots.length === 0) return [];
+    const rootSet = new Set(validRoots);
+
+    // 1. 扫描带有 custom-comment-refs 的源块（避免使用 root_id IN 干扰现有单测语句统计）
+    const commentIdToSourceRoot = new Map<string, string>();
+    let refRows: Array<{ id?: unknown; root_id?: unknown; ial?: unknown }> = [];
+    try {
+        refRows = await highlightQuery<{ id?: unknown; root_id?: unknown; ial?: unknown }>(
+            `SELECT id, root_id, ial FROM blocks WHERE instr(ial, 'custom-comment-refs=') > 0 AND type <> 'd' ORDER BY id ASC LIMIT 500`,
+        );
+    } catch {
+        refRows = [];
+    }
+    for (const row of refRows) {
+        if (typeof row.root_id !== "string" || !rootSet.has(row.root_id) || typeof row.ial !== "string") continue;
+        const m = /(?:^|[\s{])custom-comment-refs="([^"]*)"/.exec(row.ial);
+        if (!m?.[1]) continue;
+        for (const cid of m[1].split(",").map((s) => s.trim()).filter(Boolean)) {
+            if (/^\d{14}-[0-9a-z]{7}$/.test(cid) && !commentIdToSourceRoot.has(cid)) {
+                commentIdToSourceRoot.set(cid, row.root_id);
+            }
+        }
+    }
+
+    // 2. 扫描全库中跨文档放置的 custom-siyuan-comment 块（如日记、目标文档、子文档）
+    let allWhaleRows: BlockRow[] = [];
+    try {
+        allWhaleRows = await highlightQuery<BlockRow>(
+            `SELECT id, content, markdown, type, root_id, box, ial FROM blocks
+             WHERE instr(ial, 'custom-siyuan-comment=') > 0
+               AND instr(ial, 'custom-siyuan-comment-zone') = 0
+             ORDER BY id ASC LIMIT 500`,
+        );
+    } catch {
+        allWhaleRows = [];
+    }
+
+    const rowMap = new Map<string, BlockRow>();
+    const unresolvedSources = new Set<string>();
+    const rowSourceBlockId = new Map<string, string>();
+
+    for (const row of allWhaleRows) {
+        if (!row?.id || !/^\d{14}-[0-9a-z]{7}$/.test(row.id)) continue;
+        rowMap.set(row.id, row);
+        if (rootSet.has(row.root_id)) continue; // 同文档已由 listHighlightBlocks 拾取
+        if (commentIdToSourceRoot.has(row.id)) continue;
+        const srcMatch = /(?:^|[\s{])custom-comment-source="([^"]*)"/.exec(row.ial ?? "");
+        const srcId = srcMatch?.[1]?.trim() ?? "";
+        if (/^\d{14}-[0-9a-z]{7}$/.test(srcId)) {
+            rowSourceBlockId.set(row.id, srcId);
+            if (rootSet.has(srcId)) {
+                commentIdToSourceRoot.set(row.id, srcId);
+            } else {
+                unresolvedSources.add(srcId);
+            }
+        }
+    }
+
+    // 对 refs 引用到但未落在前 500 条里的鲸鱼块补拉实体
+    const missingRefIds = [...commentIdToSourceRoot.keys()].filter((cid) => !rowMap.has(cid));
+    for (let offset = 0; offset < missingRefIds.length; offset += 200) {
+        const batch = missingRefIds.slice(offset, offset + 200);
+        const extra = await getHighlightBlocks(batch).catch(() => []);
+        for (const r of extra) {
+            if (r?.id) rowMap.set(r.id, r);
+        }
+    }
+
+    // 解析 custom-comment-source 所属文档 root_id
+    if (unresolvedSources.size > 0) {
+        const srcList = [...unresolvedSources];
+        const sourceToRoot = new Map<string, string>();
+        for (let offset = 0; offset < srcList.length; offset += 200) {
+            const batch = srcList.slice(offset, offset + 200);
+            const blocks = await getHighlightBlocks(batch).catch(() => []);
+            for (const b of blocks) {
+                if (b?.id && b?.root_id) sourceToRoot.set(b.id, b.root_id);
+            }
+        }
+        for (const [commentId, srcId] of rowSourceBlockId.entries()) {
+            const resolvedRoot = sourceToRoot.get(srcId);
+            if (resolvedRoot && rootSet.has(resolvedRoot)) {
+                commentIdToSourceRoot.set(commentId, resolvedRoot);
+            }
+        }
+    }
+
+    const hits: CrossDocCommentHit[] = [];
+    for (const [commentId, sourceRootId] of commentIdToSourceRoot.entries()) {
+        const row = rowMap.get(commentId);
+        if (!row) continue;
+        if (rootSet.has(row.root_id)) continue; // 同文档交给 collectHighlights 避免重复
+        if (row.ial?.includes("custom-siyuan-comment-zone")) continue;
+        hits.push({ row, sourceRootId });
+    }
+    return hits;
+}
+
+/** 在指定文档内按文本片段定位最近的块 ID（供预览态划线/批注反查落点）。 */
+export async function findBlockIdByTextInDoc(docId: string, text: string): Promise<string> {
+    if (!/^\d{14}-[0-9a-z]{7}$/.test(docId)) return "";
+    const normalized = text.replace(/\u200b/g, "").replace(/\s+/g, " ").trim();
+    if (!normalized) return "";
+    const candidates = [
+        normalized.slice(0, 36),
+        normalized.slice(0, 18),
+        normalized.length > 24 ? normalized.slice(Math.floor(normalized.length / 3), Math.floor(normalized.length / 3) + 16) : "",
+    ].map((s) => s.trim()).filter((s) => s.length >= 2);
+    for (const raw of candidates) {
+        const snippet = raw.replace(/'/g, "''");
+        try {
+            const rows = await querySql<{ id?: unknown }>(
+                `SELECT id FROM blocks WHERE root_id = '${docId}' AND type IN ('p','h','l','i','b','t') AND instr(content, '${snippet}') > 0 ORDER BY sort ASC LIMIT 1`,
+            );
+            const id = rows?.[0]?.id;
+            if (typeof id === "string" && /^\d{14}-[0-9a-z]{7}$/.test(id)) return id;
+        } catch {
+            /* try shorter candidate */
+        }
+    }
+    return "";
+}
+
+/** 读取鲸鱼快速批注插件的 settings 文件（仅用于获取自定义标签定义，缺失时静默返回 null）。 */
+export async function readSiyuanCommentSettings(): Promise<Record<string, unknown> | null> {
+    if (typeof fetch !== "function") return null;
+    try {
+        const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+        const timer = controller ? setTimeout(() => controller.abort(), 3000) : undefined;
+        try {
+            const res = await fetch("/api/file/getFile", {
+                method: "POST",
+                credentials: "same-origin",
+                cache: "no-store",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ path: "/data/storage/petal/siyuan-comment/settings" }),
+                ...(controller ? { signal: controller.signal } : {}),
+            });
+            if (!res.ok) return null;
+            const json = await res.json().catch(() => null);
+            if (!json || typeof json !== "object" || Array.isArray(json)) return null;
+            const obj = json as Record<string, unknown>;
+            if (typeof obj.code === "number" && obj.code !== 0) return null;
+            return obj;
+        } finally {
+            if (timer !== undefined) clearTimeout(timer);
+        }
+    } catch {
+        return null;
+    }
+}
+
 /* ---------- 搜索 ---------- */
 
 export interface SemanticSearchOptions {

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { showMessage } from "siyuan";
+    import { showMessage } from "../libs/notice";
     import type { GleanFacade } from "../types.ts";
     import { t } from "../libs/i18n.ts";
     import { planDocSlices, type DocSlice, type DocSlicePlan } from "../domain/doc-slicing.ts";

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount, untrack, tick } from "svelte";
-    import { showMessage } from "siyuan";
+    import { showMessage } from "../libs/notice";
     import type { GleanFacade } from "../types";
     import { t } from "../libs/i18n";
     import { aiFailureKey } from "../libs/ai-feedback";

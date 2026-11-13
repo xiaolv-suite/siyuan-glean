@@ -1,7 +1,7 @@
 <script lang="ts">
 /** 存量迁移器弹窗（T-1102）：步进器（扫描报告→分批回填→完成）+ 统计卡 + 可暂停续跑。 */
 import { onMount, tick } from "svelte";
-import { showMessage } from "siyuan";
+import { showMessage } from "../libs/notice";
 import type { GleanFacade } from "../types";
 import { t } from "../libs/i18n";
 import { installEscapeHandler } from "../libs/modal-focus";

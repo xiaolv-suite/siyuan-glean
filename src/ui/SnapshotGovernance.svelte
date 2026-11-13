@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { showMessage } from "siyuan";
+    import { showMessage } from "../libs/notice";
     import type { GleanFacade } from "../types";
     import { t } from "../libs/i18n";
     import { installEscapeHandler } from "../libs/modal-focus";

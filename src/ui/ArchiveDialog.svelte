@@ -7,7 +7,7 @@
      * 彻底删除为二级动作（二次确认，purgeDoc 防误删同名新文档由服务层保证）。
      * 今日拾遗与自动化批量不进此对话框（快速归档=默认项语义，T-1875 禁止批量默认不可逆）。
      */
-    import { showMessage } from "siyuan";
+    import { showMessage } from "../libs/notice";
     import { onMount, tick } from "svelte";
     import type { GleanFacade } from "../types";
     import { t } from "../libs/i18n";

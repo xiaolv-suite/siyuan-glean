@@ -8,6 +8,7 @@
     import { tick, untrack } from "svelte";
     import { t } from "../libs/i18n";
     import { createProtyleController, type ProtyleController, type ProtyleMode } from "../libs/protyle-controller";
+    import { refreshWhaleDecorationsInProtyle, waitForWysiwygReady } from "../services/siyuan-comment-bridge";
 
     interface Props {
         app: App;
@@ -16,11 +17,12 @@
         i18n: Record<string, string>;
         host?: HTMLDivElement | null;
         controller?: ProtyleController | null;
+        protyleInstance?: unknown;
         className?: string;
         onOpenDocument: () => void;
     }
 
-    let { app, docId, mode, i18n, host = $bindable(null), controller = $bindable(null), className = "", onOpenDocument }: Props = $props();
+    let { app, docId, mode, i18n, host = $bindable(null), controller = $bindable(null), protyleInstance = $bindable(null), className = "", onOpenDocument }: Props = $props();
     let attempt = $state(0);
     let stage = $state<"loading" | "ready" | "failed">("loading");
     let retryButton = $state<HTMLButtonElement | null>(null);
@@ -115,12 +117,14 @@
                 observer.observe(target);
                 return () => observer.disconnect();
             },
-            onReady: () => {
+            onReady: (inst) => {
                 if (active) {
                     window.clearTimeout(timeout);
                     window.clearInterval(readyCheckTimer);
                     stage = "ready";
+                    protyleInstance = inst ?? current.getInstance?.() ?? null;
                     patchWechatImages(element);
+                    refreshWhaleDecorationsInProtyle(app, id);
                 }
             },
             onError: (error) => {
@@ -133,16 +137,27 @@
             },
         });
         controller = current;
+        protyleInstance = current.getInstance?.() ?? null;
         return () => {
             active = false;
             window.clearTimeout(timeout);
             window.clearInterval(readyCheckTimer);
             current.destroy();
             if (controller === current) controller = null;
+            protyleInstance = null;
         };
     });
 
-    $effect(() => { controller?.setMode(mode); });
+    $effect(() => {
+        controller?.setMode(mode);
+        if (mode === "wysiwyg" && docId) {
+            let active = true;
+            void waitForWysiwygReady(host, 1800).then((el) => {
+                if (active && el) refreshWhaleDecorationsInProtyle(app, docId);
+            });
+            return () => { active = false; };
+        }
+    });
 </script>
 
 <div class="glean-protyle-shell glean-protyle-shell--{stage} {className}" aria-busy={stage === "loading"}>

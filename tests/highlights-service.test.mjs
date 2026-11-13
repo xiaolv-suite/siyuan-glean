@@ -18,9 +18,9 @@ registerHooks({
 });
 
 const {
-    copyHighlights, exportHighlightsCsv, highlightDocumentTitle, listDocHighlights, listLibraryHighlights,
-    listLibraryQuotes, listQuoteRoots, getQuoteColor, setQuoteColor,
-    prepareHighlightExport, revalidateHighlights, saveHighlightDraft,
+    addAnnotationReply, copyHighlights, deleteAnnotation, exportHighlightsCsv, highlightDocumentTitle, listDocHighlights, listLibraryHighlights,
+    listLibraryQuotes, listQuoteRoots, getQuoteColor, setAnnotationTag, setQuoteColor,
+    prepareHighlightExport, revalidateHighlights, saveHighlightDraft, updateHighlightMemo,
 } = await import("../src/services/highlights.ts");
 const { listHighlightBlocks, getHighlightBlocks, listHighlightDocuments } = await import("../src/api/client.ts");
 const { DEFAULT_SETTINGS } = await import("../src/services/settings.ts");
@@ -68,6 +68,8 @@ function harness() {
             database.prepare(`UPDATE blocks SET ${field} = ? WHERE id = ?`).run(value, id);
         }
     }
+    const updateIdx = routes => calls.filter(c => routes.includes(c.route)).length;
+    void updateIdx;
     globalThis.__gleanHighlightsPost = async (route, body) => {
         calls.push({ route, body: structuredClone(body) });
         switch (route) {
@@ -90,6 +92,13 @@ function harness() {
                 if (failure.mark) return { code: 1, msg: "mark failed" };
                 setAttrs(body.id, { ...attributes.get(body.id), ...body.attrs });
                 return { code: 0, data: null };
+            case "/api/block/updateBlock":
+                database.prepare("UPDATE blocks SET markdown = ?, content = ? WHERE id = ?").run(body.data, body.data, body.id);
+                return { code: 0, data: [] };
+            case "/api/block/deleteBlock":
+                database.prepare("DELETE FROM blocks WHERE id = ?").run(body.id);
+                attributes.delete(body.id);
+                return { code: 0, data: [] };
             case "/api/filetree/createDocWithMd":
                 if (heldCreate) await heldCreate;
                 addDocument(draftId, {}, { content: labels.title, hpath: body.path, box: body.notebook, markdown: body.markdown });
@@ -382,4 +391,77 @@ test("Svelte 编译通过，UI 保留制卡、受设置约束的相关旧文、�
     assert.match(source, /min-height: 44px/);
     assert.match(source, /scope === "current"/);
     assert.match(source, /saveHighlightDraft/);
+});
+
+test("跨文档鲸鱼批注（日记/目标文档/子文档）完整读取、去重分组与双向写回（想法/标记/追记/删除）", async () => {
+    const fixture = harness();
+    const dailyDocId = rootId(50);
+    const sourceParaId = quoteId(10);
+    const whaleInDailyId = quoteId(11);
+    const whaleMemberHiddenId = quoteId(12);
+    const whaleZoneId = quoteId(13);
+
+    // 1. 源文章段落挂载 custom-comment-refs
+    fixture.addDocument(dailyDocId, {});
+    fixture.addBlock(sourceParaId, originalId, {
+        type: "p",
+        content: "原始文章段落",
+        markdown: "原始文章段落",
+        ial: `{: custom-comment-refs="${whaleInDailyId}"}`,
+    });
+    // 2. 批注块存储在今日日记 dailyDocId 中
+    fixture.addBlock(whaleInDailyId, dailyDocId, {
+        type: "p",
+        content: "跨文档批注思考",
+        markdown: "跨文档批注思考",
+    });
+    fixture.setAttrs(whaleInDailyId, {
+        "custom-siyuan-comment": "true",
+        "custom-comment-source": sourceParaId,
+        "custom-comment-text": "跨行\"划线\"_esc_newline_第二句",
+        "custom-comment-tag": "important",
+        "custom-comment-highlight-style": "red",
+        "custom-comment-replies": JSON.stringify([{ id: "r1", md: "初始追记" }]),
+    });
+    // 3. 组员隐藏块 & zone 容器块不得重复出现
+    fixture.addBlock(whaleMemberHiddenId, dailyDocId, {
+        type: "p",
+        content: "组员隐藏",
+        ial: `{: custom-siyuan-comment="true" custom-comment-source="${sourceParaId}" custom-comment-text="隐藏" custom-comment-block-hidden="true" custom-comment-group="g1" custom-comment-group-master="${whaleInDailyId}"}`,
+    });
+    fixture.addBlock(whaleZoneId, originalId, {
+        type: "h",
+        content: "批注",
+        ial: `{: custom-siyuan-comment="true" custom-siyuan-comment-zone="true"}`,
+    });
+
+    const items = await listDocHighlights(originalId);
+    const whaleItem = items.find((it) => it.id === whaleInDailyId);
+    assert.ok(whaleItem, "必须读取到保存在日记里的跨文档鲸鱼批注");
+    assert.equal(whaleItem.rootId, originalId);
+    assert.equal(whaleItem.commentDocId, dailyDocId);
+    assert.equal(whaleItem.commentBlockId, whaleInDailyId);
+    assert.equal(whaleItem.sourceBlockId, sourceParaId);
+    assert.equal(whaleItem.text, "跨行\"划线\"\n第二句");
+    assert.equal(whaleItem.memo, "跨文档批注思考");
+    assert.equal(whaleItem.annotationTag, "important");
+    assert.equal(whaleItem.color, "red");
+    assert.deepEqual(whaleItem.replies, [{ id: "r1", time: undefined, author: undefined, md: "初始追记" }]);
+    assert.equal(items.some((it) => it.id === whaleMemberHiddenId || it.id === whaleZoneId), false);
+
+    // 双向写回：修改标签、追加追记、修改想法、删除清理 refs
+    await setAnnotationTag(whaleItem, "todo");
+    assert.equal(fixture.attributes.get(whaleInDailyId)["custom-comment-tag"], "todo");
+
+    const updatedReplies = await addAnnotationReply(whaleItem, "第二条追记");
+    assert.equal(updatedReplies.length, 2);
+    assert.equal(updatedReplies[1].md, "第二条追记");
+
+    await updateHighlightMemo(whaleItem, "更新后的鲸鱼批注");
+    assert.equal(fixture.block(whaleInDailyId).markdown, "更新后的鲸鱼批注");
+
+    fixture.setAttrs(sourceParaId, { "custom-comment-refs": whaleInDailyId });
+    await deleteAnnotation(whaleItem, "delete-block");
+    assert.equal(fixture.block(whaleInDailyId), undefined);
+    assert.equal(fixture.attributes.get(sourceParaId)["custom-comment-refs"], "");
 });

@@ -5,7 +5,7 @@
      * 这里只渲染标题、载体、来源和状态，正文始终由思源编辑器承载。
      * 当前根块属性每次加载都从 clip-store 读取，索引不能覆盖编辑器里的事实。
      */
-    import { showMessage } from "siyuan";
+    import { showMessage } from "../libs/notice";
     import { untrack } from "svelte";
     import type { GleanFacade } from "../types";
     import { t } from "../libs/i18n";
@@ -114,6 +114,24 @@
 
     $effect(() => {
         return installMobileViewportVars(rootEl, facade.isMobile);
+    });
+
+    $effect(() => {
+        if (!maintenanceOpen || typeof document === "undefined") return;
+        const onDocPointerDown = (event: PointerEvent) => {
+            const target = event.target instanceof Element ? event.target : null;
+            if (target?.closest(".glean-reading-context__maintenance")) return;
+            maintenanceOpen = false;
+        };
+        const onDocKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape") maintenanceOpen = false;
+        };
+        document.addEventListener("pointerdown", onDocPointerDown, true);
+        document.addEventListener("keydown", onDocKeyDown, true);
+        return () => {
+            document.removeEventListener("pointerdown", onDocPointerDown, true);
+            document.removeEventListener("keydown", onDocKeyDown, true);
+        };
     });
 
     function carrierLabel(value: string | undefined): string {
@@ -336,12 +354,15 @@
 {:else if context}
     <aside bind:this={rootEl} class="glean-reading-context" class:glean-reading-context--pill={pillMode} aria-labelledby={titleId} aria-busy={busy || measuring || refreshing}>
         <div class="glean-reading-context__main">
-            <div id={titleId} class="glean-reading-context__title" role="heading" aria-level="2" title={context.title}>{context.title || t(i18n, "panel.untitled")}</div>
+            <div class="glean-reading-context__headline">
+                <span class={`glean-dot glean-dot--${context.status}`} aria-hidden="true"></span>
+                <div id={titleId} class="glean-reading-context__title" role="heading" aria-level="2" title={context.title}>{context.title || t(i18n, "panel.untitled")}</div>
+            </div>
             <div class="glean-reading-context__meta">
                 <span class={`glean-carrier-badge glean-carrier-badge--${resolveCarrier(context.contentType)}`}>
                     {carrierLabel(context.contentType)}
                 </span>
-                <span class="glean-reading-context__status">{statusLabel(context.status)}</span>
+                <span class={`glean-reading-context__status glean-st-badge glean-st-badge--${context.status}`}>{statusLabel(context.status)}</span>
                 {#if isWechat}
                     <span class="glean-badge glean-source-wechat" title={displayWechatAuthor(context?.author) || t(i18n, "wechat.officialAccount")}>
                         <span class="glean-wechat-dot" aria-hidden="true"></span>{t(i18n, "wechat.name")}{#if displayWechatAuthor(context?.author)} · {displayWechatAuthor(context?.author)}{/if}
@@ -350,34 +371,20 @@
                 {#if context.url && contextDisplaySource(context.url, context.site)}
                     <span class="glean-reading-context__source" title={context.url}>{contextDisplaySource(context.url, context.site)}</span>
                 {/if}
+                {#if (context.words ?? 0) > 0}
+                    <span class="glean-reading-context__words">{t(i18n, "panel.words", { n: context.words ?? 0 })}</span>
+                {/if}
             </div>
         </div>
         <div class="glean-reading-context__actions">
-            <button type="button" class="glean-reading-context__source-btn glean-reading-context__pill-toggle" title={t(i18n, pillMode ? "reading.pillExpand" : "reading.pillCollapse")} aria-label={t(i18n, pillMode ? "reading.pillExpand" : "reading.pillCollapse")} onclick={togglePillMode}>
-                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanWheat" /></svg>
-                <span>{t(i18n, pillMode ? "reading.pillExpand" : "reading.pillCollapse")}</span>
-            </button>
-            <button type="button" class="glean-reading-context__source-btn" title={t(i18n, "action.copyBlockRef")} onclick={() => void copyDocBlockRef()}>
-                <svg class="glean-icon" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
-                <span>{t(i18n, "action.copyBlockRef")}</span>
-            </button>
-            <button type="button" class="glean-reading-context__source-btn" title={t(i18n, "reading.openInReader")} onclick={() => { if (context) (facade.openReader ?? facade.openReadingDocument).call(facade, context.id); }}>
+            <button type="button" class="glean-reading-context__source-btn glean-reading-context__source-btn--primary" title={t(i18n, "reading.openInReader")} onclick={() => { if (context) (facade.openReader ?? facade.openReadingDocument).call(facade, context.id); }}>
                 <svg class="glean-icon" aria-hidden="true"><use href="#iconGleanNews" /></svg>
                 <span>{t(i18n, "reading.openInReader")}</span>
             </button>
-            <button
-                type="button"
-                class="glean-reading-context__source-btn"
-                title={t(i18n, "reading.syncMetaCalloutHint")}
-                disabled={syncingCallout || busy}
-                onclick={() => void handleSyncMetaCallout()}
-            >
-                <svg class="glean-icon" aria-hidden="true"><use href="#iconGleanPin" /></svg>
-                <span>{syncingCallout ? t(i18n, "reading.syncingMetaCallout") : t(i18n, "reading.syncMetaCallout")}</span>
-            </button>
             {#if hasSourceAction(context.contentType, context.url)}
-                <button type="button" class="glean-reading-context__source-btn glean-reading-context__source-btn--primary" title={t(i18n, "reading.sourceHint")} onclick={openSource}>
-                    <svg class="glean-icon" aria-hidden="true"><use href="#iconGleanExternal" /></svg>{t(i18n, "clip.openSource")}
+                <button type="button" class="glean-reading-context__source-btn" title={t(i18n, "reading.sourceHint")} onclick={openSource}>
+                    <svg class="glean-icon" aria-hidden="true"><use href="#iconGleanExternal" /></svg>
+                    <span>{t(i18n, "clip.openSource")}</span>
                 </button>
             {:else if resolveCarrier(context.contentType) === "link"}
                 <span class="glean-reading-context__missing">{t(i18n, "clip.sourceMissing")}</span>
@@ -405,34 +412,61 @@
                 onArchive={() => { if (context) facade.openArchiveDialog(context.id); }}
                 onRestore={() => { if (context) facade.openRestoreDialog(context.id); }}
             />
+            <button type="button" class="glean-reading-context__source-btn" title={t(i18n, "action.copyBlockRef")} aria-label={t(i18n, "action.copyBlockRef")} onclick={() => void copyDocBlockRef()}>
+                <svg class="glean-icon" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
+            </button>
             <button type="button" class="glean-reading-context__back" onclick={backToLibrary}>
                 {t(i18n, "reading.backToLibrary")}
             </button>
             <details id={maintenanceId} class="glean-reading-context__maintenance" aria-labelledby={maintenanceTitleId} bind:open={maintenanceOpen}>
                 <summary id={maintenanceTitleId}>{t(i18n, "reading.maintenance")}</summary>
-                {#if bodyState === "unmeasured"}
+                <div class="glean-reading-context__maintenance-panel">
+                    {#if bodyState === "unmeasured"}
+                        <button
+                            type="button"
+                            class="glean-reading-context__source-btn"
+                            disabled={measuring}
+                            title={t(i18n, "clip.bodyCheckHint")}
+                            aria-label={t(i18n, "clip.bodyCheckHint")}
+                            aria-busy={measuring}
+                            onclick={checkBody}
+                        ><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanSearch" /></svg><span>{t(i18n, "clip.bodyCheck")}</span></button>
+                    {/if}
                     <button
                         type="button"
                         class="glean-reading-context__source-btn"
-                        disabled={measuring}
-                        title={t(i18n, "clip.bodyCheckHint")}
-                        aria-label={t(i18n, "clip.bodyCheckHint")}
-                        aria-busy={measuring}
-                        onclick={checkBody}
-                    ><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanSearch" /></svg>{t(i18n, "clip.bodyCheck")}</button>
-                {/if}
-                <button type="button" class="glean-reading-context__source-btn" onclick={() => openFormattingDialog(facade, context!.id)}>{t(i18n, "formatting.open")}</button>
-                <button
-                    type="button"
-                    class="glean-reading-context__source-btn"
-                    disabled={recordingDailyNote || busy}
-                    title={t(i18n, "dailyNote.recordAction")}
-                    onclick={() => void handleRecordDailyNote()}
-                >
-                    <svg class="glean-icon" aria-hidden="true"><use href="#iconGleanNews" /></svg>
-                    <span>{recordingDailyNote ? t(i18n, "dailyNote.recording") : t(i18n, "dailyNote.recordAction")}</span>
-                </button>
+                        title={t(i18n, "reading.syncMetaCalloutHint")}
+                        disabled={syncingCallout || busy}
+                        onclick={() => void handleSyncMetaCallout()}
+                    >
+                        <svg class="glean-icon" aria-hidden="true"><use href="#iconGleanPin" /></svg>
+                        <span>{syncingCallout ? t(i18n, "reading.syncingMetaCallout") : t(i18n, "reading.syncMetaCallout")}</span>
+                    </button>
+                    <button type="button" class="glean-reading-context__source-btn" onclick={() => openFormattingDialog(facade, context!.id)}>
+                        <svg class="glean-icon" aria-hidden="true"><use href="#iconGleanEdit" /></svg>
+                        <span>{t(i18n, "formatting.open")}</span>
+                    </button>
+                    <button
+                        type="button"
+                        class="glean-reading-context__source-btn"
+                        disabled={recordingDailyNote || busy}
+                        title={t(i18n, "dailyNote.recordAction")}
+                        onclick={() => void handleRecordDailyNote()}
+                    >
+                        <svg class="glean-icon" aria-hidden="true"><use href="#iconGleanNews" /></svg>
+                        <span>{recordingDailyNote ? t(i18n, "dailyNote.recording") : t(i18n, "dailyNote.recordAction")}</span>
+                    </button>
+                </div>
             </details>
+            <button
+                type="button"
+                class="glean-reading-context__source-btn glean-reading-context__pill-toggle"
+                title={t(i18n, pillMode ? "reading.pillExpand" : "reading.pillCollapse")}
+                aria-label={t(i18n, pillMode ? "reading.pillExpand" : "reading.pillCollapse")}
+                onclick={togglePillMode}
+            >
+                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanWheat" /></svg>
+            </button>
         </div>
     </aside>
 {/if}

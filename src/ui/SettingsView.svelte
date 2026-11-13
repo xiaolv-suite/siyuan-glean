@@ -1,7 +1,8 @@
 <script lang="ts">
 /** 设置视图：分类导航与连续配置分组，保留草稿、保存回执及维护任务入口。 */
 import { onMount, tick } from "svelte";
-import { getFrontend, showMessage } from "siyuan";
+import { getFrontend } from "siyuan";
+import { showMessage } from "../libs/notice";
 import { listNotebooks, type NotebookMeta } from "../api/client";
 import { rebuildIndex } from "../services/clip-store";
 import { bindAllClipsToLibrary } from "../services/library-db";

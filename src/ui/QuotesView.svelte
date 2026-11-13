@@ -6,7 +6,8 @@
  * （PanelView 无 "quotes"，数据源与已接线的 HighlightView 不同——本组件聚合全库引述块、
  * 不依赖读库收录）。接线与否是产品决策；接线时需同步加导航、i18n 与路由测试。 */
 import { onMount } from "svelte";
-import { openTab, showMessage } from "siyuan";
+import { openTab } from "siyuan";
+import { showMessage } from "../libs/notice";
 import type { GleanFacade } from "../types";
 import { t } from "../libs/i18n";
 import type { GleanIndex } from "../services/index-store";

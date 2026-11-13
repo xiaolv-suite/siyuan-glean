@@ -2,10 +2,10 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
-    cleanHighlightText, escapeHighlightText, filterHighlights, formatHighlightShare, formatHighlightTime,
+    cleanHighlightText, decodeSiyuanCommentIalValue, escapeHighlightText, filterHighlights, formatHighlightShare, formatHighlightTime,
     groupHighlightsByArticle, highlightBlockLink, highlightFacets, highlightMarker, pageHighlights,
-    renderArticleHighlightsMarkdown, renderHighlightsCsv, renderHighlightsMarkdown,
-    retainHighlightSelection, safeHighlightCsvCell, selectHighlights, type HighlightItem,
+    parseIalAttr, parseSiyuanCommentReplies, renderArticleHighlightsMarkdown, renderHighlightsCsv, renderHighlightsMarkdown,
+    resolveAnnotationTagDisplay, retainHighlightSelection, safeHighlightCsvCell, selectHighlights, type HighlightItem,
 } from "../src/domain/highlights.ts";
 
 const rootId = "20261004100000-aaaaaaa";
@@ -238,3 +238,65 @@ test("HighlightView 兼容显示 siyuan-comment 鲸鱼批注与思源原生块�
     assert.match(view, /openDoc\(item\.rootId, item\.sourceBlockId \|\| item\.id\)/);
     assert.match(view, /openDoc\(group\.rootId, item\.sourceBlockId \|\| item\.id\)/);
 });
+
+test("siyuan-comment IAL 实体解码、追记解析、自定义标签与来源筛选", () => {
+    const encoded = "第一行 &quot;重点&quot;_esc_newline_第二行 &lt;tag&gt; &amp; &#65;";
+    assert.equal(decodeSiyuanCommentIalValue(encoded), "第一行 \"重点\"\n第二行 <tag> & A");
+
+    const ial = `{: id="20261112100000-abc1234" custom-siyuan-comment="true" custom-comment-text="${encoded}" custom-comment-tag="custom-9999" custom-comment-replies="[{&quot;id&quot;:&quot;r1&quot;,&quot;time&quot;:&quot;2026-11-12 10:00&quot;,&quot;author&quot;:&quot;whale&quot;,&quot;md&quot;:&quot;一条追记&quot;}]"}`;
+    assert.equal(parseIalAttr(ial, "custom-comment-text"), "第一行 \"重点\"\n第二行 <tag> & A");
+    assert.equal(parseIalAttr(ial, "custom-comment-tag"), "custom-9999");
+
+    const replies = parseSiyuanCommentReplies(parseIalAttr(ial, "custom-comment-replies"));
+    assert.deepEqual(replies, [{ id: "r1", time: "2026-11-12 10:00", author: "whale", md: "一条追记" }]);
+
+    const customDisplay = resolveAnnotationTagDisplay("custom-9999", [{ value: "custom-9999", label: "经典金句", icon: "💎", color: "#007AFF" }]);
+    assert.deepEqual(customDisplay, { value: "custom-9999", label: "经典金句", icon: "💎", color: "#007AFF" });
+
+    const gleanItem = item(1, { annotationKind: "glean", text: "拾遗摘要" });
+    const whaleItem = item(2, { annotationKind: "siyuan-comment", annotationTag: "important", replies, text: "划线正文", memo: "深度思考" });
+    assert.deepEqual(filterHighlights([gleanItem, whaleItem], { annotationKind: "siyuan-comment" }).map((v) => v.id), [whaleItem.id]);
+    assert.deepEqual(filterHighlights([gleanItem, whaleItem], { search: "一条追记" }).map((v) => v.id), [whaleItem.id]);
+
+    const share = formatHighlightShare(whaleItem);
+    assert.ok(share.includes("> 💡 深度思考"));
+    const md = renderHighlightsMarkdown([whaleItem], labels);
+    assert.ok(md.includes("> 💡 深度思考"));
+    assert.ok(md.includes("一条追记"));
+});
+
+test("AnnotationEditorDialog 接线、连续批注切换与边距注记防遮挡契约", () => {
+    const editor = readFileSync(new URL("../src/ui/AnnotationEditorDialog.svelte", import.meta.url), "utf8");
+    const reader = readFileSync(new URL("../src/ui/ReaderTab.svelte", import.meta.url), "utf8");
+    const view = readFileSync(new URL("../src/ui/HighlightView.svelte", import.meta.url), "utf8");
+    const svc = readFileSync(new URL("../src/services/highlights.ts", import.meta.url), "utf8");
+
+    assert.match(svc, /export async function setAnnotationColor/);
+    assert.match(svc, /export async function removeAnnotationReply/);
+    assert.match(editor, /setAnnotationColor/);
+    assert.match(editor, /removeAnnotationReply/);
+    assert.match(editor, /glean-ann-editor__pager/);
+    assert.match(editor, /glean-ann-editor__templates/);
+    assert.match(reader, /import AnnotationEditorDialog from "\.\/AnnotationEditorDialog\.svelte";/);
+    assert.match(reader, /class:glean-reader--has-margin-notes=/);
+    assert.match(view, /import AnnotationEditorDialog from "\.\/AnnotationEditorDialog\.svelte";/);
+});
+
+test("阅读器划词选区防清除锁、wysiwyg 就绪等待与伴生栏标签显式呈现契约", () => {
+    const reader = readFileSync(new URL("../src/ui/ReaderTab.svelte", import.meta.url), "utf8");
+    const bridge = readFileSync(new URL("../src/services/siyuan-comment-bridge.ts", import.meta.url), "utf8");
+    const styles = readFileSync(new URL("../src/index.scss", import.meta.url), "utf8");
+
+    assert.match(reader, /lockSelectionBar/);
+    assert.match(reader, /onpointerdown=\{/);
+    assert.match(reader, /waitForWysiwygReady/);
+    assert.match(bridge, /export async function waitForWysiwygReady/);
+    assert.match(bridge, /normStart/);
+    assert.match(styles, /\.glean-reader__side-nav-btn[\s\S]*span\s*\{[\s\S]*display:\s*inline\s*!important;/);
+    assert.match(styles, /\.glean-reader__host \.protyle-preview__action\s*\{\s*display:\s*none\s*!important;/);
+    assert.match(styles, /\.glean-reader__appearance-popover[\s\S]*&:not\(\[open\]\)\s*\{\s*display:\s*none\s*!important;/);
+    assert.match(reader, /toolsAppearancePanelId/);
+    assert.match(reader, /toolsAppearanceOpen/);
+});
+
+

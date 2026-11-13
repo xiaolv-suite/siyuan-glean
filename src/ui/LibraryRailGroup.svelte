@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { showMessage, type Plugin } from "siyuan";
+    import { type Plugin } from "siyuan";
+    import { showMessage } from "../libs/notice";
     import { t, type I18nBundle } from "../libs/i18n";
     import { projectRailFacets, railFacetSelected, type RailGroupKey, type RailGroupPrefs } from "../domain/library-rail";
     import type { LibraryFacet } from "../domain/library-view";

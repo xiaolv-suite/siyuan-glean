@@ -1,6 +1,6 @@
 <script lang="ts">
     import { tick } from "svelte";
-    import { showMessage } from "siyuan";
+    import { showMessage } from "../libs/notice";
     import type { ClipStatus } from "../domain/schema";
     import type { I18nBundle } from "../libs/i18n";
     import { t } from "../libs/i18n";

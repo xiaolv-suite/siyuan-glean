@@ -184,10 +184,10 @@ In just 3 minutes, transform scattered clippings into structured knowledge asset
 
 ## 📝 Recent Updates
 
-**v1.4.7 (2026-11-12)**: SiYuan 3.8.10+ native adaptations (Zen mode dock coordination & doc tree context menus), Escape dismissal on tag alias manager, mobile status-pill/safe-area/16px companion bar polish, passive scroll & lazy avatar loading, and ecosystem regression contracts.
+**v1.4.8 (2026-11-12)**: SiYuan 3.8.10+ native adaptations (Zen mode dock coordination & doc tree context menus), Escape dismissal on tag alias manager, mobile status-pill/safe-area/16px companion bar polish, passive scroll & lazy avatar loading, and ecosystem regression contracts.
 
 <details>
-<summary>View v1.4.7 Highlights & Historical Releases</summary>
+<summary>View v1.4.8 Highlights & Historical Releases</summary>
 
 - **SiYuan 3.8.10+ Native Adaptations**: Immersive Zen reading mode (`F11`) automatically coordinates folding/restoring native docks; preview card titles and reader entry support native document tree context menus (`showDocTreeNativeMenu`).
 - **Interaction & Shortcut Hardening**: Tag alias manager modal supports Escape key dismissal; ecosystem-wide clipboard error-handling contracts enforced.

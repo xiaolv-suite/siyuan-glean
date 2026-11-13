@@ -13624,6 +13624,104 @@ body.b3-theme-dark .glean-panel--mobile,
     opacity: 0.85;
 }
 
+.glean-annotation-inline-edit {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 6px;
+    padding: 6px 8px;
+    border-radius: var(--glean-radius-md);
+    background: var(--glean-inset-surface);
+    border: 1px solid var(--glean-border-soft);
+}
+
+.glean-annotation-inline-edit__input {
+    width: 100%;
+    resize: vertical;
+    font-size: var(--glean-text-xs);
+    line-height: 1.45;
+}
+
+.glean-annotation-inline-edit__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+.glean-annotation-replies {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 6px;
+    padding-left: 8px;
+    border-left: 2px solid color-mix(in srgb, var(--glean-color-action) 35%, transparent);
+}
+
+.glean-annotation-reply {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    font-size: var(--glean-text-xs);
+    line-height: 1.4;
+    color: var(--b3-theme-on-surface);
+}
+
+.glean-annotation-reply__meta {
+    font-size: 10px;
+    opacity: 0.65;
+}
+
+.glean-annotation-tag-picker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 6px;
+    padding: 6px;
+    border-radius: var(--glean-radius-md);
+    background: var(--glean-inset-surface);
+    border: 1px solid var(--glean-border-soft);
+}
+
+.glean-annotation-tag-picker__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 7px;
+    border-radius: var(--glean-radius-pill);
+    border: 1px solid var(--glean-border-soft);
+    background: var(--glean-card-surface);
+    color: var(--b3-theme-on-surface);
+    font-size: 11px;
+    cursor: pointer;
+
+    &--active {
+        border-color: var(--glean-color-action);
+        color: var(--glean-color-action);
+        font-weight: 600;
+    }
+}
+
+.glean-reader__selection-btn--whale {
+    color: var(--glean-color-action);
+    font-weight: 600;
+}
+
+.glean-reader__whale-slide-btn.glean-btn--active {
+    background: color-mix(in srgb, var(--glean-color-action) 14%, transparent);
+    color: var(--glean-color-action);
+    border-color: color-mix(in srgb, var(--glean-color-action) 35%, transparent);
+}
+
+.glean-margin-note-card__replies {
+    margin-top: 3px;
+    font-size: 10px;
+    color: var(--glean-color-action);
+}
+
+.glean-op-btn--danger:hover {
+    color: #ef4444;
+}
+
 /* BL-25: 读库拖拽放置区（DropZone） */
 .glean-dropzone-overlay {
     position: absolute;
@@ -13885,15 +13983,22 @@ body.b3-theme-dark .glean-panel--mobile,
     right: 0;
     z-index: 100;
     width: 280px;
-    padding: var(--glean-space-3);
     border-radius: var(--glean-radius-lg, 16px);
     background: var(--glean-card-surface);
     border: 1px solid var(--glean-border-soft);
-    box-shadow: var(--glean-shadow-floating, 0 8px 24px rgba(0,0,0,0.15));
-    display: flex;
-    flex-direction: column;
-    gap: var(--glean-space-2);
-    animation: gleanFadeIn 0.15s ease-out;
+    box-shadow: var(--glean-shadow-floating, 0 8px 24px rgba(0, 0, 0, 0.15));
+
+    &:not([open]) {
+        display: none !important;
+    }
+
+    &[open] {
+        display: flex;
+        flex-direction: column;
+        gap: var(--glean-space-2);
+        padding: var(--glean-space-3);
+        animation: gleanFadeIn 0.15s ease-out;
+    }
 
     .glean-reader__appearance-row {
         display: flex;
@@ -13904,11 +14009,18 @@ body.b3-theme-dark .glean-panel--mobile,
 
         select {
             width: 120px;
-            height: 36px;
-            /* ≥16px 防 iOS 聚焦自动放大 */
-            font-size: 16px;
+            height: 30px;
+            font-size: 12.5px;
             border-radius: var(--glean-radius-pill);
         }
+    }
+}
+
+@media (max-width: 640px), (pointer: coarse) {
+    .glean-reader__appearance-popover .glean-reader__appearance-row select {
+        height: 36px;
+        /* ≥16px 防 iOS 聚焦自动放大 */
+        font-size: 16px;
     }
 }
 
@@ -15486,3 +15598,960 @@ body:has(.b3-dialog--open, #lv-launchpad-sheet-mask, .lvct-dialog-mask, .sw__mob
         background: var(--b3-theme-surface-lighter);
     }
 }
+
+/* ============================================================================
+ * UI 全面升级精修层（v3 Overhaul：整体工作台 / 阅读器 / 伴生栏 / 批注精修）
+ * ============================================================================ */
+
+/* 1. 整体页面与工作台层级恢复（消除双头冗余、恢复卡片浮起层次与呼吸留白） */
+@container glean-shell (min-width: 760px) {
+    .glean-panel--shell:not(.glean-panel--mobile) {
+        [data-rail-dup="true"] {
+            display: none !important;
+        }
+
+        .glean-panel__head {
+            padding: 14px 24px 12px;
+            border-bottom: 1px solid color-mix(in srgb, var(--glean-line) 55%, transparent);
+            background: color-mix(in srgb, var(--glean-card-surface) 92%, var(--glean-app-background));
+        }
+
+        .glean-brand__name {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.015em;
+            color: var(--glean-ink);
+        }
+
+        .glean-brand__sub {
+            font-size: 12px;
+            color: var(--glean-ink-3);
+            margin-top: 2px;
+        }
+
+        .glean-workbench-rail {
+            width: 68px;
+            padding: 16px 6px;
+            gap: 8px;
+            background: color-mix(in srgb, var(--glean-app-background) 85%, var(--glean-card-surface));
+            border-right: 1px solid color-mix(in srgb, var(--glean-line) 65%, transparent);
+        }
+
+        .glean-workbench-rail__item {
+            position: relative;
+            width: 54px;
+            min-height: 48px;
+            border-radius: 12px;
+            transition: background-color 150ms ease, color 150ms ease, transform 150ms ease;
+
+            &--on {
+                background: color-mix(in srgb, var(--lv-brand) 14%, var(--glean-card-surface));
+                color: var(--lv-brand);
+                box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--lv-brand) 24%, transparent);
+            }
+        }
+    }
+}
+
+/* 恢复工作台主区域卡片微阴影与边框质感 */
+.glean-panel {
+    .glean-surf-card,
+    .glean-kcard,
+    .glean-tile,
+    .glean-block,
+    .glean-surf-continue,
+    .glean-surf-banner {
+        border: 1px solid color-mix(in srgb, var(--glean-line) 75%, transparent);
+        box-shadow: var(--glean-shadow-card);
+        background: var(--glean-card-surface);
+        border-radius: var(--glean-radius-lg, 16px);
+    }
+
+    .glean-drow {
+        margin-bottom: 8px;
+        padding: 12px 16px;
+        border: 1px solid color-mix(in srgb, var(--glean-line) 72%, transparent);
+        border-radius: var(--glean-radius-md, 12px);
+        background: var(--glean-card-surface);
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+        transition: border-color 140ms ease, box-shadow 140ms ease, background-color 140ms ease;
+    }
+
+    .glean-drow__ti {
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 1.4;
+        color: var(--glean-ink);
+    }
+
+    .glean-drow__meta {
+        gap: 6px 8px;
+        margin-top: 6px;
+    }
+
+    .glean-drow .glean-snap-badge {
+        opacity: 0.72;
+        transition: opacity 140ms ease;
+    }
+
+    .glean-drow:hover .glean-snap-badge {
+        opacity: 1;
+    }
+
+    .glean-saved-views-fold,
+    .glean-kbdhint-fold,
+    .glean-surf-context-fold {
+        border: 1px solid color-mix(in srgb, var(--glean-line) 65%, transparent);
+        background: color-mix(in srgb, var(--glean-inset-surface) 80%, transparent);
+        border-radius: var(--glean-radius-md, 12px);
+    }
+}
+
+@media (hover: hover) {
+    .glean-panel :where(.glean-surf-card, .glean-kcard, .glean-drow, .glean-tile):hover {
+        border-color: color-mix(in srgb, var(--glean-color-action) 34%, var(--glean-border-soft));
+        box-shadow: var(--glean-shadow-card-hover);
+    }
+}
+
+/* 今日拾遗 Hero 双栏 Bento 网格 */
+.glean-surf-hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    margin: 12px 16px 8px;
+
+    .glean-surf-banner,
+    .glean-surf-continue {
+        margin: 0 !important;
+    }
+}
+
+@container glean-content (min-width: 760px) {
+    .glean-surf-hero-grid--dual {
+        grid-template-columns: minmax(280px, 0.95fr) minmax(320px, 1.25fr);
+        align-items: stretch;
+        margin-inline: 20px;
+    }
+
+    .glean-surf-hero-grid:not(.glean-surf-hero-grid--dual) {
+        margin-inline: 20px;
+    }
+
+    .glean-surf-ops-bar {
+        margin-inline: 20px;
+    }
+}
+
+.glean-surf-card {
+    padding: 18px 20px !important;
+    gap: 10px !important;
+
+    .glean-surf__title-action {
+        font-size: 16px;
+        font-weight: 650;
+        line-height: 1.4;
+        color: var(--glean-ink);
+    }
+
+    .glean-surf__summary {
+        padding: 10px 12px;
+        border-left: 3px solid color-mix(in srgb, var(--glean-color-action) 42%, transparent);
+        background: color-mix(in srgb, var(--glean-inset-surface) 82%, transparent);
+        border-radius: 0 var(--glean-radius-sm, 8px) var(--glean-radius-sm, 8px) 0;
+        font-size: 13px;
+        line-height: 1.6;
+        color: var(--glean-ink-2);
+    }
+}
+
+/* 2. 原生编辑器伴生栏页面 (.glean-reading-context) 全面重塑 */
+.glean-reading-context {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    flex-wrap: nowrap !important;
+    gap: 8px 12px !important;
+    padding: 6px 14px !important;
+    height: 42px !important;
+    min-height: 42px !important;
+    box-sizing: border-box !important;
+    border-bottom: 1px solid var(--glean-border-soft);
+    background: color-mix(in srgb, var(--glean-card-surface) 95%, var(--glean-app-background));
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.glean-reading-context__main {
+    min-width: 0 !important;
+    max-width: 48% !important;
+    flex: 1 1 auto !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 8px !important;
+    overflow: hidden !important;
+}
+
+.glean-reading-context__headline {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    flex: 0 1 auto;
+    overflow: hidden;
+}
+
+.glean-reading-context__title {
+    font-size: 13px !important;
+    font-weight: 650 !important;
+    color: var(--glean-ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.glean-reading-context__meta {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    flex-wrap: nowrap !important;
+    flex-shrink: 0 !important;
+    margin-top: 0 !important;
+}
+
+.glean-reading-context__words {
+    font-size: 11px;
+    color: var(--glean-ink-3);
+    font-variant-numeric: tabular-nums;
+}
+
+.glean-reading-context__actions {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    flex-wrap: nowrap !important;
+    gap: 4px !important;
+    overflow: visible !important;
+    flex: 0 0 auto !important;
+
+    .glean-reading-context__source-btn,
+    .glean-reading-context__back,
+    .glean-status-actions__btn,
+    .glean-reading-context__maintenance > summary {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 4px;
+        height: 28px !important;
+        min-height: 28px !important;
+        line-height: 1 !important;
+        padding: 0 9px !important;
+        border-radius: var(--glean-radius-sm, 8px) !important;
+        font-size: 11.5px !important;
+        font-weight: 500;
+        white-space: nowrap !important;
+    }
+
+    .glean-reading-context__source-btn--primary {
+        border-radius: var(--glean-radius-pill) !important;
+        padding-inline: 11px !important;
+    }
+
+    .glean-reading-context__pill-toggle {
+        width: 28px !important;
+        min-width: 28px !important;
+        padding: 0 !important;
+        border-radius: 50% !important;
+    }
+}
+
+.glean-reading-context__maintenance {
+    position: relative;
+}
+
+.glean-reading-context__maintenance[open] .glean-reading-context__maintenance-panel {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 6px);
+    z-index: var(--glean-z-popover, 30);
+    min-width: 200px;
+    padding: 6px;
+    border-radius: var(--glean-radius-md, 12px);
+    background: var(--glean-card-surface);
+    border: 1px solid var(--glean-border-soft);
+    box-shadow: var(--glean-shadow-float);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    animation: glean-menu-in 130ms var(--glean-ease-out) both;
+
+    .glean-reading-context__source-btn {
+        width: 100%;
+        justify-content: flex-start !important;
+        height: 32px !important;
+        min-height: 32px !important;
+        border: 0 !important;
+        background: transparent !important;
+
+        &:hover {
+            background: var(--glean-primary-soft) !important;
+        }
+    }
+}
+
+/* 悬浮极简胶囊模式精修 */
+.glean-reading-context--pill {
+    position: fixed !important;
+    bottom: calc(16px + var(--glean-keyboard-inset, 0px)) !important;
+    right: 24px !important;
+    z-index: 99 !important;
+    width: auto !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    padding: 0 10px !important;
+    box-shadow: var(--glean-shadow-float) !important;
+    background: color-mix(in srgb, var(--glean-card-surface) 94%, transparent) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    gap: 8px !important;
+    border-radius: var(--glean-radius-pill) !important;
+
+    .glean-reading-context__actions {
+        flex: 0 0 auto !important;
+    }
+
+    &:hover,
+    &:focus-within {
+        max-width: min(92vw, 760px);
+        padding: 0 12px !important;
+    }
+}
+
+@container glean-reading-context (max-width: 960px) {
+    .glean-reading-context {
+        padding: 8px 12px !important;
+        gap: 8px !important;
+    }
+    .glean-reading-context__main {
+        max-width: 100% !important;
+    }
+    .glean-reading-context__actions {
+        justify-content: flex-start !important;
+        overflow-x: auto !important;
+        flex-wrap: nowrap !important;
+        padding-bottom: 2px;
+    }
+    .glean-reading-context__maintenance[open] .glean-reading-context__maintenance-panel {
+        position: fixed;
+        right: 12px;
+        top: auto;
+    }
+}
+
+/* 3. 拾遗阅读器页面 & 右侧伴生栏 (.glean-reader / .glean-reader__side) 全面精修 */
+.glean-reader__toolbar {
+    height: 44px !important;
+    min-height: 44px !important;
+    padding: 0 14px !important;
+    gap: 10px !important;
+    background: color-mix(in srgb, var(--glean-app-background) 86%, var(--glean-card-surface)) !important;
+    border-bottom: 1px solid var(--glean-border-soft) !important;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+}
+
+.glean-reader__toolbar-heading {
+    gap: 2px;
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.glean-reader__toolbar-title {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: var(--glean-ink) !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+
+.glean-reader__toolbar-meta {
+    font-size: 11px !important;
+    color: var(--glean-ink-3) !important;
+    opacity: 0.85 !important;
+}
+
+.glean-reader__toolbar-right {
+    gap: 5px !important;
+}
+
+.glean-reader__toolbar-primary {
+    height: 30px !important;
+    min-height: 30px !important;
+    padding: 0 12px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    border-radius: var(--glean-radius-pill) !important;
+    box-shadow: var(--glean-shadow-accent);
+}
+
+/* 阅读器正文阅读纸感舞台与去噪（兼顾阅读模式 .protyle-preview > .b3-typography 与编辑模式 .protyle-wysiwyg） */
+.glean-reader[data-reader-font-size="small"] { --glean-reader-font-size: .92em; }
+.glean-reader[data-reader-font-size="normal"] { --glean-reader-font-size: 1em; }
+.glean-reader[data-reader-font-size="large"] { --glean-reader-font-size: 1.12em; }
+.glean-reader[data-reader-line-height="compact"] { --glean-reader-line-height: 1.4; }
+.glean-reader[data-reader-line-height="normal"] { --glean-reader-line-height: 1.65; }
+.glean-reader[data-reader-line-height="relaxed"] { --glean-reader-line-height: 1.92; }
+.glean-reader[data-reader-width="narrow"] { --glean-reader-width: 720px; }
+.glean-reader[data-reader-width="normal"] { --glean-reader-width: 880px; }
+.glean-reader[data-reader-width="wide"] { --glean-reader-width: 1120px; }
+
+.glean-reader__host {
+    padding-inline: 0 !important;
+    overflow: hidden !important;
+}
+
+.glean-reader__host .protyle-content,
+.glean-reader__host .protyle-preview {
+    padding: 0 clamp(12px, 2.2vw, 24px) !important;
+    margin: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+}
+
+.glean-reader__host .protyle-wysiwyg,
+.glean-reader__host .protyle-preview > .b3-typography {
+    width: 100%;
+    max-width: var(--glean-reader-width, min(100%, 880px)) !important;
+    margin: 16px auto 40px !important;
+    padding: 32px clamp(24px, 4.5vw, 56px) 72px !important;
+    border-radius: var(--glean-radius-lg, 16px);
+    background: var(--glean-card-surface);
+    color: var(--glean-reader-foreground, var(--glean-ink));
+    font-size: var(--glean-reader-font-size, 1em) !important;
+    line-height: var(--glean-reader-line-height, 1.65) !important;
+    border: 1px solid color-mix(in srgb, var(--glean-line) 55%, transparent);
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03), 0 12px 32px -12px rgba(15, 23, 42, 0.06);
+    box-sizing: border-box;
+    overflow: visible !important;
+    overflow-wrap: anywhere;
+}
+
+.glean-reader__host .protyle-preview > .b3-typography :where(a, code, pre, p) {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+/* 彻底隐藏阅读模式下的 protyle-attr 重复时间戳与块计数噪声 */
+.glean-reader__host .protyle-attr {
+    display: none !important;
+}
+
+.glean-reader[data-reader-mode="edit"] .glean-reader__host [data-node-id]:hover > .protyle-attr {
+    display: flex !important;
+    opacity: 0.65;
+}
+
+.glean-reader[data-reader-theme="paper"] :where(.protyle-wysiwyg, .protyle-preview > .b3-typography) {
+    background: #fcfaf5 !important;
+    color: #292524 !important;
+}
+
+.glean-reader[data-reader-theme="eye"] :where(.protyle-wysiwyg, .protyle-preview > .b3-typography) {
+    background: #eef6f0 !important;
+    color: #1e293b !important;
+}
+
+/* 悬浮选区动作栏单行精致微胶囊（宽度收敛至 ≤440px，严禁换行错位） */
+.glean-reader__selection-bar {
+    padding: 4px 8px !important;
+    gap: 4px !important;
+    width: auto !important;
+    max-width: 440px !important;
+    flex-wrap: nowrap !important;
+    border-radius: var(--glean-radius-pill) !important;
+    border: 1px solid var(--glean-border-soft) !important;
+    background: color-mix(in srgb, var(--glean-card-surface) 96%, transparent) !important;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.12), 0 1px 3px rgba(15, 23, 42, 0.06) !important;
+}
+
+.glean-reader__selection-sep {
+    width: 1px;
+    height: 16px;
+    background: color-mix(in srgb, var(--glean-line) 80%, transparent);
+    flex-shrink: 0;
+}
+
+/* 右侧伴生栏修复内边距与现代分域设计 */
+.glean-reader__side {
+    width: 348px !important;
+    max-width: min(370px, 38vw) !important;
+    padding: 14px !important;
+    gap: 12px !important;
+    background: color-mix(in srgb, var(--glean-app-background) 80%, var(--glean-card-surface)) !important;
+    border-left: 1px solid color-mix(in srgb, var(--glean-line) 75%, transparent) !important;
+
+    > .glean-reader__title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 2px 10px;
+        margin: 0;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--glean-ink);
+        border-bottom: 1px solid color-mix(in srgb, var(--glean-line) 65%, transparent);
+    }
+
+    .glean-reader__side-nav {
+        padding: 4px !important;
+        gap: 3px !important;
+        border-radius: 12px !important;
+        border: 1px solid color-mix(in srgb, var(--glean-line) 65%, transparent) !important;
+        background: var(--glean-inset-surface) !important;
+    }
+
+    .glean-reader__side-nav-btn {
+        flex: 1 1 0;
+        padding: 6px 8px !important;
+        border-radius: 8px !important;
+        font-size: 11.5px !important;
+        justify-content: center;
+    }
+
+    .glean-reader__metric-capsule {
+        padding: 10px 12px !important;
+        border-radius: 12px !important;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+    }
+
+    .glean-reader__metric-val {
+        font-size: 14px !important;
+        font-weight: 700 !important;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .glean-reader__tab-panel,
+    .glean-reader__section--card {
+        padding: 12px !important;
+        border-radius: 12px !important;
+        background: var(--glean-card-surface) !important;
+        border: 1px solid color-mix(in srgb, var(--glean-line) 70%, transparent) !important;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03) !important;
+    }
+
+    .glean-reader__highlights-list {
+        max-height: none !important;
+        gap: 10px !important;
+        padding-right: 0 !important;
+    }
+
+    .glean-reader__highlight-card {
+        padding: 10px 12px !important;
+        border-radius: 10px !important;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+    }
+
+    .glean-reader__highlight-text {
+        -webkit-line-clamp: 4;
+        font-style: normal !important;
+        font-size: 12.5px !important;
+        line-height: 1.55 !important;
+        color: var(--glean-ink) !important;
+    }
+
+    .glean-reader__highlight-footer {
+        justify-content: space-between !important;
+        padding-top: 6px;
+        border-top: 1px dashed color-mix(in srgb, var(--glean-line) 65%, transparent);
+    }
+
+    .glean-reader__highlight-footer-left,
+    .glean-reader__highlight-footer-right {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        flex-wrap: wrap;
+    }
+
+    .glean-op-btn--primary-soft {
+        background: var(--glean-primary-soft);
+        color: var(--glean-color-action);
+    }
+
+    .glean-reader__tools-footer-ops {
+        padding-top: 4px;
+    }
+}
+
+/* 4. 暗黑模式兼容精修 */
+:where([data-theme-mode="dark"], body.body--dark, body.b3-theme-dark) {
+    .glean-reader__host .protyle-wysiwyg {
+        background: var(--glean-card-surface);
+        border-color: rgba(255, 255, 255, 0.08);
+    }
+    .glean-reader[data-reader-theme="paper"] .protyle-wysiwyg {
+        background: #24211d;
+        color: #ede8df;
+    }
+    .glean-reader[data-reader-theme="eye"] .protyle-wysiwyg {
+        background: #1b2520;
+        color: #ddebe3;
+    }
+}
+
+/* 5. 无障碍减弱动效守门 */
+@media (prefers-reduced-motion: reduce) {
+    .glean-panel .glean-drow,
+    .glean-reading-context__maintenance[open] .glean-reading-context__maintenance-panel,
+    .glean-ann-editor {
+        transition: var(--glean-motion-none) !important;
+        animation: none !important;
+        transform: none !important;
+    }
+}
+
+/* ============================================================================
+ * UI 深度精修第 2 轮（边距注记防遮挡 / 预览双栏阅读舞台 / 大纲树 / 读库顶栏收敛 / 统计 Bento）
+ * ============================================================================ */
+
+/* A. 边距悬浮注记独立右栏安全区（超宽屏下优雅留白，中小视口正文绝对不被挤压） */
+@media (min-width: 1560px) {
+    .glean-reader--has-margin-notes {
+        .glean-reader__host {
+            padding-right: 236px;
+        }
+
+        .glean-reader__back-to-top {
+            right: 252px;
+        }
+
+        .glean-reader__floating-progress {
+            right: 252px;
+        }
+    }
+}
+
+/* B. 阅读器大纲视觉层级（H1/H2/H3 字重差异 + 轻导引线） */
+.glean-reader__outline-item {
+    border-radius: 8px !important;
+    padding-block: 5px !important;
+    position: relative;
+
+    &[style*="--glean-outline-level:1"] .glean-reader__outline-text {
+        font-weight: 650;
+        color: var(--glean-ink);
+    }
+
+    &[style*="--glean-outline-level:2"] .glean-reader__outline-text {
+        font-weight: 500;
+        color: var(--glean-ink);
+    }
+
+    &[style*="--glean-outline-level:3"] .glean-reader__outline-text,
+    &[style*="--glean-outline-level:4"] .glean-reader__outline-text,
+    &[style*="--glean-outline-level:5"] .glean-reader__outline-text {
+        font-weight: 400;
+        opacity: 0.85;
+    }
+}
+
+/* C. 读库右侧双栏预览面板 (.glean-preview) 正文呼吸留白与统一质感 */
+.glean-preview-pane {
+    background: color-mix(in srgb, var(--glean-app-background) 78%, var(--glean-card-surface)) !important;
+    border-left: 1px solid color-mix(in srgb, var(--glean-line) 75%, transparent) !important;
+
+    .glean-protyle-mount .protyle-wysiwyg {
+        padding: 20px 24px 48px !important;
+        background: var(--glean-card-surface);
+        margin: 12px 14px 24px;
+        border-radius: var(--glean-radius-md, 12px);
+        border: 1px solid color-mix(in srgb, var(--glean-line) 55%, transparent);
+        box-shadow: 0 1px 4px rgba(15, 23, 42, 0.03);
+    }
+
+    .glean-preview__excerpt {
+        padding: 10px 14px;
+        border-top: 1px solid var(--glean-border-soft);
+        border-bottom: 0;
+        background: var(--glean-card-surface);
+        box-shadow: 0 -4px 16px rgba(15, 23, 42, 0.06);
+    }
+}
+
+/* D. 读库顶部工具链视觉降噪与紧凑统一 */
+.glean-panel--shell:not(.glean-panel--mobile) {
+    .glean-queues-row {
+        padding: 8px 20px 4px;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .glean-libbar {
+        padding: 4px 20px 8px;
+        gap: 8px;
+    }
+
+    .glean-saved-views-fold {
+        margin: 2px 20px 6px;
+        border: 1px dashed color-mix(in srgb, var(--glean-line) 65%, transparent);
+        background: transparent;
+
+        &[open] {
+            background: color-mix(in srgb, var(--glean-card-surface) 92%, var(--glean-app-background));
+            border-style: solid;
+        }
+    }
+
+    .glean-rail {
+        background: color-mix(in srgb, var(--glean-app-background) 78%, var(--glean-card-surface));
+        padding: 10px 8px;
+    }
+}
+
+/* E. 统计视图 (.glean-stats) Bento 卡片层级提升 */
+.glean-stats {
+    padding: 20px 24px !important;
+    gap: 16px !important;
+
+    .glean-stats__metric {
+        padding: 14px 16px;
+        border-radius: var(--glean-radius-md, 12px);
+        border: 1px solid color-mix(in srgb, var(--glean-line) 65%, transparent);
+        background: color-mix(in srgb, var(--glean-app-background) 60%, var(--glean-card-surface));
+        position: relative;
+        overflow: hidden;
+
+        &::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: color-mix(in srgb, var(--glean-color-data) 55%, transparent);
+        }
+
+        dd:not(.glean-stats__metric-hint) {
+            font-size: 28px;
+            font-weight: 700;
+            line-height: 1.2;
+            margin: 6px 0 2px;
+            color: var(--glean-ink);
+            font-variant-numeric: tabular-nums;
+        }
+    }
+
+    .glean-milestone-chip {
+        border: 1px solid color-mix(in srgb, var(--glean-line) 65%, transparent);
+        border-radius: var(--glean-radius-md, 12px);
+        background: color-mix(in srgb, var(--glean-inset-surface) 85%, transparent);
+
+        &--unlocked {
+            background: color-mix(in srgb, var(--glean-color-data) 10%, var(--glean-card-surface));
+            border-color: color-mix(in srgb, var(--glean-color-data) 35%, transparent);
+        }
+    }
+}
+
+/* F. 移动端阅读器伴生抽屉把手指示器 */
+@media (max-width: 680px) {
+    .glean-reader__side:not([hidden])::before {
+        content: "";
+        display: block;
+        width: 36px;
+        height: 4px;
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--glean-ink-3) 35%, transparent);
+        margin: 0 auto 8px;
+        flex-shrink: 0;
+    }
+}
+
+/* G. 修复伴生栏导航文字在 width<=348px 容器中被 @container max-width:320px 隐藏的 Bug，保持单行 5 格胶囊 */
+@container glean-reader-side (max-width: 360px) {
+    .glean-reader__side-nav {
+        flex-wrap: nowrap !important;
+        gap: 2px !important;
+        padding: 3px !important;
+    }
+
+    .glean-reader__side-nav-btn {
+        flex: 1 1 0 !important;
+        min-width: 0;
+        padding: 5px 4px !important;
+        gap: 3px !important;
+        font-size: 11px !important;
+        white-space: nowrap;
+
+        span {
+            display: inline !important;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    }
+}
+
+/* H. 隐藏阅读器预览模式冗余的思源原生设备宽度切换条（桌面/平板/移动端），保留拾遗自身 Aa 排版控制 */
+.glean-reader__host .protyle-preview__action {
+    display: none !important;
+}
+
+/* I. 微信卡折叠标题 & 伴生栏大纲/折叠/暗黑模式最终视觉精修 */
+.glean-reader__side {
+    width: 364px !important;
+    max-width: min(384px, 38vw) !important;
+    padding: 10px 12px !important;
+    gap: 10px !important;
+
+    > .glean-reader__title {
+        padding: 0 2px 8px;
+        font-size: 12.5px;
+    }
+
+    .glean-reader__metric-lbl {
+        opacity: 0.8;
+    }
+
+    .glean-reader__outline-head-ops {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px;
+        margin-left: 0;
+        margin-top: 2px;
+
+        .glean-btn,
+        .glean-reader__slice-btn {
+            margin-left: 0 !important;
+            width: 100%;
+            justify-content: center;
+            height: 26px !important;
+            min-height: 26px !important;
+            padding: 0 6px !important;
+            font-size: 11px !important;
+            border-radius: var(--glean-radius-sm, 8px) !important;
+        }
+    }
+
+    .glean-reader__outline-slice-marker {
+        margin: 4px 0 6px;
+    }
+
+    .glean-reader__outline-slice-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        max-width: 100%;
+        padding: 4px 10px;
+        border-radius: var(--glean-radius-pill);
+        background: color-mix(in srgb, var(--glean-color-action) 9%, var(--glean-inset-surface));
+        border: 1px solid color-mix(in srgb, var(--glean-color-action) 20%, transparent);
+        color: var(--glean-color-action);
+        font-size: 11.5px;
+        font-weight: 500;
+        box-sizing: border-box;
+
+        svg {
+            flex-shrink: 0;
+        }
+
+        span {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    }
+
+    .glean-reader__fold-section {
+        padding: 0 !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+
+        .glean-fold-reader {
+            padding: 0;
+            background: transparent;
+        }
+    }
+}
+
+:where([data-theme-mode="dark"], body.body--dark, body.b3-theme-dark) {
+    .glean-reader__host .protyle-preview > .b3-typography {
+        background: var(--glean-card-surface);
+        border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .glean-reader[data-reader-theme="paper"] .protyle-preview > .b3-typography {
+        background: #24211d !important;
+        color: #ede8df !important;
+    }
+
+    .glean-reader[data-reader-theme="eye"] .protyle-preview > .b3-typography {
+        background: #1b2520 !important;
+        color: #ddebe3 !important;
+    }
+}
+
+.glean-wechat-publisher__series-summary {
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: 600;
+    user-select: none;
+
+    &::after {
+        content: "▸";
+        font-size: 11px;
+        opacity: 0.7;
+        transition: transform 140ms ease;
+    }
+
+    &::-webkit-details-marker {
+        display: none;
+    }
+}
+
+.glean-wechat-publisher__series[open] > .glean-wechat-publisher__series-summary::after {
+    transform: rotate(90deg);
+}
+
+/* 伴生栏「批注」页签顶部引导提示条 */
+.glean-reader__notes-guide {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 7px 10px;
+    margin-bottom: 10px;
+    border-radius: var(--glean-radius-sm, 8px);
+    background: color-mix(in srgb, var(--glean-color-action) 8%, var(--glean-inset-surface));
+    border: 1px solid color-mix(in srgb, var(--glean-color-action) 20%, transparent);
+    font-size: 11.5px;
+    line-height: 1.4;
+    color: var(--glean-ink-2);
+}
+
+.glean-reader__notes-guide-text {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+
+

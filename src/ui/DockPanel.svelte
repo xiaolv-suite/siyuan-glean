@@ -1,7 +1,8 @@
 <script lang="ts">
 /** 读库 Dock 面板 v2（T-1104/T-1201/T-1202/T-1300/T-1400c）：库 / 统计 / 高亮 三视图；tab 画布 rail+行表/看板。 */
 import { onMount, tick, untrack } from "svelte";
-import { openTab, showMessage, Menu } from "siyuan";
+import { openTab, Menu } from "siyuan";
+import { showMessage } from "../libs/notice";
 import { showDocTreeNativeMenu } from "../libs/lv-notice-kit";
 import type { GleanFacade } from "../types";
 import { t } from "../libs/i18n";
@@ -44,7 +45,7 @@ import { openRoamingDialog } from "./roaming-dialog";
 import { makeQuoteCardPreview } from "./flashcard-dialog";
 import { formatAPA, formatBibTeX, formatGBT7714, formatMLA, type CitationFormat, type CitationItem } from "../domain/citation";
 import { batchRecognizeWechatAuthors, scanAndFillWechatAuthor, purifyWechatArticle } from "../services/wechat-service";
-import { lvNotify, lvActivity, notifyClipSuccess, notifyBatchProgress, notifySilentTask, showNotice } from "../libs/notice";
+import { lvNotify, lvActivity, notifyClipSuccess, notifyBatchProgress, showNotice } from "../libs/notice";
 import ClipStatusActions from "./ClipStatusActions.svelte";
 import { installMobileViewportVars } from "../libs/mobile-viewport";
 import { installEscapeHandler, installModalFocus } from "../libs/modal-focus";
@@ -177,7 +178,7 @@ function triggerSilentWechatScan(): void {
             const knownWithAuthors = libraryItems.filter((entry) => isWechatEntry(entry) && Boolean(displayWechatAuthor(entry.author)));
             const result = await batchRecognizeWechatAuthors(facade.pluginInstance, [...knownWithAuthors, ...batch]);
             if (result.detectedCount > 0 && !disposed && rootEl) {
-                notifySilentTask(`后台自动识别微信公众号作者：已完成 ${result.detectedCount} 篇`, "wechat-auto-scan");
+                console.debug(`[LvGlean] 后台自动识别微信公众号作者：已完成 ${result.detectedCount} 篇`);
                 facade.notifyDataChanged();
                 await reload();
             }
@@ -3525,9 +3526,9 @@ $effect(() => {
             </div>
         {:else}
             <div class="glean-brand">
-                <div class="glean-brand__mark"><svg><use href="#iconGleanWheat" /></svg></div>
+                <div class="glean-brand__mark" data-rail-dup="true"><svg><use href="#iconGleanWheat" /></svg></div>
                 <div>
-                    <div class="glean-brand__name">{t(i18n, "pluginName")}</div>
+                    <div class="glean-brand__name">{isTabCanvas ? t(i18n, views.find((v) => v.key === view)?.labelKey ?? "pluginName") : t(i18n, "pluginName")}</div>
                     <div class="glean-brand__sub">{headerSubtitle}</div>
                 </div>
                 <div class="glean-head-actions">
@@ -3553,7 +3554,7 @@ $effect(() => {
                         <svg aria-hidden="true"><use href="#iconGleanRefresh" /></svg>
                         <span class="glean-head-action__label">{t(i18n, "panel.migrateShort")}</span>
                     </button>
-                    <button type="button" class="glean-icon-btn glean-head-action" title={t(i18n, "panel.settings")} aria-label={t(i18n, "panel.settings")} onclick={() => facade.openSettings()}>
+                    <button type="button" class="glean-icon-btn glean-head-action" data-rail-dup="true" title={t(i18n, "panel.settings")} aria-label={t(i18n, "panel.settings")} onclick={() => facade.openSettings()}>
                         <svg aria-hidden="true"><use href="#iconGleanGear" /></svg>
                         <span class="glean-head-action__label">{t(i18n, "panel.settings")}</span>
                     </button>

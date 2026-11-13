@@ -6,7 +6,7 @@
 // .glean-stats__distributions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }，
 // .glean-stats__distribution { min-width: 0; }。
 import { onDestroy, tick } from "svelte";
-import { showMessage } from "siyuan";
+import { showMessage } from "../libs/notice";
 import type { GleanFacade } from "../types";
 import DistributionList from "./DistributionList.svelte";
 import ActionPopover from "./ActionPopover.svelte";

@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount, untrack } from "svelte";
-    import { openTab, showMessage } from "siyuan";
+    import { openTab } from "siyuan";
+    import { showMessage } from "../libs/notice";
     import { showDocTreeNativeMenu } from "../libs/lv-notice-kit";
     import { querySql } from "../api/client";
     import type { GleanFacade } from "../types";
@@ -635,16 +636,17 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 8px;
-        padding: 8px 12px;
+        gap: 10px;
+        padding: 10px 16px;
         border-bottom: 1px solid var(--glean-border-soft);
-        background: color-mix(in srgb, var(--b3-theme-surface) 95%, transparent);
+        background: color-mix(in srgb, var(--glean-card-surface) 96%, var(--glean-app-background));
     }
     .glean-preview__header h2 {
         margin: 0;
-        font-size: 14px;
-        font-weight: 600;
+        font-size: 15px;
+        font-weight: 650;
         line-height: 1.4;
+        color: var(--glean-ink);
         display: -webkit-box;
         -webkit-line-clamp: 2;
         line-clamp: 2;

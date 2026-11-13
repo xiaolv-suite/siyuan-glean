@@ -130,6 +130,7 @@ function loadSurfaceControls({ act, undo, pin, replacement, tick, openReading } 
     const modules = {
         svelte: { onDestroy(callback) { destroyCallbacks.push(callback); }, tick: async () => tick?.() },
         siyuan: { showMessage(message) { calls.messages.push(message); }, openTab() {} },
+        "../libs/notice": { showMessage(message) { calls.messages.push(message); }, lvLaunchpad: { haptic: () => {} } },
         "../libs/i18n": { t: (_dictionary, key) => key },
         "../services/resurface-service": services,
         "../domain/resurface": { todayStamp: () => "20261016" },
