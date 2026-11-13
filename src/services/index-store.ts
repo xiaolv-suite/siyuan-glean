@@ -1,0 +1,257 @@
+/**
+ * 派生索引 glean-index.json（DATA-CONTRACT §3）。
+ * 真相永远是文档属性；这份只是性能缓存，可随时全量重建（"重建索引"命令）。
+ * 写入纪律：只在本插件写属性成功后增量更新，或走 rebuild/reconcile 全量/对账重建。
+ */
+import type { Plugin } from "siyuan";
+import { normalizeAuthor } from "../domain/author.ts";
+import { inspectCandidate, type CandidateEvidence, type CandidateMissing, type CandidateProbe } from "../domain/candidate-policy.ts";
+import type { ReadingPosition } from "../domain/reading-position.ts";
+import { parseClipAttrs, parseUserTags, type ClipStatus } from "../domain/schema.ts";
+
+const INDEX_FILE = "glean-index.json";
+const INDEX_VERSION = 1;
+
+export interface ClipIndexEntry {
+    id: string;
+    title: string;
+    hpath: string;
+    box: string;
+    status: ClipStatus | "";
+    url: string;
+    site: string;
+    author?: string;
+    internal?: boolean;
+    /** 思源根块 IAL.tags 的只读投影；不是 custom-clip-* 属性。 */
+    tags: string[];
+    /** 收录入口（custom-clip-src），用于来源筛选。 */
+    src: string;
+    time: string;
+    /** 最近一次显式完成的时刻；空串 = 完成时间未知（D-0028）。 */
+    doneTime: string;
+    words: number;
+    minutes: number;
+    priority: number;
+    rating: number;
+    /** 用户显式收藏标记（custom-clip-favorite）；缺省 false。 */
+    favorite: boolean;
+    surfaced: string;
+    pinned?: string;
+    summary: string;
+    /** 单文件快照 assets 路径 */
+    snapshot: string;
+    aiTags: string[];
+    contentType: string;
+    timeSource: string;
+    updated: string;
+    readPoint?: string;
+    readingPosition?: ReadingPosition;
+}
+
+/** 未收录候选：无有效状态；可能已有来源 URL，显式收录时补齐缺失字段。 */
+export interface CandidateEntry {
+    id: string;
+    title: string;
+    hpath: string;
+    box: string;
+    updated: string;
+    url: string;
+    site: string;
+    author?: string;
+    /** 候选根块 IAL.tags 的只读投影。 */
+    tags: string[];
+    evidence: CandidateEvidence[];
+    missing: CandidateMissing[];
+}
+
+export interface GleanIndex {
+    version: number;
+    updatedAt: string;
+    clips: Record<string, ClipIndexEntry>;
+    candidates: Record<string, CandidateEntry>;
+}
+
+export function emptyIndex(): GleanIndex {
+    return { version: INDEX_VERSION, updatedAt: "", clips: {}, candidates: {} };
+}
+
+/**
+ * 索引写入互斥：load→改→save 的读改写段必须整体串行，避免并发动作互相覆盖。
+ * 这里只约束当前插件实例；索引是可由完整对账随时重建的派生缓存。
+ */
+let indexLock: Promise<unknown> = Promise.resolve();
+
+export function withIndexLock<T>(task: () => Promise<T>): Promise<T> {
+    const run = indexLock.then(task, task);
+    indexLock = run.catch(() => undefined);
+    return run;
+}
+
+/** 索引文件损坏后禁止增量覆盖，等待完整对账/重建确认。 */
+let indexCorrupted = false;
+
+/** 由完整对账/重建完成后调用，解除损坏保护。 */
+export function confirmIndexRebuilt(): void {
+    indexCorrupted = false;
+}
+
+/**
+ * 增量写入前读取当前保护状态。
+ *
+ * 索引是派生缓存，读取损坏时增量写不能用空/局部快照覆盖原文件；
+ * 写属性的调用方需要据此把“属性已写入、索引待重建”反馈给界面。
+ */
+export function isIndexCorrupted(): boolean {
+    return indexCorrupted;
+}
+
+export async function loadIndex(plugin: Plugin, options: { strict?: boolean } = {}): Promise<GleanIndex> {
+    try {
+        const raw = await plugin.loadData(INDEX_FILE);
+        if (!raw || typeof raw !== "object") return emptyIndex();
+        const index = raw as Partial<GleanIndex>;
+        const rawCandidates = index.candidates && typeof index.candidates === "object" ? index.candidates : {};
+        const candidates: Record<string, CandidateEntry> = {};
+        for (const [id, value] of Object.entries(rawCandidates as Record<string, Partial<CandidateEntry>>)) {
+            if (!value || typeof value !== "object") continue;
+            candidates[id] = {
+                id: typeof value.id === "string" ? value.id : id,
+                title: typeof value.title === "string" ? value.title : "",
+                hpath: typeof value.hpath === "string" ? value.hpath : "",
+                box: typeof value.box === "string" ? value.box : "",
+                updated: typeof value.updated === "string" ? value.updated : "",
+                url: typeof value.url === "string" ? value.url : "",
+                site: typeof value.site === "string" ? value.site : "",
+                author: normalizeAuthor(value.author) ?? "",
+                tags: Array.isArray(value.tags) ? value.tags.filter((tag): tag is string => typeof tag === "string") : [],
+                evidence: Array.isArray(value.evidence) ? value.evidence as CandidateEvidence[] : [],
+                missing: Array.isArray(value.missing) ? value.missing as CandidateMissing[] : ["status"],
+            };
+        }
+        const rawClips = index.clips && typeof index.clips === "object" ? index.clips : {};
+        const clips: Record<string, ClipIndexEntry> = {};
+        for (const [id, value] of Object.entries(rawClips as Record<string, Partial<ClipIndexEntry>>)) {
+            if (!value || typeof value !== "object") continue;
+            clips[id] = {
+                ...(value as ClipIndexEntry),
+                id: typeof value.id === "string" ? value.id : id,
+                title: typeof value.title === "string" ? value.title : "",
+                hpath: typeof value.hpath === "string" ? value.hpath : "",
+                box: typeof value.box === "string" ? value.box : "",
+                status: value.status ?? "",
+                url: typeof value.url === "string" ? value.url : "",
+                site: typeof value.site === "string" ? value.site : "",
+                author: normalizeAuthor(value.author) ?? "",
+                internal: value.internal === true,
+                tags: Array.isArray(value.tags) ? value.tags.filter((tag): tag is string => typeof tag === "string") : [],
+                src: typeof value.src === "string" ? value.src : "",
+                time: typeof value.time === "string" ? value.time : "",
+                doneTime: typeof value.doneTime === "string" ? value.doneTime : "",
+                words: typeof value.words === "number" ? value.words : 0,
+                minutes: typeof value.minutes === "number" ? value.minutes : 0,
+                priority: typeof value.priority === "number" ? value.priority : 3,
+                rating: typeof value.rating === "number" ? value.rating : 0,
+                favorite: value.favorite === true,
+                surfaced: typeof value.surfaced === "string" ? value.surfaced : "",
+                pinned: typeof value.pinned === "string" ? value.pinned : "",
+                summary: typeof value.summary === "string" ? value.summary : "",
+                snapshot: typeof value.snapshot === "string" ? value.snapshot : "",
+                aiTags: Array.isArray(value.aiTags) ? value.aiTags.filter((tag): tag is string => typeof tag === "string") : [],
+                contentType: typeof value.contentType === "string" ? value.contentType : "",
+                timeSource: typeof value.timeSource === "string" ? value.timeSource : "",
+                updated: typeof value.updated === "string" ? value.updated : "",
+            };
+        }
+        return {
+            version: INDEX_VERSION,
+            updatedAt: typeof index.updatedAt === "string" ? index.updatedAt : "",
+            clips,
+            candidates,
+        };
+    } catch (error) {
+        indexCorrupted = true;
+        console.warn("[glean] 索引读取失败，进入损坏保护（增量落盘暂停，等待完整对账/重建）:", error);
+        if (options.strict) throw error;
+        return emptyIndex();
+    }
+}
+
+export async function saveIndex(plugin: Plugin, index: GleanIndex, options: { repair?: boolean } = {}): Promise<GleanIndex> {
+    if (indexCorrupted && !options.repair) {
+        // 损坏未消除前拒绝增量落盘，避免空/局部索引覆盖原文件。
+        console.warn("[glean] 索引处于损坏保护，本次变更仅保留在内存，等待完整对账/重建后恢复落盘");
+        return index;
+    }
+    index.version = INDEX_VERSION;
+    index.updatedAt = new Date().toISOString();
+    await plugin.saveData(INDEX_FILE, index);
+    return index;
+}
+
+/** 用一篇文档的最新 IAL 更新索引条目（clip 与 candidate 二选一）。 */
+export function applyAttrsToIndex(
+    index: GleanIndex,
+    doc: { id: string; title: string; hpath: string; box: string; updated: string },
+    ial: Record<string, string>,
+    probe: CandidateProbe = inspectCandidate({ ial, title: doc.title, hpath: doc.hpath }),
+): void {
+    const attrs = parseClipAttrs(ial);
+    const isClip = Boolean(attrs.status);
+    if (isClip) {
+        delete index.candidates[doc.id];
+        index.clips[doc.id] = {
+            id: doc.id,
+            title: doc.title,
+            hpath: doc.hpath,
+            box: doc.box,
+            status: attrs.status ?? "",
+            url: attrs.url ?? "",
+            site: attrs.site ?? "",
+            author: attrs.author ?? "",
+            internal: attrs.internal === true,
+            tags: parseUserTags(ial.tags),
+            src: attrs.src ?? "",
+            time: attrs.time ?? "",
+            doneTime: attrs.doneTime ?? "",
+            words: attrs.words ?? 0,
+            minutes: attrs.minutes ?? 0,
+            priority: attrs.priority ?? 3,
+            rating: attrs.rating ?? 0,
+            favorite: attrs.favorite === true,
+            surfaced: attrs.lastSurfaced ?? "",
+            pinned: attrs.pinned ?? "",
+            summary: attrs.summary ?? "",
+            snapshot: attrs.snapshot ?? "",
+            aiTags: attrs.aiTags,
+            contentType: attrs.contentType ?? "",
+            timeSource: attrs.timeSource ?? "",
+            ...(attrs.readPoint ? { readPoint: attrs.readPoint } : {}),
+            ...(attrs.readingPosition ? { readingPosition: attrs.readingPosition } : {}),
+            updated: doc.updated,
+        };
+    } else {
+        delete index.clips[doc.id];
+        if (!probe.eligible) {
+            delete index.candidates[doc.id];
+            return;
+        }
+        index.candidates[doc.id] = {
+            id: doc.id,
+            title: doc.title,
+            hpath: doc.hpath,
+            box: doc.box,
+            updated: doc.updated,
+            url: probe.url,
+            site: probe.site,
+            author: attrs.author ?? "",
+            tags: parseUserTags(ial.tags),
+            evidence: probe.evidence,
+            missing: probe.missing,
+        };
+    }
+}
+
+export function removeDocFromIndex(index: GleanIndex, docId: string): void {
+    delete index.clips[docId];
+    delete index.candidates[docId];
+}

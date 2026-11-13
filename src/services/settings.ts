@@ -1,0 +1,229 @@
+/**
+ * 插件设置（saveData "settings.json"）。normalize 兜底：缺键补默认、类型漂移拉回。
+ * 这份只是偏好；文章数据永远在文档属性上（D-0001），删了设置也不伤库。
+ */
+import type { Plugin } from "siyuan";
+import { DEFAULT_MIGRATE_BATCH_SIZE, MAX_MIGRATE_BATCH_SIZE } from "../domain/migrate-consts.ts";
+
+export interface GleanSettings {
+    version: 1;
+    /** 读库笔记本（主锚点），notebook id 列表 */
+    anchorNotebooks: string[];
+    /** 统一小驴空间下的拾遗子目录根路径（如 "/04-小驴拾遗"） */
+    rootPath?: string;
+    snapshotOnCapture: boolean;
+    ai: {
+        /** 富化触发模式：off=关闭 / manual=仅手动(✨) / auto=收录时自动。token 消耗的主开关。 */
+        enrichMode: "off" | "manual" | "auto";
+        /** 每日富化次数上限（自动+手动合计），0=不限；超限静默跳过并提示 */
+        enrichDailyCap: number;
+        /** 富化时做语义查重（走嵌入模型，不耗 LLM token） */
+        dedupOnEnrich: boolean;
+        /** 阅读时推荐相关旧文（走嵌入模型，不耗 LLM token） */
+        relatedWhileReading: boolean;
+        formattingEnabled: boolean;
+        authorSuggestionEnabled: boolean;
+        questionCardEnabled: boolean;
+        articleQuestionEnabled: boolean;
+        /** 预置 AI 动作（总结/要点/反方观点，不自动消耗 token） */
+        presetActions: boolean;
+        /** LLM 通道：siyuan=思源内置（默认）；custom=拾遗专用 OpenAI 兼容 API（D-0015） */
+        channel: "siyuan" | "custom";
+        /** 自定义通道：baseURL（OpenAI 兼容，如 https://api.free.example.com/v1） */
+        customBaseUrl: string;
+        /** 自定义通道：模型名 */
+        customModel: string;
+        /** 自定义通道：密钥在思源「密钥和变量」库中的名字（内核加密存储，经 getSecret 读取） */
+        customSecretName: string;
+    };
+    resurface: {
+        /** 每日重浮篇数（M4 生效） */
+        dailyCount: number;
+        /** 重浮池包含已读高亮 */
+        includeDoneHighlights: boolean;
+    };
+    /** 新剪藏区提醒上限 */
+    inboxQuota: number;
+    /** 超龄归档候选天数（M4 生效） */
+    staleDays: number;
+    /** 迁移器每批写入条数（≤50） */
+    migrateBatchSize: number;
+    /** 小驴协同（T-1505）：读完重浮文章时向打卡记录事件（写能力，用户显式开启） */
+    integration: {
+        checkinEnabled: boolean;
+        checkinItemId: string;
+        bridgeWriteEnabled: boolean;
+        dailyNoteEnabled: boolean;
+    };
+    /** 阅读页签（D-0029/T-1730）：内嵌 Protyle 的插件内阅读视图 */
+    reader: {
+        /** 开始阅读时在内嵌页签打开（默认关，沿用思源原生页签） */
+        openInTab: boolean;
+        /** 页签默认模式：read=preview 只读 / edit=wysiwyg 编辑 */
+        defaultMode: "read" | "edit";
+    };
+}
+
+export const DEFAULT_SETTINGS: GleanSettings = {
+    version: 1,
+    anchorNotebooks: [],
+    snapshotOnCapture: false,
+    ai: {
+        enrichMode: "manual",
+        enrichDailyCap: 20,
+        dedupOnEnrich: false,
+        relatedWhileReading: false,
+        formattingEnabled: false,
+        authorSuggestionEnabled: false,
+        questionCardEnabled: false,
+        articleQuestionEnabled: false,
+        presetActions: false,
+        channel: "siyuan",
+        customBaseUrl: "",
+        customModel: "",
+        customSecretName: "glean",
+    },
+    resurface: { dailyCount: 3, includeDoneHighlights: false },
+    inboxQuota: 50,
+    staleDays: 90,
+    migrateBatchSize: DEFAULT_MIGRATE_BATCH_SIZE,
+    integration: { checkinEnabled: false, checkinItemId: "", bridgeWriteEnabled: false, dailyNoteEnabled: false },
+    reader: { openInTab: false, defaultMode: "read" },
+};
+
+const SETTINGS_FILE = "settings.json";
+
+function clampInt(value: unknown, min: number, max: number, fallback: number): number {
+    const parsed = typeof value === "number" && Number.isFinite(value) ? Math.round(value) : Number(value);
+    if (!Number.isFinite(parsed)) return fallback;
+    return Math.min(max, Math.max(min, parsed));
+}
+
+function normalizeEnrichMode(value: unknown, legacyOnCapture: unknown): "off" | "manual" | "auto" {
+    if (value === "off" || value === "manual" || value === "auto") return value;
+    if (typeof legacyOnCapture === "boolean") return legacyOnCapture ? "auto" : "manual";
+    return DEFAULT_SETTINGS.ai.enrichMode;
+}
+
+function normalizeReader(value: unknown): GleanSettings["reader"] {
+    const input = (value ?? {}) as Partial<GleanSettings["reader"]>;
+    return {
+        openInTab: typeof input.openInTab === "boolean" ? input.openInTab : DEFAULT_SETTINGS.reader.openInTab,
+        defaultMode: input.defaultMode === "edit" ? "edit" : "read",
+    };
+}
+
+export function normalizeSettings(raw: unknown): GleanSettings {
+    const input = (raw ?? {}) as Partial<GleanSettings> & { ai?: Partial<GleanSettings["ai"]> & { enrichOnCapture?: unknown } };
+    const ai = (input.ai ?? {}) as Partial<GleanSettings["ai"]> & { enrichOnCapture?: unknown };
+    const resurface = (input.resurface ?? {}) as Partial<GleanSettings["resurface"]>;
+    const integration = (input.integration ?? {}) as Partial<GleanSettings["integration"]>;
+    return {
+        version: 1,
+        anchorNotebooks: Array.isArray(input.anchorNotebooks)
+            ? input.anchorNotebooks.filter((id): id is string => typeof id === "string" && id.length > 0)
+            : [],
+        ...(typeof input.rootPath === "string" && input.rootPath.trim() ? { rootPath: input.rootPath.trim() } : {}),
+        snapshotOnCapture: typeof input.snapshotOnCapture === "boolean" ? input.snapshotOnCapture : false,
+        ai: {
+            // 兼容旧版布尔 enrichOnCapture：true→auto，false→manual
+            enrichMode: normalizeEnrichMode(ai.enrichMode, ai.enrichOnCapture),
+            enrichDailyCap: clampInt(ai.enrichDailyCap, 0, 500, DEFAULT_SETTINGS.ai.enrichDailyCap),
+            dedupOnEnrich: typeof ai.dedupOnEnrich === "boolean" ? ai.dedupOnEnrich : DEFAULT_SETTINGS.ai.dedupOnEnrich,
+            relatedWhileReading: typeof ai.relatedWhileReading === "boolean" ? ai.relatedWhileReading : DEFAULT_SETTINGS.ai.relatedWhileReading,
+            formattingEnabled: typeof ai.formattingEnabled === "boolean" ? ai.formattingEnabled : DEFAULT_SETTINGS.ai.formattingEnabled,
+            authorSuggestionEnabled: typeof ai.authorSuggestionEnabled === "boolean" ? ai.authorSuggestionEnabled : DEFAULT_SETTINGS.ai.authorSuggestionEnabled,
+            questionCardEnabled: typeof ai.questionCardEnabled === "boolean" ? ai.questionCardEnabled : DEFAULT_SETTINGS.ai.questionCardEnabled,
+            articleQuestionEnabled: typeof ai.articleQuestionEnabled === "boolean" ? ai.articleQuestionEnabled : DEFAULT_SETTINGS.ai.articleQuestionEnabled,
+            presetActions: typeof ai.presetActions === "boolean" ? ai.presetActions : DEFAULT_SETTINGS.ai.presetActions,
+            channel: ai.channel === "custom" ? "custom" : "siyuan",
+            customBaseUrl: typeof ai.customBaseUrl === "string" ? ai.customBaseUrl : "",
+            customModel: typeof ai.customModel === "string" ? ai.customModel : "",
+            customSecretName: typeof ai.customSecretName === "string" && ai.customSecretName
+                ? ai.customSecretName
+                : DEFAULT_SETTINGS.ai.customSecretName,
+        },
+        resurface: {
+            dailyCount: clampInt(resurface.dailyCount, 1, 10, DEFAULT_SETTINGS.resurface.dailyCount),
+            includeDoneHighlights: typeof resurface.includeDoneHighlights === "boolean" ? resurface.includeDoneHighlights : DEFAULT_SETTINGS.resurface.includeDoneHighlights,
+        },
+        inboxQuota: clampInt(input.inboxQuota, 5, 1000, DEFAULT_SETTINGS.inboxQuota),
+        staleDays: clampInt(input.staleDays, 7, 3650, DEFAULT_SETTINGS.staleDays),
+        migrateBatchSize: clampInt(input.migrateBatchSize, 1, MAX_MIGRATE_BATCH_SIZE, DEFAULT_MIGRATE_BATCH_SIZE),
+        // 写能力（events.record）：必须用户显式开启（打卡契约准入第 4 条）
+        integration: {
+            checkinEnabled: typeof integration.checkinEnabled === "boolean" ? integration.checkinEnabled : DEFAULT_SETTINGS.integration.checkinEnabled,
+            checkinItemId: typeof integration.checkinItemId === "string" ? integration.checkinItemId : "",
+            bridgeWriteEnabled: typeof integration.bridgeWriteEnabled === "boolean" ? integration.bridgeWriteEnabled : false,
+            dailyNoteEnabled: typeof integration.dailyNoteEnabled === "boolean" ? integration.dailyNoteEnabled : false,
+        },
+        reader: normalizeReader(input.reader),
+    };
+}
+
+export function cloneSettings(settings: GleanSettings): GleanSettings {
+    return normalizeSettings(settings);
+}
+
+/** A configured anchor wins; fallback is restricted to the explicit XiaoLv notebook. */
+export function resolveDefaultAnchorNotebook(notebooks: Array<{ id: string; name: string; closed?: boolean }>, anchors: string[]): string | undefined {
+    return notebooks.find(n => !n.closed && anchors.includes(n.id))?.id
+        ?? notebooks.find(n => !n.closed && /^(小驴空间|小驴笔记本|小驴生态统一测试空间)$/.test(n.name))?.id;
+}
+
+export function resolveGleanRootPrefix(settings: GleanSettings, notebooks: Array<{ id: string; name: string }>, notebookId: string): string {
+    const configured = settings.rootPath?.trim();
+    if (configured) return `/${configured.split("/").filter(part => part && part !== "." && part !== "..").join("/")}`;
+    return notebooks.some(n => n.id === notebookId && /^(小驴空间|小驴笔记本|小驴生态统一测试空间)$/.test(n.name)) ? "/04-小驴拾遗" : "/小驴拾遗";
+}
+
+export function mergeSettingsDraft(current: GleanSettings, draft: GleanSettings): GleanSettings {
+    const saved = normalizeSettings(current);
+    const edited = normalizeSettings(draft);
+    return normalizeSettings({
+        ...saved,
+        anchorNotebooks: edited.anchorNotebooks,
+        rootPath: edited.rootPath,
+        snapshotOnCapture: edited.snapshotOnCapture,
+        ai: { ...saved.ai, ...edited.ai },
+        resurface: { ...saved.resurface, ...edited.resurface },
+        inboxQuota: edited.inboxQuota,
+        staleDays: edited.staleDays,
+        integration: { ...saved.integration, ...edited.integration },
+        reader: { ...saved.reader, ...edited.reader },
+    });
+}
+
+export function settingsEqual(left: GleanSettings, right: GleanSettings): boolean {
+    return JSON.stringify(normalizeSettings(left)) === JSON.stringify(normalizeSettings(right));
+}
+
+export async function loadSettings(plugin: Plugin, options: { strict?: boolean } = {}): Promise<GleanSettings> {
+    try {
+        const raw = await plugin.loadData(SETTINGS_FILE);
+        return normalizeSettings(raw);
+    } catch (error) {
+        if (options.strict) throw error;
+        return { ...DEFAULT_SETTINGS };
+    }
+}
+
+export class SettingsConflictError extends Error {
+    constructor() { super("Settings changed"); }
+}
+
+const settingsQueues = new WeakMap<Plugin, Promise<unknown>>();
+
+export async function saveSettings(plugin: Plugin, settings: GleanSettings, options: { expected?: GleanSettings } = {}): Promise<GleanSettings> {
+    const normalized = normalizeSettings(settings);
+    const expected = options.expected ? cloneSettings(options.expected) : undefined;
+    const previous = settingsQueues.get(plugin) ?? Promise.resolve();
+    const operation = previous.catch(() => undefined).then(async () => {
+        if (expected && !settingsEqual(await loadSettings(plugin, { strict: true }), expected)) throw new SettingsConflictError();
+        await plugin.saveData(SETTINGS_FILE, normalized);
+        return normalized;
+    });
+    settingsQueues.set(plugin, operation);
+    void operation.then(() => {}, () => {}).then(() => { if (settingsQueues.get(plugin) === operation) settingsQueues.delete(plugin); });
+    return operation;
+}
