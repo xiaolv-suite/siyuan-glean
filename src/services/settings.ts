@@ -168,13 +168,13 @@ export function cloneSettings(settings: GleanSettings): GleanSettings {
 /** A configured anchor wins; fallback is restricted to the explicit XiaoLv notebook. */
 export function resolveDefaultAnchorNotebook(notebooks: Array<{ id: string; name: string; closed?: boolean }>, anchors: string[]): string | undefined {
     return notebooks.find(n => !n.closed && anchors.includes(n.id))?.id
-        ?? notebooks.find(n => !n.closed && /^(小驴空间|小驴笔记本|小驴生态统一测试空间)$/.test(n.name))?.id;
+        ?? notebooks.find(n => !n.closed && /^(🐴\s*)?小驴(生态|空间|笔记本)$/.test(n.name))?.id;
 }
 
 export function resolveGleanRootPrefix(settings: GleanSettings, notebooks: Array<{ id: string; name: string }>, notebookId: string): string {
     const configured = settings.rootPath?.trim();
     if (configured) return `/${configured.split("/").filter(part => part && part !== "." && part !== "..").join("/")}`;
-    return notebooks.some(n => n.id === notebookId && /^(小驴空间|小驴笔记本|小驴生态统一测试空间)$/.test(n.name)) ? "/04-小驴拾遗" : "/小驴拾遗";
+    return notebooks.some(n => n.id === notebookId && /^(🐴\s*)?小驴(生态|空间|笔记本)$/.test(n.name)) ? "/04-小驴拾遗" : "/小驴拾遗";
 }
 
 export function mergeSettingsDraft(current: GleanSettings, draft: GleanSettings): GleanSettings {

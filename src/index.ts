@@ -835,10 +835,7 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
             const isUrl = /^https?:\/\//i.test(text);
             const openNbs = await (await import("./api/client")).listNotebooks();
             const hubNb = openNbs.find(
-                (n) =>
-                    n.name.includes("小驴空间") ||
-                    n.name.includes("小驴笔记本") ||
-                    n.name.includes("小驴生态统一测试空间"),
+                (n) => /^(🐴\s*)?小驴(生态|空间|笔记本)/.test(n.name?.trim() || "")
             );
             const targetNotebook = this.settings.anchorNotebooks[0] || hubNb?.id || openNbs[0]?.id;
             if (!targetNotebook) {
