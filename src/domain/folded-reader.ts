@@ -26,6 +26,7 @@ export interface FoldNode {
     concept?: string; // Level 5: 核心概念标签
     expanded?: boolean; // 单段卡片是否单独展开/折叠
     type?: string; // 段落类型 (NodeParagraph, NodeHeading 等)
+    aiEnriched?: boolean; // 是否经 AI 深入语义提炼
 }
 
 export interface FoldLevelConfig {

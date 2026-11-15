@@ -1458,6 +1458,10 @@ async function doMountBoard() {
         min-width: 0;
         min-height: 0;
         overflow-y: auto;
+        /* 手机端触控惯性滚动 + 纵向手势锁定（拉网统一：长设置列表不再滑不动） */
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-y: contain;
+        touch-action: pan-y;
         display: flex;
         flex-direction: column;
         gap: var(--glean-space-5);

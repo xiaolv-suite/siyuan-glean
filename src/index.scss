@@ -474,6 +474,7 @@ body.b3-theme-dark,
     --glean-accent-b: #0D9488;
     --glean-shadow-accent: 0 4px 14px -4px rgba(20, 184, 166, 0.32);
     --glean-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.25), 0 10px 28px -14px rgba(0, 0, 0, 0.5);
+    --glean-shadow-card-hover: 0 4px 10px rgba(0, 0, 0, 0.36), 0 16px 34px -6px rgba(0, 0, 0, 0.58);
     --glean-shadow-float: 0 16px 40px -10px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.4);
     --glean-shadow-control: 0 1px 3px rgba(0, 0, 0, 0.4);
     --glean-shadow-knob: 0 1px 3px rgba(0, 0, 0, 0.5);
@@ -741,12 +742,13 @@ body.b3-theme-dark,
 }
 
 .glean-head-action--primary {
-    background: var(--glean-grad);
-    color: var(--b3-theme-on-primary);
+    background: var(--glean-grad) !important;
+    color: var(--b3-theme-on-primary, #ffffff) !important;
 
     &:hover {
-        background: var(--glean-grad);
-        filter: brightness(1.04);
+        background: var(--glean-grad) !important;
+        color: var(--b3-theme-on-primary, #ffffff) !important;
+        filter: brightness(1.08);
     }
 
     &:disabled {
@@ -780,7 +782,7 @@ body.b3-theme-dark,
         white-space: nowrap;
         transition: transform var(--glean-duration-fast) ease, background var(--glean-duration-fast) ease, border-color var(--glean-duration-fast) ease, box-shadow var(--glean-duration-fast) ease, color var(--glean-duration-fast) ease, opacity var(--glean-duration-fast) ease;
 
-        &:hover {
+        &:hover:not(.glean-head-action--primary) {
             background: color-mix(in srgb, var(--lv-brand) 8%, var(--glean-card-surface));
             border-color: color-mix(in srgb, var(--lv-brand) 28%, transparent);
             color: var(--glean-ink);
@@ -1085,6 +1087,7 @@ body.b3-theme-dark,
 
 .glean-views__btn {
     flex: 1;
+    min-height: 28px;
     border: none;
     background: transparent;
     color: var(--glean-ink-2);
@@ -1093,7 +1096,14 @@ body.b3-theme-dark,
     padding: var(--glean-space-1-25) var(--glean-space-3);
     border-radius: var(--glean-radius-pill);
     cursor: pointer;
+    touch-action: manipulation;
     transition: transform var(--glean-duration-normal) var(--glean-ease-out), background var(--glean-duration-normal) var(--glean-ease-out), border-color var(--glean-duration-normal) var(--glean-ease-out), box-shadow var(--glean-duration-normal) var(--glean-ease-out), color var(--glean-duration-normal) var(--glean-ease-out), opacity var(--glean-duration-normal) var(--glean-ease-out);
+
+    @media (max-width: 640px) {
+        min-height: 38px;
+        padding: 6px 12px;
+        font-size: 13px;
+    }
 
     &.glean-views__btn--on {
         background: color-mix(in srgb, var(--glean-color-action) 12%, var(--glean-card-surface));
@@ -1311,6 +1321,7 @@ body.b3-theme-dark,
     flex-shrink: 0;
     display: inline-flex;
     align-items: center;
+    min-height: 28px;
     gap: var(--glean-space-1-5);
     padding: var(--glean-space-1-25) var(--glean-space-3);
     border-radius: var(--glean-radius-pill);
@@ -1320,6 +1331,10 @@ body.b3-theme-dark,
     font-size: var(--glean-text-sm);
     cursor: pointer;
     transition: transform var(--glean-duration-normal) var(--glean-ease-out), background var(--glean-duration-normal) var(--glean-ease-out), border-color var(--glean-duration-normal) var(--glean-ease-out), box-shadow var(--glean-duration-normal) var(--glean-ease-out), color var(--glean-duration-normal) var(--glean-ease-out), opacity var(--glean-duration-normal) var(--glean-ease-out);
+
+    @media (pointer: coarse), (max-width: 680px) {
+        min-height: 32px;
+    }
 
     &.glean-q--on {
         color: var(--glean-color-action);
@@ -1363,6 +1378,10 @@ body.b3-theme-dark,
     font-size: var(--glean-text-caption);
     line-height: var(--glean-leading-1-4);
     flex-shrink: 0;
+
+    @media (max-width: 680px), (pointer: coarse) {
+        display: none !important;
+    }
 
     &__keys {
         display: flex;
@@ -2537,6 +2556,7 @@ mark.glean-search-highlight {
     color: var(--glean-ink-2);
     font-size: var(--glean-text-meta);
     font-weight: var(--glean-weight-medium);
+    font-variant-numeric: tabular-nums;
     box-shadow: var(--glean-shadow-card);
     display: inline-flex;
     align-items: center;
@@ -3707,35 +3727,52 @@ mark.glean-search-highlight {
         line-height: 1.2 !important;
     }
 
-    .glean-head-actions {
-        gap: 2px !important;
+    .glean-panel:not(.glean-panel--mobile) .glean-head-actions {
+        gap: 4px !important;
 
         .glean-head-action {
-            width: 26px !important;
-            height: 26px !important;
-            min-height: 26px !important;
+            width: 28px !important;
+            height: 28px !important;
+            min-height: 28px !important;
+            min-width: 28px !important;
             padding: 0 !important;
+            touch-action: manipulation !important;
 
             svg {
-                width: 14px !important;
-                height: 14px !important;
+                width: 15px !important;
+                height: 15px !important;
+            }
+
+            @media (max-width: 640px) {
+                width: 38px !important;
+                height: 38px !important;
+                min-height: 38px !important;
+                min-width: 38px !important;
             }
         }
     }
 
     .glean-queues {
         padding: 4px 10px 6px !important;
-        gap: 4px !important;
+        gap: 6px !important;
         overflow-x: auto !important;
         flex-wrap: nowrap !important;
     }
 
-    .glean-q {
-        height: 24px !important;
-        min-height: 24px !important;
-        padding: 0 8px !important;
-        font-size: 11px !important;
+    .glean-panel:not(.glean-panel--mobile) .glean-q {
+        height: 28px !important;
+        min-height: 28px !important;
+        padding: 0 10px !important;
+        font-size: 12px !important;
         border-radius: var(--glean-radius-pill) !important;
+        touch-action: manipulation !important;
+
+        @media (max-width: 640px) {
+            height: 36px !important;
+            min-height: 36px !important;
+            padding: 0 12px !important;
+            font-size: 13px !important;
+        }
     }
 
     .glean-dtable {
@@ -3777,14 +3814,14 @@ mark.glean-search-highlight {
         .glean-drow__done-btn {
             display: none !important;
         }
+    }
 
-        .glean-btn {
-            height: 24px !important;
-            min-height: 24px !important;
-            padding: 0 8px !important;
-            font-size: 11px !important;
-            border-radius: var(--glean-radius-sm) !important;
-        }
+    .glean-panel:not(.glean-panel--mobile) .glean-drow__ops .glean-btn {
+        height: 24px !important;
+        min-height: 24px !important;
+        padding: 0 8px !important;
+        font-size: 11px !important;
+        border-radius: var(--glean-radius-sm) !important;
     }
 
     .glean-card {
@@ -8342,12 +8379,13 @@ mark.glean-search-highlight {
 .glean-reading-context__source-btn--primary {
     border-color: color-mix(in srgb, var(--glean-color-action) 34%, var(--glean-border-soft));
     background: color-mix(in srgb, var(--glean-color-action) 12%, var(--glean-card-surface));
-    color: var(--glean-color-action);
+    color: var(--glean-color-action) !important;
     font-weight: var(--glean-weight-650);
 
     &:hover {
         background: color-mix(in srgb, var(--glean-color-action) 18%, var(--glean-card-surface));
         border-color: var(--glean-color-action);
+        color: var(--glean-color-action) !important;
     }
 }
 
@@ -11567,6 +11605,7 @@ body.b3-theme-dark .glean-panel--mobile,
 @container glean-workbench (max-width: 720px) {
     .glean-libbar { align-items: stretch; flex-wrap: wrap; }
     .glean-libbar__spacer { display: none; }
+    .glean-libbar > .glean-btn { min-height: 38px; touch-action: manipulation; }
     .glean-libbar > .glean-btn[aria-pressed] { margin-left: auto; }
     .glean-saved-views { align-items: stretch; }
     .glean-saved-views :where(.b3-select, .b3-text-field) { flex: 1 1 140px; width: auto; }
@@ -11935,11 +11974,16 @@ body.b3-theme-dark .glean-panel--mobile,
     justify-content: space-between;
     gap: var(--glean-space-2);
     width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
     margin-block: var(--glean-space-0-5);
     min-height: 32px;
 
     .glean-queues {
         margin: 0;
+        min-width: 0;
+        flex: 1 1 auto;
         gap: var(--glean-space-1);
     }
 
@@ -12592,6 +12636,12 @@ body.b3-theme-dark .glean-panel--mobile,
     margin-inline: var(--glean-space-2);
 }
 
+.glean-settings .glean-set-row {
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
 .glean-settings .glean-set-row__lb {
     min-width: 0;
     overflow-wrap: anywhere;
@@ -12606,7 +12656,9 @@ body.b3-theme-dark .glean-panel--mobile,
 .glean-settings .glean-set-row > .glean-mini-input,
 .glean-settings .glean-set-row > .b3-select {
     flex: 0 1 auto;
+    min-width: 0;
     max-width: min(100%, 230px);
+    box-sizing: border-box;
 }
 
 .glean-settings .glean-nb:hover {
@@ -15419,6 +15471,13 @@ body:has(.b3-dialog--open, #lv-launchpad-sheet-mask, .lvct-dialog-mask, .sw__mob
     padding-bottom: env(safe-area-inset-bottom, 0px) !important;
     padding-left: env(safe-area-inset-left, 0px) !important;
     padding-right: env(safe-area-inset-right, 0px) !important;
+
+    // 手机端全屏弹层触控滚动统一（拉网收口）：弹层主滚动链路开惯性滚动并锁定纵向手势
+    :is(.b3-dialog__body, .b3-dialog__content) {
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-y: contain;
+        touch-action: pan-y;
+    }
 }
 
 @media (max-width: 640px) {
@@ -16070,24 +16129,81 @@ body:has(.b3-dialog--open, #lv-launchpad-sheet-mask, .lvct-dialog-mask, .sw__mob
     color: #1e293b !important;
 }
 
-/* 悬浮选区动作栏单行精致微胶囊（宽度收敛至 ≤440px，严禁换行错位） */
+/* 悬浮选区动作栏单行精致微胶囊：宽度自适应、防溢出与深浅主题自适应（修复批注横条 UI） */
 .glean-reader__selection-bar {
-    padding: 4px 8px !important;
-    gap: 4px !important;
-    width: auto !important;
-    max-width: 440px !important;
+    padding: 4px 10px !important;
+    gap: 6px !important;
+    width: max-content !important;
+    max-width: min(640px, calc(100% - 32px)) !important;
     flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
     border-radius: var(--glean-radius-pill) !important;
-    border: 1px solid var(--glean-border-soft) !important;
-    background: color-mix(in srgb, var(--glean-card-surface) 96%, transparent) !important;
-    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.12), 0 1px 3px rgba(15, 23, 42, 0.06) !important;
-}
+    border: 1px solid var(--glean-border-soft, rgba(0, 0, 0, 0.12)) !important;
+    background: var(--glean-card-surface, #ffffff) !important;
+    box-shadow: 0 8px 24px -4px color-mix(in srgb, var(--glean-ink, #0f172a) 18%, transparent), 0 2px 6px color-mix(in srgb, var(--glean-ink, #0f172a) 8%, transparent) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    align-items: center !important;
 
-.glean-reader__selection-sep {
-    width: 1px;
-    height: 16px;
-    background: color-mix(in srgb, var(--glean-line) 80%, transparent);
-    flex-shrink: 0;
+    &::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    .glean-reader__selection-btn {
+        height: 28px !important;
+        min-height: 28px !important;
+        padding: 0 10px !important;
+        font-size: 11.5px !important;
+        font-weight: 550 !important;
+        color: var(--glean-ink, #0f172a) !important;
+        border-radius: var(--glean-radius-pill) !important;
+        transition: all 0.15s ease !important;
+
+        &:hover:not(:disabled) {
+            background: color-mix(in srgb, var(--lv-brand, #0d9488) 12%, var(--glean-card-surface, #ffffff)) !important;
+            color: var(--lv-brand, #0d9488) !important;
+        }
+    }
+
+    .glean-reader__selection-colors {
+        padding: 2px 6px !important;
+        gap: 5px !important;
+        background: color-mix(in srgb, var(--glean-ink, #0f172a) 4%, transparent) !important;
+        border-radius: 9999px !important;
+        border: none !important;
+    }
+
+    .glean-reader__selection-sep {
+        width: 1px !important;
+        height: 16px !important;
+        background: color-mix(in srgb, var(--glean-ink, #0f172a) 12%, transparent) !important;
+        margin: 0 2px !important;
+    }
+
+    .glean-reader__selection-memo {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 4px !important;
+
+        .glean-reader__selection-memo-input {
+            width: 140px !important;
+            height: 26px !important;
+            padding: 0 8px !important;
+            font-size: 11.5px !important;
+            border-radius: 9999px !important;
+        }
+
+        .glean-btn--pri {
+            height: 26px !important;
+            width: 26px !important;
+            min-width: 26px !important;
+            padding: 0 !important;
+            display: grid !important;
+            place-items: center !important;
+            border-radius: 50% !important;
+        }
+    }
 }
 
 /* 右侧伴生栏修复内边距与现代分域设计 */
@@ -16504,6 +16620,66 @@ body:has(.b3-dialog--open, #lv-launchpad-sheet-mask, .lvct-dialog-mask, .sw__mob
     .glean-reader[data-reader-theme="eye"] .protyle-preview > .b3-typography {
         background: #1b2520 !important;
         color: #ddebe3 !important;
+    }
+}
+
+/* ══════════ 移动端工作台文章预览瘦身减负（极大化正文阅读浸入空间） ══════════ */
+.glean-preview__mobile-header {
+    min-height: 42px !important;
+    height: 42px !important;
+    padding: 4px 10px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+    background: var(--glean-card-surface) !important;
+    border-bottom: 1px solid var(--glean-line) !important;
+    flex-shrink: 0 !important;
+
+    .glean-preview__mobile-title {
+        font-size: 13.5px !important;
+        font-weight: 700 !important;
+        margin: 0 !important;
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+        color: var(--glean-ink) !important;
+    }
+
+    .glean-preview__header-actions {
+        flex: 0 0 auto !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+
+        .glean-btn {
+            height: 28px !important;
+            min-height: 28px !important;
+            padding: 0 8px !important;
+            font-size: 11.5px !important;
+            border-radius: var(--glean-radius-pill) !important;
+        }
+    }
+}
+
+.glean-preview__mobile-drawer {
+    padding: 8px 12px !important;
+    background: var(--glean-inset-surface) !important;
+    border-bottom: 1px solid var(--glean-line) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    flex-shrink: 0 !important;
+}
+
+@media (max-width: 768px) {
+    .glean-preview .protyle-preview__action {
+        display: none !important;
+    }
+    .glean-preview .protyle-preview {
+        padding-top: 4px !important;
     }
 }
 

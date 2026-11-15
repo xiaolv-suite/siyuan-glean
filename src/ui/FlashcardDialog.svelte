@@ -185,7 +185,7 @@
     .glean-flashcard__source > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .glean-flashcard__quote { margin: 0; padding: var(--glean-space-2) var(--glean-space-3); border: 1px solid var(--glean-border-soft); border-radius: var(--glean-radius-lg, 16px); background: var(--glean-inset-surface); }
     .glean-flashcard__quote summary { min-height: 32px; display: flex; align-items: center; cursor: pointer; color: var(--b3-theme-on-surface); font-size: var(--glean-text-sm); font-weight: 650; }
-    .glean-flashcard__quote pre { margin: var(--glean-space-2) 0 0; padding-top: var(--glean-space-2); border-top: 1px solid var(--glean-border-soft); white-space: pre-wrap; overflow-wrap: anywhere; max-height: 160px; overflow: auto; font: inherit; font-size: var(--glean-text-sm); line-height: 1.65; }
+    .glean-flashcard__quote pre { margin: var(--glean-space-2) 0 0; padding-top: var(--glean-space-2); border-top: 1px solid var(--glean-border-soft); white-space: pre-wrap; overflow-wrap: break-word; max-height: 160px; overflow: auto; font: inherit; font-size: var(--glean-text-sm); line-height: 1.65; }
     .glean-flashcard__sides { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--glean-space-3); }
     .glean-flashcard__sides label { display: flex; flex-direction: column; gap: var(--glean-space-2); min-width: 0; color: var(--b3-theme-on-surface); font-size: var(--glean-text-sm); font-weight: 650; }
     .glean-flashcard__sides label span { font-variant-numeric: tabular-nums; }
@@ -216,6 +216,16 @@
         .glean-flashcard { padding: var(--glean-space-4) var(--glean-space-3) calc(var(--glean-space-5) + env(safe-area-inset-bottom, 0px)); }
         .glean-flashcard__source { align-items: flex-start; flex-direction: column; }
         .glean-flashcard__source > span { white-space: normal; }
+    }
+    @media (max-width: 600px) and (max-height: 500px) {
+        .glean-flashcard__actions--footer { position: static; }
+        .glean-flashcard__sides textarea { min-height: 110px; }
+    }
+    :global([data-glean-keyboard-open="true"]) .glean-flashcard__actions--footer {
+        position: static;
+    }
+    :global([data-glean-keyboard-open="true"]) .glean-flashcard__sides textarea {
+        min-height: 110px;
     }
     @media (max-width: 360px) {
         .glean-flashcard__actions .glean-btn { width: 100%; justify-content: center; }

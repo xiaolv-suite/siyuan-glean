@@ -300,6 +300,63 @@ async function doExport(): Promise<void> {
 </div>
 
 <style>
+    .glean-quotes__facets {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--glean-space-1-5, 6px);
+        margin: var(--glean-space-2, 8px) 0;
+    }
+    .glean-quotes__facet {
+        min-height: 28px;
+        padding: 3px 10px;
+        border-radius: var(--glean-radius-pill, 9999px);
+        border: 1px solid var(--b3-border-color, var(--glean-border-soft));
+        background: var(--b3-theme-surface);
+        color: var(--glean-ink-2, var(--b3-theme-on-surface));
+        font-size: var(--glean-text-xs, 12px);
+        cursor: pointer;
+        touch-action: manipulation;
+        transition: all 0.15s ease;
+    }
+    .glean-quotes__facet:hover {
+        border-color: var(--b3-theme-primary);
+        color: var(--b3-theme-primary);
+    }
+    .glean-quotes__facet--on {
+        background: color-mix(in srgb, var(--b3-theme-primary) 12%, var(--b3-theme-surface));
+        border-color: var(--b3-theme-primary);
+        color: var(--b3-theme-primary);
+        font-weight: 600;
+    }
+    .glean-quotes__chips {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 8px;
+    }
+    .glean-quotes__chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        min-height: 28px;
+        padding: 2px 10px;
+        border-radius: var(--glean-radius-pill, 9999px);
+        border: 1px solid var(--b3-theme-primary);
+        background: color-mix(in srgb, var(--b3-theme-primary) 12%, var(--b3-theme-surface));
+        color: var(--b3-theme-primary);
+        font-size: var(--glean-text-xs, 12px);
+        cursor: pointer;
+        touch-action: manipulation;
+    }
+    @media (max-width: 640px) {
+        .glean-quotes__facet,
+        .glean-quotes__chip {
+            min-height: 38px;
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+    }
     .glean-quotes-filter-empty {
         padding: var(--glean-space-3);
     }

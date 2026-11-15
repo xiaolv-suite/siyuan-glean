@@ -559,7 +559,7 @@
         display: grid;
         place-items: center;
         padding: var(--glean-space-4, 16px);
-        background: color-mix(in srgb, #0b1317 48%, transparent);
+        background: var(--b3-dialog-scrim, color-mix(in srgb, var(--b3-theme-surface, #0b1317) 48%, transparent));
         backdrop-filter: blur(6px);
         -webkit-backdrop-filter: blur(6px);
     }
@@ -606,9 +606,15 @@
     }
 
     .glean-ann-editor__pager-btn {
-        width: 24px;
-        height: 24px;
+        width: 28px;
+        height: 28px;
+        min-width: 28px;
+        min-height: 28px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         padding: 0;
+        touch-action: manipulation;
     }
 
     .glean-ann-editor__pager-pos {
@@ -627,14 +633,25 @@
     }
 
     .glean-ann-editor__tpl-chip {
-        padding: 3px 9px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 28px;
+        padding: 3px 10px;
         border-radius: var(--glean-radius-pill);
         border: 1px solid var(--glean-border-soft);
         background: var(--glean-inset-surface);
         color: var(--glean-ink-2);
         font-size: 11px;
         cursor: pointer;
+        touch-action: manipulation;
         transition: border-color 140ms ease, color 140ms ease, background 140ms ease;
+
+        @media (max-width: 640px) {
+            min-height: 34px;
+            padding: 4px 12px;
+            font-size: 12px;
+        }
     }
 
     .glean-ann-editor__tpl-chip:hover {
@@ -807,14 +824,17 @@
     }
 
     .glean-ann-editor__color-btn {
-        width: 26px;
-        height: 26px;
+        width: 28px;
+        height: 28px;
+        min-width: 28px;
+        min-height: 28px;
         border-radius: 50%;
         border: 2px solid transparent;
         background: transparent;
         display: grid;
         place-items: center;
         cursor: pointer;
+        touch-action: manipulation;
         transition: transform 120ms ease, border-color 120ms ease;
 
         .glean-reader__highlight-dot {
@@ -824,6 +844,18 @@
 
         &:hover {
             transform: scale(1.12);
+        }
+
+        @media (max-width: 640px) {
+            width: 34px;
+            height: 34px;
+            min-width: 34px;
+            min-height: 34px;
+
+            .glean-reader__highlight-dot {
+                width: 16px;
+                height: 16px;
+            }
         }
     }
 

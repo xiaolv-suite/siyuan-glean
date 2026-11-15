@@ -715,14 +715,25 @@
     }
 
     .glean-quote-card-font-btn {
-        padding: 2px 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 28px;
+        padding: 2px 10px;
         border-radius: var(--glean-radius-pill);
         border: 1px solid transparent;
         background: transparent;
         color: var(--b3-theme-on-surface);
         font-size: var(--glean-text-xs);
         cursor: pointer;
+        touch-action: manipulation;
         transition: transform var(--glean-duration-fast) ease, background var(--glean-duration-fast) ease, border-color var(--glean-duration-fast) ease, box-shadow var(--glean-duration-fast) ease, color var(--glean-duration-fast) ease, opacity var(--glean-duration-fast) ease;
+
+        @media (max-width: 640px) {
+            min-height: 38px;
+            padding: 6px 12px;
+            font-size: var(--glean-text-sm);
+        }
     }
 
     .glean-quote-card-font-btn:hover {
@@ -756,6 +767,7 @@
         display: inline-flex;
         align-items: center;
         gap: 6px;
+        min-height: 28px;
         padding: 4px 12px;
         border-radius: var(--glean-radius-pill);
         border: 1px solid transparent;
@@ -763,7 +775,14 @@
         color: var(--b3-theme-on-surface);
         font-size: var(--glean-text-xs-plus);
         cursor: pointer;
+        touch-action: manipulation;
         transition: transform var(--glean-duration-fast) ease, background var(--glean-duration-fast) ease, border-color var(--glean-duration-fast) ease, box-shadow var(--glean-duration-fast) ease, color var(--glean-duration-fast) ease, opacity var(--glean-duration-fast) ease;
+
+        @media (max-width: 640px) {
+            min-height: 38px;
+            padding: 6px 14px;
+            font-size: var(--glean-text-sm);
+        }
     }
 
     .glean-quote-card-theme-btn:hover {
@@ -808,7 +827,7 @@
         width: 14px;
         height: 14px;
         border-radius: 50%;
-        border: 1px solid rgba(0,0,0,0.15);
+        border: 1px solid var(--b3-border-color, rgba(125, 125, 125, 0.25));
     }
 
     .glean-quote-card-theme-preview--teal { background: #064E3B; }

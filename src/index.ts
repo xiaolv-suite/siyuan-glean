@@ -1512,7 +1512,17 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
     /** 收集箱右键"迁入读库"：open-menu-inbox detail.ids → 逐条取详情迁移（T-1500） */
     private migrateFromInbox = async (ids: string[]): Promise<void> => {
         if (this.inboxMigrating) return;
-        const notebookId = this.settings.anchorNotebooks[0];
+        let notebookId = this.settings.anchorNotebooks[0];
+        if (notebookId && this.settings.anchorNotebooks.length > 0) {
+            try {
+                const { listNotebooks } = await import("./api/client");
+                const { resolveDefaultAnchorNotebook } = await import("./services/settings");
+                const openNbs = await listNotebooks().catch(() => []);
+                if (openNbs.length > 0) {
+                    notebookId = resolveDefaultAnchorNotebook(openNbs, this.settings.anchorNotebooks) || notebookId;
+                }
+            } catch {}
+        }
         if (!notebookId) {
             showNotice(t(this.i18n, "panel.noAnchorHint"), 4000, "warn");
             return;

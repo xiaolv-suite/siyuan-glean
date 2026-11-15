@@ -13,9 +13,12 @@
         globalLevel?: FoldLevel;
         i18n: I18nBundle;
         loading?: boolean;
+        aiBusy?: boolean;
+        aiEnriched?: boolean;
         onLevelChange?: (level: FoldLevel) => void;
         onJumpToBlock?: (blockId: string) => void;
         onToggleNode?: (nodeId: string) => void;
+        onRunAiEnrich?: () => Promise<void>;
     }
 
     let {
@@ -23,9 +26,12 @@
         globalLevel = 2,
         i18n,
         loading = false,
+        aiBusy = false,
+        aiEnriched = false,
         onLevelChange,
         onJumpToBlock,
         onToggleNode,
+        onRunAiEnrich,
     }: Props = $props();
 
     let currentLevel = $state<FoldLevel>(2);
@@ -159,17 +165,32 @@
         </div>
         <div class="glean-fold-reader__desc-row">
             <span class="glean-fold-reader__desc-text">{t(i18n, activeConfig.descKey)}</span>
-            {#if nodes.length > 0}
-                <button
-                    type="button"
-                    class="glean-btn glean-btn--ghost glean-btn--xs glean-fold-reader__copy-btn"
-                    title={t(i18n, "foldReader.copyMarkdown")}
-                    onclick={copyCurrentOutlineMarkdown}
-                >
-                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
-                    <span>{t(i18n, "foldReader.copyMarkdown")}</span>
-                </button>
-            {/if}
+            <div class="glean-fold-reader__ops-right" style="display:flex;align-items:center;gap:6px;margin-left:auto;">
+                {#if onRunAiEnrich}
+                    <button
+                        type="button"
+                        class="glean-btn glean-btn--ghost glean-btn--xs glean-fold-reader__ai-btn"
+                        class:glean-btn--active={aiEnriched}
+                        disabled={aiBusy || loading || nodes.length === 0}
+                        title="借助 AI 提炼全文段落的论点支撑、单行要旨与核心概念"
+                        onclick={() => void onRunAiEnrich?.()}
+                    >
+                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg>
+                        <span>{aiBusy ? "提炼中…" : aiEnriched ? "已提炼 ✓" : "✨ AI 智能分层"}</span>
+                    </button>
+                {/if}
+                {#if nodes.length > 0}
+                    <button
+                        type="button"
+                        class="glean-btn glean-btn--ghost glean-btn--xs glean-fold-reader__copy-btn"
+                        title={t(i18n, "foldReader.copyMarkdown")}
+                        onclick={copyCurrentOutlineMarkdown}
+                    >
+                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
+                        <span>{t(i18n, "foldReader.copyMarkdown")}</span>
+                    </button>
+                {/if}
+            </div>
         </div>
     </header>
 
@@ -217,6 +238,9 @@
                             <span class="glean-fold-card__idx">#{idx + 1}</span>
                             {#if node.concept}
                                 <span class="glean-fold-card__concept">{node.concept}</span>
+                            {/if}
+                            {#if node.aiEnriched}
+                                <span class="glean-fold-card__concept" style="background:color-mix(in srgb, var(--lv-brand, #0d9488) 12%, transparent);color:var(--lv-brand, #0d9488);border-color:color-mix(in srgb, var(--lv-brand, #0d9488) 25%, transparent)">✨ AI 提炼</span>
                             {/if}
                         </div>
                         <div class="glean-fold-card__ops">
@@ -287,8 +311,11 @@
                                 <strong>{node.gist}</strong>
                             </div>
                         {:else if effectiveLevel === 5}
-                            <div class="glean-fold-card__concept-view">
-                                <span>{node.gist || node.brief}</span>
+                            <div class="glean-fold-card__concept-view" style="display:flex;flex-direction:column;gap:6px;">
+                                <div style="display:flex;align-items:center;gap:6px;">
+                                    <span class="glean-fold-card__concept" style="font-weight:700;font-size:12px;padding:2px 8px;border-radius:9999px;">💡 {node.concept || "核心概念"}</span>
+                                </div>
+                                <p style="margin:0;font-size:12px;line-height:1.5;color:var(--glean-ink-2);">{node.gist || node.brief}</p>
                             </div>
                         {/if}
                     </div>

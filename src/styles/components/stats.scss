@@ -627,19 +627,31 @@
 
     .glean-stats__search-clear {
         position: absolute;
-        right: 6px;
+        right: 4px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 28px;
+        height: 28px;
+        min-width: 28px;
+        min-height: 28px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         border: none;
+        border-radius: 50%;
         background: transparent;
         color: var(--b3-theme-on-surface);
         opacity: 0.6;
         cursor: pointer;
-        padding: 2px 4px;
-        font-size: 11px;
+        padding: 0;
+        font-size: 12px;
         line-height: 1;
+        touch-action: manipulation;
 
         &:hover {
             opacity: 1;
             color: var(--glean-color-action);
+            background: color-mix(in srgb, var(--b3-theme-on-surface) 8%, transparent);
         }
 
         &:focus-visible {

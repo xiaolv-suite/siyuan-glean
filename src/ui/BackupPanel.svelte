@@ -333,13 +333,13 @@
     .glean-backup__row-state--missing, .glean-backup__row-state--unsupported { color: var(--glean-st-inbox-text); background: color-mix(in srgb, var(--glean-st-inbox) 9%, transparent); }
     .glean-backup__row-meta { margin: var(--glean-space-2) 0 !important; font-family: var(--b3-font-family-code); font-size: var(--glean-text-xs) !important; }
     .glean-backup__table { overflow-x: auto; margin-top: var(--glean-space-2); border: 1px solid var(--glean-border-soft); border-radius: var(--glean-radius-sm); }
-    .glean-backup table { width: 100%; min-width: 420px; border-collapse: collapse; text-align: left; }
+    .glean-backup table { width: 100%; border-collapse: collapse; text-align: left; }
     .glean-backup th, .glean-backup td { padding: var(--glean-space-2); border-bottom: 1px solid var(--glean-border-soft); vertical-align: top; }
     .glean-backup tr:last-child th, .glean-backup tr:last-child td { border-bottom: 0; }
     .glean-backup th { max-width: 180px; overflow-wrap: anywhere; font-size: var(--glean-text-sm); }
     .glean-backup pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 180px; overflow: auto; margin: 0; padding: var(--glean-space-2); border-radius: var(--glean-radius-sm); background: var(--glean-inset-surface); font-family: var(--b3-font-family-code); font-size: var(--glean-text-xs); line-height: 1.55; }
     .glean-backup__check { display: flex; align-items: center; gap: var(--glean-space-2); color: var(--b3-theme-on-surface); font-size: var(--glean-text-sm); }
-    .glean-backup__diff { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--glean-space-2); }
+    .glean-backup__diff { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--glean-space-2); }
     .glean-backup__preferences { padding: var(--glean-space-2) var(--glean-space-3); border: 1px solid var(--glean-border-soft); border-radius: var(--glean-radius-lg, 16px); background: var(--glean-inset-surface); }
     .glean-backup__preferences summary { font-size: var(--glean-text-sm); }
     .glean-backup__status { display: flex; align-items: center; gap: var(--glean-space-2); padding: var(--glean-space-2) var(--glean-space-3); border: 1px solid var(--glean-border-soft); border-radius: var(--glean-radius-pill); background: var(--glean-status-surface); font-variant-numeric: tabular-nums; }

@@ -91,7 +91,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
     import { openRoamingDialog } from "./roaming-dialog";
     import { formatCitation, citationSuccessKey, type CitationFormat } from "../domain/citation";
     import FoldedReaderView from "./FoldedReaderView.svelte";
-    import { loadDocumentFoldNodes } from "../services/folded-reader-service";
+    import { loadDocumentFoldNodes, enrichFoldNodesWithAi } from "../services/folded-reader-service";
     import { applyGlobalFoldLevel, toggleNodeFold, type FoldLevel, type FoldNode } from "../domain/folded-reader";
     import { estimateReadingPercentage } from "../domain/reading-position";
     import { findMatchingOutlineItemId, type OutlineItem } from "../domain/outline";
@@ -270,6 +270,28 @@ import { aiFailureKey } from "../libs/ai-feedback";
     let foldNodes = $state<FoldNode[]>([]);
     let foldLoading = $state(false);
     let foldGlobalLevel = $state<FoldLevel>(2);
+    let foldAiBusy = $state(false);
+    let foldAiEnriched = $state(false);
+
+    async function runFoldAiEnrich(): Promise<void> {
+        if (!docId || foldNodes.length === 0 || foldAiBusy) return;
+        foldAiBusy = true;
+        try {
+            const res = await enrichFoldNodesWithAi(facade.pluginInstance, facade.settings, foldNodes);
+            if (res.ok && res.count > 0) {
+                foldNodes = res.nodes;
+                foldAiEnriched = true;
+                showMessage(`✨ 已通过 AI 智能提炼 ${res.count} 个段落的五阶分层！`, 3000);
+            } else {
+                showMessage(res.error || "AI 分层提炼未生成有效内容，请检查 AI 服务配置", 3500);
+            }
+        } catch (err) {
+            console.warn("[glean] runFoldAiEnrich failed:", err);
+            showMessage("AI 分层提炼失败：" + (err instanceof Error ? err.message : String(err)), 3500);
+        } finally {
+            foldAiBusy = false;
+        }
+    }
 
     async function refreshFoldNodes(targetDocId = docId): Promise<void> {
         if (!targetDocId) return;
@@ -737,7 +759,10 @@ import { aiFailureKey } from "../libs/ai-feedback";
                 if (currentCtx && mounted) context = currentCtx;
             } catch {}
         }
-        if (!currentCtx) return;
+        if (!currentCtx) {
+            showMessage(t(i18n, "msg.actionFailed"), 2500);
+            return;
+        }
         openDocSlicingDialog(facade, currentCtx, outline, (blockId) => {
             scrollToHighlight(blockId);
         });
@@ -754,7 +779,10 @@ import { aiFailureKey } from "../libs/ai-feedback";
                 if (currentCtx && mounted) context = currentCtx;
             } catch {}
         }
-        if (!currentCtx) return;
+        if (!currentCtx) {
+            showMessage(t(i18n, "msg.actionFailed"), 2500);
+            return;
+        }
         mindmapBusy = true;
         try {
             const res = await createOutlineMindmapDocument(facade.pluginInstance, currentCtx, outline);
@@ -2847,7 +2875,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
                                         aria-checked={currentThemePalette === p.id}
                                         class="glean-reader__palette-opt"
                                         class:glean-reader__palette-opt--active={currentThemePalette === p.id}
-                                        style="width: 20px; height: 20px; border-radius: 50%; padding: 0; min-width: 0; background: {p.brand}; border: {currentThemePalette === p.id ? '2px solid var(--b3-theme-primary)' : '1px solid var(--glean-border-soft)'}; cursor: pointer;"
+                                        style="width: 30px; height: 30px; min-width: 30px; min-height: 30px; border-radius: 50%; padding: 0; background: {p.brand}; border: {currentThemePalette === p.id ? '2.5px solid var(--b3-theme-primary)' : '1px solid var(--glean-border-soft)'}; box-shadow: {currentThemePalette === p.id ? '0 0 0 2px color-mix(in srgb, var(--b3-theme-primary) 30%, transparent)' : 'none'}; cursor: pointer; touch-action: manipulation;"
                                         title={t(i18n, p.nameKey)}
                                         onclick={() => void selectPalette(p.id)}
                                     ></button>
@@ -2899,20 +2927,20 @@ import { aiFailureKey } from "../libs/ai-feedback";
                 <ActionPopover label={t(i18n, "reader.moreActions")} compact>
                     <button type="button" class="glean-btn glean-btn--ghost" onclick={() => setMode(mode === "read" ? "edit" : "read")}>
                         <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanEdit" /></svg>
-                        <span>{t(i18n, mode === "read" ? "reader.modeEdit" : "reader.modeRead")} (Alt+E)</span>
+                        <span>{t(i18n, mode === "read" ? "reader.modeEdit" : "reader.modeRead")}{facade.isMobile ? "" : " (Alt+E)"}</span>
                     </button>
                     <button type="button" class="glean-btn glean-btn--ghost" onclick={() => { searchOpen = !searchOpen; }}>
                         <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSearch" /></svg>
-                        <span>{t(i18n, "reader.searchTitle")} (Ctrl+F)</span>
+                        <span>{t(i18n, "reader.searchTitle")}{facade.isMobile ? "" : " (Ctrl+F)"}</span>
                     </button>
                     <button type="button" class="glean-btn glean-btn--ghost" onclick={toggleFoldReader}>
                         <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg>
-                        <span>{t(i18n, "foldReader.navTitle")} (Alt+Z)</span>
+                        <span>{t(i18n, "foldReader.navTitle")}{facade.isMobile ? "" : " (Alt+Z)"}</span>
                     </button>
                     {#if context}
                         <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void toggleFavorite()}>
                             <svg class="glean-icon glean-icon--xs" class:glean-icon--fav={context.favorite} aria-hidden="true"><use href={context.favorite ? "#iconGleanHeart" : "#iconGleanHeartOutline"} /></svg>
-                            <span>{context.favorite ? t(i18n, "roaming.favoriteRemoved") : t(i18n, "roaming.favoriteAction")} (Alt+F)</span>
+                            <span>{context.favorite ? t(i18n, "roaming.favoriteRemoved") : t(i18n, "roaming.favoriteAction")}{facade.isMobile ? "" : " (Alt+F)"}</span>
                         </button>
                     {/if}
                     <button type="button" class="glean-btn glean-btn--ghost" onclick={toggleZenMode}>
@@ -3318,7 +3346,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
                     onclick={() => { companionTab = "outline"; outlineOpen = true; }}
                 >
                     <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg>
-                    <span>{t(i18n, "reader.companionNavOutline")}{#if outline.length > 0} ({outline.length}){/if}</span>
+                    <span>大纲{#if outline.length > 0} <small style="opacity:.8;font-size:10px">({outline.length})</small>{/if}</span>
                 </button>
                 <button
                     type="button"
@@ -3327,7 +3355,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
                     onclick={() => { companionTab = "notes"; highlightsOpen = true; }}
                 >
                     <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanEdit" /></svg>
-                    <span>{t(i18n, "reader.companionNavNotes")}{#if docHighlights.length > 0} ({docHighlights.length}){/if}</span>
+                    <span>批注{#if docHighlights.length > 0} <small style="opacity:.8;font-size:10px">({docHighlights.length})</small>{/if}</span>
                 </button>
                 <button
                     type="button"
@@ -3336,7 +3364,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
                     onclick={() => { companionTab = "fold"; if (foldNodes.length === 0) void refreshFoldNodes(); }}
                 >
                     <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg>
-                    <span>{t(i18n, "foldReader.navTitle")}</span>
+                    <span>五阶分层</span>
                 </button>
                 {#if aiOn}
                     <button
@@ -3346,7 +3374,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
                         onclick={() => companionTab = "ai"}
                     >
                         <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg>
-                        <span>{t(i18n, "reader.companionNavAi")}</span>
+                        <span>AI 伴读</span>
                     </button>
                 {/if}
                 <button
@@ -3356,7 +3384,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
                     onclick={() => { companionTab = "tools"; moreToolsOpen = true; }}
                 >
                     <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanGear" /></svg>
-                    <span>{t(i18n, "reader.companionNavTools")}</span>
+                    <span>工具</span>
                 </button>
             </div>
             {#if isWechatArticle && (companionTab === "tools" || companionTab === "all")}
@@ -3640,6 +3668,9 @@ import { aiFailureKey } from "../libs/ai-feedback";
                         globalLevel={foldGlobalLevel}
                         {i18n}
                         loading={foldLoading}
+                        aiBusy={foldAiBusy}
+                        aiEnriched={foldAiEnriched}
+                        onRunAiEnrich={runFoldAiEnrich}
                         onLevelChange={(lvl) => {
                             foldGlobalLevel = lvl;
                             foldNodes = applyGlobalFoldLevel(foldNodes, lvl);

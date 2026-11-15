@@ -408,6 +408,7 @@
     }
 
     let rootEl = $state<HTMLElement | null>(null);
+    let mobileMetaOpen = $state(false);
 
     function onPreviewKeyDown(event: KeyboardEvent): void {
         if (event.repeat) return;
@@ -482,136 +483,190 @@
 <svelte:window onkeydown={onPreviewKeyDown} />
 
 <section class="glean-preview" bind:this={rootEl} tabindex="-1" aria-labelledby={titleId} aria-describedby={metaId} aria-busy={busy}>
-    <div class="glean-preview__header">
-        <h2 id={titleId} title={`${entry.title || t(i18n, "panel.untitled")}（右键呼出原生菜单）`} oncontextmenu={openDocContextMenu}>{entry.title || t(i18n, "panel.untitled")}</h2>
-        <div class="glean-preview__header-actions" role="group" aria-label={t(i18n, "preview.title")}>
-            {#if onToggleWiden}
+    {#if facade.isMobile}
+        <div class="glean-preview__header glean-preview__mobile-header">
+            <h2 id={titleId} class="glean-preview__mobile-title" title={`${entry.title || t(i18n, "panel.untitled")}`} oncontextmenu={openDocContextMenu}>{entry.title || t(i18n, "panel.untitled")}</h2>
+            <div class="glean-preview__header-actions" role="group" aria-label={t(i18n, "preview.title")}>
                 <button
                     type="button"
-                    class="glean-btn glean-btn--ghost glean-preview__widen-btn"
-                    title={widen ? t(i18n, "preview.restoreWidth") : t(i18n, "preview.widen")}
-                    aria-label={widen ? t(i18n, "preview.restoreWidth") : t(i18n, "preview.widen")}
-                    onclick={() => onToggleWiden?.()}
+                    class="glean-btn glean-btn--ghost glean-btn--sm"
+                    title={t(i18n, "reading.openInReader")}
+                    onclick={() => { onClose(); (facade.openReader ?? facade.openReadingDocument).call(facade, entry.id); }}
                 >
-                    <svg class="glean-icon glean-icon--xs" aria-hidden="true">
-                        <use href={widen ? "#iconGleanCollapseAll" : "#iconGleanExpandAll"} />
-                    </svg>
+                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg>
+                    <span>阅读器</span>
                 </button>
-            {/if}
-            {#if entry.kind === "clip" && attrs?.status}
                 <button
                     type="button"
-                    class="glean-btn glean-btn--ghost glean-preview__fav-btn"
-                    class:glean-preview__fav-btn--active={attrs.favorite}
-                    title={attrs.favorite ? t(i18n, "roaming.favoriteRemoved") : t(i18n, "roaming.favoriteAction") + " (F)"}
-                    aria-label={attrs.favorite ? t(i18n, "roaming.favoriteRemoved") : t(i18n, "roaming.favoriteAction")}
-                    onclick={() => void toggleFavorite()}
+                    class="glean-btn glean-btn--ghost glean-btn--sm"
+                    class:glean-btn--active={mobileMetaOpen}
+                    title="展开/收起详情与状态管理"
+                    onclick={() => { mobileMetaOpen = !mobileMetaOpen; }}
                 >
-                    <svg class="glean-icon glean-icon--xs" class:glean-icon--fav={attrs.favorite} aria-hidden="true"><use href={attrs.favorite ? "#iconGleanHeart" : "#iconGleanHeartOutline"} /></svg>
+                    <span>{attrs?.status ? t(i18n, `queue.${attrs.status}`) : "状态"}</span>
+                    <span style="font-size: 8px;">{mobileMetaOpen ? "▲" : "▼"}</span>
                 </button>
-            {/if}
-            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => { if (facade.isMobile) onClose(); facade.openReadingDocument(entry.id); }}>{t(i18n, "preview.openDocument")}</button>
-            <ActionPopover label={t(i18n, "library.moreActions")} compact>
-                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void triggerRoaming()} title={t(i18n, "roaming.buttonHint")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanRefresh" /></svg> <span>{t(i18n, "roaming.button")}</span></button>
-                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyBlockRef()}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg> <span>{t(i18n, "action.copyBlockRef")}</span></button>
-                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation("gbt")} title="{t(i18n, 'citation.copyGBT')} (C)"><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg> <span>GB/T</span></button>
-                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation("bibtex")} title="{t(i18n, 'citation.copyBibTeX')} (Shift+C)"><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArchive" /></svg> <span>BibTeX</span></button>
-                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation("apa")} title={t(i18n, "citation.copyAPA")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanLocal" /></svg> <span>APA</span></button>
-                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation("mla")} title={t(i18n, "citation.copyMLA")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg> <span>MLA</span></button>
-                {#if entry.kind === "clip"}<button type="button" class="glean-btn glean-btn--ghost" disabled={busy || exporting} onclick={() => void downloadMarkdown()}>{exporting ? t(i18n, "settings.exporting") : t(i18n, "export.markdown")}</button>{/if}
-                {#if entry.kind === "clip"}
-                    <button
-                        type="button"
-                        class="glean-btn glean-btn--ghost glean-preview__snapshot-btn"
-                        title={attrs?.snapshot ? t(i18n, "snapshot.open") : t(i18n, "snapshot.take") + " (S)"}
-                        onclick={() => void openOrTakeSnapshot()}
-                    >
-                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCamera" /></svg> <span>{attrs?.snapshot ? t(i18n, "snapshot.open") : t(i18n, "snapshot.take")}</span>
-                    </button>
-                {/if}
-            </ActionPopover>
-            <button type="button" class="glean-btn glean-btn--ghost" onclick={onClose}>{t(i18n, "preview.close")}</button>
+                <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm" onclick={onClose} aria-label={t(i18n, "preview.close")}>✕</button>
+            </div>
         </div>
-    </div>
-    <div id={metaId} class="glean-preview__meta glean-preview__toolbar">
-        <div class="glean-preview__meta-left">
-            {#if safeAuthor}
-                <span class="glean-preview__author">
-                    {#if onFilterAuthor}
-                        <button type="button" class="glean-source-author glean-preview__author-btn" onclick={() => onFilterAuthor?.(safeAuthor)} title={safeAuthor}>
+        {#if mobileMetaOpen}
+            <div class="glean-preview__meta glean-preview__toolbar glean-preview__mobile-drawer">
+                <div class="glean-preview__meta-left">
+                    {#if safeAuthor}
+                        <span class="glean-preview__author">
                             {safeAuthor}
-                        </button>
-                    {:else}
-                        {safeAuthor}
+                        </span>
                     {/if}
-                </span>
-            {/if}
-            {#if normalizeUrl(sourceUrl)}
-                <a href={sourceUrl} target="_blank" rel="noopener noreferrer" class="glean-preview__source-link" title={sourceUrl}>
-                    {#if wechatAvatar}
-                        <img loading="lazy" decoding="async" class="glean-preview__avatar" src={wechatAvatar} alt="" referrerpolicy="no-referrer" />
-                    {:else}
-                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanExternal" /></svg>
+                    {#if normalizeUrl(sourceUrl)}
+                        <a href={sourceUrl} target="_blank" rel="noopener noreferrer" class="glean-preview__source-link" title={sourceUrl}>
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanExternal" /></svg>
+                            <span>{previewSourceLabel()}</span>
+                        </a>
                     {/if}
-                    <span>{previewSourceLabel()}</span>
-                </a>
-                <button
-                    type="button"
-                    class="glean-preview__source-link glean-preview__source-link--reader"
-                    title={`${t(i18n, "reading.openInReader")}（右键呼出原生菜单）`}
-                    onclick={() => { if (facade.isMobile) onClose(); (facade.openReader ?? facade.openReadingDocument).call(facade, entry.id); }}
-                    oncontextmenu={openDocContextMenu}
-                >
-                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg> <span>{t(i18n, "reading.openInReader")}</span>
-                </button>
-                {#if isWechatUrl(sourceUrl)}
+                </div>
+                <div class="glean-preview__actions glean-preview__actions--compact" role="group" aria-label={t(i18n, "preview.title")} aria-busy={busy}>
+                    {#if confirmed && attrs}
+                        <div class="glean-preview__status-group" role="group" aria-label="状态流转">
+                            {#each statuses as status}
+                                <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm" class:glean-btn--active={attrs.status === status} aria-pressed={attrs.status === status} disabled={busy || attrs.status === status} onclick={() => statusAction(status)}>{t(i18n, `queue.${status}`)}</button>
+                            {/each}
+                        </div>
+                    {/if}
+                </div>
+            </div>
+        {/if}
+    {:else}
+        <div class="glean-preview__header">
+            <h2 id={titleId} title={`${entry.title || t(i18n, "panel.untitled")}（右键呼出原生菜单）`} oncontextmenu={openDocContextMenu}>{entry.title || t(i18n, "panel.untitled")}</h2>
+            <div class="glean-preview__header-actions" role="group" aria-label={t(i18n, "preview.title")}>
+                {#if onToggleWiden}
                     <button
                         type="button"
-                        class="glean-preview__source-link glean-preview__source-link--weread"
-                        title={t(i18n, "wechat.wereadGuide")}
-                        onclick={handleOpenWeread}
+                        class="glean-btn glean-btn--ghost glean-preview__widen-btn"
+                        title={widen ? t(i18n, "preview.restoreWidth") : t(i18n, "preview.widen")}
+                        aria-label={widen ? t(i18n, "preview.restoreWidth") : t(i18n, "preview.widen")}
+                        onclick={() => onToggleWiden?.()}
                     >
-                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanExternal" /></svg> <span>{t(i18n, "wechat.openInWeread")}</span>
+                        <svg class="glean-icon glean-icon--xs" aria-hidden="true">
+                            <use href={widen ? "#iconGleanCollapseAll" : "#iconGleanExpandAll"} />
+                        </svg>
                     </button>
                 {/if}
-            {:else if sourceUrl}
-                <span class="glean-preview__source-link">{previewSourceLabel()}</span>
-            {/if}
-            {#if confirmed}
-                <AuthorEditor {facade} docId={entry.id} onSaved={onRefresh} />
-            {/if}
-            {#if entry.kind === "candidate"}
-                <div class="glean-preview__evidence" aria-label={t(i18n, "candidate.evidenceLabel")}>
-                    <span class="glean-preview__evidence-chip glean-preview__evidence-chip--signal">{t(i18n, "candidate.evidenceLabel")}: {entry.evidence.map((value) => t(i18n, `candidate.evidence.${value}`)).join(" · ")}</span>
-                    {#if entry.missing.filter((value) => value !== "status").length > 0}
-                        <span class="glean-preview__evidence-chip glean-preview__evidence-chip--missing">{entry.missing.filter((value) => value !== "status").map((value) => t(i18n, `candidate.missing.${value}`)).join(" · ")}</span>
+                {#if entry.kind === "clip" && attrs?.status}
+                    <button
+                        type="button"
+                        class="glean-btn glean-btn--ghost glean-preview__fav-btn"
+                        class:glean-preview__fav-btn--active={attrs.favorite}
+                        title={attrs.favorite ? t(i18n, "roaming.favoriteRemoved") : t(i18n, "roaming.favoriteAction") + " (F)"}
+                        aria-label={attrs.favorite ? t(i18n, "roaming.favoriteRemoved") : t(i18n, "roaming.favoriteAction")}
+                        onclick={() => void toggleFavorite()}
+                    >
+                        <svg class="glean-icon glean-icon--xs" class:glean-icon--fav={attrs.favorite} aria-hidden="true"><use href={attrs.favorite ? "#iconGleanHeart" : "#iconGleanHeartOutline"} /></svg>
+                    </button>
+                {/if}
+                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => { if (facade.isMobile) onClose(); facade.openReadingDocument(entry.id); }}>{t(i18n, "preview.openDocument")}</button>
+                <ActionPopover label={t(i18n, "library.moreActions")} compact>
+                    <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void triggerRoaming()} title={t(i18n, "roaming.buttonHint")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanRefresh" /></svg> <span>{t(i18n, "roaming.button")}</span></button>
+                    <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyBlockRef()}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg> <span>{t(i18n, "action.copyBlockRef")}</span></button>
+                    <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation("gbt")} title="{t(i18n, 'citation.copyGBT')} (C)"><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg> <span>GB/T</span></button>
+                    <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation("bibtex")} title="{t(i18n, 'citation.copyBibTeX')} (Shift+C)"><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArchive" /></svg> <span>BibTeX</span></button>
+                    <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation("apa")} title={t(i18n, "citation.copyAPA")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanLocal" /></svg> <span>APA</span></button>
+                    <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyCitation("mla")} title={t(i18n, "citation.copyMLA")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg> <span>MLA</span></button>
+                    {#if entry.kind === "clip"}<button type="button" class="glean-btn glean-btn--ghost" disabled={busy || exporting} onclick={() => void downloadMarkdown()}>{exporting ? t(i18n, "settings.exporting") : t(i18n, "export.markdown")}</button>{/if}
+                    {#if entry.kind === "clip"}
+                        <button
+                            type="button"
+                            class="glean-btn glean-btn--ghost glean-preview__snapshot-btn"
+                            title={attrs?.snapshot ? t(i18n, "snapshot.open") : t(i18n, "snapshot.take") + " (S)"}
+                            onclick={() => void openOrTakeSnapshot()}
+                        >
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCamera" /></svg> <span>{attrs?.snapshot ? t(i18n, "snapshot.open") : t(i18n, "snapshot.take")}</span>
+                        </button>
                     {/if}
-                </div>
-            {/if}
+                </ActionPopover>
+                <button type="button" class="glean-btn glean-btn--ghost" onclick={onClose}>{t(i18n, "preview.close")}</button>
+            </div>
         </div>
-        <div class="glean-preview__actions glean-preview__actions--compact" role="group" aria-label={t(i18n, "preview.title")} aria-busy={busy}>
-            {#if loadFailed}
-                <span class="glean-preview__state glean-preview__state--error" role="alert">{t(i18n, "preview.changed")}</span>
-                <button type="button" class="glean-btn glean-btn--sm" onclick={() => void load()}>{t(i18n, "action.retry")}</button>
-            {:else if !attrs}
-                <span class="glean-preview__state glean-preview__state--loading" role="status" aria-live="polite">{t(i18n, "panel.loading")}</span>
-            {:else if candidate}
-                <button type="button" class="glean-btn glean-btn--sm" disabled={busy || !normalizeUrl(sourceUrl)} onclick={() => confirm()}>{t(i18n, "action.addToInbox")}</button>
-                {#if !sourceUrl}<button type="button" class="glean-btn glean-btn--sm" disabled={busy} onclick={() => confirm(true)}>{t(i18n, "candidate.captureLocal")}</button>{/if}
-                <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm" disabled={busy} onclick={editUrl}>{t(i18n, "candidate.fixUrl")}</button>
-                <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm" disabled={busy} onclick={() => { const id = entry.id; void process(() => excludePreviewCandidate(facade.pluginInstance, id), "msg.candidateExcluded"); }}>{t(i18n, "candidate.exclude")}</button>
-            {:else if confirmed}
-                <div class="glean-preview__status-group" role="group" aria-label="状态流转">
-                    {#each statuses as status}
-                        <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm" class:glean-btn--active={attrs.status === status} aria-pressed={attrs.status === status} disabled={busy || attrs.status === status} onclick={() => statusAction(status)}>{t(i18n, `queue.${status}`)}</button>
-                    {/each}
-                </div>
-            {:else}
-                <span class="glean-preview__state glean-preview__state--error" role="alert">{t(i18n, "preview.changed")}</span>
-                <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm" disabled={busy} onclick={() => void load()}>{t(i18n, "action.retry")}</button>
-            {/if}
+        <div id={metaId} class="glean-preview__meta glean-preview__toolbar">
+            <div class="glean-preview__meta-left">
+                {#if safeAuthor}
+                    <span class="glean-preview__author">
+                        {#if onFilterAuthor}
+                            <button type="button" class="glean-source-author glean-preview__author-btn" onclick={() => onFilterAuthor?.(safeAuthor)} title={safeAuthor}>
+                                {safeAuthor}
+                            </button>
+                        {:else}
+                            {safeAuthor}
+                        {/if}
+                    </span>
+                {/if}
+                {#if normalizeUrl(sourceUrl)}
+                    <a href={sourceUrl} target="_blank" rel="noopener noreferrer" class="glean-preview__source-link" title={sourceUrl}>
+                        {#if wechatAvatar}
+                            <img loading="lazy" decoding="async" class="glean-preview__avatar" src={wechatAvatar} alt="" referrerpolicy="no-referrer" />
+                        {:else}
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanExternal" /></svg>
+                        {/if}
+                        <span>{previewSourceLabel()}</span>
+                    </a>
+                    <button
+                        type="button"
+                        class="glean-preview__source-link glean-preview__source-link--reader"
+                        title={`${t(i18n, "reading.openInReader")}（右键呼出原生菜单）`}
+                        onclick={() => { if (facade.isMobile) onClose(); (facade.openReader ?? facade.openReadingDocument).call(facade, entry.id); }}
+                        oncontextmenu={openDocContextMenu}
+                    >
+                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg> <span>{t(i18n, "reading.openInReader")}</span>
+                    </button>
+                    {#if isWechatUrl(sourceUrl)}
+                        <button
+                            type="button"
+                            class="glean-preview__source-link glean-preview__source-link--weread"
+                            title={t(i18n, "wechat.wereadGuide")}
+                            onclick={handleOpenWeread}
+                        >
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanExternal" /></svg> <span>{t(i18n, "wechat.openInWeread")}</span>
+                        </button>
+                    {/if}
+                {:else if sourceUrl}
+                    <span class="glean-preview__source-link">{previewSourceLabel()}</span>
+                {/if}
+                {#if confirmed}
+                    <AuthorEditor {facade} docId={entry.id} onSaved={onRefresh} />
+                {/if}
+                {#if entry.kind === "candidate"}
+                    <div class="glean-preview__evidence" aria-label={t(i18n, "candidate.evidenceLabel")}>
+                        <span class="glean-preview__evidence-chip glean-preview__evidence-chip--signal">{t(i18n, "candidate.evidenceLabel")}: {entry.evidence.map((value) => t(i18n, `candidate.evidence.${value}`)).join(" · ")}</span>
+                        {#if entry.missing.filter((value) => value !== "status").length > 0}
+                            <span class="glean-preview__evidence-chip glean-preview__evidence-chip--missing">{entry.missing.filter((value) => value !== "status").map((value) => t(i18n, `candidate.missing.${value}`)).join(" · ")}</span>
+                        {/if}
+                    </div>
+                {/if}
+            </div>
+            <div class="glean-preview__actions glean-preview__actions--compact" role="group" aria-label={t(i18n, "preview.title")} aria-busy={busy}>
+                {#if loadFailed}
+                    <span class="glean-preview__state glean-preview__state--error" role="alert">{t(i18n, "preview.changed")}</span>
+                    <button type="button" class="glean-btn glean-btn--sm" onclick={() => void load()}>{t(i18n, "action.retry")}</button>
+                {:else if !attrs}
+                    <span class="glean-preview__state glean-preview__state--loading" role="status" aria-live="polite">{t(i18n, "panel.loading")}</span>
+                {:else if candidate}
+                    <button type="button" class="glean-btn glean-btn--sm" disabled={busy || !normalizeUrl(sourceUrl)} onclick={() => confirm()}>{t(i18n, "action.addToInbox")}</button>
+                    {#if !sourceUrl}<button type="button" class="glean-btn glean-btn--sm" disabled={busy} onclick={() => confirm(true)}>{t(i18n, "candidate.captureLocal")}</button>{/if}
+                    <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm" disabled={busy} onclick={editUrl}>{t(i18n, "candidate.fixUrl")}</button>
+                    <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm" disabled={busy} onclick={() => { const id = entry.id; void process(() => excludePreviewCandidate(facade.pluginInstance, id), "msg.candidateExcluded"); }}>{t(i18n, "candidate.exclude")}</button>
+                {:else if confirmed}
+                    <div class="glean-preview__status-group" role="group" aria-label="状态流转">
+                        {#each statuses as status}
+                            <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm" class:glean-btn--active={attrs.status === status} aria-pressed={attrs.status === status} disabled={busy || attrs.status === status} onclick={() => statusAction(status)}>{t(i18n, `queue.${status}`)}</button>
+                        {/each}
+                    </div>
+                {:else}
+                    <span class="glean-preview__state glean-preview__state--error" role="alert">{t(i18n, "preview.changed")}</span>
+                    <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm" disabled={busy} onclick={() => void load()}>{t(i18n, "action.retry")}</button>
+                {/if}
+            </div>
         </div>
-    </div>
+    {/if}
     {#if editingUrl && candidate}
         <div class="glean-preview__url">
             <input class="b3-text-field" type="url" bind:value={urlDraft} disabled={busy} placeholder={t(i18n, "candidate.urlPlaceholder")} aria-label={t(i18n, "candidate.urlPlaceholder")} onkeydown={(event) => { if (event.key === "Enter") { event.preventDefault(); saveUrl(); } else if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); editingUrl = false; } }} />
@@ -702,16 +757,22 @@
         border: 1px solid var(--glean-border-soft);
     }
     .glean-preview__status-group .glean-btn {
-        padding: 2px 7px;
-        font-size: 11px;
-        min-height: 22px;
-        line-height: 18px;
+        padding: 3px 9px;
+        font-size: 12px;
+        min-height: 28px;
+        line-height: 20px;
         border-radius: var(--glean-radius-pill);
         border: none;
+        touch-action: manipulation;
+        @media (max-width: 640px) {
+            min-height: 38px;
+            padding: 6px 12px;
+            font-size: 13px;
+        }
     }
     .glean-preview__status-group .glean-btn--active {
         background: var(--glean-color-action, var(--b3-theme-primary));
-        color: #ffffff;
+        color: var(--b3-theme-on-primary, #ffffff);
         font-weight: 600;
     }
     .glean-preview__source-link {

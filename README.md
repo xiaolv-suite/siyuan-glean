@@ -8,7 +8,7 @@
 
 100% 数据主权 · 结构化阅读生命周期 · 视线同焦注记 · 划词金句海报 · 学术文献著录
 
-**当前版本：v1.4.8** ｜ [English Documentation](README.en-US.md) ｜ [更新日志](CHANGELOG.md)
+**当前版本：v1.4.9** ｜ [English Documentation](README.en-US.md) ｜ [更新日志](CHANGELOG.md)
 
 [![Quality gates](https://github.com/xiaolv-suite/siyuan-glean/actions/workflows/ci.yml/badge.svg)](https://github.com/xiaolv-suite/siyuan-glean/actions/workflows/ci.yml)
 [![思源笔记](https://img.shields.io/badge/思源笔记-%3E%3D%203.8.4-brightgreen.svg)](https://b3log.org/siyuan)
