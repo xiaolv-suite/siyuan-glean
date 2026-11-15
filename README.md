@@ -25,6 +25,43 @@
 
 ---
 
+## 🚀 本次更新要点（v1.4.9）
+
+- **移动端工具栏空间重构**：紧凑收敛工具栏占地，为手机端文章正文留出充裕沉浸阅读视野；
+- **批注横条与悬浮工具栏体验提升**：修复悬浮批注横条在高密度文档下的视觉排版与遮挡问题；
+- **伴生栏与分层折叠深度优化**：伴生栏 UI 质感提升，结构树层级交互更加稳定顺畅；
+- **小驴罗盘顶栏常驻与防横跳**：消除思源 3.8.x 内置重排对罗盘中枢的拉锯推挤，单插件亦可一键直达罗盘全功能；
+- **通知去重与长效免打扰**：升级通知高可见胶囊呈现，重复通知自动折叠计数（×N），免打扰设置跨重启严格固化。
+
+<details>
+<summary>展开查看历史版本更新记录（v1.4.8 及更早版本 · 完整记录见 CHANGELOG.md）</summary>
+
+- **v1.4.8**：思源 3.8.10+ 原生适配（专注模式折叠停靠栏、原生文档树菜单）、标签别名 Escape 退出、移动端状态组修复。
+- **v1.4.6**：顶栏右键快捷菜单官方化，罗盘与弹层层级接入全生态 Protocol v1.7.6 治理。
+- **v1.4.5**：手机端完整体验闭环——罗盘双入口、全屏面板、五态快捷悬浮条。
+</details>
+
+---
+
+## 🐴 小驴思源全家桶生态矩阵与交流
+
+本插件为「小驴思源生态」8 大官方集市插件之一。所有插件共享小驴罗盘（顶栏常驻中枢）、全域穿透搜索与统一备份恢复：
+
+| 插件名称 | 核心用途 | 官方集市 / 仓库 |
+| :--- | :--- | :--- |
+| **小驴打卡** | 本地优先习惯打卡、日程提醒与多维人生热力图工作台 | [`siyuan-checkin`](https://github.com/xiaolv-suite/siyuan-checkin) |
+| **小驴管家** | 家庭成员中心视角档案、证照保单到期预警与 LifeLog 流水协同 | [`siyuan-home`](https://github.com/xiaolv-suite/siyuan-home) |
+| **小驴人脉** | 一人一文档人际管理、圈层力导向关系网络与会前破冰速览 | [`siyuan-contacts`](https://github.com/xiaolv-suite/siyuan-contacts) |
+| **小驴拾遗** | 剪藏文章深度消化、视线同焦伴生导读与 4 大学术著录 | [`siyuan-glean`](https://github.com/xiaolv-suite/siyuan-glean) |
+| **小驴闪卡** | 原生 FSRS 算法调度、文档内质感序号流与全场景极速制卡 | [`siyuan-lv-cards`](https://github.com/xiaolv-suite/siyuan-lv-cards) |
+| **小驴考试** | 全真模拟考场环境、错题靶向归因复训与苏格拉底启发式 AI 导师 | [`siyuan-exam`](https://github.com/xiaolv-suite/siyuan-exam) |
+| **小驴常用** | 代码片段工作室、零卡死安全剪贴板历史与一键记事沙盒 | [`xiaolv-common`](https://github.com/xiaolv-suite/xiaolv-common) |
+| **小驴雷切** | 毫秒级多文档穿透切换、左右双文档实时分栏对照与切片代码画板 | [`siyuan-speed-switch`](https://github.com/xiaolv-suite/siyuan-speed-switch) |
+
+💬 **官方交流与需求反馈 QQ 群**：**871707735**（开发者实时在线，欢迎反馈问题、交流使用体验与提交新功能构想）。
+
+---
+
 ## 🎯 插件定位与核心理念
 
 小驴拾遗是思源笔记中**本地优先（Local-First）的稍后读（Read-it-Later）与长文深度消化中枢**，致力于终结“剪藏一时爽，收集即吃灰”的困境：
@@ -130,46 +167,6 @@
   **答：完全不会丢失。** 文章本体始终是标准的思源笔记文档，划线与批注也是原生思源块。即使彻底删除插件，文档依然完好、内容零损失。
 - **Q3：手机端打开文章后，工作台会挡在前面吗？**  
   **答：不会。** v1.4.6 已实现移动端全屏工作台优雅退场：点击具体文章后，工作台自动收起，底层笔记即刻呈现，无需手动二次关闭。
-
----
-
-## 📝 最近更新
-
-**v1.4.8（2026-11-12）**：思源 3.8.10+ 原生适配（专注模式折叠原生停靠栏、预览与阅读器原生文档树菜单）、标签别名管理 Escape 退出、移动端状态组/安全区/16px 伴随条防缩放、passive 滚动与图片懒加载及全生态回归契约护航。
-
-<details>
-<summary>展开查看 v1.4.8 更新要点与历史版本摘要（完整记录见 <a href="./CHANGELOG.md">CHANGELOG.md</a>）</summary>
-
-- **思源 3.8.10+ 原生特性适配**：进入沉浸阅读专注模式（F11）自动协同折叠原生停靠栏，退出时安全恢复；文章卡片预览标题与阅读器入口支持右键弹出思源原生文档树菜单（`showDocTreeNativeMenu`）。
-- **交互与快捷键治理**：标签别名管理器弹层支持 Escape 键退出；全生态剪贴板写入失败处理覆盖契约固化。
-- **移动端与样式打磨**：移动端状态组换行后椭圆壳自适应包裹、头部操作按钮防止拉伸散排；吸底栏补齐 iOS 安全区内边距，伴随条下拉框统一 16px 防自动缩放。
-- **性能与动效**：滚动与触摸监听全面改用 passive，微信头像列表图片懒加载；卡片标题、行与开关增加桌面端 hover 悬停高亮。
-
-### 历史版本
-- **v1.4.6（2026-11-08）**：顶栏右键快捷菜单官方化（并入思源原生条目菜单），罗盘与弹层层级接入全生态 Protocol v1.7.6 治理；修复手机端打开文章后工作台退场闭环。
-- **v1.4.5（2026-11-04）**：手机端完整体验闭环——罗盘双入口、全屏面板、五态快捷悬浮条与键盘智能避让。
-- **v1.4.4（2026-11-03）**：全生态去中心化统一通知接入，伴读顶栏三区重构，兄弟插件联邦互通（闪卡/人脉/常用/打卡）。
-
-</details>
-
-👉 完整版本历史见 [CHANGELOG.md](CHANGELOG.md)。
-
----
-
-## 小驴系列插件
-
-| 插件名称 | 一句话简介 | GitHub 仓库 |
-| --- | --- | --- |
-| 小驴雷切 | 统一切换与工作上下文平台。 | [siyuan-speed-switch](https://github.com/xiaolv-suite/siyuan-speed-switch) |
-| 小驴打卡 | 本地优先的习惯、打卡与复盘工作台。 | [siyuan-checkin](https://github.com/xiaolv-suite/siyuan-checkin) |
-| 小驴人脉 | 在思源中管理联系人、人际关系及相关资料。 | [siyuan-contacts](https://github.com/xiaolv-suite/siyuan-contacts) |
-| 小驴拾遗 | 整理剪藏文章，支持阅读管理与日后回顾。 | [siyuan-glean](https://github.com/xiaolv-suite/siyuan-glean) |
-| 小驴考试（内测版） | 本地题库、刷题、模考、错题复盘与 AI 辅助。 | [siyuan-exam](https://github.com/xiaolv-suite/siyuan-exam) |
-| 小驴管家（内测版） | 家庭与生活台账、到期提醒及事务跟进。 | [siyuan-home](https://github.com/xiaolv-suite/siyuan-home) |
-| 小驴闪卡（内测版） | 思源笔记中的本地优先全生命周期闪卡学习平台。 | [siyuan-lv-cards](https://github.com/xiaolv-suite/siyuan-lv-cards) |
-| 小驴常用（内测版） | 基于思源块快速调用常用语、模板、代码等内容。 | [xiaolv-common](https://github.com/xiaolv-suite/xiaolv-common) |
-
-交流与反馈 QQ 群：**871707735**，可反馈 Bug、提交需求和交流使用体验。
 
 ---
 
