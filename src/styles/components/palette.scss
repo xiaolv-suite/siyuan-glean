@@ -1,0 +1,215 @@
+/* 全插件色彩主题切换体系样式（Theme Palette System） */
+.glean-theme-palette-group {
+    margin-bottom: var(--glean-space-3, 12px);
+}
+
+.glean-palette-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: var(--glean-space-2, 8px);
+    margin-top: var(--glean-space-2, 8px);
+}
+
+.glean-palette-card {
+    display: flex;
+    align-items: center;
+    gap: var(--glean-space-2, 8px);
+    padding: var(--glean-space-2, 8px) var(--glean-space-2-5, 10px);
+    background: var(--glean-card-surface, var(--b3-theme-surface));
+    border: 1px solid var(--glean-border-soft);
+    border-radius: var(--glean-radius-lg, 16px);
+    cursor: pointer;
+    text-align: left;
+    transition: transform var(--glean-duration-fast) var(--glean-ease-enter), border-color var(--glean-duration-fast) var(--glean-ease-enter), background-color var(--glean-duration-fast) var(--glean-ease-enter), box-shadow var(--glean-duration-fast) var(--glean-ease-enter);
+    position: relative;
+    color: inherit;
+    font: inherit;
+
+    &:focus-visible {
+        outline: 2px solid var(--glean-color-action);
+        outline-offset: 2px;
+    }
+}
+
+.glean-palette-card:hover {
+    border-color: var(--glean-color-action);
+    background: color-mix(in srgb, var(--glean-color-action) 6%, var(--b3-theme-surface));
+    transform: translateY(-1px);
+    box-shadow: var(--glean-shadow-card);
+}
+
+.glean-palette-card--active {
+    border-color: var(--glean-color-action);
+    background: color-mix(in srgb, var(--glean-color-action) 12%, var(--b3-theme-surface));
+    box-shadow: var(--glean-shadow-control), 0 0 0 2px color-mix(in srgb, var(--glean-color-action) 35%, transparent);
+
+    @media (forced-colors: active) {
+        border: 2px solid Highlight;
+        color: Highlight;
+    }
+}
+
+.glean-palette-preview {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+    padding: 2px;
+    box-sizing: border-box;
+    box-shadow: var(--glean-shadow-control);
+}
+
+.glean-palette-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.85);
+}
+
+.glean-palette-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.glean-palette-name {
+    font-size: var(--glean-text-sm, 13px);
+    font-weight: var(--glean-weight-semibold);
+    color: var(--b3-theme-on-background);
+}
+
+.glean-palette-desc {
+    font-size: var(--glean-text-meta);
+    color: var(--b3-theme-on-surface);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.glean-palette-check {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: var(--glean-weight-semibold);
+    font-size: 12px;
+    color: var(--glean-color-action);
+
+    .glean-icon {
+        width: 14px;
+        height: 14px;
+        flex-shrink: 0;
+    }
+}
+
+/* 阅读器与工作台快捷色盘微菜单 */
+.glean-reader__palette-picker,
+.glean-palette-quick-wrap {
+    position: relative;
+    display: inline-flex;
+}
+
+.glean-reader__toolbar-palette {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 6px;
+}
+
+.glean-palette-preview-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.85);
+}
+
+.glean-head-palette-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255, 255, 255, 0.85);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.glean-reader__palette-dropdown,
+.glean-palette-quick-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    z-index: 100;
+    background: var(--glean-card-surface, var(--b3-theme-surface));
+    border: 1px solid var(--glean-border-soft);
+    border-radius: var(--glean-radius-lg, 16px);
+    padding: var(--glean-space-1);
+    box-shadow: var(--glean-shadow-float);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 140px;
+}
+
+.glean-reader__palette-opt,
+.glean-palette-quick-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: var(--glean-space-1) var(--glean-space-2-5);
+    border: none;
+    background: transparent;
+    border-radius: var(--glean-radius-pill);
+    cursor: pointer;
+    font-size: var(--glean-text-xs, 12px);
+    color: var(--b3-theme-on-surface);
+    text-align: left;
+    transition: background-color var(--glean-duration-fast) var(--glean-ease-enter), color var(--glean-duration-fast) var(--glean-ease-enter);
+
+    &:focus-visible {
+        outline: 2px solid var(--glean-color-action);
+        outline-offset: 1px;
+    }
+}
+
+.glean-reader__palette-opt:hover,
+.glean-palette-quick-item:hover {
+    background: color-mix(in srgb, var(--glean-color-action) 8%, var(--b3-theme-surface));
+    color: var(--glean-color-action);
+}
+
+.glean-reader__palette-opt--active,
+.glean-palette-quick-item--active {
+    background: color-mix(in srgb, var(--glean-color-action) 12%, var(--b3-theme-surface));
+    color: var(--glean-color-action);
+    font-weight: var(--glean-weight-semibold);
+}
+
+.glean-palette-dot-mini {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+@media (max-width: 560px) {
+    .glean-palette-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .glean-palette-card {
+        min-height: 44px;
+    }
+
+    .glean-reader__palette-opt,
+    .glean-palette-quick-item {
+        min-height: 38px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .glean-palette-card,
+    .glean-reader__palette-opt,
+    .glean-palette-quick-item {
+        transition: var(--glean-motion-none) !important;
+        transform: none !important;
+    }
+}

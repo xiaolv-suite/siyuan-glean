@@ -1,0 +1,89 @@
+<script lang="ts">
+    /**
+     * 一篇剪藏的统一状态动作（S3）。
+     *
+     * 状态动作只通过父组件传入的回调落到 clip-store；这个组件不读写属性，
+     * 因而可以在 Dock、桌面行表、看板和移动端共用同一套语义。
+     */
+    import type { ClipStatus } from "../domain/schema";
+    import type { I18nBundle } from "../libs/i18n";
+    import { t } from "../libs/i18n";
+
+    interface Props {
+        i18n: I18nBundle;
+        status: ClipStatus;
+        disabled?: boolean;
+        /** 阅读页签将完成动作提升到顶栏；其他画布保持默认显示。 */
+        showDone?: boolean;
+        onStartReading: () => void | Promise<void>;
+        onSetStatus: (status: ClipStatus) => void | Promise<void>;
+        /** 提供时弹出归档策略；缺省回落到直接写入 archived。 */
+        onArchive?: () => void | Promise<void>;
+        /** 提供时按宿主位置分流恢复；缺省回落到直接写入 later。 */
+        onRestore?: () => void | Promise<void>;
+    }
+
+    let { i18n, status, disabled = false, showDone = true, onStartReading, onSetStatus, onArchive, onRestore }: Props = $props();
+    let pending = $state(false);
+
+    async function invoke(action: () => void | Promise<void>) {
+        if (disabled || pending) return;
+        pending = true;
+        try {
+            await action();
+        } finally {
+            pending = false;
+        }
+    }
+
+    function stop(event: Event) {
+        event.stopPropagation();
+    }
+
+    function labelForStart(): string {
+        if (status === "reading") return t(i18n, "action.continueReading");
+        if (status === "done") return t(i18n, "action.readAgain");
+        return t(i18n, "action.startReading");
+    }
+</script>
+
+<div class="glean-status-actions" role="group" aria-label={t(i18n, "action.statusActions")} aria-busy={pending}>
+    {#if status === "archived"}
+        <button
+            class="glean-status-actions__btn glean-status-actions__btn--restore"
+            disabled={disabled || pending}
+            title={t(i18n, "action.restore")}
+            onclick={(event) => { stop(event); void invoke(() => onRestore ? onRestore() : onSetStatus("later")); }}
+        ><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanArrowUp" /></svg><span>{t(i18n, "action.restore")}</span></button>
+    {:else}
+        <button
+            class="glean-status-actions__btn glean-status-actions__btn--primary"
+            disabled={disabled || pending}
+            title={labelForStart()}
+            onclick={(event) => { stop(event); void invoke(onStartReading); }}
+        ><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanNews" /></svg><span>{labelForStart()}</span></button>
+
+        <button
+            class="glean-status-actions__btn"
+            disabled={disabled || pending || status === "later"}
+            title={t(i18n, "action.moveToLater")}
+            onclick={(event) => { stop(event); void invoke(() => onSetStatus("later")); }}
+        ><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanArrowRight" /></svg><span>{t(i18n, "action.moveToLater")}</span></button>
+
+        {#if showDone}
+            <button
+                class="glean-status-actions__btn"
+                disabled={disabled || pending || status === "done"}
+                title={t(i18n, "action.markDone")}
+                onclick={(event) => { stop(event); void invoke(() => onSetStatus("done")); }}
+            ><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanCheck" /></svg><span>{t(i18n, "action.markDone")}</span></button>
+        {/if}
+
+        <button
+            class="glean-status-actions__btn glean-status-actions__btn--archive"
+            disabled={disabled || pending}
+            title={t(i18n, "action.archive")}
+            onclick={(event) => { stop(event); void invoke(() => onArchive ? onArchive() : onSetStatus("archived")); }}
+        ><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanArchive" /></svg><span>{t(i18n, "action.archive")}</span></button>
+    {/if}
+</div>

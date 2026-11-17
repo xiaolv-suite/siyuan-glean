@@ -1,0 +1,207 @@
+/** domain/schema 纯函数单测 */
+import test from "node:test";
+import assert from "node:assert/strict";
+
+import {
+    ATTR,
+    canTransition,
+    captureDefaults,
+    countWords,
+    daysSince,
+    estimateMinutes,
+    isClipDoc,
+    isMarkedInternalDoc,
+    parseClipAttrs,
+    serializePatch,
+    displaySiteName,
+    siteFromUrl,
+    siyuanDate,
+    siyuanTimestamp,
+} from "../src/domain/schema.ts";
+
+test("作者属性按码点校验，非法旧值不投影，显式清空保持删除语义", () => {
+    assert.equal(parseClipAttrs({ [ATTR.author]: "  公众号  " }).author, "公众号");
+    assert.equal(parseClipAttrs({ [ATTR.author]: "错误\n署名" }).author, undefined);
+    assert.equal(isClipDoc({ [ATTR.author]: "单独署名" }), false);
+    assert.deepEqual(serializePatch({ author: "😀".repeat(120) }), { [ATTR.author]: "😀".repeat(120) });
+    assert.throws(() => serializePatch({ author: "😀".repeat(121) }), RangeError);
+    assert.throws(() => serializePatch({ author: "署名\n" }), RangeError);
+    assert.deepEqual(serializePatch({ author: " " }), { [ATTR.author]: null });
+    assert.deepEqual(serializePatch({ author: undefined }), {});
+});
+
+test("parseClipAttrs：完整 IAL 还原为强类型", () => {
+    const attrs = parseClipAttrs({
+        [ATTR.url]: "https://example.com/a",
+        [ATTR.site]: "example.com",
+        [ATTR.time]: "20260929010101",
+        [ATTR.status]: "reading",
+        [ATTR.words]: "1234",
+        [ATTR.minutes]: "3",
+        [ATTR.readMinutes]: "2",
+        [ATTR.priority]: "4",
+        [ATTR.rating]: "5",
+        [ATTR.aiTags]: "ai, 隐私",
+        [ATTR.summary]: "一篇好文章",
+        [ATTR.lastSurfaced]: "20260928",
+        [ATTR.pinned]: "20260929",
+        [ATTR.src]: "migration",
+    });
+    assert.equal(attrs.url, "https://example.com/a");
+    assert.equal(attrs.status, "reading");
+    assert.equal(attrs.words, 1234);
+    assert.equal(attrs.priority, 4);
+    assert.equal(attrs.readMinutes, 2);
+    assert.deepEqual(attrs.aiTags, ["ai", "隐私"]);
+    assert.equal(attrs.src, "migration");
+    assert.equal(attrs.pinned, "20260929");
+});
+
+test("parseClipAttrs：非法值丢弃、缺键为 undefined、aiTags 空数组兜底", () => {
+    const attrs = parseClipAttrs({
+        [ATTR.status]: "bogus-status",
+        [ATTR.words]: "abc",
+        [ATTR.priority]: "9",
+    });
+    assert.equal(attrs.status, undefined);
+    assert.equal(attrs.words, undefined);
+    assert.equal(attrs.priority, 5); // 越界值钳制到 1-5
+    assert.deepEqual(attrs.aiTags, []);
+    assert.equal(attrs.url, undefined);
+    assert.equal(parseClipAttrs({ [ATTR.pinned]: "20260230" }).pinned, undefined);
+});
+
+test("isClipDoc：有状态或 URL 即认，空串不算", () => {
+    assert.equal(isClipDoc({ [ATTR.status]: "inbox" }), true);
+    assert.equal(isClipDoc({ [ATTR.url]: "https://x" }), true);
+    assert.equal(isClipDoc({ [ATTR.status]: "" }), false);
+    assert.equal(isClipDoc({}), false);
+});
+
+test("isMarkedInternalDoc：只有字符串 true 的 internal 标记才算插件宿主（T-1987）", () => {
+    assert.equal(isMarkedInternalDoc({ [ATTR.internal]: "true" }), true);
+    assert.equal(isMarkedInternalDoc({ [ATTR.internal]: "True" }), true);
+    assert.equal(isMarkedInternalDoc({ [ATTR.internal]: "false" }), false);
+    assert.equal(isMarkedInternalDoc({ [ATTR.internal]: "" }), false);
+    assert.equal(isMarkedInternalDoc({}), false);
+});
+
+test("serializePatch：数字钳制与空串删除语义", () => {
+    const patch = serializePatch({ priority: 9, rating: -1, status: "later", url: "", aiTags: ["a", "b"] });
+    assert.equal(patch[ATTR.priority], "5");
+    assert.equal(patch[ATTR.rating], "0");
+    assert.equal(patch[ATTR.status], "later");
+    assert.equal(patch[ATTR.url], null);
+    assert.equal(patch[ATTR.aiTags], "a,b");
+});
+
+test("数字属性拒绝非有限值和超出安全整数范围的计数", () => {
+    for (const value of [Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]) {
+        assert.throws(() => serializePatch({ words: value }), RangeError);
+        assert.throws(() => serializePatch({ priority: value }), RangeError);
+    }
+    assert.throws(() => serializePatch({ readMinutes: Number.MAX_SAFE_INTEGER + 1 }), RangeError);
+    assert.equal(serializePatch({ priority: 1e308 })[ATTR.priority], "5");
+    assert.equal(serializePatch({ words: -4 })[ATTR.words], "0");
+    assert.equal(serializePatch({ readMinutes: -Number.MAX_VALUE })[ATTR.readMinutes], "0");
+    assert.equal(parseClipAttrs({ [ATTR.words]: "9007199254740992" }).words, undefined);
+    assert.equal(estimateMinutes(Number.NaN), 0);
+    assert.equal(estimateMinutes(Number.POSITIVE_INFINITY), 0);
+});
+
+test("serializePatch：真实阅读分钟独立于预计分钟", () => {
+    assert.deepEqual(serializePatch({ minutes: 8, readMinutes: 3 }), {
+        [ATTR.minutes]: "8",
+        [ATTR.readMinutes]: "3",
+    });
+});
+
+test("serializePatch：显式 null 保留（删除），undefined 键不出现", () => {
+    const patch = serializePatch({ summary: null });
+    assert.equal(patch[ATTR.summary], null);
+    const patch2 = serializePatch({});
+    assert.deepEqual(patch2, {});
+});
+
+test("serializePatch：今日置顶只接受真实 YYYYMMDD，空值表示删除", () => {
+    assert.equal(serializePatch({ pinned: "20260929" })[ATTR.pinned], "20260929");
+    assert.equal(serializePatch({ pinned: null })[ATTR.pinned], null);
+    assert.throws(() => serializePatch({ pinned: "20260230" }), RangeError);
+});
+
+test("estimateMinutes：400 字/分钟，最少 1 分钟", () => {
+    assert.equal(estimateMinutes(0), 0);
+    assert.equal(estimateMinutes(100), 1);
+    assert.equal(estimateMinutes(800), 2);
+    assert.equal(estimateMinutes(850), 2);
+});
+
+test("countWords：中英混排", () => {
+    assert.equal(countWords("hello world"), 2);
+    assert.equal(countWords("你好世界"), 4);
+    assert.equal(countWords("你好 world 代码"), 5);
+    assert.equal(countWords(""), 0);
+});
+
+test("siteFromUrl：去 www；非法输入返回空串", () => {
+    assert.equal(siteFromUrl("https://www.example.com/a?b=1"), "example.com");
+    assert.equal(siteFromUrl("not a url"), "");
+});
+
+test("siyuanTimestamp/siyuanDate：定长格式", () => {
+    const now = new Date(2026, 8, 29, 7, 5, 3);
+    assert.equal(siyuanTimestamp(now), "20260929070503");
+    assert.equal(siyuanDate(now), "20260929");
+});
+
+test("daysSince：按入库时间算天数", () => {
+    const now = new Date(2026, 8, 29, 12, 0, 0);
+    assert.equal(daysSince("20260929120000", now), 0);
+    assert.equal(daysSince("20260920120000", now), 9);
+    assert.equal(daysSince("bad", now), null);
+    assert.equal(daysSince(undefined, now), null);
+    assert.equal(daysSince("20260230120000", now), null);
+    assert.equal(daysSince("20260929120000", new Date(Number.NaN)), null);
+});
+
+test("canTransition：状态机白名单", () => {
+    assert.equal(canTransition("inbox", "later"), true);
+    assert.equal(canTransition("inbox", "archived"), true);
+    assert.equal(canTransition("archived", "reading"), true);
+    assert.equal(canTransition("done", "inbox"), false);
+    assert.equal(canTransition("reading", "reading"), true);
+});
+
+test("captureDefaults：收录缺省值", () => {
+    const now = new Date(2026, 8, 29, 8, 0, 0);
+    const defaults = captureDefaults(now);
+    assert.equal(defaults.status, "inbox");
+    assert.equal(defaults.priority, 3);
+    assert.equal(defaults.time, "20260929080000");
+    assert.equal(defaults.src, "manual");
+});
+
+test("displaySiteName：知名站点映射品牌名，未知域名优雅回退（T-1809 / T-3381）", () => {
+    assert.equal(displaySiteName("mp.weixin.qq.com"), "微信公众号");
+    assert.equal(displaySiteName("zhuanlan.zhihu.com"), "知乎专栏");
+    assert.equal(displaySiteName("zhihu.com"), "知乎");
+    assert.equal(displaySiteName("bilibili.com"), "哔哩哔哩");
+    assert.equal(displaySiteName("sspai.com"), "少数派");
+    assert.equal(displaySiteName("github.com"), "GitHub");
+    assert.equal(displaySiteName("www.github.com"), "GitHub");
+
+    // 未知域名去 www 回退（精确匹配 www.，不误伤 wwwe 或 www1）
+    assert.equal(displaySiteName("blog.example.com"), "blog.example.com");
+    assert.equal(displaySiteName("www.my-personal-site.org"), "my-personal-site.org");
+    assert.equal(displaySiteName("wwwe.example.com"), "wwwe.example.com");
+    assert.equal(displaySiteName("www1.example.org"), "www1.example.org");
+
+    // 空边界安全
+    assert.equal(displaySiteName(""), "");
+    assert.equal(displaySiteName(undefined), "");
+});
+
+test("ATTR.gleanHighlight 契约守门：符合 Issue #17 建议联动多维数据库自动化", () => {
+    assert.equal(ATTR.gleanHighlight, "custom-lv-glean-highlight");
+    assert.equal(ATTR.highlightColor, "custom-clip-hl-color");
+});

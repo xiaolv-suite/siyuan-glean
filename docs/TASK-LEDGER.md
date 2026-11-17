@@ -1,0 +1,211 @@
+# 当前任务账本
+
+> 本页由 `TODO.md` 当前执行板派生；历史需求池和旧交接中的下一任务不产生当前开发承诺。校验命令：`pnpm task:ledger --check`。
+
+| 任务 | 看板状态 | 代码状态 | 隔离验证 | 真实验收 | 延后/阻塞原因 |
+| --- | --- | --- | --- | --- | --- |
+| T-3360 | ◐ | 实现完成，版本仍为 1.3.6，未推送 | Reader 回归 22/22、完整 `pnpm test` 1436/1436、`pnpm check` 0 错误/0 警告、`pnpm build`、发布/性能/视觉登记与任务账本门禁通过 | Reader、工作台、收集箱、摘录回跳和 24 项视觉矩阵仍待 B-0002/B-0007 | 本轮不重新发布 v1.3.6，真实宿主与外部服务必须由作者环境单独确认 |
+| T-3361 | ◐ | 已实现并补入口回归 | 完整 `pnpm test` 1437/1437、`pnpm check` 0 错误/0 警告、构建、发布/性能/视觉登记、任务账本与 `git diff --check` 均通过 | 待 B-0002/Issue #16 作者环境复测 | 截图与宿主布局事件链只能在真实思源工作区确认，本轮不直接关闭公开 Issue |
+| T-3362 | ◐ | 纯函数、样本、协议与回归已实现 | 完整 `pnpm test` 1444/1444、`pnpm check` 0 错误/0 警告、构建、发布/性能/视觉登记、任务账本与 `git diff --check` 均通过 | 待 B-0002 真实存量文章与宿主 UI/读屏复测 | 先确认元数据覆盖和失败路径，返回原列表/滚动位置等待宿主 tab 生命周期契约 |
+| T-3363 | ◐ | 今日拾遗内嵌面板、双语文案与静态回归已实现，不新增属性、端点或持久化 | 完整 `pnpm test` 1446/1446、`pnpm check` 0 错误/0 警告、定向情境选文 9/9、构建、发布/性能/视觉登记、任务账本与 `git diff --check` 通过 | 待 B-0002 真实存量、桌面/窄 Dock/移动端与读屏复测 | 返回原列表/滚动位置仍等待宿主 tab 生命周期契约，隔离合成样本不关闭真实 UI 验收 |
+| T-3364 | ◐ | 组件/导航修复与 canonical 原型对齐已完成，不新增属性/端点/持久化 | 完整 1455/1455、定向 66/66、类型/Svelte 0 错误0警告、构建/发布包/性能/视觉登记/任务账本/差异门禁通过，Chrome 组件与原型宽窄/376px 暗色/加载错误空态/筛选/载体退路/焦点点验通过 | 待 B-0002 真实宿主/设备/读屏与改天撤销焦点复测 | 合成演示不关闭真实视觉矩阵与宿主生命周期验收，版本保持 1.3.6，本轮不发布 |
+| T-3365 | ◐ | 四项修复、忙态样式与回归完成，不新增属性、端点或持久化 | 完整 1469/1469、定向 83/83、check 0 错误0警告、构建/发布包/性能/视觉登记/任务账本/差异门禁通过，IAB + 隔离 3.8.8-alpha.3 实际核对改天/撤销、换文、原生正文导航、外部状态冲突和 560px 卡片可达，环境已清理 | 待 B-0002 原工作区、设备、读屏及 24 项视觉矩阵 | Chrome 宿主被请求来源校验拒绝，慢置顶离页及其他失败只由 VM 错误注入覆盖，隔离样本不关闭真实验收，版本保持 1.3.6，本轮不发布 |
+| T-3366 | ◐ | 实现完成，不新增属性、端点或持久化，协议见 D-0245/D-0246 与 WORKBENCH-NAVIGATION | 完整 `pnpm test` 1498/1498、`pnpm check` 0 错误/0 警告、构建、发布包、性能、视觉登记、任务账本与差异门禁通过 | 待 B-0002 原工作区/设备/读屏与 24 项视觉矩阵 | SDK 决定目标实例，原始工作台关联、像素偏移和跨重载恢复未实施，不用隔离证据关闭 #16 原场景 |
+| T-3390 | ◐ | 完成 | 单测通过 | 待 B-0002 | 真实宿主编辑器与草稿保存仍待 B-0002 |
+| T-3391 | ◐ | 完成 | 单测通过 | 待 B-0002 | 真实多篇长短文读库联动观感仍待 B-0002 |
+| T-3392 | ◐ | 完成 | 定向 `tests/library-keyboard.test.ts` 9/9、完整 `pnpm test` 1564/1564、`pnpm check` 0 错误/0 警告、`pnpm build`、`pnpm check:release`、`pnpm perf:check`、`pnpm visual:check` 与任务账本门禁通过 | 待 B-0002 真实宿主键盘、读屏与窄 Dock | 真实宿主按键冲突与视觉矩阵仍归 B-0002 |
+| T-3393 | ◐ | 完成 | `tests/ui-prefs.test.ts` 8/8、完整 `pnpm test` 1566/1566、`pnpm check` 0 错误/0 警告、构建与发布包校验通过 | 待 B-0002 真实多组合视图与跨设备同步 | 真实宿主多视图观感与数据持久仍归 B-0002 |
+| T-3394 | ◐ | 完成 | `tests/highlights.test.ts` 11/11、完整 `pnpm test` 1567/1567、`pnpm check` 0 错误/0 警告、构建与发布包校验通过 | 待 B-0002/B-0006 真实思源 riff 牌组与全库摘录卡片交互 | 真实宿主 riff 题库与多端观感仍归 B-0002/B-0006 |
+| T-3395 | ◐ | 完成 | `tests/stats.test.ts` 22/22、完整 `pnpm test` 1567/1567、`pnpm check` 0 错误/0 警告、构建与发布包校验通过 | 待 B-0002 真实多统计回顾与日期联动交互 | 真实宿主统计视图与长趋势仍归 B-0002 |
+| T-3396 | ◐ | 完成 | `tests/resurface.test.ts` 20/20、完整 `pnpm test` 1568/1568、`pnpm check` 0 错误/0 警告、构建与发布包校验通过 | 待 B-0002 真实桌面端今日拾遗连续操作与键盘关闭 | 真实宿主观感与触控仍归 B-0002 |
+| T-3397 | ◐ | 完成 | `tests/context-selection-ui.test.ts` 6/6、完整 `pnpm test` 1569/1569、`pnpm check` 0 错误/0 警告、构建与发布包校验通过 | 待 B-0002 真实多标签别名与情境选文观感 | 真实宿主标签别名与多端观感仍归 B-0002 |
+| T-3398 | ◐ | 完成 | `tests/library-keyboard.test.ts` 9/9、`tests/library-selection.test.ts` 16/16、完整 `pnpm test` 1570/1570、`pnpm check` 0 错误/0 警告、构建与发布包校验通过 | 待 B-0002 真实宿主键盘批量分拣与读屏播报 | 真实按键冲突与读屏节奏仍归 B-0002 |
+| T-3399 | ◐ | 完成 | `tests/highlights.test.ts` 12/12、完整 `pnpm test` 1571/1571、`pnpm check` 0 错误/0 警告、构建与发布包校验通过 | 待 B-0002 真实宿主摘录墙键盘操作与读屏 | 真实按键冲突与读屏节奏仍归 B-0002 |
+| T-3400 | ◐ | 完成 | `tests/resurface.test.ts` 21/21、完整 `pnpm test` 1571/1571、`pnpm check` 0 错误/0 警告、构建与发布包校验通过 | 待 B-0002 真实桌面端今日拾遗连续键盘分拣与换篇实操 | 真实宿主长周期重浮与读屏观感仍归 B-0002 |
+| T-3401 | ◐ | 完成 | `tests/reader.test.ts` 14/14、完整 `pnpm test` 1572/1572、`pnpm check` 0 错误/0 警告、构建与发布包校验通过 | 待 B-0002 真实多文档阅读与长快捷键工作流 | 真实宿主多页签与外部链接跳转仍归 B-0002 |
+| T-3402 | ◐ | 完成 | `tests/reader.test.ts` 12/12、完整 `pnpm test` 1573/1573、`pnpm check` 0 错误/0 警告、构建与发布包校验通过 | 待 B-0002/B-0004 真实 AI 伴读生成与卡片交互 | 真实 AI 调用与宿主多端仍归 B-0002/B-0004 |
+| T-3403 | ◐ | 完成 | `tests/library-filter-chips.test.ts` 4/4、完整 `pnpm test` 1574/1574、`pnpm check` 0 错误/0 警告、构建与发布包校验通过 | 待 B-0002 真实多组合筛选下拉键盘操作 | 真实宿主多分面筛选仍归 B-0002 |
+| T-3404 | ◐ | 完成 | `tests/ui-prefs.test.ts` 9/9、完整 `pnpm test` 1575/1575、`pnpm check` 0 错误/0 警告、构建与发布包校验通过 | 待 B-0002 真实标签别名管理与键盘连续录入 | 真实宿主别名管理观感仍归 B-0002 |
+| T-3405 | ◐ | 完成 | `tests/settings.test.ts` 21/21、完整 `pnpm test` 1577/1577、`pnpm check` 0 错误/0 警告、构建与发布包校验通过 | 待 B-0002 真实设置弹窗键盘快捷操作与读屏交互 | 真实宿主独立弹窗焦点与键盘仍归 B-0002 |
+| T-3406 | ◐ | 完成 | `tests/library-export-service.test.mjs` 9/9、`pnpm check` 0 错误/0 警告、完整 `pnpm test` 1586/1586、构建与发布包校验通过 | 待 B-0002 真实多卷 ZIP 导出与大容量下载实测 | 真实大容量导出仍待 B-0002 |
+| T-3407 | ◐ | 完成 | `tests/ai-tag-merge-ui.test.mjs`、`tests/reader-acceptance.test.ts`、完整 `pnpm test` 通过 | 待 B-0002 真实宿主作者编辑与标签合并键盘操作 | 真实宿主键盘与读屏走查仍归 B-0002 |
+| T-3408 | ◐ | 完成 | `tests/modal-escape.test.ts` 7/7、完整 `pnpm test` 通过 | 待 B-0002 真实宿主向导与迁移键盘走查 | 真实宿主向导与迁移操作仍归 B-0002 |
+| T-3409 | ◐ | 完成 | `tests/modal-escape.test.ts` 8/8、完整 `pnpm test` 通过 | 待 B-0002/B-0005 真实宿主导入文件与键盘走查 | 真实宿主导入文件与外部能力仍归 B-0002/B-0005 |
+| T-3410 | ◐ | 完成 | `tests/modal-escape.test.ts` 9/9、完整 `pnpm test` 通过 | 待 B-0002/B-0006 真实宿主备份导出恢复与闪卡走查 | 真实宿主备份文件与闪卡操作仍归 B-0002/B-0006 |
+| T-3411 | ◐ | 完成 | `tests/ai-batch-ui.test.mjs`、`tests/modal-escape.test.ts`、完整 `pnpm test` 通过 | 待 B-0002/B-0004 真实宿主 AI 批处理与键盘走查 | 真实宿主 AI 批处理与外部模型能力仍归 B-0002/B-0004 |
+| T-3412 | ◐ | 完成 | `tests/snapshot-governance.test.ts`、`tests/modal-escape.test.ts`、完整 `pnpm test` 通过 | 待 B-0002 真实宿主快照治理批量执行与键盘走查 | 真实宿主快照批量拍摄与外部写入仍归 B-0002 |
+| T-3413 | ◐ | 完成 | `tests/library-keyboard.test.ts` 10/10、`tests/resurface.test.ts` 21/21、完整 `pnpm test` 通过 | 待 B-0002 真实宿主读库与今日拾遗键盘快捷分拣实操 | 真实宿主键盘与读屏走查仍归 B-0002 |
+| T-3414 | ◐ | 完成 | `tests/outline.test.ts` 4/4、阅读器相关 159/159、上下文与样式 38/38、`tsc` 与 `svelte-check` 0 错误 0 警告 | 待 B-0002 真实宿主长文大纲联动与滚动实操 | 真实宿主 Protyle 渲染差异与读屏节奏仍归 B-0002 |
+| T-3415 | ◐ | 完成 | `tests/highlights.test.ts` 52/52、`tests/highlights-service.test.mjs`、`tsc` 与 `svelte-check` 0 错误 0 警告 | 待 B-0002 真实宿主摘录墙按文章聚合与整篇导出 | 真实多篇引述排版与多端观感仍归 B-0002 |
+| T-3416 | ◐ | 完成 | `tests/reader-ai.test.mjs` 53/53、`tests/reader.test.ts` 13/13、`tsc` 与 `svelte-check` 0 错误 0 警告 | 待 B-0002/B-0004 真实宿主正文插入与多端实测 | 真实宿主编辑器与外部模型能力仍归 B-0002/B-0004 |
+| T-3417 | ◐ | 完成 | `tests/library-rail-accordion.test.ts` 13/13、`tests/library-rail.test.ts` 10/10、`tsc` 与 `svelte-check` 0 错误 0 警告 | 待 B-0002 真实宿主分面交互手感走查 | 真实宿主分面点击与键盘触控仍归 B-0002 |
+| T-3418 | ◐ | 完成 | `tests/library-rail-badges.test.ts` 10/10、`tests/library-rail-accordion.test.ts` 13/13、`pnpm check` 0 错误/0 警告、完整 `pnpm test` 1596/1596、构建与发布包校验通过 | 待 B-0002 真实多文档与分面角标走查 | 真实宿主文档大库统计手感与观感仍归 B-0002 |
+| T-3419 | ◐ | 完成 | `tests/reader-search.test.ts` 10/10、`tests/reader-search-dom.test.ts` 4/4、`tests/reader.test.ts` 14/14、`pnpm check` 0 错误/0 警告 | 待 B-0002 真实宿主 Protyle 搜索与高亮手感 | 真实宿主高亮渲染差异仍归 B-0002 |
+| T-3420 | ◐ | 完成 | `tests/wechat.test.ts` 8/8、`tests/content-url.test.ts` 8/8、`tsc` 与 `svelte-check` 0 错误 0 警告 | 待 B-0001/B-0002 真实微信剪藏文章走查 | 真实微信公众号文章排版仍待 B-0001/B-0002 |
+| T-3421 | ◐ | 完成 | `tests/reader.test.ts` 14/14、`tests/highlights.test.ts` 52/52、`tsc` 与 `svelte-check` 0 错误 0 警告 | 待 B-0002 真实长文批注联动与滚动走查 | 真实宿主长文滚动与读屏节奏仍归 B-0002 |
+| T-3422 | ◐ | 完成 | `tests/resurface.test.ts` 26/26、`tsc` 与 `svelte-check` 0 错误 0 警告 | 待 B-0002 真实宿主今日拾遗推荐理由观感走查 | 真实多来源推荐走查仍归 B-0002 |
+| T-3423 | ◐ | 完成 | `tests/reader.test.ts` 14/14、`tsc` 与 `svelte-check` 0 错误 0 警告 | 待 B-0002 真实长文主题切换观感 | 真实宿主编辑器主题视觉仍归 B-0002 |
+| T-3424 | ◐ | 完成 | `tests/excerpt-service.test.mjs` 12/12、`tests/reader.test.ts` 14/14、`tsc` 与 `svelte-check` 0 错误 0 警告 | 待 B-0002 真实宿主正文划词批注手感走查 | 真实宿主选区与块插入仍归 B-0002 |
+| T-3425 | ◐ | 完成 | `tests/prefs.test.ts` 17/17、`tests/library-rail-accordion.test.ts` 11/11、`tsc` 与 `svelte-check` 0 错误 0 警告 | 待 B-0002 真实宿主侧栏展开折叠触控走查 | 真实宿主分面折叠仍归 B-0002 |
+| T-3426 | ◐ | 完成 | `tests/library-view.test.ts` 20/20、`tsc` 与 `svelte-check` 0 错误 0 警告 | 待 B-0002 真实多文档时长色彩感知走查 | 真实宿主各主题色彩观感仍归 B-0002 |
+| T-3427 | ◐ | 完成 | `tests/stats.test.ts` 24/24、`tests/resurface.test.ts` 26/26、`tsc` 与 `svelte-check` 0 错误 0 警告 | 待 B-0002 真实宿主今日拾遗打卡条交互手感走查 | 真实宿主滚动与读屏观感仍归 B-0002 |
+| T-3428 | ◐ | 完成 | `tests/stats.test.ts` 24/24、`tsc` 与 `svelte-check` 0 错误 0 警告 | 待 B-0002 真实宿主统计页成就徽章观感走查 | 真实宿主多数据跨度仍归 B-0002 |
+| T-3429 | ◐ | 完成 | `tests/highlights.test.ts` 14/14、`tests/reader.test.ts` 14/14、`tsc` 与 `svelte-check` 0 错误 0 警告 | 待 B-0002 真实宿主微动效与沉浸阅读手感走查 | 真实宿主编辑器沉浸走查仍归 B-0002 |
+| T-3430 | ◐ | 完成 | `tests/wechat.test.ts` 19/19、`tests/content-url.test.ts` 8/8、`tests/reader.test.ts` 14/14、`tsc` 与 `svelte-check` 0 错误 0 警告 | 待 B-0001/B-0002 真实微信多图文章走查 | 真实微信公众号多图排版仍待 B-0001/B-0002 |
+| T-3431 | ◐ | 完成 | `tests/wechat.test.ts` 22/22、`tests/formatting.test.ts` 28/28、`tests/reader.test.ts` 14/14、`tsc` 与 `svelte-check` 0 错误 0 警告 | 待 B-0001/B-0002 真实微信公式与代码长文走查 | 真实微信公众号公式排版仍待 B-0001/B-0002 |
+| T-3432 | ◐ | 完成 | `tests/wechat.test.ts` 22/22、`tsc` 与 `svelte-check` 0 错误 0 警告 | 待 B-0001/B-0002 真实微信多图与视频长文走查 | 真实微信公众号视频排版仍待 B-0001/B-0002 |
+| T-3433 | ◐ | 完成 | `tests/header-actions.test.ts` 27/27、`tsc` 与 `svelte-check` 0 错误 0 警告 | 待 B-0002 真实宿主设置页宽屏与表单走查 | 真实多分辨率宿主观感仍归 B-0002 |
+| T-3434 | ◐ | 完成 | `tests/formatting-service.test.mjs` 20/20、`tests/highlights.test.ts` 14/14、`tests/reader.test.ts` 14/14、`tsc` 与 `svelte-check` 0 错误 0 警告 | 待 B-0001/B-0002 真实微信排版与摘录锚定走查 | 真实宿主编辑器锚定仍归 B-0002 |
+| T-3435 | ◐ | 完成 | `tests/reader.test.ts` 14/14、`tests/resurface.test.ts` 26/26、`tsc` 与 `svelte-check` 0 错误 0 警告 | 待 B-0002 真实大纲滚动跟随走查 | 真实长文大纲跟随仍归 B-0002 |
+| T-3436 | ◐ | 完成 | `tests/reader.test.ts` 14/14、`tests/resurface.test.ts` 26/26、`tsc` 与 `svelte-check` 0 错误 0 警告 | 待 B-0002 真实划词朗读与全读完空态走查 | 真实多日打卡状态仍归 B-0002 |
+| T-3437 | ◐ | 完成 | `tests/reader.test.ts` 14/14、`tsc` 与 `svelte-check` 0 错误 0 警告 | 待 B-0002 真实长文大纲目录与伴读指标走查 | 真实宿主编辑器滚动跟随仍归 B-0002 |
+| T-3438 | ◐ | 完成 | `tests/reader.test.ts` 14/14、`tsc` 与 `svelte-check` 0 错误 0 警告 | 待 B-0002 真实长文大纲检索与 AI 快捷追问走查 | 真实 AI 响应与大纲过滤手感仍归 B-0002 |
+| T-3439 | ◐ | 完成 | `tests/reader.test.ts` 14/14、`tests/highlights.test.ts` 14/14、`tsc` 与 `svelte-check` 0 错误 0 警告 | 待 B-0002 真实块属性持久化走查 | 真实宿主编辑器属性生效仍归 B-0002 |
+| T-3440 | ◐ | 完成 | `tests/reader.test.ts` 14/14、`tests/clip-store.test.ts` 48/48、`tsc` 与 `svelte-check` 0 错误 0 警告 | 待 B-0002 真实文章多标签呈现走查 | 真实宿主标签交互仍归 B-0002 |
+| T-3441 | ◐ | 完成 | `tests/lifecycle-contract.test.ts` 3/3、`tests/reader-acceptance.test.ts` 30/30、`tsc` 与 `svelte-check` 0 错误 0 警告 | 待 B-0002 真实思源云同步走查 | 真实多设备同步仍归 B-0002 |
+| T-3442 | ◐ | 完成 | `tests/reader.test.ts` 14/14、`tests/highlights.test.ts` 14/14、`tsc` 与 `svelte-check` 0 错误 0 警告 | 待 B-0002 真实万字长文往返滚动走查 | 真实宿主编辑器滚动跟随仍归 B-0002 |
+| T-3443 | ◐ | 完成 | `tests/reader.test.ts` 14/14、`tests/checkin.test.ts` 4/4、`tsc` 与 `svelte-check` 0 错误 0 警告 | 待 B-0002 真实多插件协同走查 | 真实兄弟插件联调仍归 B-0002 |
+| T-3444 | ◐ | 完成 | `tests/reader.test.ts` 14/14、`tsc` 与 `svelte-check` 0 错误 0 警告 | 待 B-0002 真实各弹窗标题栏走查 | 真实宿主弹窗挂载仍归 B-0002 |
+| T-3445 | ◐ | 完成 | `tests/reader.test.ts` 14/14、`tests/wechat.test.ts` 22/22、`tsc` 与 `svelte-check` 0 错误 0 警告 | 待 B-0002 真实微信剪藏走查 | 真实微信 DOM 与考试出题交互仍归 B-0002 |
+| T-3446 | ◐ | 完成 | `tests/mobile-nav.test.ts` 26/26、`tests/highlights.test.ts` 14/14、完整 `pnpm test` 1661/1661、`tsc` 与 `svelte-check` 0 错误 0 警告 | 待 B-0002 跨平台宿主走查 | 多平台物理按键体验仍归 B-0002 |
+| T-3447 | ◐ | 完成 | `tests/reader.test.ts` 14/14、`tests/highlights.test.ts` 14/14、`tsc` 与 `svelte-check` 0 错误 0 警告 | 待 B-0002 真实键盘翻页与微信卡片走查 | 真实键盘滚动速度与微信数据展示仍归 B-0002 |
+| T-3448 | ◐ | 完成 | `tests/mobile-nav.test.ts` 26/26、`tests/header-actions.test.ts` 27/27、`tsc` 与 `svelte-check` 0 错误 0 警告 | 待 B-0002 真实原生胶囊跳转与标签过滤走查 | 真实原生编辑器挂载仍归 B-0002 |
+| T-3449 | ◐ | 完成 | `tests/accessibility.test.ts` 56/56、`tests/stats.test.ts` 26/26、`tsc` 与 `svelte-check` 0 错误 0 警告 | 待 B-0002 真实热力图点击走查 | 真实热力图交互手感仍归 B-0002 |
+| T-3450 | ◐ | 完成 | `tests/reader.test.ts` 14/14、`tests/formatting.test.ts` 28/28、`tests/formatting-service.test.mjs` 20/20、`tsc` 与 `svelte-check` 0 错误 0 警告 | 待 B-0002 真实伴生栏建稿走查 | 真实思源新建文档与页签激活仍归 B-0002 |
+| T-3451 | ◐ | 完成 | `tests/header-actions.test.ts` 27/27、`tsc` 与 `svelte-check` 0 错误 0 警告 | 待 B-0002 真实微信公众号钻取走查 | 真实卡片点击与筛选列表联动仍归 B-0002 |
+| T-3452 | ◐ | 完成 | `tests/highlights.test.ts` 14/14、`tsc` 与 `svelte-check` 0 错误 0 警告 | 待 B-0002 真实多色高亮过滤走查 | 真实多篇批注色彩切换仍归 B-0002 |
+| T-3453 | ◐ | 完成 | `tests/reader.test.ts` 14/14、`tsc` 与 `svelte-check` 0 错误 0 警告 | 待 B-0002 真实沉浸模式走查 | 真实视口全屏效果仍归 B-0002 |
+| T-3454 | ◐ | 完成 | `tests/reader.test.ts` 14/14、`tsc` 与 `svelte-check` 0 错误 0 警告 | 待 B-0002 真实朗读播放走查 | 真实桌面系统音频播放仍归 B-0002 |
+| T-3455 | ◐ | 完成 | `tests/library-filter-chips.test.ts` 4/4、`tests/wechat.test.ts` 22/22、`tests/reader.test.ts` 14/14、`tests/highlights.test.ts` 14/14、`tests/highlights-service.test.mjs` 38/38、S1 服务级 E2E 58/58 全通 | 待 B-0002 真实多设备走查 | 多平台设备宿主仍归 B-0002 |
+| T-3456 | ◐ | 完成 | `tests/wechat-service.test.mjs` 5/5、`tests/i18n.test.ts` 5/5、`tsc` 与 `svelte-check` 0 错误 0 警告 | 待 B-0002 真实大批量微信剪藏走查 | 真实上百篇微信剪藏仍归 B-0002 |
+| T-3457 | ◐ | 完成 | `tests/header-actions.test.ts` 27/27、`tests/a11y-glean-styles.test.ts` 8/8、`tsc` 与 `svelte-check` 0 错误 0 警告 | 待 B-0002 真实多端主题走查 | 真实宿主各套外部主题仍归 B-0002 |
+| T-3458 | ◐ | 完成 | `tests/header-actions.test.ts` 27/27、`tests/wechat-service.test.mjs` 5/5、`tsc` 与 `svelte-check` 0 错误 0 警告 | 待 B-0002 真实后台全自动自愈走查 | 真实多篇长文静默回填仍归 B-0002 |
+| T-3459 | ◐ | 完成 | `tests/wechat.test.ts` 23/23、`tests/header-actions.test.ts` 27/27、`tsc` 与 `svelte-check` 0 错误 0 警告 | 待 B-0002 真实多样性 URL 走查 | 真实多源长链接样本仍归 B-0002 |
+| T-3460 | ◐ | 完成 | `tests/reader.test.ts` 14/14、`tests/header-actions.test.ts` 27/27、`tsc` 与 `svelte-check` 0 错误 0 警告 | 待 B-0002 真实多设备深度研读走查 | 真实思源多端宿主仍归 B-0002 |
+| T-3461 | ◐ | 完成 | `tests/reader.test.ts` 14/14、`tests/wechat-service.test.mjs` 5/5、`tests/i18n.test.ts` 5/5、`tsc` 与 `svelte-check` 0 错误 0 警告 | 待 B-0002 真实键盘快捷穿梭走查 | 真实宿主编辑器键盘滚动仍归 B-0002 |
+| T-3462 | ◐ | 完成 | `tests/stats.test.ts` 24/24、`tests/accessibility.test.ts` 32/32、`tsc` 与 `svelte-check` 0 错误 0 警告 | 待 B-0002 真实多端大屏与移动宿主走查 | 真实多端环境仍归 B-0002 |
+| T-3463 | ◐ | 完成 | `tests/quote-card.test.ts` 3/3、`tests/wechat-service.test.mjs` 5/5、`tests/i18n.test.ts` 5/5、`tests/architecture.test.ts` 3/3、`tsc` 与 `svelte-check` 0 错误 0 警告 | 待 B-0002 真实剪贴板图片粘贴验证 | 真实操作系统剪贴板与高分屏仍归 B-0002 |
+| T-3545 | ◐ | 完成 | `pnpm check` 0 错误/0 警告、`pnpm test` 1769/1769、S1 E2E 58/58、spike 8/8、`pnpm build`、`pnpm check:release` 与 `pnpm tokens:audit` 全部通过 | 待 B-0002 真实宿主工作区点验 | 严格遵守本地闭环纪律不执行远程推送，真实宿主视觉矩阵仍归 B-0002 |
+| T-3367 | ◐ | 实现完成，契约见 D-0247/D-0292，不新增属性、端点或持久化 | 定向 51/51、完整 `pnpm test` 1517/1517、`pnpm check` 0 错误/0 警告、`pnpm build`、`pnpm check:release`、`pnpm perf:check`、`pnpm visual:check`、`pnpm task:ledger -- --check` 与 `git diff --check` 通过 | 待 B-0002 原工作区、触控和系统读屏 | Chrome 原型与隔离样本不替代真实设备与视觉矩阵，视觉登记仍为 24 项待真实宿主 |
+| T-3389 | ◐ | 完成 | `tests/flashcard.test.ts`、`tests/flashcard-service.test.mjs` 通过 | 待 B-0002/B-0006 | 真实思源 riff 牌组与快捷键实操仍待 B-0002/B-0006，版本保持 1.3.6，本轮不发布 |
+| T-3388 | ◐ | 完成 | `tests/inbox-recovery.test.ts` 4/4 通过 | 待 B-0002/B-0007 | 真实云收集箱联调仍待 B-0007，版本保持 1.3.6，本轮不发布 |
+| T-3387 | ◐ | 完成 | `tests/stats.test.ts` 26/26、`tests/stats-service.test.mjs` 通过 | 待 B-0002 | 真实多日期完成回顾交互仍待 B-0002，版本保持 1.3.6，本轮不发布 |
+| T-3386 | ◐ | 完成 | `tests/library-filter-chips.test.ts` 8/8 通过 | 待 B-0002 | 真实多维度组合筛选观感仍待 B-0002，版本保持 1.3.6，本轮不发布 |
+| T-3385 | ◐ | 完成 | `tests/backup.test.ts` 29/29、`tests/backup-service.test.mjs` 通过 | 待 B-0002 | 真实备份导出与宿主恢复验证仍待 B-0002，版本保持 1.3.6，本轮不发布 |
+| T-3384 | ◐ | 完成 | `tests/modal-escape.test.ts` 29/29 通过 | 待 B-0002 | 真实宿主弹层焦点与按键仍待 B-0002，版本保持 1.3.6，本轮不发布 |
+| T-3383 | ◐ | 完成 | `tests/tts.test.ts` 55/55 通过 | 待 B-0002 | 真实桌面系统语音朗读观感仍待 B-0002，版本保持 1.3.6，本轮不发布 |
+| T-3382 | ◐ | 完成 | `tests/workbench-preview.test.ts` 19/19 通过 | 待 B-0002 | 真实宿主键盘与读屏走查仍待 B-0002，版本保持 1.3.6，本轮不发布 |
+| T-3381 | ◐ | 完成 | `tests/schema.test.ts` 18/18 通过 | 待 B-0002 | 真实多来源站点观感仍待 B-0002，版本保持 1.3.6，本轮不发布 |
+| T-3380 | ◐ | 完成 | `tests/reading-position.test.ts` 54/54 通过 | 待 B-0002 | 真实多长短文滚动视口观感仍待 B-0002，版本保持 1.3.6，本轮不发布 |
+| T-3378 | ◐ | 完成 | 单测通过 | 待 B-0004 | 真实外部 AI 通道连通仍待 B-0004，版本保持 1.3.6，本轮不发布 |
+| T-3379 | ◐ | 完成 | 单测通过 | 待 B-0002 | 真实宿主命令面板快捷键操作仍待 B-0002，版本保持 1.3.6，本轮不发布 |
+| T-3377 | ◐ | 完成 | 单测通过 | 待 B-0002 | 真实宿主侧栏折叠观感仍待 B-0002，版本保持 1.3.6，本轮不发布 |
+| T-3376 | ◐ | 完成 | 单测通过 | 待 B-0002 | 真实存量阅读转化观感仍待 B-0002，版本保持 1.3.6，本轮不发布 |
+| T-3375 | ◐ | 完成 | 单测通过 | 待 B-0002 | 真实宿主视觉与多端观感仍待 B-0002，版本保持 1.3.6，本轮不发布 |
+| T-3374 | ◐ | 完成 | 单测通过 | 待 B-0002/B-0005 | 真实多浏览器下载与文件查看仍待 B-0002/B-0005，版本保持 1.3.6，本轮不发布 |
+| T-3373 | ◐ | 完成 | 单测通过 | 待 B-0002 | 真实多来源候选分拣仍待 B-0002，版本保持 1.3.6，本轮不发布 |
+| T-3372 | ◐ | 完成 | 单测通过 | 待 B-0002 | 真实宿主剪藏与文件导入仍待 B-0001/B-0005，版本保持 1.3.6，本轮不发布 |
+| T-3371 | ◐ | 完成 | 单测通过 | 待 B-0002 | 真实宿主视觉与复制仍归 B-0002，版本保持 1.3.6，本轮不发布 |
+| T-3370 | ◐ | 完成 | 单测通过 | 待 B-0002 | 真实宿主视觉与切文仍归 B-0002，版本保持 1.3.6，本轮不发布 |
+| T-3369 | ◐ | 进行中 | 待运行 | 待 B-0002 | 真实宿主视觉与切文仍归 B-0002，版本保持 1.3.6，本轮不发布 |
+| T-3368 | ◐ | 实现完成，不新增属性、端点或持久化 | 批量/移动/无障碍定向 74/74，完整 `pnpm test` 1521/1521，`pnpm check` 0 错误/0 警告，`pnpm build`、`pnpm check:release`、`pnpm perf:check`、`pnpm visual:check`、`pnpm task:ledger -- --check` 与 `git diff --check` 通过 | 待 B-0002 原工作区、移动触控、键盘与系统读屏 | 静态与隔离证据不替代真实设备和视觉矩阵，版本保持 1.3.6，本轮不发布 |
+| T-3359 | ◐ | 完成，不新增持久化或端点 | 全量 1434/1434，最后 CSS 调整后定向 83/83、check 0 错误/0 警告、构建及包门禁通过，性能与视觉登记通过 | 待 B-0002 原工作区与 B-0005 真实四格式导出文件 | 视觉矩阵仍为 24 项待真实宿主，隔离合成样本不关闭真实设备/文件验收，版本保持 1.3.6，本轮不发布 |
+| T-3358 | ◐ | 实现完成，契约与 D-0232–D-0236 已同步 | 全量测试 1422/1422、check 0 错误/0 警告、构建及发布/性能/视觉登记门禁通过，S1 58/58，IAB 合成数据完成宽窄屏阅读、撤销、设置及连续导入回归 | 待 B-0002 原工作区、主题和设备，真实导出文件仍待 B-0005 | 视觉矩阵仍为 24 项待真实宿主截图，隔离样本不替代真实环境，测试内核已停止，版本保持 1.3.6，本轮不发布 |
+| T-3353 | x | 发布材料已同步，`main`/tag/Release 已发布 | `pnpm check`、`pnpm test` 1339/1339、`pnpm build`、`pnpm check:release`、`pnpm perf:check`、`pnpm visual:check`、`pnpm task:ledger -- --check` 和 `git diff --check` 通过 | 真实宿主、真实模型、真实导入文件、assets/riff、收集箱和打卡联调仍待 B-0002、B-0004–B-0008 | 发布不关闭这些 blocker |
+| T-3355 | x | 核心修复与回归完成，三页后台刷新反馈同步收口 | `pnpm check` 0 错误/0 警告、全量测试 1353/1353、构建及发布/性能/视觉登记门禁通过，发布提交 Quality gates/CodeQL 成功 | 原始场景与设备结果仍待 B-0002，不关闭其他外部能力 blocker | 原始视频未能从工单附件读取，高频原场景不能冒充已复现，先发布已证事件链修复 |
+| T-3356 | ◐ | 布局实现完成，窄工作台收起分面栏，选择列兼容 44px 热区 | 全量 1353/1353，宽窄屏、长标题、候选、预览、更多菜单与批量选择通过 | 待 B-0002 原工作区主题与真实长标题复测 | 本轮使用隔离合成数据验证几何与交互，不冒充用户真实文章验收 |
+| T-3357 | ◐ | 实现完成 | 长标题合成数据跨页几何与交互回归、完整门禁已通过 | 待 B-0002 用户主题、真实文章、窄分屏与移动设备 | 隔离宿主不替代原工作区验收，版本保持 1.3.6，本轮不发布 |
+| T-3354 | x | 规划文档与旧书签字段注释已校准，未启动新功能 | `pnpm check` 0 错误/0 警告、`pnpm test` 1339/1339、任务账本与差异检查通过，规划经独立只读复核 | 不适用（文档规划），不关闭 B-0002、B-0004–B-0008 | 候选方向未进入功能实施排期，实际执行仍由本板决定 |
+| T-3352 | ◐ | 统一传输、同文队列、写后读回及索引失败标记已实现，读库预览及主要写入口已显示“索引待同步” | `pnpm check`、`pnpm test`（1339/1339）、`pnpm build`、`pnpm check:release`、`pnpm perf:check`、`pnpm visual:check`、`pnpm task:ledger -- --check` 和 `git diff --check` 通过 | 待 B-0002（宿主权限、真实多画布/网络故障及写后视图更新） | 思源宿主控制 token/登录且 SDK 不能真正取消内核请求，插件不臆造登录路由或跨客户端事务保证 |
+| T-3351 | ◐ | 本轮已完成即时缺口，并将索引待同步结果贯通主要写入口 | `pnpm check`、`pnpm test`（1436/1436）、`pnpm build`、`pnpm check:release`、`pnpm perf:check`、`pnpm visual:check`、`pnpm task:ledger -- --check` 和 `git diff --check` 通过 | 待 B-0002（思源多画布、移动端、读屏和真实宿主错误注入） | 宿主 URL/history 不属于插件可安全接管范围，筛选/滚动持久快照需先确定宿主 tab 生命周期契约 |
+| T-3349 | ◐ | 完成 | 迁移回归及 S1 真实内核 E2E 通过 | 待 B-0002（真实思源存储异常、重载和迁移弹窗操作） | 隔离插件无法模拟作者宿主的持久化故障与真实恢复操作 |
+| T-3350 | ◐ | 完成 | AV 延迟回归、S1 隔离内核 58/58 | 待 B-0002（宿主中挂库后立即刷新并检查无重复数据库） | SQL 索引时序及实际宿主 UI 只能在作者环境确认 |
+| T-3347 | ◐ | 完成 | 原型交互实测、移动筛选 25/25 | 待 B-0002（真实宿主抽屉滚动、读屏、第三方弹层与三画布观感） | 浏览器原型和隔离测试不能替代思源宿主验证 |
+| T-3348 | ◐ | 完成 | 设置模态/草稿确认、桌面/移动阅读分支及读库预览已在本地浏览器操作核验，移动端 `#reader` 深链接回退同步归一为 `#home` | 待 B-0002（思源宿主页签、桌面/移动入口、键盘/读屏和批注插件） | 独立原型不调用宿主 API，实际跳转和嵌入兼容无法由浏览器样例确认 |
+| T-3344 | ◐ | 原型、组件清单与交付文档已收口 | `pnpm check`、`pnpm test` 1264/1264、`pnpm build`、`pnpm check:release`、`pnpm perf:check`、`pnpm visual:check`、`pnpm task:ledger -- --check`、`git diff --check` 全部通过 | 待 B-0002/B-0004/B-0005（宿主与设备、读屏、真实文件） | 当前隔离预览不能代替作者思源环境及真实数据验收 |
+| T-3345 | ◐ | 完成 | ReaderTab/Protyle 生命周期、专注退出、原生页签回退和原型静态回归通过 | 待 B-0002（外部快速批注插件识别内嵌 Protyle，分别核对阅读/编辑模式、选区批注、切换/退出与原生页签回退） | 第三方插件只保证其公开入口，内嵌编辑器兼容性需真机确认 |
+| T-3346 | ◐ | 完成 | 偏好归一化、精确读改写、读库/高亮筛选一致性、交互与 i18n 回归通过 | 待 B-0002（桌面、窄 Dock、移动端及读屏） | 不新增文章标签写入或多标签组合语义，以守住用户数据所有权 |
+| T-3341 | x | 完成 | `pnpm check`、`pnpm test` 1245/1245、`pnpm build`、`pnpm check:release`、`pnpm perf:check`、`pnpm visual:check`、独立内核 S1 58/58、AV spike 6/6、GitHub Quality gates 38068573521 和 CodeQL 38068573513 通过 | 待 B-0002（真实思源 AV 看板刷新、重复行和失败重试） | 无 |
+| T-3342 | ◐ | 完成 | `pnpm test` 1245/1245、`pnpm check`、`pnpm build`、`pnpm check:release`、`pnpm perf:check`、`pnpm visual:check`、`pnpm task:ledger -- --check`、`git diff --check` 通过，隔离组件浏览器预览已通过 | 待 B-0002/B-0004（宿主、移动设备与模型） | 浏览器合成数据不能替代真实宿主 |
+| T-3343 | ◐ | 完成 | `pnpm test` 1248/1248、`pnpm check`、`pnpm build`、`pnpm check:release`、`pnpm perf:check`、`pnpm visual:check`、`pnpm task:ledger -- --check`、`git diff --check` 通过 | 待 B-0002（桌面/移动页头密度与真实完成数据） | 指标只能反映现存的最近完成时间，不能恢复被覆盖的历史日期 |
+| T-3338 | ◐ | 完成 | `pnpm check`、`pnpm test`、i18n/无障碍/任务账本与 `git diff --check` 通过 | 待 B-0002（桌面首启、移动端空态、窄 Dock 与读屏） | 真实宿主交互需作者环境验证 |
+| T-3339 | ◐ | 完成 | `pnpm check`、`pnpm test`、无障碍/交互静态回归与 `git diff --check` 通过 | 待 B-0002（多画布刷新、迁移弹窗和阅读页签联动） | 真实宿主事件时序和多窗口响应需作者环境验证 |
+| T-3340 | ◐ | 完成 | `pnpm check`、阅读 AI/相关旧文/i18n 回归通过 | 待 B-0002/B-0004（真实 Protyle、模型、嵌入与多端 UI） | 当前环境不能替代真实宿主和模型验收 |
+| T-3327 | ⏸ | 未开发 | 仅有 `3.8.7-alpha.6` 源码调研，尚无正式 API 契约 | 待 3.8.7 正式版发布后复核源码、完成 spike 与作者宿主验收 | 当前上游仍为 alpha，正式设置、调用和副作用契约尚未确认 |
+| T-3326 | x | 完成 | `pnpm check`、`pnpm test` 1230/1230、`pnpm build`、`pnpm check:release`、`pnpm perf:check`、`pnpm visual:check`、定向回归、任务账本和 `git diff --check` 通过 | 待 B-0002 的真实思源侧栏观感与鼠标响应 | 当前环境不能替代作者宿主交互验收 |
+| T-3325 | x | 完成 | 本地 check/test 1229/1229/build/check:release/perf/visual、任务账本、diff 和 S1 E2E 58/58 已通过，GitHub Quality gates 37966314661 与 CodeQL 37966319033 成功，远端 Release 包哈希与本地一致 | 真实宿主视觉、读屏、大库与外部能力仍待 B-0002/B-0005 | 无 |
+| T-3324 | x | 完成 | `pnpm check`、`pnpm test` 1229/1229、`pnpm build`、`pnpm check:release`、`pnpm task:ledger -- --check`、`git diff --check` 通过 | 不适用（文档整理） | 无 |
+| T-3323 | x | 完成 | `pnpm check`、`pnpm test`、`pnpm build`、`pnpm check:release`、`pnpm task:ledger -- --check`、`git diff --check` 通过 | 待 B-0002（今日拾遗三卡底线、筛选控件和统计层级） | 静态检查无法替代真实宿主视觉 |
+| T-3331 | ◐ | 完成 | 定向 19/19，完整门禁通过（check/test 1237/build/release/perf/visual/ledger/diff） | 待 B-0002（宽窄画布按钮与卡片反馈） | 会话级记录不承诺跨重启审计 |
+| T-3332 | ◐ | 完成 | 定向 8/8，完整门禁通过（check/test 1237/build/release/perf/visual/ledger/diff） | 待 B-0002/B-0006（维护页与 assets 真实写入） | 资产回写失败可能保留孤儿资产，按现有端点边界明示 |
+| T-3333 | ◐ | 完成 | 定向 3/3，完整门禁通过（check/test 1237/build/release/perf/visual/ledger/diff） | 待 B-0002/B-0005（真实浏览器下载与文件内容核对） | 内核导出保真仍需真实文件验收 |
+| T-3335 | ◐ | 完成 | 定向 3/3，完整门禁通过（check/test 1237/build/release/perf/visual/ledger/diff） | 待 B-0002/B-0005（大库下载、分卷与失败报告） | 真实大库体积和浏览器多文件下载需作者验收 |
+| T-3322 | x | 完成 | `pnpm check`、`pnpm test` 1227/1227、`pnpm build`、`pnpm check:release`、`pnpm task:ledger -- --check`、`git diff --check` 通过 | 待 B-0002（真实宿主/读屏与三视口视觉） | 静态审查无法替代宿主实测 |
+| T-3321 | x | 完成 | `pnpm check`、`pnpm test` 1226/1226、`pnpm build`、`pnpm check:release`、`pnpm perf:check`、任务账本、`git diff --check` 全通过 | 真实宿主大库首屏、滚动、内存和低端设备仍待 B-0002/B-0005 | 无 |
+| T-3320 | x | 完成 | 定向类型检查、`library-db` 55/55、看板/架构定向测试、`pnpm perf:check`、`git diff --check` 通过 | 待 B-0002/B-0005（真实宿主首屏、滚动、内存与低端设备） | 无 |
+| T-3319 | x | 完成 | pnpm check 0 错误/0 警告、pnpm test 1226/1226、pnpm build、pnpm check:release、pnpm perf:check、pnpm visual:check、任务账本、git diff --check 全通过 | 保留能力矩阵与 blockers 边界，集市 PR 未授权不执行 | 无 |
+| T-3318 | x | 完成 | pnpm check 0 错误/0 警告、pnpm test 1226/1226、pnpm build、pnpm check:release、git diff --check 通过 | 归 B-0002 | 无 |
+| T-3317 | x | 完成 | pnpm check 0 错误/0 警告、pnpm test 1225/1225、pnpm build、pnpm check:release、pnpm perf:check、任务账本与 git diff --check 通过 | 归 B-0002 | 无 |
+| T-3316 | x | 完成 | `pnpm check` 0 错误/0 警告、`pnpm test` 1223/1223、`pnpm build`、`pnpm check:release`、账本与 `git diff --check` 通过 | 归 B-0002 | 无 |
+| T-3315 | x | 完成 | `pnpm check` 0 错误/0 警告、`pnpm test` 1223/1223、`pnpm build`、`pnpm check:release`、`pnpm perf:check`、任务账本与 `git diff --check` 通过，隔离 S1 E2E 58/58 | 归 B-0002 | 无 |
+| T-3314 | x | 完成 | `pnpm check` 0 错误/0 警告、`pnpm test` 1223/1223、`pnpm build`、`pnpm check:release`、i18n/无障碍/账本门禁与 `git diff --check` 通过 | 真实浮窗的分类导航密度、触控与暗色主题仍待 B-0002 | 无 |
+| T-3313 | x | 完成 | `pnpm check` 0 错误/0 警告、`pnpm test` 1222/1222、`pnpm build`、`pnpm check:release`、i18n/架构/账本门禁与 `git diff --check` 通过，隔离 S1 E2E 见 PROGRESS | 多编辑器当前文档语义、滑动标签视觉与置顶拾遗观感待 B-0002 | 无 |
+| T-3312 | x | 完成 | `pnpm check` 0 错误/0 警告、`pnpm test` 1221/1221、`pnpm build`、`pnpm check:release`、任务账本与 `git diff --check` 通过 | 交互修复项待 B-0002 走查 | 无 |
+| T-3311 | x | 完成 | `pnpm check`、`pnpm test` 1216/1216、AI 标签面板 SSR 回归、build/release/perf/visual/task-ledger/diff 全通过 | 待 B-0002/B-0004（设置浮窗与真实 AI/大库标签仍需作者验收） | 无 |
+| T-3310 | x | 完成 | `pnpm check`、`pnpm test` 1215/1215、S1 E2E 58/58、build/release/perf/visual/task-ledger/diff 全通过，Quality gates/CodeQL 成功 | 保留能力矩阵与 blockers 边界 | 无 |
+| T-3309 | x | 文档完成 | README/i18n/任务账本门禁通过 | 不适用 | 无 |
+| T-3308 | ◐ | 完成 | 待本轮门禁 | 待 B-0002 | 需要作者在设置浮窗确认分组、滚动和底部操作区布局 |
+| T-3307 | ◐ | 完成 | 待本轮门禁 | 待 B-0002 | 需要作者在独立浮窗确认宽画布排版、滚动和关闭行为 |
+| T-3306 | ◐ | 完成 | 待本轮门禁 | 待 B-0002 | 需要作者在宽画布今日拾遗中确认三张卡片底线、阴影和窄屏布局 |
+| T-3305 | x | 文档整理完成 | 完成（`pnpm check`、`pnpm test` 1214/1214、`pnpm build`、`pnpm perf:check`、`pnpm visual:check`、`pnpm check:release`、任务账本、`git diff --check`，PR #11 Quality gates/CodeQL 通过） | 不适用 | 无，历史 PR/Release/tag 保留审计链，`dev/thispc-1002` 已确认无独有提交后删除，`codex/main-sync-20261008` 按纪律保留 |
+| T-3303 | ◐ | 完成 | 完成（定向 UI/i18n、`pnpm check`、全量 `pnpm test` 1174/1174、`pnpm build`、`pnpm perf:check`、`pnpm task:ledger -- --check`、`pnpm check:release`） | 待 B-0002 | 需确认真机当前文档语义、按钮状态和安全区布局 |
+| T-3302 | ◐ | 完成 | 完成（定向 UI/i18n、`pnpm check`、全量 `pnpm test` 1174/1174、`pnpm build`） | 待 B-0002 | 需作者在工作台、独立浮窗和多编辑器场景确认当前文档语义与按钮密度 |
+| T-3301 | ◐ | 完成 | 完成（定向 UI/i18n、`pnpm check`、全量 `pnpm test` 1173/1173 通过） | 待 B-0002 | 真实 Android 安全区、触控误触和当前文档收录语义仍需作者走查 |
+| T-3292 | ◐ | 完成 | 完成（无障碍/i18n 定向、`pnpm check`、全量 `pnpm test` 1172/1172 通过） | 待 B-0002 | 真实 Dock 宽度、键盘和移动触控仍需作者走查 |
+| T-3293 | ◐ | 完成 | 完成（smoke-kernel 8/8、脚本语法、`pnpm test` 1146/1146、`pnpm check`、`pnpm build`、`pnpm check:release`、任务账本均通过） | 待 B-0012（独立 6807 靶场全套写型脚本） | 当前环境不触碰作者主工作区，需作者按 `docs/SMOKE-E2E.md` 运行隔离靶场并确认主工作区拒跑、残留自动清扫和结束无残留 |
+| T-3294 | x | 已修复 | 格式化/导入定向 61/61、全量 `pnpm test` 1163/1163、`pnpm check`、`pnpm build`、性能/视觉/发布门禁通过，CodeQL #1/#2 已标记 fixed | 不适用（安全解析边界由单元和服务测试验证，T-3286 仍负责真实外部文件验收） | 无 |
+| T-3295 | x | 完成 | 源码流向复核、CodeQL 告警状态和测试门禁通过 | 不适用（测试代码分类） | 无 |
+| T-3296 | x | 完成 | workflow YAML 解析、任务账本和差异检查通过，GitHub Quality gates 与 CodeQL 均通过 | 不适用（GitHub 自动化配置） | 无 |
+| T-3297 | x | 完成 | 阅读帮助结构回归、README 本地链接检查、任务账本和格式检查通过 | 不适用（安全/文档边界） | 无 |
+| T-3298 | x | 完成 | GitHub 项目元数据核验、README 本地链接和任务账本检查通过 | 不适用（文档事实） | 无 |
+| T-3299 | x | 完成 | 收集箱/导入定向回归 52/52、`pnpm check`（0 错误/0 警告）、`pnpm test`（1166/1166）、`pnpm build`、`pnpm visual:check`（24 个真实宿主案例仍待验收）、`pnpm check:release`、任务账本和 `git diff --check` 通过，GitHub Quality gates `37634094181` 与 CodeQL `37634094243` 成功 | 不适用（序列化安全边界，真实外部集成仍归 T-3286/B-0005–B-0008） | 无 |
+| T-3300 | x | 完成 | 收集箱/检查点定向回归 42/42，`pnpm check`（0 错误/0 警告），`pnpm test`（1172/1172），`pnpm build`、`pnpm visual:check`（24 个真实宿主案例仍待验收）、`pnpm check:release`、任务账本和 `git diff --check` 通过 | 待 B-0002/B-0007（真实收集箱、重载和双窗口） | 需要真实云端订阅与宿主重载验证 |
+| T-3274 | x | 完成 | 完成（全量 `pnpm test` 1138/1138、`pnpm check` 0 错误/0 警告、`pnpm build`、`pnpm check:release` 通过） | 不适用（测试/门禁治理） | 无 |
+| T-3275 |   | 已有入口 | 已有 S1–S4 证据 | 待 B-0002 | 需要作者独立测试工作区与真实宿主操作 |
+| T-3276 |   | 已有移动端实现 | 静态/逻辑回归已有 | 待 B-0002 | 桌面响应式和浏览器截图不能替代真实 Android SiYuan |
+| T-3277 |   | 候选规则完成 | payload 模拟通过 | 待 B-0001 | 需要真实浏览器扩展和站点样本 |
+| T-3278 |   | 服务与门禁已有 | 数据主权/恢复回归已有 | 待 B-0002 | 必须在独立测试文章上核对原属性保留 |
+| T-3279 |   | 矩阵与校验器已有 | 登记检查通过 | 待 B-0002 | 24 个 `pending-host` 槽位需要真实截图 |
+| T-3280 |   | 静态契约已有 | a11y 回归已有 | 待 B-0002 | 需要桌面与移动系统辅助功能证据 |
+| T-3281 |   | 共享服务已有 | 组件/服务回归已有 | 待 B-0002 | 真实宿主切文、焦点和触控尚未走查 |
+| T-3282 |   | 主要入口已有 | 设置/恢复回归已有 | 待 B-0002 | 需要真实弹层、滚动和焦点证据 |
+| T-3283 |   | 能力已落地 | 阅读/选区/计时回归已有 | 待 B-0002 | Protyle、多窗口和移动布局仍未验证 |
+| T-3284 |   | 窗口挂载与基线已有，CI 增加合成性能退化检查 | `pnpm perf:check` 本地重复通过并纳入 GitHub Quality gates | 待 B-0002/B-0005 | 合成 Node 基线不能代替宿主和真实导入文件 |
+| T-3285 |   | 入口与失败语义已有 | AI 矩阵与服务回归已有 | 待 B-0004 | 需要真实模型、嵌入、TLS 和脱敏证据 |
+| T-3286 |   | 入口与降级已有 | 解析/服务/spike 已有 | 待 B-0005–B-0008 | 需要真实文件、订阅、assets 和双插件环境 |
+| T-3287 |   | 现有入口较多 | 待交互契约 | 待 B-0002 | 依赖主链走查后的用户反馈 |
+| T-3288 | ◐ | 三类 Issue 模板补齐版本、文章载体、失败重试和能力矩阵入口，新增 `docs/FEEDBACK-LOOP.md` 并与 CONTRIBUTING/PR 互链 | 模板内容核对、任务账本和文档差异检查通过 | 待作者使用反馈 | 需先完成一轮真实走查并验证反馈流程是否足够 |
+| T-3289 |   | 已有 `icon.png`/`preview.png`，素材未闭环 | 待尺寸/压缩检查 | 待作者视觉确认 | 不能用未验证功能制造宣传画面 |
+| T-3290 | ◐ | README、Issue 模板、徽章、安装入口、反馈模板、CI、Dependabot、SECURITY 和 CONTRIBUTING 已整理，GitHub 描述/主页/主题与 v1.2.0 保持一致 | README 能力矩阵边界、双语链接和 Issue 模板内容已核对，类型/测试/任务账本及差异检查通过 | 24 个真实宿主视觉案例仍待作者审阅 | 不能用占位图替代真实宿主素材，真机验收继续按 B-0002 |
+| T-3291 | ◐ | v1.2.0 已定版，发布提交 `faf046c` 已推送 | 发布门禁与 S1 E2E 已通过，`v1.2.0` tag/Release 已创建，GitHub 默认分支已切为 `main` | 待 B-0002–B-0008 | 覆盖安装、卸载保留属性、真实宿主/移动端和外部集成仍需作者走查，集市 PR 未授权 |
+| T-3260 | ◐ | 完成 | 完成 | 待 B-0002 | 真实三画布观感与触控必须作者走查 |
+| T-3261 | ◐ | 完成 | 完成 | 待 B-0002 | 真实三画布观感与触控必须作者走查 |
+| T-3262 | ◐ | 完成 | 完成 | 待 B-0002 | 真实宿主滚动、内存和低端设备收益必须实测 |
+| T-3263 | ◐ | 完成 | 完成 | 待 B-0002/B-0008 | 桌面宿主单实例、真机和双插件环境需要作者或独立设备 |
+| T-3264 | ◐ | 完成 | 完成 | 待 B-0001/B-0002/B-0004–B-0008 | 真实设备、模型、外部文件和双插件条件不在当前隔离环境 |
+| T-3265 | x | 完成 | 通过 `pnpm task:ledger --check` | 不适用（治理工具） | 无，治理任务不需要产品真机验收 |
+| T-3266 | x | 完成 | 通过跨插件身份纯函数回归、显式 `--plugin-dir` 会话启动/停止、工作区准备器、全量测试、类型检查、构建和发布门禁 | 不适用（开发工具契约，真实宿主仍按各插件自己的验收账本执行） | 无 |
+| T-3267 | ◐ | 完成 | 完成（定向恢复/服务回归、全量 `pnpm test` 1114/1114、`pnpm check`、生产构建通过） | 待 B-0002/B-0006 | 需要真实思源 riff 牌组和重载操作验收 |
+| T-3268 | ◐ | 完成 | 完成（自动快照服务回归、全量 `pnpm test` 1129/1129、`pnpm check`、生产构建、性能与发布门禁通过） | 待 B-0002/B-0006 | 真实宿主 assets、图片/链接保真、移动端及大文档需要单独验收 |
+| T-3269 | ◐ | 完成 | 完成（`pnpm test`、`pnpm check`、性能基线通过） | 待 B-0002 | 真实宿主大库滚动、重渲染和低端设备收益需要作者实测 |
+| T-3270 | ◐ | 完成 | 完成（i18n、无障碍、类型检查与全量测试通过） | 待 B-0004 | 真实自定义通道是否可达、TLS 配置和模型服务行为需作者环境验证 |
+| T-3271 | ◐ | 完成 | 完成（纯函数、i18n、类型检查与全量测试通过） | 待 B-0002 | 真实阅读页签宽窄布局、触控与宿主切文行为需要作者走查 |
+| T-3272 | ◐ | 完成 | 完成（计时纯函数、存储并发/位置校验、CSV/桥接、i18n、类型检查与全量测试通过） | 待 B-0002 | 真实宿主前台判定、切文和移动端体验需要作者走查 |
+| T-3273 | ◐ | 完成 | 完成（选区端点/折叠/跨宿主回归、阅读页与工作台接入、类型检查和全量测试通过） | 待 B-0002 | 真实 Protyle 选区事件和多窗口预览仍需作者走查 |
+
+## 审计结果
+
+- 当前执行板任务数：198；当前板重复编号：无。
+- 历史重复编号：T-3331（276,595行）、T-3332（277,596行）、T-3333（278,597行）、T-3335（279,599行）、T-3183（351,2309行）、T-3184（352,2310行）、T-3185（353,2311行）、T-3186（354,2312行）、T-1100（440,441,442行）、T-1400（456,457,458,477行）、T-1200（462,464,483行）、T-1300（470,484,496,497,498,499行）、T-1402（479,491行）、T-1600（485,492行）、T-1501（490,504行）、T-1730（711,712,713,714,715,716行）；历史重复只保留来源，不改变当前承诺。
+- 当前交接中的过期下一任务：无。
+- `真实验收：不适用` 只允许用于任务治理或开发工具本身；产品行为必须绑定作者、设备、模型或外部文件验收条件。

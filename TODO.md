@@ -1,0 +1,2337 @@
+# 任务总账（TODO）
+
+> 编号 T-1000 起。状态：☐ 待办 / ◐ 进行中 / ✅ 完成 / ⏸ 延后（含原因）。
+> 规划书红线任务不可删；延后不等于取消（D-0008）。
+
+## 当前执行板（2026-10-16 使用体验打磨）
+
+> 本节是下一轮实际执行顺序，不删除后面的历史规划；当前执行板是唯一开发承诺源。每项必须记录“代码状态、隔离验证、作者真实环境验收、延后/阻塞原因”四态；只有前三态都通过，才可从待办中关闭。详见 `docs/QUALITY-AUDIT-2026-10-03.md`、D-0044 与 D-0114。
+
+### 2026-10-06 精品化评审后的下一执行板
+
+- [◐] **T-3360**（P1，2026-10-18）审计收口入口降级、文档承诺与源码/Release 差额：ReaderTab 自定义页签失败回退原生页签，工作台打开失败可见反馈且不派发错误聚焦；校准收集箱实际错误/重试语义、`HighlightView` 与未接线 `QuotesView` 的能力边界，修正摘录草案根文档回跳，并同步 D-0238、双语 README、路线/组件/能力/发布文档。代码状态：实现完成，版本仍为 1.3.6，未推送；隔离验证：Reader 回归 22/22、完整 `pnpm test` 1436/1436、`pnpm check` 0 错误/0 警告、`pnpm build`、发布/性能/视觉登记与任务账本门禁通过；真实验收：Reader、工作台、收集箱、摘录回跳和 24 项视觉矩阵仍待 B-0002/B-0007；延后原因：本轮不重新发布 v1.3.6，真实宿主与外部服务必须由作者环境单独确认。
+
+- [◐] **T-3361**（P1，2026-10-18）收口 GitHub #16 的首启引导重入残留：自动延迟引导与空态/设置/今日拾遗手动入口共享弹窗单例，手动打开时取消未触发计时器；真实宿主仍需确认进入引导与阅读页签时不再闪烁。代码状态：已实现并补入口回归；隔离验证：完整 `pnpm test` 1437/1437、`pnpm check` 0 错误/0 警告、构建、发布/性能/视觉登记、任务账本与 `git diff --check` 均通过；真实验收：待 B-0002/Issue #16 作者环境复测；延后原因：截图与宿主布局事件链只能在真实思源工作区确认，本轮不直接关闭公开 Issue。
+
+- [◐] **T-3362**（P1，2026-10-18）先交付情境选文协议与元数据覆盖样本：定义 5/15/30 分钟预算、用户标签、未知时长、link 载体、已读回看、空结果退路和稳定排序；与每日拾遗分开，不新增属性、端点或持久化。代码状态：纯函数、样本、协议与回归已实现；隔离验证：完整 `pnpm test` 1444/1444、`pnpm check` 0 错误/0 警告、构建、发布/性能/视觉登记、任务账本与 `git diff --check` 均通过；真实验收：待 B-0002 真实存量文章与宿主 UI/读屏复测；延后原因：先确认元数据覆盖和失败路径，返回原列表/滚动位置等待宿主 tab 生命周期契约。
+
+- [◐] **T-3363**（P1，2026-10-18）把情境选文协议接入今日拾遗会话 UI：预算 5/15/30、根块用户标签、已读回看和未知时长放宽；显示入选理由、link-only 退路和空结果诊断，打开文章沿用既有载体策略。代码状态：今日拾遗内嵌面板、双语文案与静态回归已实现，不新增属性、端点或持久化；隔离验证：完整 `pnpm test` 1446/1446、`pnpm check` 0 错误/0 警告、定向情境选文 9/9、构建、发布/性能/视觉登记、任务账本与 `git diff --check` 通过；真实验收：待 B-0002 真实存量、桌面/窄 Dock/移动端与读屏复测；延后原因：返回原列表/滚动位置仍等待宿主 tab 生命周期契约，隔离合成样本不关闭真实 UI 验收。
+
+- [◐] **T-3364**（P1，2026-10-18）情境选文交互与原型收口：修复实际容器断点、预算默认空白、长内容与卡片挤压、刷新后消失主题的可见筛选、文章标题辅助描述和索引引用循环；统一默认原生/移动阅读异常反馈，并同步 canonical 原型。代码状态：组件/导航修复与 canonical 原型对齐已完成，不新增属性/端点/持久化；隔离验证：完整 1455/1455、定向 66/66、类型/Svelte 0 错误0警告、构建/发布包/性能/视觉登记/任务账本/差异门禁通过，Chrome 组件与原型宽窄/376px 暗色/加载错误空态/筛选/载体退路/焦点点验通过；真实验收：待 B-0002 真实宿主/设备/读屏与改天撤销焦点复测；延后原因：合成演示不关闭真实视觉矩阵与宿主生命周期验收，版本保持 1.3.6，本轮不发布。
+
+- [◐] **T-3365**（P1，2026-10-18）拾遗动作与隔离宿主生命周期回归：换一篇定位确切替补卡片、慢置顶离页保护、撤销开始阅读清理会话回执、失败忙态保留按钮焦点；核对长情境面板后的改天/撤销与后台对账筛选保留。代码状态：四项修复、忙态样式与回归完成，不新增属性、端点或持久化；隔离验证：完整 1469/1469、定向 83/83、check 0 错误0警告、构建/发布包/性能/视觉登记/任务账本/差异门禁通过，IAB + 隔离 3.8.8-alpha.3 实际核对改天/撤销、换文、原生正文导航、外部状态冲突和 560px 卡片可达，环境已清理；真实验收：待 B-0002 原工作区、设备、读屏及 24 项视觉矩阵；延后原因：Chrome 宿主被请求来源校验拒绝，慢置顶离页及其他失败只由 VM 错误注入覆盖，隔离样本不关闭真实验收，版本保持 1.3.6，本轮不发布。
+
+- [◐] **T-3366**（P1，2026-10-18）工作台返回与正文/预览生命周期收口：以 SDK 返回 tab.id 定向交付文章，仅最新请求可定位，隐藏工作台/浮窗/Dock 不消费；可见目标保留筛选/队列/排序/布局，被筛掉才放宽；窄预览实际遮住列表时收起预览以显出目标，宽并排和直接进入预览的导航请求保持；正文失败异步回焦尊重主动移焦，预览慢写离页仅广播数据。代码状态：实现完成，不新增属性、端点或持久化，协议见 D-0245/D-0246 与 WORKBENCH-NAVIGATION；隔离验证：完整 `pnpm test` 1498/1498、`pnpm check` 0 错误/0 警告、构建、发布包、性能、视觉登记、任务账本与差异门禁通过；IAB + 专用隔离思源 3.8.8-alpha.3 实际验证多实例筛选隔离、宽列表/看板往返、窄 560x900 预览收起后返回、标题焦点与筛选保留，证据在 `output/workbench-return-3366/acceptance.md`；真实验收：待 B-0002 原工作区/设备/读屏与 24 项视觉矩阵；延后原因：SDK 决定目标实例，原始工作台关联、像素偏移和跨重载恢复未实施，不用隔离证据关闭 #16 原场景。
+
+- [◐] **T-3390**（P3，2026-10-19）排版整理对话框接入 Escape 快捷关闭与 Ctrl/Cmd+Enter 草案保存（承接 T-1792 / D-0270）：`FormattingDialog.svelte` 接入 `<svelte:window>` 级别 Escape 关闭，并在对比区支持快捷键保存；单测与门禁完备。代码状态：完成；隔离验证：单测通过；真实验收：待 B-0002；延后原因：真实宿主编辑器与草稿保存仍待 B-0002。
+
+- [◐] **T-3391**（P2，2026-10-19）读库分面筛选器支持预计阅读时间分档筛选（承接 Readwise/Cubox 调研 / D-0270）：`domain/library-view.ts` 新增 `matchReadingTimeTier` 纯函数与 `ReadingTimeTier` 类型；`LibraryFilters.svelte` 更多筛选接入时长下拉分档（短文 ≤5m、中篇 6-15m、长篇 >15m）；单测与双语支持完备。代码状态：完成；隔离验证：单测通过；真实验收：待 B-0002；延后原因：真实多篇长短文读库联动观感仍待 B-0002。
+
+- [◐] **T-3392**（P2，2026-10-19）读库全键盘操作流导航与快捷状态分拣（参考 Readwise Reader）：`domain/library-keyboard.ts` 新增 `resolveLibraryShortcut` 与 `moveLibraryCursor` 纯函数，仲裁 J/K、Enter、O、R、A、E、X、Esc，并让出 IME 组合、修饰键、Shift 组合、文本输入、按钮原生语义与浮层打开场景；`DockPanel.svelte` 在读库列表行/卡片与看板卡片接入键盘光标、行内快捷键提示条与 SR 播报，移动端不注册；纯会话状态与视图投影，不新增属性、端点或持久化。代码状态：完成；隔离验证：定向 `tests/library-keyboard.test.ts` 9/9、完整 `pnpm test` 1564/1564、`pnpm check` 0 错误/0 警告、`pnpm build`、`pnpm check:release`、`pnpm perf:check`、`pnpm visual:check` 与任务账本门禁通过；真实验收：待 B-0002 真实宿主键盘、读屏与窄 Dock；延后原因：真实宿主按键冲突与视觉矩阵仍归 B-0002。
+
+- [◐] **T-3393**（P2，2026-10-19）智能聚合视图与动态规则过滤器（参考 Cubox）：`domain/ui-prefs.ts` 扩充 `SavedViewFilter` 纳入 `readingTimeTier` 与 `favoriteOnly`，`normalizeFilter` 补充时长分档与收藏合法性归一；新增 `SMART_VIEW_PRESETS`（短文速读、深度长文、星标收藏、最久待办）与 `instantiateSmartViewPreset` 纯函数，支持去重命名与 20 个视图容量约束；`DockPanel.svelte` 接线保存与恢复时长分档，并在保存视图栏提供智能预设一键创建；双语文案与单测完备，不改文章属性与端点。代码状态：完成；隔离验证：`tests/ui-prefs.test.ts` 8/8、完整 `pnpm test` 1566/1566、`pnpm check` 0 错误/0 警告、构建与发布包校验通过；真实验收：待 B-0002 真实多组合视图与跨设备同步；延后原因：真实宿主多视图观感与数据持久仍归 B-0002。
+
+- [◐] **T-3394**（P2，2026-10-19）摘录墙全库制卡贯通与导出预览 Escape 退出交互（承接方向四：找回文章，并把摘录用起来）：`HighlightView.svelte` 解除制卡按钮的 `scope === "current"` 人为限定，全库与当前文档均可一键制作思源 riff 闪卡；接入 `<svelte:window>` 级别 Escape 快捷关闭导出预览，并在搜索框支持 Escape 键一键清空搜索词；不改变任何数据契约与文章属性。代码状态：完成；隔离验证：`tests/highlights.test.ts` 11/11、完整 `pnpm test` 1567/1567、`pnpm check` 0 错误/0 警告、构建与发布包校验通过；真实验收：待 B-0002/B-0006 真实思源 riff 牌组与全库摘录卡片交互；延后原因：真实宿主 riff 题库与多端观感仍归 B-0002/B-0006。
+
+- [◐] **T-3395**（P2，2026-10-19）统计回顾预览与日期过滤 Escape 快捷退出交互（承接全插件键盘交互收口）：`StatsView.svelte` 接入 `<svelte:window>` 级别 Escape 快捷关闭，支持在非忙碌时一键放弃并退出回顾预览草稿；当选中有具体日期过滤（`selectedDayDate`）时，按 Escape 快捷清除单日过滤回到完整完成列表；保持平静原则与数据事实不变。代码状态：完成；隔离验证：`tests/stats.test.ts` 22/22、完整 `pnpm test` 1567/1567、`pnpm check` 0 错误/0 警告、构建与发布包校验通过；真实验收：待 B-0002 真实多统计回顾与日期联动交互；延后原因：真实宿主统计视图与长趋势仍归 B-0002。
+
+- [◐] **T-3396**（P2，2026-10-19）今日拾遗撤销与换篇提示 Escape 快捷关闭与焦点闭环（全插件键盘无障碍走查）：`ResurfaceView.svelte` 挂载 `<svelte:window>` 级别 Escape 快捷关闭，支持在非忙碌时一键关闭操作撤销条（`undoNotice`，自动安全回退焦点）并清空换文提示（`replacementNotice`）；纯组件状态交互，不改写底层属性或持久化。代码状态：完成；隔离验证：`tests/resurface.test.ts` 20/20、完整 `pnpm test` 1568/1568、`pnpm check` 0 错误/0 警告、构建与发布包校验通过；真实验收：待 B-0002 真实桌面端今日拾遗连续操作与键盘关闭；延后原因：真实宿主观感与触控仍归 B-0002。
+
+- [◐] **T-3397**（P2，2026-10-19）情境选文标签别名贯通与 Escape 快捷清空（承接 T-3346 与全插件键盘交互收口）：`ContextSelectionPanel.svelte` 接入 `tagAliases` 偏好观察与实时更新，标签下拉选项与理由卡片（`reasonText`）统一投影用户友好的标签别名；控件区域接入 Escape 快捷键清空已选主题标签，保持会话纯投影与数据主权不变。代码状态：完成；隔离验证：`tests/context-selection-ui.test.ts` 6/6、完整 `pnpm test` 1569/1569、`pnpm check` 0 错误/0 警告、构建与发布包校验通过；真实验收：待 B-0002 真实多标签别名与情境选文观感；延后原因：真实宿主标签别名与多端观感仍归 B-0002。
+
+- [◐] **T-3398**（P2，2026-10-19）读库键盘流补齐批量选择收尾键位（承接 T-3367/T-3392）：`domain/library-keyboard.ts` 新增 `selectDisplayed`（S，需键盘光标）、`keepFiltered`（F）与 `clearSelection`（C）动作，选择类动作只需存在勾选即可触发且同样忽略长按重复；`DockPanel.svelte` 接入三条动作路由并复用既有 `selectDisplayedArticles` / `keepFilteredArticles` / `clearSelection`，行内快捷键提示条同步展示 S/F/C，批量条 `aria-live` 范围摘要继续承担播报；不改变 D-0247 的跨筛选选择语义与数据契约。代码状态：完成；隔离验证：`tests/library-keyboard.test.ts` 9/9、`tests/library-selection.test.ts` 16/16、完整 `pnpm test` 1570/1570、`pnpm check` 0 错误/0 警告、构建与发布包校验通过；真实验收：待 B-0002 真实宿主键盘批量分拣与读屏播报；延后原因：真实按键冲突与读屏节奏仍归 B-0002。
+
+- [◐] **T-3399**（P2，2026-10-19）摘录墙行级键盘导航复用读库仲裁层（承接 T-3392/T-3394）：`HighlightView.svelte` 引入 `moveLibraryCursor` 与 `resolveLibraryShortcut`，为当前页摘录卡片提供键盘光标（J/K 移动、X 勾选、Enter 打开原文、Escape 退出光标），只接管 `move`/`toggleSelect`/`activate` 三类动作，方向键继续交给列表原生滚动；翻页、筛选或作用域切换后光标不可见即清除；卡片补 `data-glean-highlight-id`、`aria-current` 与 `--cursor` 描边（含 forced-colors 回退）；纯会话状态，不写文章属性或持久化。代码状态：完成；隔离验证：`tests/highlights.test.ts` 12/12、完整 `pnpm test` 1571/1571、`pnpm check` 0 错误/0 警告、构建与发布包校验通过；真实验收：待 B-0002 真实宿主摘录墙键盘操作与读屏；延后原因：真实按键冲突与读屏节奏仍归 B-0002。
+
+- [◐] **T-3400**（P2，2026-10-19）今日拾遗桌面端全键盘分拣流（J/K/Enter/A/E/H）：`ResurfaceView.svelte` 接入 `moveLibraryCursor` 与 `resolveLibraryShortcut`，为每日重浮卡片提供 J/K 上下移动、Enter/R 阅读、A 改天、E 归档、H 换一篇（今日拾遗专属）快捷分拣；桌面端卡片补 `data-glean-surf-id`、`aria-current` 与 `--cursor` 描边，并在顶部展示 `glean-kbdhint` 行内快捷键提示与读屏播报；纯会话状态与状态路由复用，不修改文章属性或持久化。代码状态：完成；隔离验证：`tests/resurface.test.ts` 21/21、完整 `pnpm test` 1571/1571、`pnpm check` 0 错误/0 警告、构建与发布包校验通过；真实验收：待 B-0002 真实桌面端今日拾遗连续键盘分拣与换篇实操；延后原因：真实宿主长周期重浮与读屏观感仍归 B-0002。
+
+- [◐] **T-3401**（P2，2026-10-19）阅读器全键盘工作流对齐（A 稍后读、O 打开原文、Escape 关闭帮助与浮层）：`domain/reader-shortcuts.ts` 扩展 `ReaderShortcut` 纳入 `later`（a）与 `openSource`（o），所有写入/跳转类动作忽略长按重复；`ReaderTab.svelte` 接入快捷键动作路由，支持按 a 快捷转稍后读（保留阅读时长），按 o 快捷打开外部原文，按 Escape 快捷退出快捷键帮助浮层或样式/工具菜单；更新快捷键帮助列表与双语文案；纯会话状态与读写路由复用，不改变文章属性或端点。代码状态：完成；隔离验证：`tests/reader.test.ts` 14/14、完整 `pnpm test` 1572/1572、`pnpm check` 0 错误/0 警告、构建与发布包校验通过；真实验收：待 B-0002 真实多文档阅读与长快捷键工作流；延后原因：真实宿主多页签与外部链接跳转仍归 B-0002。
+
+- [◐] **T-3402**（P2，2026-10-19）阅读伴读 AI 结果卡片可关闭与问答输入 Escape 清空（承接方向五：有依据的阅读 AI）：`ReaderTab.svelte` 在 AI 伴读结果（`aiResult`，总结/翻译）与文章提问问答（`questionResult`）卡片内提供明确的关闭按钮（`action.close`）；问答输入框监听 Escape 快捷清空草稿；主键盘事件处理 `Escape` 时同步关闭常驻的 AI 结果卡片；纯客户端交互优化，不改变模型请求或数据主权。代码状态：完成；隔离验证：`tests/reader.test.ts` 12/12、完整 `pnpm test` 1573/1573、`pnpm check` 0 错误/0 警告、构建与发布包校验通过；真实验收：待 B-0002/B-0004 真实 AI 伴读生成与卡片交互；延后原因：真实 AI 调用与宿主多端仍归 B-0002/B-0004。
+
+- [◐] **T-3403**（P2，2026-10-19）读库分面筛选器单项 Escape 清空与键盘交互闭环（承接读库无鼠标分拣）：`LibraryFilters.svelte` 为站点（`site`）、标签（`tag`）以及更多筛选浮层内的作者（`author`）、AI 标签（`aiTag`）、来源（`source`）、时间源（`timeSource`）、载体类型（`contentType`）、预计阅读时长（`readingTimeTier`）全部接入 Escape 快捷键，在下拉框获焦时按 Escape 立即将该项重置为默认值并阻断事件冒泡；不改变分面筛选计算与视图投影。代码状态：完成；隔离验证：`tests/library-filter-chips.test.ts` 4/4、完整 `pnpm test` 1574/1574、`pnpm check` 0 错误/0 警告、构建与发布包校验通过；真实验收：待 B-0002 真实多组合筛选下拉键盘操作；延后原因：真实宿主多分面筛选仍归 B-0002。
+
+- [◐] **T-3404**（P2，2026-10-19）标签别名管理弹窗回车快捷保存与重置交互闭环（全插件键盘交互走查）：`DockPanel.svelte` 中的标签别名管理弹窗（`tagAliasDialog`）在别名输入框与来源标签下拉框接入键盘快捷键，按 Enter 或 Ctrl/Cmd+Enter 自动校验并保存别名；编辑已有别名时按 Escape 安全重置草稿并退出编辑状态回到新建表单，未编辑草稿时按 Escape 则由模态焦点管理器正常关闭弹窗；纯组件交互，不改动标签别名契约或保存规则。代码状态：完成；隔离验证：`tests/ui-prefs.test.ts` 9/9、完整 `pnpm test` 1575/1575、`pnpm check` 0 错误/0 警告、构建与发布包校验通过；真实验收：待 B-0002 真实标签别名管理与键盘连续录入；延后原因：真实宿主别名管理观感仍归 B-0002。
+
+- [◐] **T-3405**（P2，2026-10-19）设置弹窗快捷保存与脏草稿退出键盘交互闭环（全插件键盘交互走查）：`SettingsView.svelte` 挂载 `<svelte:window>` 级别 `Ctrl/Cmd+Enter` 快捷保存（`!saveBusy && draftDirty`）；接入 `installEscapeHandler` 捕获阶段拦截 Esc 退出，在有脏草稿时激活放弃确认条并将焦点移入“继续编辑”按钮，在干净草稿时正常关闭弹窗；归档笔记本搜索框按 Esc 优先清空过滤；放弃确认条支持 Esc 取消与 Enter 键盘触发；单测与门禁完备，不改变配置 schema 或端点契约。代码状态：完成；隔离验证：`tests/settings.test.ts` 21/21、完整 `pnpm test` 1577/1577、`pnpm check` 0 错误/0 警告、构建与发布包校验通过；真实验收：待 B-0002 真实设置弹窗键盘快捷操作与读屏交互；延后原因：真实宿主独立弹窗焦点与键盘仍归 B-0002。
+
+- [◐] **T-3406**（P2，2026-10-20）读库导出服务全链路容灾与边界测试补全（自动化测试与健壮性）：为 `library-export-service.ts` 补齐原生模块隔离服务级回归测试 `tests/library-export-service.test.mjs`；覆盖 CSV 导出特殊字符转义/BOM/内部与未收录文档过滤、单篇 Markdown 导出与 YAML Frontmatter/未入库拒止、Markdown 全库归档 ZIP 分卷切分（`ARCHIVE_PART_MAX_BYTES`）以及单篇文档读取异常时的容灾捕获（不中断归档并在 index.json 记录 failure）、匿名诊断指标聚合与对账异常时的安全降级报告；单测与门禁完备，不改变导出契约或破坏分层架构。代码状态：完成；隔离验证：`tests/library-export-service.test.mjs` 9/9、`pnpm check` 0 错误/0 警告、完整 `pnpm test` 1586/1586、构建与发布包校验通过；真实验收：待 B-0002 真实多卷 ZIP 导出与大容量下载实测；延后原因：真实大容量导出仍待 B-0002。
+
+- [◐] **T-3407**（P2，2026-10-20）作者编辑与 AI 标签合并二次确认 Escape 快捷退出与键盘交互闭环（全插件键盘交互走查）：`AuthorEditor.svelte` 表单接入 Escape 快捷退出与有建议时优先清空建议，输入框支持 `Ctrl/Cmd+Enter` 快捷保存；`AiTagMergePanel.svelte` 挂载 `<svelte:window>` Escape 快捷取消二次确认合并状态；双语与单测完备，不改变底层文档属性与端点契约。代码状态：完成；隔离验证：`tests/ai-tag-merge-ui.test.mjs`、`tests/reader-acceptance.test.ts`、完整 `pnpm test` 通过；真实验收：待 B-0002 真实宿主作者编辑与标签合并键盘操作；延后原因：真实宿主键盘与读屏走查仍归 B-0002。
+
+- [◐] **T-3408**（P2，2026-10-20）首启引导向导与存量迁移弹窗 Escape 快捷退出与状态守卫闭环（全插件键盘交互走查）：`OnboardingDialog.svelte` 挂载 `<svelte:window>` Escape 触发 `continueLater()` 退出并保存中断标记，后台忙碌时锁定防并发异常；`MigrateDialog.svelte` 挂载 `<svelte:window>` Escape，运行批次中或清理中锁定防中断，行内编辑和丢弃确认状态下优先取消局部交互，输入框同步接入按键拦截；单测与门禁完备，不改变底层文档属性与端点契约。代码状态：完成；隔离验证：`tests/modal-escape.test.ts` 7/7、完整 `pnpm test` 通过；真实验收：待 B-0002 真实宿主向导与迁移键盘走查；延后原因：真实宿主向导与迁移操作仍归 B-0002。
+
+- [◐] **T-3409**（P2，2026-10-20）外部导入弹窗 Escape 分级拦截与状态守卫闭环（全插件键盘交互走查）：`ImportDialog.svelte` 挂载 `<svelte:window>` Escape 监听，在导入运行中、文件/进度处理中、暂停中或检查点读取中锁定防中断；丢弃/重置/恢复/首次导入确认状态下按 Escape 优先取消二次确认，空闲且无二次确认时按 Escape 安全退出弹窗；单测与门禁完备，不改变底层文档属性与端点契约。代码状态：完成；隔离验证：`tests/modal-escape.test.ts` 8/8、完整 `pnpm test` 通过；真实验收：待 B-0002/B-0005 真实宿主导入文件与键盘走查；延后原因：真实宿主导入文件与外部能力仍归 B-0002/B-0005。
+
+- [◐] **T-3410**（P2，2026-10-20）备份恢复面板与闪卡恢复面板 Escape 分级撤销与忙碌守卫（全插件键盘交互走查）：`BackupPanel.svelte` 挂载 `<svelte:window>` Escape 监听，在导出/恢复/读取文件忙碌中锁定防中断，异步预览中按 Escape 取消解析，已生成恢复会话时按 Escape 优先重置预览会话并阻止冒泡；`FlashcardRecoveryPanel.svelte` 挂载 `<svelte:window>` Escape，在恢复与清除丢失记录忙碌时锁定防意外操作；单测与门禁完备，不改变底层数据契约与文章属性。代码状态：完成；隔离验证：`tests/modal-escape.test.ts` 9/9、完整 `pnpm test` 通过；真实验收：待 B-0002/B-0006 真实宿主备份导出恢复与闪卡走查；延后原因：真实宿主备份文件与闪卡操作仍归 B-0002/B-0006。
+
+- [◐] **T-3411**（P2，2026-10-20）AI 批处理面板 Escape 分级拦截与状态守卫闭环（全插件键盘交互走查）：`AiBatchPanel.svelte` 挂载 `<svelte:window>` Escape 监听，在批处理运行中（`busy`）锁定防中断；勾选开始确认或丢弃确认状态下按 Escape 优先取消二次确认，存在未执行的批处理准备预览时按 Escape 优先清空预览并复位确认，空闲态按 Escape 正常折叠面板；单测与门禁完备，不改变底层文档属性与日记契约。代码状态：完成；隔离验证：`tests/ai-batch-ui.test.mjs`、`tests/modal-escape.test.ts`、完整 `pnpm test` 通过；真实验收：待 B-0002/B-0004 真实宿主 AI 批处理与键盘走查；延后原因：真实宿主 AI 批处理与外部模型能力仍归 B-0002/B-0004。
+
+- [◐] **T-3412**（P2，2026-10-20）快照治理面板 Escape 忙碌守卫与键盘交互闭环（全插件键盘交互走查）：`SnapshotGovernance.svelte` 挂载 `<svelte:window>` Escape 监听，在批量补拍快照（`busy`）或对账扫描加载中（`loading`）时拦截并阻止冒泡，避免外部设置弹窗意外关闭导致中途卸载；空闲态不拦截交由外层设置正常关闭；单测与门禁完备，不改变底层文档属性与端点契约。代码状态：完成；隔离验证：`tests/snapshot-governance.test.ts`、`tests/modal-escape.test.ts`、完整 `pnpm test` 通过；真实验收：待 B-0002 真实宿主快照治理批量执行与键盘走查；延后原因：真实宿主快照批量拍摄与外部写入仍归 B-0002。
+
+- [◐] **T-3413**（P2，2026-10-20）读库与今日拾遗键盘流快捷设置优先级与评分（同类产品对标 / 快捷分拣）：`domain/library-keyboard.ts` 扩展 `LibraryKeyboardAction` 纳入 `cyclePriority`（P）、`setPriority`（1-5 数字键）与 `cycleRating`（M），增加 `cyclePriorityValue` 与 `cycleRatingValue` 纯函数并纳入长按防抖保护；`DockPanel.svelte` 与 `ResurfaceView.svelte` 接入快捷键动作路由并分别调用 `setPriority` / `setRating` 与 `setPickPriority` / `setPickRating`，行内快捷键提示条同步呈现 P/1-5 与 M；纯会话状态与状态路由复用，不改变底层文档属性与端点契约。代码状态：完成；隔离验证：`tests/library-keyboard.test.ts` 10/10、`tests/resurface.test.ts` 21/21、完整 `pnpm test` 通过；真实验收：待 B-0002 真实宿主读库与今日拾遗键盘快捷分拣实操；延后原因：真实宿主键盘与读屏走查仍归 B-0002。
+
+- [◐] **T-3414**（P2，2026-10-20）阅读伴生栏大纲目录与块书签视口联动指示（同类产品对标 / 连续阅读）：`domain/outline.ts` 新增 `findMatchingOutlineItemId`，`libs/reading-position.ts` 新增 `findActiveOutlineItemInHost`（按 Protyle DOM 真实文档顺序定位目标块所属章节）；`ReadingClipContext` 带回只读投影 `readingPosition`；`ReadingPositionControls` 新增 `onPositionChange` 回调；`ReaderTab.svelte` 高亮当前书签所属 `glean-reader__outline-item--active` 并展示书签标记，点击仍平滑滚动；纯只读投影，不新增属性键或改变书签 JSON 契约。代码状态：完成；隔离验证：`tests/outline.test.ts` 4/4、阅读器相关 159/159、上下文与样式 38/38、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实宿主长文大纲联动与滚动实操；延后原因：真实宿主 Protyle 渲染差异与读屏节奏仍归 B-0002。
+
+- [◐] **T-3415**（P2，2026-10-20）摘录墙支持“按文章聚类”分组浏览与整篇引述导出（同类产品对标 / 摘录沉淀）：`domain/highlights.ts` 新增 `ArticleHighlightGroup` 接口、`groupHighlightsByArticle` 纯函数与 `renderArticleHighlightsMarkdown`；`HighlightView.svelte` 增加 `viewMode: "timeline" | "article"` 切换并在折叠卡片头部提供打开原文、一键复制整篇摘录与一键下载 Markdown 导出；纯客户端只读投影与本地导出，不改变文章属性或端点。代码状态：完成；隔离验证：`tests/highlights.test.ts` 52/52、`tests/highlights-service.test.mjs`、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实宿主摘录墙按文章聚合与整篇导出；延后原因：真实多篇引述排版与多端观感仍归 B-0002。
+
+- [◐] **T-3416**（P2，2026-10-20）阅读伴读 AI 结果与问答一键插入正文开头（同类产品对标 / 知识回流）：`api/client.ts` 新增 `prependBlockDomIds` 与 `prependBlockDom`，`domain/reader.ts` 新增 `buildAiCalloutBlockDom` 纯函数；`services/reader-ai.ts` 新增 `insertAiCalloutToDocument` 服务；`ReaderTab.svelte` 在 AI 伴读结果卡与问答卡提供一键“插入正文开头”动作，直接沉淀为思源原生引述块事实；双语与单测完备，不改变底层文档属性与端点契约。代码状态：完成；隔离验证：`tests/reader-ai.test.mjs` 53/53、`tests/reader.test.ts` 13/13、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002/B-0004 真实宿主正文插入与多端实测；延后原因：真实宿主编辑器与外部模型能力仍归 B-0002/B-0004。
+
+- [◐] **T-3417**（P2，2026-10-20）分面侧栏手风琴互斥折叠与全展开/全收起顶部工具栏支持（同类产品对标 / 分面导航与空间优化）：`domain/library-rail.ts` 新增 `RailGroupStateMap` 类型，提供 `toggleRailGroupState`（手风琴模式激活时互斥折叠其余分组，普通模式独立切换）、`collapseAllRailGroups`（一键全收起）与 `expandAllRailGroups`（一键全展开）纯函数；`services/prefs.ts` 新增 `railAccordion: boolean` 偏好配置，默认保持 `false`；`LibraryRailGroup.svelte` 重构支持外部受控 `groupPrefs` 与 `onToggleGroup` 变更通知，同时保留非受控回退逻辑保证兼容；`DockPanel.svelte` 侧栏分面头部新增操作工具栏，提供手风琴互斥开关（`glean-rail-accordion-btn`）、一键全收起（`collapseAll`）与一键全展开（`expandAll`）按钮；双语国际化键与单测完备，不改变底层文档属性与端点契约。代码状态：完成；隔离验证：`tests/library-rail-accordion.test.ts` 13/13、`tests/library-rail.test.ts` 10/10、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实宿主分面交互手感走查；延后原因：真实宿主分面点击与键盘触控仍归 B-0002。
+
+- [◐] **T-3418**（P2，2026-10-20）分面侧栏未读与待办动态角标计数投影（同类产品对标 / 数量一目了然）：`domain/library-rail-badges.ts` 新增 `buildRailBadgeMap` 纯函数，支持排除当前维度的高效多维分类数量统计；`domain/library-rail.ts` 扩展 `RailItem.badge` 契约；`LibraryRailGroup.svelte` 渲染徽标、零值抑制与 `aria-label` 计数辅助；`DockPanel.svelte` 响应式注入角标；单测与门禁完备，不改变底层文档属性与端点契约。代码状态：完成；隔离验证：`tests/library-rail-badges.test.ts` 10/10、`tests/library-rail-accordion.test.ts` 13/13、`pnpm check` 0 错误/0 警告、完整 `pnpm test` 1596/1596、构建与发布包校验通过；真实验收：待 B-0002 真实多文档与分面角标走查；延后原因：真实宿主文档大库统计手感与观感仍归 B-0002。
+
+- [◐] **T-3419**（P2，2026-10-20）阅读器正文搜索与命中高亮导航（同类产品对标 / 原文长文检视）：在阅读器正文视图支持全文快速查找（Ctrl/Cmd+F），高亮匹配关键词并提供上一个/下一个命中跳转，Esc 快捷关闭；双语与单测完备，不改变文章属性或数据主权。代码状态：完成；隔离验证：`tests/reader-search.test.ts` 10/10、`tests/reader-search-dom.test.ts` 4/4、`tests/reader.test.ts` 14/14、`pnpm check` 0 错误/0 警告；真实验收：待 B-0002 真实宿主 Protyle 搜索与高亮手感；延后原因：真实宿主高亮渲染差异仍归 B-0002。
+
+- [◐] **T-3420**（P2，2026-10-21）微信公众号文章专属优化（自动识别公众号作者、防盗链保护与噪声过滤）：新增 `domain/wechat.ts` 纯函数层，提供 `isWechatUrl`、`extractWechatAuthor`、`isWechatImage` 与 `cleanWechatNoise`；在收录与迁移中自动将公众号名称回填至 `author`（已有值严格保护不覆盖）；ProtyleHost 对 `qpic.cn` 微信图片设置 `no-referrer` 避免 403 裂图；单测与门禁完备，不破坏数据主权。代码状态：完成；隔离验证：`tests/wechat.test.ts` 8/8、`tests/content-url.test.ts` 8/8、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0001/B-0002 真实微信剪藏文章走查；延后原因：真实微信公众号文章排版仍待 B-0001/B-0002。
+
+- [◐] **T-3421**（P2，2026-10-21）剪藏文章批注本篇伴生栏与双向定位联动及顶部阅读进度条：`ReaderTab.svelte` 伴生栏新增【本篇批注】列表（调用 `listDocHighlights`），点击卡片平滑滚动定位正文块并施加 `pulse-highlight` 脉冲视觉反馈；正文主视图顶部提供平滑阅读进度条（`estimateReadingPercentage`）；单测与门禁完备，不改变底层文档属性与端点契约。代码状态：完成；隔离验证：`tests/reader.test.ts` 14/14、`tests/highlights.test.ts` 52/52、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实长文批注联动与滚动走查；延后原因：真实宿主长文滚动与读屏节奏仍归 B-0002。
+
+- [◐] **T-3422**（P2，2026-10-21）每日拾遗智能融合作者公众号推荐理由与读库微信紧凑展示（对标 Cubox / Readwise，承接公众号深度优化）：`domain/resurface.ts` 新增 `SurfaceReason.author`（`kind: "author"`），`resurface-service.ts` 接入 `author` 属性；`ResurfaceView.svelte` 智能呈现「来自 ${author}」理由；`DockPanel.svelte` 列表行、卡片与移动端来源标签对微信公众号文章自动收敛为紧凑「微信 · 作者」；双语文案与单测完备。代码状态：完成；隔离验证：`tests/resurface.test.ts` 26/26、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实宿主今日拾遗推荐理由观感走查；延后原因：真实多来源推荐走查仍归 B-0002。
+
+- [◐] **T-3423**（P2，2026-10-21）阅读器工具栏一键主题循环切换（跟随思源 / 纸感 / 护眼绿）：`ReaderTab.svelte` 顶部工具栏增设 `glean-reader__toolbar-theme` 循环切换按钮，实时切换 `readerAppearance.theme` 并展示专属三色状态指示圆点；单测与门禁完备，不改变配置 schema 或端点契约。代码状态：完成；隔离验证：`tests/reader.test.ts` 14/14、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实长文主题切换观感；延后原因：真实宿主编辑器主题视觉仍归 B-0002。
+
+- [◐] **T-3424**（P2，2026-10-21）ReaderTab 选区快捷批注与个人思考插入（Quote with Memo）：`services/excerpt-service.ts` 的 `insertQuoteExcerpt` 接入 `memo?: string` 参数，将引述与感想分别按段落构建为结构化引述块；`ReaderTab.svelte` 选区悬浮胶囊工具条提供「💬 批注」按钮与回车快捷插入；单测与门禁完备，不改变底层文档属性与端点契约。代码状态：完成；隔离验证：`tests/excerpt-service.test.mjs` 12/12、`tests/reader.test.ts` 14/14、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实宿主正文划词批注手感走查；延后原因：真实宿主选区与块插入仍归 B-0002。
+
+- [◐] **T-3425**（P2，2026-10-21）分面侧栏一键折叠收起与宽窄自适应切换（railCollapsed 偏好与快捷展开）：`services/prefs.ts` 接入 `railCollapsed: boolean` 偏好；`DockPanel.svelte` 侧栏分面工具条提供一键收起按钮，并在收起后于列表顶栏展示展开快捷按钮；单测与门禁完备，不改变底层文档属性与端点契约。代码状态：完成；隔离验证：`tests/prefs.test.ts` 17/17、`tests/library-rail-accordion.test.ts` 11/11、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实宿主侧栏展开折叠触控走查；延后原因：真实宿主分面折叠仍归 B-0002。
+
+- [◐] **T-3426**（P2，2026-10-21）读库列表与卡片时长标签（Reading Time Badge）分级视觉色彩优化：`domain/library-view.ts` 新增 `resolveReadingTimeTier` 纯函数；`DockPanel.svelte` 列表行、看板卡片与移动端时长标签按短文（绿色）、中篇（蓝色）、长篇（橙色）赋予轻量色彩辨识；单测与门禁完备。代码状态：完成；隔离验证：`tests/library-view.test.ts` 20/20、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实多文档时长色彩感知走查；延后原因：真实宿主各主题色彩观感仍归 B-0002。
+
+- [◐] **T-3427**（P2，2026-10-21）参考图美学落地：今日拾遗 7 日打卡步进条与连续完成 Bento 卡片（对标 Days Logged In & Streak Card）：`domain/stats.ts` 新增 `computeRecent7DaysStatus` 纯函数；`ResurfaceView.svelte` 顶部接入暖琥珀渐变 Streak 鼓励卡片与 7 日水平打卡步进条（`.glean-surf-banner`）；单测与门禁完备，不改变底层文档属性与端点契约。代码状态：完成；隔离验证：`tests/stats.test.ts` 24/24、`tests/resurface.test.ts` 26/26、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实宿主今日拾遗打卡条交互手感走查；延后原因：真实宿主滚动与读屏观感仍归 B-0002。
+
+- [◐] **T-3428**（P2，2026-10-21）参考图美学落地：统计回顾页派生阅读里程碑印记（对标 Achievements 勋章）：`domain/stats.ts` 新增 `computeReadingMilestones` 纯函数，根据当前读库藏书规模、连续天数、本周读完等派生 6 类阅读勋章；`StatsView.svelte` 呈现轻量 Bento 胶囊徽章墙；单测与门禁完备。代码状态：完成；隔离验证：`tests/stats.test.ts` 24/24、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实宿主统计页成就徽章观感走查；延后原因：真实宿主多数据跨度仍归 B-0002。
+
+- [◐] **T-3429**（P2，2026-10-21）时间线引导轴微标、沉浸阅读工具栏呼吸隐退与全卡片按压缩放手感（参考图美学深化）：摘录墙平铺时间线模式接入竖向引导轴与动态放大圆环锚点；ReaderTab 沉浸模式工具栏支持非获焦呼吸隐退并在 Escape 监听中支持快捷退出；连续阅读卡片、打卡步进器与分段选择器按压时接入 spring scale 微动效；单测与门禁完备。代码状态：完成；隔离验证：`tests/highlights.test.ts` 14/14、`tests/reader.test.ts` 14/14、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实宿主微动效与沉浸阅读手感走查；延后原因：真实宿主编辑器沉浸走查仍归 B-0002。
+
+- [◐] **T-3430**（P2，2026-10-21）微信文章懒加载修复、官方封面摘要提取与纯净短链/微信读书互通（微信公众号专项深化）：`domain/wechat.ts` 新增 `repairWechatImages`、`extractWechatCover`、`extractWechatDescription`、`cleanWechatArticleUrl` 与 `wechatArticleToWereadUrl`；`domain/content.ts`（`inspectClipMarkdown`）自动提取官方摘要与封面，`clip-store.ts`（`captureClip`）在未有手填摘要时自动回填免调 AI 的高质量作者简介；`ReaderTab.svelte` 伴生栏微信专属卡片提供「微信读书」网页版跳转与「复制纯净短链」动作；扩充 `cleanWechatNoise` 深度清洗赞赏码/阅读原文/往期推荐等模板噪点；单测与门禁完备。代码状态：完成；隔离验证：`tests/wechat.test.ts` 19/19、`tests/content-url.test.ts` 8/8、`tests/reader.test.ts` 14/14、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0001/B-0002 真实微信多图文章走查；延后原因：真实微信公众号多图排版仍待 B-0001/B-0002。
+
+- [◐] **T-3431**（P2，2026-10-21）微信公众号 LaTeX 公式逆向、代码块提纯、语音组件转换与同作者合集连读导航（微信专项进阶）：`domain/wechat.ts` 新增 `repairWechatMath`、`repairWechatCode`、`repairWechatVoice`、`repairWechatContent`、`extractWechatAvatar` 与 `extractWechatBiz`；`formatting.ts` 扩充微信赞赏/阅读原文/往期推荐等推广噪点匹配；`ReaderTab.svelte` 伴生栏呈现公众号圆形头像与同号文章连读导航列表（`loadAuthorArticles`）；单测与门禁完备，不改变底层文档属性与端点契约。代码状态：完成；隔离验证：`tests/wechat.test.ts` 22/22、`tests/formatting.test.ts` 28/28、`tests/reader.test.ts` 14/14、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0001/B-0002 真实微信公式与代码长文走查；延后原因：真实微信公众号公式排版仍待 B-0001/B-0002。
+
+- [◐] **T-3432**（P2，2026-10-21）微信公众号 CSS 背景插图抢救、内嵌视频转换与读库一键公众号分面筛选：`domain/wechat.ts` 新增 `repairWechatBackgroundImages`、`repairWechatVideos` 与整合函数 `repairWechatContent`；`DockPanel.svelte` 行表、看板卡片与移动端列表来源微标接入一键筛选（`selectSite(entry.site)`）；单测与门禁完备，不改变底层文档属性与端点契约。代码状态：完成；隔离验证：`tests/wechat.test.ts` 22/22、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0001/B-0002 真实微信多图与视频长文走查；延后原因：真实微信公众号视频排版仍待 B-0001/B-0002。
+
+- [◐] **T-3433**（P2，2026-10-21）设置页弹窗放大（920x720px）、新手提示卡片截断修复与 8 大分类导航图标重构：`index.ts` 弹窗尺寸升级为 920px x 720px；`SettingsView.svelte` 与 `src/index.scss` 彻底消除 `newbie-hint` 的纵向 Flex 挤压与高度截断，重构为完整自适应的横幅通知组件（`glean-settings__newbie-banner`）；左侧分类导航扩充 8 大分类专属 SVG 图标与 220px 宽屏排版；单测与门禁完备。代码状态：完成；隔离验证：`tests/header-actions.test.ts` 27/27、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实宿主设置页宽屏与表单走查；延后原因：真实多分辨率宿主观感仍归 B-0002。
+
+- [◐] **T-3434**（P2，2026-10-22）排版整理微信专属提纯、摘录精准制导原文定位、专栏合集连读扩展与看板卡片标题收敛：`formatting-service.ts` 与 `FormattingDialog.svelte` 接入微信正文专属清洗提纯（`repairWechatContent`）；`HighlightView.svelte` 跳转原文精确锚定引述块（`openReadingDocument(rootId, blockId)`）；`ReaderTab.svelte` 基于只读目录派生系列专栏文章列表（`seriesArticles`）；看板卡片与列表卡片超长标题接入 `line-clamp: 3` 收敛；单测与门禁完备，不改变底层文档属性与端点契约。代码状态：完成；隔离验证：`tests/formatting-service.test.mjs` 20/20、`tests/highlights.test.ts` 14/14、`tests/reader.test.ts` 14/14、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0001/B-0002 真实微信排版与摘录锚定走查；延后原因：真实宿主编辑器锚定仍归 B-0002。
+
+- [◐] **T-3435**（P2，2026-10-22）快捷键面板立体键帽矩阵重构、大纲活动导轨与标题跳转脉冲光晕（交互细节深化）：`ReaderTab.svelte` 快捷键提示面板接入模块化立体键帽徽标矩阵并补充 Ctrl+F 搜索说明；伴生栏大纲目录活动项接入 2.5px 品牌主色竖向指示轨（`--active`）；`scrollToOutline` 点击大纲平滑滚动时为目标标题块施加 1.2 秒脉冲高亮渐变强调（`glean-pulse-highlight`）；今日拾遗撤销提示条与换篇接入弹簧平滑淡入动效；单测与门禁完备。代码状态：完成；隔离验证：`tests/reader.test.ts` 14/14、`tests/resurface.test.ts` 26/26、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实大纲滚动跟随走查；延后原因：真实长文大纲跟随仍归 B-0002。
+
+- [◐] **T-3436**（P2，2026-10-22）选区划词即时朗读接入、今日拾遗读完闭环持久激励呈现（闭环微交互深化）：`ReaderTab.svelte` 划词悬浮胶囊工具条增设即时朗读选区按钮（`startSpeech("selection")`）；`ResurfaceView.svelte` 当日文章全部消化读完时保持渲染连续阅读天数与 7 日步进条，赋予读者满满成就感；单测与门禁完备。代码状态：完成；隔离验证：`tests/reader.test.ts` 14/14、`tests/resurface.test.ts` 26/26、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实划词朗读与全读完空态走查；延后原因：真实多日打卡状态仍归 B-0002。
+
+- [◐] **T-3437**（P2，2026-10-22）伴读栏全方位体验重构（阅读看板指标胶囊、大纲/批注解嵌一级常驻、H1-H6标题微标与卡片美学升级）：`ReaderTab.svelte` 伴生栏顶部重构为四维阅读看板胶囊（`glean-reader__metric-capsule`：字数/预估时长/累计已读/阅读进度百分比）；正文大纲树（Outline）与本篇批注（Highlights）提升为一级核心独立卡片面板，解开 `moreTools` 双重折叠嵌套；大纲目录树接入 H1-H6 标题层级微标（`glean-reader__outline-tag`）与主题色轨道指示；单测与门禁完备。代码状态：完成；隔离验证：`tests/reader.test.ts` 14/14、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实长文大纲目录与伴读指标走查；延后原因：真实宿主编辑器滚动跟随仍归 B-0002。
+
+- [◐] **T-3438**（P2，2026-10-22）伴生栏全方位体验深度打磨（顶部导航分段切换、大纲关键词即时检索、AI快捷追问胶囊、一键复制全文批注）：`ReaderTab.svelte` 伴生栏新增分段导航条（`companionTab`：全部/大纲/批注/AI），支持专项聚焦与全景视图无缝切换；大纲长篇标题超过 6 条时提供关键词即时过滤栏与一键清空；批注卡片标题增设「复制本文全部批注」一键动作（`copyAllDocHighlights`）；文章提问接入预设灵感胶囊（核心论点/实践建议/一句话总结）；单测与门禁完备。代码状态：完成；隔离验证：`tests/reader.test.ts` 14/14、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实长文大纲检索与 AI 快捷追问走查；延后原因：真实 AI 响应与大纲过滤手感仍归 B-0002。
+
+- [◐] **T-3439**（P2，2026-10-22）阅读指标胶囊时长分级色彩徽标融入、批注卡片高亮颜色即时切换与全局摘录墙色彩对齐：`ReaderTab.svelte` 伴读指标胶囊接入 `resolveReadingTimeTier` 时长分档圆点（短文绿色/中篇蓝色/长篇橙色）；批注卡片圆点按钮支持直接点击循环切换四色高亮（`cycleHighlightColor`：黄/红/蓝/绿）并调用 `writeHighlightColor` 写入块级 IAL 属性；多色存在时提供就地颜色分级筛选器（`highlightColorFilter`）；`HighlightView.svelte` 单条引述同步呈现高亮色彩圆点；单测与门禁完备。代码状态：完成；隔离验证：`tests/reader.test.ts` 14/14、`tests/highlights.test.ts` 14/14、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实块属性持久化走查；延后原因：真实宿主编辑器属性生效仍归 B-0002。
+
+- [◐] **T-3440**（P2，2026-10-22）伴生栏文章分类标签横向胶囊展台与上下文数据层扩展：`clip-store.ts`（`readClipContext`）接入 `parseUserTags` 与 `attrs.aiTags` 补充文章级标签投影（`tags` 与 `aiTags`）；`ReaderTab.svelte` 伴生栏在指标胶囊下方呈现文章级用户标签与 AI 标签微胶囊网格（`.glean-reader__tags-bar`），消除伴读视图看不到文章分类标签的体验盲区；单测与门禁完备。代码状态：完成；隔离验证：`tests/reader.test.ts` 14/14、`tests/clip-store.test.ts` 48/48、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实文章多标签呈现走查；延后原因：真实宿主标签交互仍归 B-0002。
+
+- [◐] **T-3441**（P1，2026-10-22）思源官方最新 Petal 插件生命周期契约对齐与生态联动加固：`index.ts`（`LvGleanPlugin`）覆盖实现 `onDataChanged(reason?: "sync" | "overwrite")`，彻底免疫思源底层 `loader.ts` 默认将未覆盖实例整插件暴力重载（`requestReload`）的体验缺陷；`onLayoutReady` 增加 `topBarElement` 引用记录与幂等性防护，杜绝二次触发重复挂载顶栏按钮；接入官方 `open-siyuan-url-plugin` 事件实现外部快捷唤起，接入 `sync-end` 事件实现多端同步完成秒级自动刷新；单测与门禁完备。代码状态：完成；隔离验证：`tests/lifecycle-contract.test.ts` 3/3、`tests/reader-acceptance.test.ts` 30/30、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实思源云同步走查；延后原因：真实多设备同步仍归 B-0002。
+
+- [◐] **T-3442**（P2，2026-10-22）长文深读平滑回到顶部悬浮胶囊与摘录聚类一键全部折叠/展开（操作流深度优化）：`ReaderTab.svelte` 在阅读进度超过 12% 时右下角平滑浮现极简圆环回到顶部悬浮按钮（`scrollToTop` 与 `.glean-reader__back-to-top`）；`HighlightView.svelte` 聚类视图工具栏提供「全部折叠 / 全部展开」动作按钮（`allGroupsOpen`）；单测与门禁完备。代码状态：完成；隔离验证：`tests/reader.test.ts` 14/14、`tests/highlights.test.ts` 14/14、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实万字长文往返滚动走查；延后原因：真实宿主编辑器滚动跟随仍归 B-0002。
+
+- [◐] **T-3443**（P1，2026-10-23）小驴全生态跨插件联邦联动全面落地与规范加固（Epoch 6 标准）：深度接入 `ecosystem-bridge-kit` SDK；`checkin-bridge.ts` 与 `bridge.ts`（`setClipStatus`）文章读完（`done`）自动联动打卡，零强依赖降级；划词悬浮条智能探测小驴闪卡（`xiaolvCards`）与小驴考试（`LvExam`）提供幽灵态降级与出题桥接；`onload` 向小驴雷切注册 `glean-later-list` 稍后读待读流小组件并在 `onunload` 安全注销；`index.ts` 升级 `iconGleanWheat` 32×32 单色矢量图标并纠偏 `hotkeys`；`src/index.scss` 消除 `.dialog-content` 顶层裸类样式污染并注入北欧青绿+金麦美学；`plugin.json` 补齐小驴品牌关键词与独立设置大窗（`settingsWindow: true`）；补齐根目录 `CHANGELOG.md` 与 `.github/workflows/release.yml`；单测与门禁完备。代码状态：完成；隔离验证：`tests/reader.test.ts` 14/14、`tests/checkin.test.ts` 4/4、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实多插件协同走查；延后原因：真实兄弟插件联调仍归 B-0002。
+
+- [◐] **T-3444**（P2，2026-10-23）全表面 Dialog 统一品牌标题栏规范（.lv-dialog-title-wrap）装配与专栏空值加固：`dialog.ts` 新增 `mountPlatformDialogTitleWrap`，将设置大窗、排版优化、引导、迁移、导入、制卡与工作台弹窗标题栏统一升级为 22×22 青绿底白麦穗标 + 标题 + 紧凑版本胶囊；加固 `seriesArticles` 目录路径空值判断；单测与门禁完备。代码状态：完成；隔离验证：`tests/reader.test.ts` 14/14、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实各弹窗标题栏走查；延后原因：真实宿主弹窗挂载仍归 B-0002。
+
+- [◐] **T-3445**（P2，2026-10-23）微信公众号文章全自动识别、手动重扫与伴生栏批注研读流增强：`ReaderTab.svelte` 接入 `scanWechatPublisher`，打开微信剪藏文章自动扫描 DOM 与前置文本提取公众号名称并回填文档属性 `custom-clip-author`；微信展台右侧新增一键重新识别动作；批注数量达到 4 条以上时自动提供即时过滤检索栏（`highlightFilter`）；批注卡片底部新增「📝 AI 出题」动作，智能探测小驴考试（`LvExam`）提供幽灵态降级与一键出题；单测与门禁完备。代码状态：完成；隔离验证：`tests/reader.test.ts` 14/14、`tests/wechat.test.ts` 22/22、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实微信剪藏走查；延后原因：真实微信 DOM 与考试出题交互仍归 B-0002。
+
+- [◐] **T-3446**（P1，2026-10-23）生态统领指令深度贯彻与全仓样式隔离（Epoch 6 标准）：`src/index.scss` 彻底消除针对原生弹窗表单的裸类选择器，严格包裹至 `.lv-glean`、`.glean-dialog`、`[class*="glean"]` 专属作用域内；`HighlightView.svelte` 摘录墙平铺与聚类双视图制卡按钮全面接入 `hasCardsInstalled` 幽灵态降级；`src/index.ts` 快捷键纠偏为自适应平台语法（Mac 使用 `⌥⌘G`，Windows/Linux 使用跨平台标准 `Ctrl+Alt+G`）；严格保护新版 256×256 高清 `icon.png` 资产不变；单测与门禁完备。代码状态：完成；隔离验证：`tests/mobile-nav.test.ts` 26/26、`tests/highlights.test.ts` 14/14、完整 `pnpm test` 1661/1661、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 跨平台宿主走查；延后原因：多平台物理按键体验仍归 B-0002。
+
+- [◐] **T-3447**（P2，2026-10-24）读库工作台微信文章 URL 深度识别、阅读器空格翻页与摘录墙 AI 出题：`DockPanel.svelte` 引入 `isWechatUrl`，看板、列表、表格全面支持 URL 级别的微信文章深度判定，消除 `entry.site` 为空或未规范时被误报为“未知来源”的问题，统一对齐绿色品牌微标并支持按公众号一键筛选；`ReaderTab.svelte` 新增 `Space` / `Shift+Space` 平滑翻页并在浮层提供提示；`HighlightView.svelte` 摘录卡片工具栏全量接入「📝 AI 出题」动作（小驴考试联动与幽灵态降级）；单测与门禁完备。代码状态：完成；隔离验证：`tests/reader.test.ts` 14/14、`tests/highlights.test.ts` 14/14、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实键盘翻页与微信卡片走查；延后原因：真实键盘滚动速度与微信数据展示仍归 B-0002。
+
+- [◐] **T-3448**（P2，2026-10-24）原生阅读胶囊微信绿色徽标与读库全卡片主题标签微胶囊展台：`ReadingContext.svelte` 接入 `isWechatUrl` 智能识别与专属微信绿色微标（`.glean-source-wechat`），操作栏新增「📖 在拾遗阅读器打开」按钮；`DockPanel.svelte` 看板、列表、表格卡片全面呈现 `#tag` 与 `✨aiTag` 药丸胶囊微标（`.glean-mini-tag`）并接入 `selectTag` 与 `selectAiTag` 下钻筛选；单测与门禁完备。代码状态：完成；隔离验证：`tests/mobile-nav.test.ts` 26/26、`tests/header-actions.test.ts` 27/27、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实原生胶囊跳转与标签过滤走查；延后原因：真实原生编辑器挂载仍归 B-0002。
+
+- [◐] **T-3449**（P2，2026-10-24）拾遗卡片多维元数据呈现对齐与年度热力图下钻筛选交互：`ResurfaceView.svelte` 拾遗推荐卡片全面引入微信公众号绿色来源徽标（`.glean-source-wechat`）、预估阅读时长分级色彩徽标（短文/中篇/长篇圆点）以及用户主题标签（`#tag`）与 AI 标签（`✨aiTag`）；`StatsView.svelte` 全年热力图单元格（`glean-stats__day`）升级为可聚焦与可交互单元，支持读者点击或键盘 `Enter`/`Space` 直接联动下方完成文章清单下钻筛选（`selectedDayDate`），再次点击取消；单测与门禁完备。代码状态：完成；隔离验证：`tests/accessibility.test.ts` 56/56、`tests/stats.test.ts` 26/26、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实热力图点击走查；延后原因：真实热力图交互手感仍归 B-0002。
+
+- [◐] **T-3450**（P2，2026-10-24）伴生栏批注流就地一键生成思源读书笔记文档与排版微信双向识别：`ReaderTab.svelte` 伴生栏批注流顶部标题区增设「创建摘录笔记」一键导出动作（`highlight.createArticleDoc`），就地将本文批注以原生块引用汇编为格式标准的独立思源笔记文档；`formatting-service.ts` 微信判定升级为对 `attrs.url` 与 `attrs.site` 双向探测 `isWechatUrl`；单测与门禁完备。代码状态：完成；隔离验证：`tests/reader.test.ts` 14/14、`tests/formatting.test.ts` 28/28、`tests/formatting-service.test.mjs` 20/20、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实伴生栏建稿走查；延后原因：真实思源新建文档与页签激活仍归 B-0002。
+
+- [◐] **T-3451**（P2，2026-10-24）读库卡片微信来源微标与公众号下钻筛选闭环：`DockPanel.svelte` 实现 `handleSiteClick` 智能路由；当读者点击卡片上的微信微标时，若该文章已识别出公众号作者（`entry.author`），优先直接触发按该微信公众号进行精准全库筛选；若无作者则按 `mp.weixin.qq.com` 站点筛选；彻底消灭来源未规范时的点击无响应问题；单测与门禁完备。代码状态：完成；隔离验证：`tests/header-actions.test.ts` 27/27、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实微信公众号钻取走查；延后原因：真实卡片点击与筛选列表联动仍归 B-0002。
+
+- [◐] **T-3452**（P2，2026-10-24）全局摘录墙多色高亮筛选闭环与纯函数扩展：`domain/highlights.ts` 纯函数 `HighlightFilter` 扩展 `color` 字段，`filterHighlights` 纯函数接入高亮色彩严格匹配与专项单测覆盖；`HighlightView.svelte` 筛选工具栏在存在多种颜色摘录时自动呈现高亮颜色下拉筛选器（`reader.filterByColor`），支持在“黄/红/蓝/绿”高亮分类之间秒级切换筛选，并支持一键清空重置；单测与门禁完备。代码状态：完成；隔离验证：`tests/highlights.test.ts` 14/14、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实多色高亮过滤走查；延后原因：真实多篇批注色彩切换仍归 B-0002。
+
+- [◐] **T-3453**（P2，2026-10-24）沉浸阅读浮动进度微胶囊与剩余时长预估：`ReaderTab.svelte` 增加 `remainingMinutes` 响应式衍生计算；在伴生栏折叠或开启全屏沉浸阅读且进度超过 12% 时，右下角自动浮现半透明毛玻璃药丸微胶囊（`.glean-reader__floating-progress`），动态展示已读百分比与剩余预估阅读时间（如 `45% · 余 3 分钟`）；单测与门禁完备。代码状态：完成；隔离验证：`tests/reader.test.ts` 14/14、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实沉浸模式走查；延后原因：真实视口全屏效果仍归 B-0002。
+
+- [◐] **T-3454**（P2，2026-10-24）视口浮动音频声波播放胶囊与就地暂停控制：`ReaderTab.svelte` 接入 `.glean-reader__floating-speech` 悬浮音频控制器，在 TTS 朗读时动态呈现波形声波跳动微动效（`@keyframes glean-speech-wave`）、段落进度指示（`X/Y`）、就地播放/暂停切换（`⏯`）与停止动作（`⏹`），朗读结束自动隐退；单测与门禁完备。代码状态：完成；隔离验证：`tests/reader.test.ts` 14/14、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实朗读播放走查；延后原因：真实桌面系统音频播放仍归 B-0002。
+
+- [◐] **T-3455**（P2，2026-10-25）全功能系统性 E2E 排查、老用户历史数据兼容与多维体验加固：`domain/library-filter-chips.ts` 纯函数 `FILTER_CHIP_KEYS` 扩展 `readingTimeTier`，`libraryFilterChips` 完整呈现时长分级徽标；`domain/wechat.ts` 纯函数 `isWechatUrl` 强化容错无前缀域名与中文别名；`ReaderTab.svelte` 键盘处理器将 Escape 优先分配给划词条（`excerpt`）与 Memo 批注输入框；`highlights.ts` 增加父级文档 `box` 与 `hpath` 自动回退保护；沉淀《全功能排查与老用户平滑迁移指南》（`docs/MIGRATION-GUIDE.md`）；单测与门禁完备。代码状态：完成；隔离验证：`tests/library-filter-chips.test.ts` 4/4、`tests/wechat.test.ts` 22/22、`tests/reader.test.ts` 14/14、`tests/highlights.test.ts` 14/14、`tests/highlights-service.test.mjs` 38/38、S1 服务级 E2E 58/58 全通；真实验收：待 B-0002 真实多设备走查；延后原因：多平台设备宿主仍归 B-0002。
+
+- [◐] **T-3456**（P2，2026-10-25）微信公众号作者全自动强行识别回填与收集箱不可用静默隐藏：新增 `src/services/wechat-service.ts` 专属服务（`scanAndFillWechatAuthor` 与 `batchRecognizeWechatAuthors`）；`WorkbenchPreview.svelte` 接入预览自动静默识别，无需用户同意强行提取并自动回填 `custom-clip-author` 属性与同步索引；`DockPanel.svelte` 读库工作台接入「✨ 自动识别全部公众号」一键全量并发批处理横幅与卡片快速识别动作；`InboxSection.svelte` 严格落地“不可用时 UI 整块隐藏”契约消除错误横条干扰；单测与门禁完备。代码状态：完成；隔离验证：`tests/wechat-service.test.mjs` 5/5、`tests/i18n.test.ts` 5/5、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实大批量微信剪藏走查；延后原因：真实上百篇微信剪藏仍归 B-0002。
+
+- [◐] **T-3457**（P2，2026-10-25）北欧文库雅致青绿色彩美学重构与全表面 UI 质感飞跃：核心品牌渐变 `--glean-grad` 升级为北欧文库青绿（`#0D9488` → `#0F766E`）；【+ 快速收录】、【+ 加入读库】等主按钮注入青绿微光与弥散阴影；队列【待分拣】胶囊与侧栏分面选块告别刺目亮橙，重绘为呼吸感微透底衬与精致数字药丸；批量底栏接入 12px 毛玻璃与立体软阴影；暗黑模式对比度自适应微调；单测与门禁完备。代码状态：完成；隔离验证：`tests/header-actions.test.ts` 27/27、`tests/a11y-glean-styles.test.ts` 8/8、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实多端主题走查；延后原因：真实宿主各套外部主题仍归 B-0002。
+
+- [◐] **T-3458**（P2，2026-10-25）读库后台静默微信公众号自动识别队列与分面侧栏微信站点投影：`DockPanel.svelte` 新增轻量静默扫描调度（`triggerSilentWechatScan`），工作台载入 2.5 秒后自动启动后台低优先级队列，以每批 6 篇温和节奏静默提取正文回填公众号；`LibraryRailGroup.svelte` 站点项接入 `siteItemLabel` 优雅投影将 `mp.weixin.qq.com` 映射为中文「微信」；单测与门禁完备。代码状态：完成；隔离验证：`tests/header-actions.test.ts` 27/27、`tests/wechat-service.test.mjs` 5/5、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实后台全自动自愈走查；延后原因：真实多篇长文静默回填仍归 B-0002。
+
+- [◐] **T-3459**（P2，2026-10-25）微信公众号作者防长链过滤与全表面色彩深度协调优化：`domain/wechat.ts` 纯函数 `cleanExtractedName` 与 `displayWechatAuthor` 严防长链接泄露，拒绝将 URL 识别为作者；`DockPanel.svelte` 卡片与列表行全表面接入安全作者显示；`WorkbenchPreview.svelte` 消除顶部大段裸露的无意义原始 URL，重塑为雅致来源微胶囊徽标（`.glean-preview__source-link`）；`全文剪藏` 等载体徽标与 AI 标签全面融入青绿柔美质感；单测与门禁完备。代码状态：完成；隔离验证：`tests/wechat.test.ts` 23/23、`tests/header-actions.test.ts` 27/27、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实多样性 URL 走查；延后原因：真实多源长链接样本仍归 B-0002。
+
+- [◐] **T-3460**（P2，2026-10-27）划词悬浮四色即时色盘、微信读书无障碍跳转与批量打标设作者：`ReaderTab.svelte` 划词悬浮条内嵌四色快捷圆点选择器（黄/红/蓝/绿），选中文本点击色彩一步落库；`WorkbenchPreview.svelte` 来源微标旁增设「📖 微信读书」直达胶囊；`LibraryBatchBar.svelte` 与 `DockPanel.svelte` 新增批量追加标签与批量统一设置作者操作；`HighlightView.svelte` 摘录卡片与 `ReaderTab.svelte` 批注卡片左侧增加对应高亮颜色的 3px 竖向指示彩条；单测与门禁完备。代码状态：完成；隔离验证：`tests/reader.test.ts` 14/14、`tests/header-actions.test.ts` 27/27、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实多设备深度研读走查；延后原因：真实思源多端宿主仍归 B-0002。
+
+- [◐] **T-3461**（P2，2026-10-27）阅读器批注键盘飞速跳转、微信文章零 Token 官方摘要自动回填与一键导出全部批注：`domain/reader-shortcuts.ts` 扩展 `h`（跳转到下一处批注）与 `H`（跳转到上一处批注）单键导航；`ReaderTab.svelte` 接入平滑滚动与呼吸聚焦微动效，伴生栏批注流顶部增设「📋 复制全部批注」快捷动作；`wechat-service.ts` 扫描微信文章时联动提取官方 `<meta og:description>` 自动回填 `custom-clip-summary` 属性；单测与门禁完备。代码状态：完成；隔离验证：`tests/reader.test.ts` 14/14、`tests/wechat-service.test.mjs` 5/5、`tests/i18n.test.ts` 5/5、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实键盘快捷穿梭走查；延后原因：真实宿主编辑器键盘滚动仍归 B-0002。
+
+- [◐] **T-3462**（P2，2026-10-27）热力图单元格直接下钻、预览区作者筛选联动与全场景链接防长链优化：`StatsView.svelte` 热力图单元格（`.glean-stats__day`）支持鼠标直接点击与键盘回车下钻，平滑展开完成文章列表并呈现重置横幅；`WorkbenchPreview.svelte` 点击公众号作者名称秒级触发全库精确分面筛选；`ReadingContext.svelte` 与 `ResurfaceView.svelte` 统一防范长链接泄露，原生编辑器常驻上下文来源 URL 重构为极简域名微标；单测与门禁完备。代码状态：完成；隔离验证：`tests/stats.test.ts` 24/24、`tests/accessibility.test.ts` 32/32、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实多端大屏与移动宿主走查；延后原因：真实多端环境仍归 B-0002。
+
+- [◐] **T-3463**（P2，2026-10-27）微信公众号合集标签自动聚合、金句卡片生成器与高清图片导出：`wechat-service.ts` 扫描时提取微信话题合集（`extractWechatSeries`）写入 `aiTags` 实现合集下钻；新增 `domain/quote-card.ts` 纯函数层；新增 `QuoteCardDialog.svelte` 原生 Canvas 2x 超采样高清卡片渲染弹窗，支持四款质感主题、一键复制图片与保存 PNG；`HighlightView.svelte` 与 `ReaderTab.svelte` 批注操作条接入「🖼️ 金句卡片」入口；单测与门禁完备。代码状态：完成；隔离验证：`tests/quote-card.test.ts` 3/3、`tests/wechat-service.test.mjs` 5/5、`tests/i18n.test.ts` 5/5、`tests/architecture.test.ts` 3/3、`tsc` 与 `svelte-check` 0 错误 0 警告；真实验收：待 B-0002 真实剪贴板图片粘贴验证；延后原因：真实操作系统剪贴板与高分屏仍归 B-0002。
+
+- [◐] **T-3545**（P0，2026-10-31）全仓存量材料四态盘点、6 项核心缺陷修复、AI 词表防膨胀服务层贯通与 v1.4.1 本地发版：沉淀单一事实来源 `docs/AUDIT-AND-BACKLOG-2026-10-31.md` 并归档过期原型至 `design/archive/`；修复 `matchesAutoTriageRule` 未知时长/字数误触发规则污染导入书签标签、漫游盲盒 `markCurrentLater`/`markCurrentArchive` 因 `loading` 锁重入无法自动翻页、思源 3.8.9 `createDocWithMd` 元数据未就绪报错、弹窗与预览区全局按键穿透与按钮焦点冲突、折叠阅读器异步切文竞态与定位降级、渐进切片弹窗定位遮挡与生成期关闭守卫；在 `enrich-service.ts` 接入 `loadExistingTagVocabulary` 贯通既有标签词表防膨胀；补齐 `.glean-card` 快照健康度徽标与 `:root` 令牌声明，完成 v1.4.1 本地构建、保留 `output/release-v1.4.0-rollback/package.zip` 并通过 3.8.9 隔离内核安装验证。代码状态：完成；隔离验证：`pnpm check` 0 错误/0 警告、`pnpm test` 1769/1769、S1 E2E 58/58、spike 8/8、`pnpm build`、`pnpm check:release` 与 `pnpm tokens:audit` 全部通过；真实验收：待 B-0002 真实宿主工作区点验；延后原因：严格遵守本地闭环纪律不执行远程推送，真实宿主视觉矩阵仍归 B-0002。
+
+
+- [◐] **T-3367**（P1，2026-10-18）批量选择范围与底部操作可达性：保留跨筛选选择，显示总数及筛选外数量，提供仅保留当前筛选、追加已显示文章和清空入口；三画布共用正常流批量条，获焦时按 Escape 快捷取消选择并安全回退焦点；移动窄屏保留左右安全区。代码状态：实现完成，契约见 D-0247/D-0292，不新增属性、端点或持久化；隔离验证：定向 51/51、完整 `pnpm test` 1517/1517、`pnpm check` 0 错误/0 警告、`pnpm build`、`pnpm check:release`、`pnpm perf:check`、`pnpm visual:check`、`pnpm task:ledger -- --check` 与 `git diff --check` 通过；Chrome 原型已点验宽/窄 Dock、筛选外提示、显式保留和清空，窄布局批量区 `738px` 宽、`142px` 高且无横溢出。真实验收：待 B-0002 原工作区、触控和系统读屏；延后原因：Chrome 原型与隔离样本不替代真实设备与视觉矩阵，视觉登记仍为 24 项待真实宿主。
+
+- [◐] **T-3389**（P3，2026-10-19）制卡弹窗键盘快捷提交与字符计数纯函数（承接 T-1792/T-3243）：`domain/flashcard.ts` 新增 `countFlashcardCharacters` 纯函数；`FlashcardDialog.svelte` 接入 Escape 退出与 Ctrl/Cmd+Enter 快捷提交；单测与门禁完备。代码状态：完成；隔离验证：`tests/flashcard.test.ts`、`tests/flashcard-service.test.mjs` 通过；真实验收：待 B-0002/B-0006；延后原因：真实思源 riff 牌组与快捷键实操仍待 B-0002/B-0006，版本保持 1.3.6，本轮不发布。
+
+- [◐] **T-3388**（P2，2026-10-19）收集箱已有文章打开统一走阅读门面路由（承接 T-1500/D-0250）：`InboxSection.svelte` 三处已有文章打开重构为统一调用 `facade.openReadingDocument`；`domain/inbox-recovery.ts` 增加可操作状态判定纯函数；单测与门禁完备。代码状态：完成；隔离验证：`tests/inbox-recovery.test.ts` 4/4 通过；真实验收：待 B-0002/B-0007；延后原因：真实云收集箱联调仍待 B-0007，版本保持 1.3.6，本轮不发布。
+
+- [◐] **T-3387**（P2，2026-10-19）统计热力图与按日明细点击日期联动过滤完成文章列表（承接 T-1770/T-1946）：`domain/stats.ts` 新增 `filterCompletedItemsByDate` 纯函数；`StatsView.svelte` 热力图与按日表格支持点击日期联动筛选完成文章并提供清除入口；双语文案与单测完备。代码状态：完成；隔离验证：`tests/stats.test.ts` 26/26、`tests/stats-service.test.mjs` 通过；真实验收：待 B-0002；延后原因：真实多日期完成回顾交互仍待 B-0002，版本保持 1.3.6，本轮不发布。
+
+- [◐] **T-3386**（P3，2026-10-19）高级筛选浮层激活项计数与就地清空支持（承接 T-1808/T-1887）：`domain/library-filter-chips.ts` 新增 `countSecondaryActiveFilters` 纯函数；`LibraryFilters.svelte` 在更多筛选按钮显示生效徽标并提供就地清空动作；双语文案与单测完备。代码状态：完成；隔离验证：`tests/library-filter-chips.test.ts` 8/8 通过；真实验收：待 B-0002；延后原因：真实多维度组合筛选观感仍待 B-0002，版本保持 1.3.6，本轮不发布。
+
+- [◐] **T-3385**（P3，2026-10-19）备份包标准文件命名与元信息摘要纯函数（承接 T-1780/D-0088）：`domain/backup.ts` 新增 `generateBackupFilename` 与 `summarizeBackupPackage` 纯函数；`BackupPanel.svelte` 接入标准导出命名并呈现备份摘要；双语文案与单测完备。代码状态：完成；隔离验证：`tests/backup.test.ts` 29/29、`tests/backup-service.test.mjs` 通过；真实验收：待 B-0002；延后原因：真实备份导出与宿主恢复验证仍待 B-0002，版本保持 1.3.6，本轮不发布。
+
+- [◐] **T-3384**（P3，2026-10-19）归档与恢复对话框 Escape 快捷关闭与半成功重试（承接 T-1792/T-1848）：`ArchiveDialog.svelte` 接入 Escape 取消删除确认并回退焦点及外层 Escape 关闭；`RestoreDialog.svelte` 接入 Escape 键盘关闭且部分失败（`restore.partialMoved`）重试时仅重试写状态；双语文案与无障碍语义完备。代码状态：完成；隔离验证：`tests/modal-escape.test.ts` 29/29 通过；真实验收：待 B-0002；延后原因：真实宿主弹层焦点与按键仍待 B-0002，版本保持 1.3.6，本轮不发布。
+
+- [◐] **T-3383**（P3，2026-10-19）TTS 朗读语速偏好记忆与续听支持（承接 T-3337/T-1744）：`ui-prefs.json` 接入 `speechRate` 偏好，ReaderTab 自动恢复并保存语速；`domain/speech.ts` 新增 `resumeSpeechChunkIndex` 纯函数并融入 ReaderTab 续听调度。代码状态：完成；隔离验证：`tests/tts.test.ts` 55/55 通过；真实验收：待 B-0002；延后原因：真实桌面系统语音朗读观感仍待 B-0002，版本保持 1.3.6，本轮不发布。
+
+- [◐] **T-3382**（P3，2026-10-19）候选补来源键盘完全可达收口（承接 T-1792/T-1869）：`WorkbenchPreview.svelte` 补来源输入框接入 Enter 提交与 Escape 退出键盘交互，提升分拣连贯性；保持并发与防覆盖校验。代码状态：完成；隔离验证：`tests/workbench-preview.test.ts` 19/19 通过；真实验收：待 B-0002；延后原因：真实宿主键盘与读屏走查仍待 B-0002，版本保持 1.3.6，本轮不发布。
+
+- [◐] **T-3381**（P3，2026-10-19）高频剪藏来源站点友好名称纯函数与展示投影（承接 T-1809）：`domain/schema.ts` 新增 `displaySiteName` 纯函数映射主流站点（微信、知乎、B站、少数派等）显示名；界面元数据支持友好站点投影；单测与门禁完备。代码状态：完成；隔离验证：`tests/schema.test.ts` 18/18 通过；真实验收：待 B-0002；延后原因：真实多来源站点观感仍待 B-0002，版本保持 1.3.6，本轮不发布。
+
+- [◐] **T-3380**（P3，2026-10-19）书签面板支持视口阅读百分比轻量估算（承接 T-3336）：`domain/reading-position.ts` 新增 `estimateReadingPercentage` 纯函数，仅在有真实滚动视口时估算百分比；`ReadingPositionControls.svelte` 展示辅助进度，不改变书签数据契约；双语文案与单测完备。代码状态：完成；隔离验证：`tests/reading-position.test.ts` 54/54 通过；真实验收：待 B-0002；延后原因：真实多长短文滚动视口观感仍待 B-0002，版本保持 1.3.6，本轮不发布。
+
+- [◐] **T-3378**（P3，2026-10-19）自定义 AI 通道公网明文 HTTP 地址安全警示（承接 T-1765）：`domain/ai-direct.ts` 新增 `inspectCustomEndpointSecurity` 纯函数校验端点协议与局域网豁免；`SettingsView.svelte` 对公网明文 HTTP 配置显示安全提示；双语文案与单测完备。代码状态：完成；隔离验证：单测通过；真实验收：待 B-0004；延后原因：真实外部 AI 通道连通仍待 B-0004，版本保持 1.3.6，本轮不发布。
+
+- [◐] **T-3379**（P2，2026-10-19）继续阅读命令动作增强支持会话历史与阅读中文章回退（承接 T-1800）：`domain/recent-reading.ts` 新增 `pickContinueReadingDocId` 纯函数，支持在多篇最近阅读间按命令往返切换；`index.ts` 接入会话历史与 `reading` 状态兜底；双语文案与单测完备。代码状态：完成；隔离验证：单测通过；真实验收：待 B-0002；延后原因：真实宿主命令面板快捷键操作仍待 B-0002，版本保持 1.3.6，本轮不发布。
+
+- [◐] **T-3377**（P3，2026-10-19）侧栏 rail 手风琴模式纯函数与偏好支持（承接 T-1810）：`domain/library-rail.ts` 新增 `applyRailGroupToggle` 纯函数，支持展开某组自动收起其他组；`ui-prefs.json` 增加 `railAccordion` 偏好，默认关闭；双语文案与单测完备。代码状态：完成；隔离验证：单测通过；真实验收：待 B-0002；延后原因：真实宿主侧栏折叠观感仍待 B-0002，版本保持 1.3.6，本轮不发布。
+
+- [◐] **T-3376**（P2，2026-10-19）统计视图接入收录与阅读转化漏斗纯投影（承接 T-1773）：`domain/stats.ts` 新增 `computeConversionFunnel` 纯函数投影候选→收录→完成各环节数量与转化率；`StatsView.svelte` 呈现平静原则漏斗卡片；双语文案与无障碍语义完备。代码状态：完成；隔离验证：单测通过；真实验收：待 B-0002；延后原因：真实存量阅读转化观感仍待 B-0002，版本保持 1.3.6，本轮不发布。
+
+- [◐] **T-3375**（P2，2026-10-19）今日拾遗首页信息层级收口：贯通待确认与最近收录（承接 T-1847）：`ResurfaceView.svelte` 补齐首页“继续阅读、待确认、今日拾遗、最近收录”完整信息层级；存在候选时展示常态轻提醒直达收件箱，底部投影最近收录文章；双语文案与无障碍语义完备。代码状态：完成；隔离验证：单测通过；真实验收：待 B-0002；延后原因：真实宿主视觉与多端观感仍待 B-0002，版本保持 1.3.6，本轮不发布。
+
+- [◐] **T-3374**（P2，2026-10-19）摘录墙支持选中引述批量导出独立 Markdown 文件（承接 T-1752）：`HighlightView.svelte` 导出动作区增加直接下载 `.md` 文件的纯前端导出链路，复用 `renderHighlightsMarkdown` 结构化格式；双语文案与无障碍语义完备。代码状态：完成；隔离验证：单测通过；真实验收：待 B-0002/B-0005；延后原因：真实多浏览器下载与文件查看仍待 B-0002/B-0005，版本保持 1.3.6，本轮不发布。
+
+- [◐] **T-3373**（P3，2026-10-19）待分拣候选站点分面聚合与来源分组（承接 T-1801）：`domain/library-view.ts` 分面函数支持候选站点聚合，新增 `groupCandidatesBySite` 纯函数按来源分组；收件箱视图支持按候选来源站点过滤分拣。代码状态：完成；隔离验证：单测通过；真实验收：待 B-0002；延后原因：真实多来源候选分拣仍待 B-0002，版本保持 1.3.6，本轮不发布。
+
+- [◐] **T-3372**（P2，2026-10-19）URL 跟踪参数规范化与变体查重识别（承接 T-1799）：`domain/url.ts` 新增 `canonicalUrlKey` 与 `isSimilarUrl` 纯函数清洗追踪参数；`clip-store` 查重管线支持识别不同分享参数的同源文章冲突，保护原始 URL 写入。代码状态：完成；隔离验证：单测通过；真实验收：待 B-0002；延后原因：真实宿主剪藏与文件导入仍待 B-0001/B-0005，版本保持 1.3.6，本轮不发布。
+
+- [◐] **T-3371**（P2，2026-10-19）摘录卡片支持一键复制格式化引用与块时间线索展示（承接 T-1753/T-1803）：domain/highlights.ts 新增 formatHighlightShare 纯函数和时间解析；HighlightView.svelte 卡片增设“复制引用”按钮与块时间戳显示，支持格式化 Markdown 引述直接复制到剪贴板。代码状态：完成；隔离验证：单测通过；真实验收：待 B-0002；延后原因：真实宿主视觉与复制仍归 B-0002，版本保持 1.3.6，本轮不发布。
+
+- [◐] **T-3370**（P1，2026-10-19）读库检索纳入文章摘要与匹配原因，统一摘录跳转路由：LibraryItem 增加 summary 字段并在 searchableText 中支持摘要检索，新增 matchReason 纯函数提供标题/摘要/标签/作者等结构化匹配线索；HighlightView 统一调用 openReadingDocument 融入最近阅读与阅读页签路由。代码状态：完成；隔离验证：单测通过；真实验收：待 B-0002；延后原因：真实宿主视觉与切文仍归 B-0002，版本保持 1.3.6，本轮不发布。
+
+- [◐] **T-3369**（P1，2026-10-19）今日拾遗与工作台会话内“继续阅读”入口与原生阅读上下文贯通：打通原生阅读上下文与工作台阅读记录，recordRecentReading 缺标题时回退读库索引，原生上下文挂载已收录文章自动同步；今日拾遗首屏增设“继续阅读”卡片，展示当前最新一篇的标题、载体、书签标记与动作，支持查看最近打开列表（最多3条），有效已收录文章才参与投影，失效条目静默跳过。代码状态：进行中；隔离验证：待运行；真实验收：待 B-0002；延后原因：真实宿主视觉与切文仍归 B-0002，版本保持 1.3.6，本轮不发布。
+
+- [◐] **T-3368**（P1，2026-10-18）批量操作后的焦点与移动安全区收口：清理、仅保留当前筛选和批量状态动作在操作条卸载后回到当前可见搜索入口；移动卡片选择框补齐可见提示与程序化名称；修正移动顶栏/底栏因嵌套 `.glean-panel__body` 导致的直接子代 CSS 失效，并让批量条在平板/横屏继续避开安全区。代码状态：实现完成，不新增属性、端点或持久化；隔离验证：批量/移动/无障碍定向 74/74，完整 `pnpm test` 1521/1521，`pnpm check` 0 错误/0 警告，`pnpm build`、`pnpm check:release`、`pnpm perf:check`、`pnpm visual:check`、`pnpm task:ledger -- --check` 与 `git diff --check` 通过；真实验收：待 B-0002 原工作区、移动触控、键盘与系统读屏；延后原因：静态与隔离证据不替代真实设备和视觉矩阵，版本保持 1.3.6，本轮不发布。
+
+- [◐] **T-3359**（P1，2026-10-16；承接 T-3107）导入预览区分空文件、无法识别、格式不符、没有有效链接与全部重复，显示文件名与换文件入口，分阶段说明文件读取、检查点读取和查重故障；有效条目查重失败拒绝继续，恢复仍优先核验原文件指纹。代码状态：完成，不新增持久化或端点；文件控件常驻，窄屏确认文案、不透明粘性表头、条目表防压缩与状态列盒模型已修正；隔离验证：全量 1434/1434，最后 CSS 调整后定向 83/83、check 0 错误/0 警告、构建及包门禁通过，性能与视觉登记通过；IAB 合成文件完成五类提示、导入 1 条、暂停/重载误选保护及同任务 12 条恢复，最终 560px 对话框 476/476、表格 451/451px 且两篇文章可见，隔离会话已停止；真实验收：待 B-0002 原工作区与 B-0005 真实四格式导出文件；延后原因：视觉矩阵仍为 24 项待真实宿主，隔离合成样本不关闭真实设备/文件验收，版本保持 1.3.6，本轮不发布。
+
+- [◐] **T-3358**（P1，2026-10-16）打磨已有操作的使用感：桌面今日拾遗成功/撤销与键盘焦点、Reader 首层手动书签、导入回执按任务身份刷新、设置错误字段切分类并聚焦；补齐首次检查点读取、确切阅读页签路由、新建文档 SQL 可见等候及已知 ID 实时索引补查。代码状态：实现完成，契约与 D-0232–D-0236 已同步；隔离验证：全量测试 1422/1422、check 0 错误/0 警告、构建及发布/性能/视觉登记门禁通过，S1 58/58，IAB 合成数据完成宽窄屏阅读、撤销、设置及连续导入回归；真实验收：待 B-0002 原工作区、主题和设备，真实导出文件仍待 B-0005；延后原因：视觉矩阵仍为 24 项待真实宿主截图，隔离样本不替代真实环境，测试内核已停止，版本保持 1.3.6，本轮不发布。
+
+- [x] **T-3353**（P1，2026-10-16）发布 v1.3.5：同步双 manifest、双语 README、CHANGELOG、发布候选、媒体清单和交接记录，完成本地门禁与生产构建，推送 `main`、创建 annotated tag/GitHub Release 并上传 `package.zip`；不提交集市 PR。代码状态：发布材料已同步，`main`/tag/Release 已发布；隔离验证：`pnpm check`、`pnpm test` 1339/1339、`pnpm build`、`pnpm check:release`、`pnpm perf:check`、`pnpm visual:check`、`pnpm task:ledger -- --check` 和 `git diff --check` 通过；真实验收：真实宿主、真实模型、真实导入文件、assets/riff、收集箱和打卡联调仍待 B-0002、B-0004–B-0008；延后原因：发布不关闭这些 blocker。
+
+- [x] **T-3355**（P0，2026-10-16）紧急修复 GitHub #16 引导/阅读闪烁并发布 v1.3.6：原生阅读上下文重复加载/激活去重，真实切回时后台保鲜；内嵌阅读页签与预览排除重复注入；后台刷新保留文章/无栏结果；排查其他页面同类跳动。代码状态：核心修复与回归完成，三页后台刷新反馈同步收口；`main`/tag/Latest Release 已发布，公开附件哈希与本地一致；隔离验证：`pnpm check` 0 错误/0 警告、全量测试 1353/1353、构建及发布/性能/视觉登记门禁通过，发布提交 Quality gates/CodeQL 成功；S1 E2E 58/58，隔离宿主引导/普通文档/文章切回/预览冒烟通过；真实验收：原始场景与设备结果仍待 B-0002，不关闭其他外部能力 blocker；延后原因：原始视频未能从工单附件读取，高频原场景不能冒充已复现，先发布已证事件链修复。
+
+- [◐] **T-3356**（P0，2026-10-16）修复读库标题被挤到零宽及行卡松散：已收录/候选标题与元信息分层，依据实际列表宽度安排紧凑动作，收窄分面栏并限制列表最大宽度，同步 canonical 原型。代码状态：布局实现完成，窄工作台收起分面栏，选择列兼容 44px 热区；隔离验证：全量 1353/1353，宽窄屏、长标题、候选、预览、更多菜单与批量选择通过；真实验收：待 B-0002 原工作区主题与真实长标题复测；延后原因：本轮使用隔离合成数据验证几何与交互，不冒充用户真实文章验收。
+
+- [◐] **T-3357**（P1，2026-10-16）跨页面排查标题挤压与窄容器溢出：阅读独立页签和专注工具栏补齐容器响应，统计页头与日期筛选自然换行，今日拾遗/高亮/批量条按正文可用宽度降级，收集箱补完整标题提示，canonical 原型修复高亮选择列与移动设置弹窗。代码状态：实现完成；隔离验证：长标题合成数据跨页几何与交互回归、完整门禁已通过；真实验收：待 B-0002 用户主题、真实文章、窄分屏与移动设备；延后原因：隔离宿主不替代原工作区验收，版本保持 1.3.6，本轮不发布。
+
+- [x] **T-3354**（P1，2026-10-16）围绕定位梳理未来方向：新增 `docs/FUTURE-DIRECTION.md`，区分现有能力、体验差额与新研究，按可信主链、情境选文、连续阅读、找回复用和有依据的 AI 给出阶段门槛与最小切片；同步路线入口及 D-0228。代码状态：规划文档与旧书签字段注释已校准，未启动新功能；隔离验证：`pnpm check` 0 错误/0 警告、`pnpm test` 1339/1339、任务账本与差异检查通过，规划经独立只读复核；真实验收：不适用（文档规划），不关闭 B-0002、B-0004–B-0008；延后原因：候选方向未进入功能实施排期，实际执行仍由本板决定。
+
+- [◐] **T-3352**（P1，2026-10-14）真实数据请求与写操作一致性审查：清理不可信占位数据；让内核读请求统一具备按资源去重、latest-wins、超时/取消和仅限明确幂等只读的有界重试；核对写入队列、预期值、写后读回、缓存失效及异步结果刷新；补齐权限错误保留上下文与恢复说明，验证超长文本、非法日期、空值和数值边界。代码状态：统一传输、同文队列、写后读回及索引失败标记已实现，读库预览及主要写入口已显示“索引待同步”；隔离验证：`pnpm check`、`pnpm test`（1339/1339）、`pnpm build`、`pnpm check:release`、`pnpm perf:check`、`pnpm visual:check`、`pnpm task:ledger -- --check` 和 `git diff --check` 通过；真实验收：待 B-0002（宿主权限、真实多画布/网络故障及写后视图更新）；延后原因：思源宿主控制 token/登录且 SDK 不能真正取消内核请求，插件不臆造登录路由或跨客户端事务保证。
+
+- [◐] **T-3351**（P1，2026-10-14）全控件交互状态与表单反馈收口：逐项核对按钮/筛选/分页/弹窗/写操作的真实 handler；补齐导入失败重试的目标失效禁用与说明、恢复上下文/写入的加载失败重试、设置数值与自定义 AI 通道的字段级校验、Dock 聚焦闪烁定时器清理与无效目标清理，以及命令面板异步动作的失败反馈；记录筛选/滚动快照和宿主路由边界的后续验收。代码状态：本轮已完成即时缺口，并将索引待同步结果贯通主要写入口；命令面板打开原文、读下一篇、摘录和手动富化均已闭合异常反馈（D-0239）；隔离验证：`pnpm check`、`pnpm test`（1436/1436）、`pnpm build`、`pnpm check:release`、`pnpm perf:check`、`pnpm visual:check`、`pnpm task:ledger -- --check` 和 `git diff --check` 通过；真实验收：待 B-0002（思源多画布、移动端、读屏和真实宿主错误注入）；延后原因：宿主 URL/history 不属于插件可安全接管范围，筛选/滚动持久快照需先确定宿主 tab 生命周期契约。
+
+> 评审结论与验收顺序见 [`docs/STATUS-REVIEW-2026-10-06.md`](docs/STATUS-REVIEW-2026-10-06.md)。这些任务优先收口真实可用性、恢复能力和对外承诺，再扩展新功能。
+
+> **未来方向入口（D-0228/T-3354）**：见 [`docs/FUTURE-DIRECTION.md`](docs/FUTURE-DIRECTION.md)。优先候选是按可用时间/主题选一篇，并打磨返回原列表与继续阅读；本轮仅完成规划，不启动功能代码。作者已选择先继续代码/文档工作，真实宿主窗口期到位后继续逐项补证；独立协议与样本工作可并行推进，不将 blocker 当作所有工作的前置条件。
+
+> **T-3352/T-3351 之后的候选顺序（暂不启动新功能代码）**：先完成 B-0002 的真实宿主收尾；作者确认进入下一阶段后，按 S5 的 T-1711（AI 语义与失败口径）和 T-1712（AV/收集箱/导入/快照/制卡/打卡逐项验收）执行真实样本，再做 S6 的 T-1713（桌面、移动、浏览器主链与数据主权证据）。本轮已完成 S5 验收矩阵审计，补齐本文问答、作者建议、AV 单向投影、制卡恢复、Pocket CSV、自动快照和索引待同步边界；真实模型/文件/订阅/riff/双插件证据仍分别归 B-0004–B-0008。知流调研可借鉴“阶段化会话进度、可配置 AI 审阅视角、逐图建议且失败保留”的交互；分别落在既有 T-1718、T-3221 和排版/阅读任务中，不新增网页抓取产品线。
+
+- [◐] **T-3349**（P0，2026-10-13）迁移检查点失败关闭、去除文章事实并防并发覆盖：严格校验并升级压缩 `migrate-progress.json`，区分读取失败与损坏记录；失败期间禁止新扫描/续跑/覆盖，损坏记录提供重试和明确确认清理；恢复展示与执行从思源实时重建；同一插件实例的检查点写入按序执行；窗口操作绑定 `taskId`，所有变更入口必传非空任务 ID 且在运行时失败关闭；手工计划失败保留可重新确认的行，已写属性优先对账；批次更新本地结果避免重复扫描全任务，所有成功/跳过写入同步刷新其他视图。代码状态：完成；隔离验证：迁移回归及 S1 真实内核 E2E 通过；真实验收：待 B-0002（真实思源存储异常、重载和迁移弹窗操作）；延后原因：隔离插件无法模拟作者宿主的持久化故障与真实恢复操作。
+
+- [◐] **T-3350**（P1，2026-10-14）防止读库刷新因 AV 索引短暂未就绪而重复建库：查找已有数据库块时对可见性延迟做有界重试，不把暂时空结果当成“数据库不存在”；确认不会重复插入数据库块或文章行。代码状态：完成；隔离验证：AV 延迟回归、S1 隔离内核 58/58；真实验收：待 B-0002（宿主中挂库后立即刷新并检查无重复数据库）；延后原因：SQL 索引时序及实际宿主 UI 只能在作者环境确认。
+
+- [◐] **T-3347**（P2，2026-10-13）筛选抽屉与 canonical 原型交互对齐：窄 Dock/移动端保留状态演示入口，移动筛选抽屉隔离背景并锁定滚动，标题排序使用真实标题来源，结果计数随已应用筛选同步，清除筛选覆盖全部条件；桌面/移动排序方向播报当前升降序。代码状态：完成；隔离验证：原型交互实测、移动筛选 25/25；`pnpm check`、`pnpm test`（1278/1278）、`pnpm build`、`pnpm check:release`、`pnpm perf:check`、`pnpm visual:check`、`pnpm task:ledger -- --check` 和 `git diff --check` 通过；真实验收：待 B-0002（真实宿主抽屉滚动、读屏、第三方弹层与三画布观感）；延后原因：浏览器原型和隔离测试不能替代思源宿主验证。
+
+- [◐] **T-3348**（P2，2026-10-13）按真实入口收敛 canonical 原型：Dock 主导航仅保留四个实际视图；阅读通过文章动作进入独立页签演示，默认遵守桌面开关关闭和移动端原生页签回退；设置按独立模态窗口呈现并覆盖未保存确认；区分打开原文、文章预览和继续阅读。代码状态：完成；隔离验证：设置模态/草稿确认、桌面/移动阅读分支及读库预览已在本地浏览器操作核验，移动端 `#reader` 深链接回退同步归一为 `#home`；静态回归与全量门禁通过：`pnpm check`、`pnpm test`（1278/1278）、`pnpm build`、`pnpm check:release`、`pnpm perf:check`、`pnpm visual:check`、`pnpm task:ledger -- --check` 和 `git diff --check`；真实验收：待 B-0002（思源宿主页签、桌面/移动入口、键盘/读屏和批注插件）；延后原因：独立原型不调用宿主 API，实际跳转和嵌入兼容无法由浏览器样例确认。
+
+- [◐] **T-3344**（P1，2026-10-12）交互原型、全组件清单与交付文档收口：让 R54 原型明确标注合成数据并覆盖运行时视图、关键交互状态、主题与画布断点；移除不存在的动作并校正状态互斥；新增 32 个 Svelte 组件清单和从零开发/测试/部署指南；对照原型、实现、验收边界和异步/空错态回归。代码状态：原型、组件清单与交付文档已收口；隔离验证：`pnpm check`、`pnpm test` 1264/1264、`pnpm build`、`pnpm check:release`、`pnpm perf:check`、`pnpm visual:check`、`pnpm task:ledger -- --check`、`git diff --check` 全部通过；真实验收：待 B-0002/B-0004/B-0005（宿主与设备、读屏、真实文件）；延后原因：当前隔离预览不能代替作者思源环境及真实数据验收。
+
+- [◐] **T-3345**（P2，2026-10-12）ReaderTab 专注阅读：新增页签内铺满正文的专注布局，区分“收起伴生栏”和“专注阅读”，保留明显退出、伴生栏/插件工具、正文选区和思源原生页签入口；不移动或重建 Protyle、不调用浏览器 Fullscreen API、不保存正文状态。代码状态：完成；隔离验证：ReaderTab/Protyle 生命周期、专注退出、原生页签回退和原型静态回归通过；真实验收：待 B-0002（外部快速批注插件识别内嵌 Protyle，分别核对阅读/编辑模式、选区批注、切换/退出与原生页签回退）；延后原因：第三方插件只保证其公开入口，内嵌编辑器兼容性需真机确认。
+
+- [◐] **T-3346**（P2，2026-10-12）自定义用户标签筛选别名：允许为现有思源根块 `tags` 配置一对一的本地显示名，Dock/工作台/移动筛选及高亮筛选入口统一展示别名，实际过滤、文章元数据、chip 与保存视图继续使用原始标签；提供增改删、重复/空值/失效标签处理和双语文案。代码状态：完成；隔离验证：偏好归一化、精确读改写、读库/高亮筛选一致性、交互与 i18n 回归通过；真实验收：待 B-0002（桌面、窄 Dock、移动端及读屏）；延后原因：不新增文章标签写入或多标签组合语义，以守住用户数据所有权。
+
+- [x] **T-3341**（P1，2026-10-11）AV 异步空行防重复绑定与 v1.3.3 候选：挂库刷新在已有文章行暂时不可见时等待并重试，避免把事务延迟误判为缺失而重复创建绑定；补充回归测试、双语变更记录和候选发布文档。代码状态：完成；隔离验证：`pnpm check`、`pnpm test` 1245/1245、`pnpm build`、`pnpm check:release`、`pnpm perf:check`、`pnpm visual:check`、独立内核 S1 58/58、AV spike 6/6、GitHub Quality gates 38068573521 和 CodeQL 38068573513 通过；真实验收：待 B-0002（真实思源 AV 看板刷新、重复行和失败重试）；延后原因：无。
+
+- [◐] **T-3342**（P1，2026-10-11）对齐系列 R54 工作台：参考本机闪卡 R54 与打卡页面壳，重构稳定导航、今日主行动、读库页头及统计/高亮/设置视觉尺度；沿用拾遗主题和服务语义。代码状态：完成；隔离验证：`pnpm test` 1245/1245、`pnpm check`、`pnpm build`、`pnpm check:release`、`pnpm perf:check`、`pnpm visual:check`、`pnpm task:ledger -- --check`、`git diff --check` 通过，隔离组件浏览器预览已通过；真实验收：待 B-0002/B-0004（宿主、移动设备与模型）；延后原因：浏览器合成数据不能替代真实宿主。
+
+- [◐] **T-3343**（P2，2026-10-11）连续完成记录提示：从每篇文章最近一次可信完成时间派生本地连续日期数，在统计次级指标和今日拾遗页头显示；午夜及窗口重新聚焦时刷新日期相关投影；明确它不代表每日阅读时长或完整重读历史，不增加持久化字段。代码状态：完成；隔离验证：`pnpm test` 1248/1248、`pnpm check`、`pnpm build`、`pnpm check:release`、`pnpm perf:check`、`pnpm visual:check`、`pnpm task:ledger -- --check`、`git diff --check` 通过；真实验收：待 B-0002（桌面/移动页头密度与真实完成数据）；延后原因：指标只能反映现存的最近完成时间，不能恢复被覆盖的历史日期。
+
+- [◐] **T-3338**（P2，2026-10-10）新用户操作引导与空库首步提示：桌面首启保留可跳过的四步向导；Dock/工作台/今日拾遗空态与设置页提供回看入口，提示剪藏、右键收录、导入、读库分拣和今日阅读的最短路径；引导保存/扫描动作加忙碌禁用与防重复提交。代码状态：完成；隔离验证：`pnpm check`、`pnpm test`、i18n/无障碍/任务账本与 `git diff --check` 通过；真实验收：待 B-0002（桌面首启、移动端空态、窄 Dock 与读屏）；延后原因：真实宿主交互需作者环境验证。
+- [◐] **T-3339**（P1，2026-10-10）跨板块反馈与迁移交互收口：收录、候选处理、状态/评分/优先级、置顶、快照、今日拾遗、收集箱迁移和删除成功后广播数据变更，使 Dock/浮窗/阅读页签/统计及时对账；迁移逐行决策与编辑请求期间锁定当前行，防止重复提交。代码状态：完成；隔离验证：`pnpm check`、`pnpm test`、无障碍/交互静态回归与 `git diff --check` 通过；真实验收：待 B-0002（多画布刷新、迁移弹窗和阅读页签联动）；延后原因：真实宿主事件时序和多窗口响应需作者环境验证。
+- [◐] **T-3340**（P1，2026-10-10）阅读页伴读体验与性能增强：统一 AI 上下文范围/隐私/配置引导；区分相关旧文关闭、嵌入未启用、无命中和失败；结果卡标明全文/选区并防止摘要重复保存；同篇正文导出使用插件实例会话缓存，正文变更时失效。代码状态：完成；隔离验证：`pnpm check`、阅读 AI/相关旧文/i18n 回归通过；真实验收：待 B-0002/B-0004（真实 Protyle、模型、嵌入与多端 UI）；延后原因：当前环境不能替代真实宿主和模型验收。
+- [⏸] **T-3327**（P2，等待思源 3.8.7 正式版）评估并按正式契约接入 OCR：优先研究阅读当前文章时用户主动识别图片，并明确提示 OCR 提供商设置及 AI OCR 图片外发；不得依赖 alpha 端点或自动扫描。代码状态：未开发；隔离验证：仅有 `3.8.7-alpha.6` 源码调研，尚无正式 API 契约；真实验收：待 3.8.7 正式版发布后复核源码、完成 spike 与作者宿主验收；延后原因：当前上游仍为 alpha，正式设置、调用和副作用契约尚未确认。
+- [x] **T-3326**（P1，2026-10-10）修复窄侧栏今日拾遗布局并降低鼠标事件开销：按 `.glean-workbench` 容器宽度切为两列动作网格、主动作通栏；桌面不注册移动滑动 pointer 事件，窄容器关闭卡片入场动画。代码状态：完成；隔离验证：`pnpm check`、`pnpm test` 1230/1230、`pnpm build`、`pnpm check:release`、`pnpm perf:check`、`pnpm visual:check`、定向回归、任务账本和 `git diff --check` 通过；真实验收：待 B-0002 的真实思源侧栏观感与鼠标响应；延后原因：当前环境不能替代作者宿主交互验收。
+- [x] **T-3325**（P1，2026-10-10）发布 v1.3.2：同步双 manifest、双语 README、CHANGELOG、RELEASE-CANDIDATE、RELEASE-MEDIA 和交接记录，构建并校验 `package.zip`，推送 `main`、annotated tag 和 GitHub Release；不提交集市 PR。代码状态：完成；隔离验证：本地 check/test 1229/1229/build/check:release/perf/visual、任务账本、diff 和 S1 E2E 58/58 已通过，GitHub Quality gates 37966314661 与 CodeQL 37966319033 成功，远端 Release 包哈希与本地一致；真实验收：真实宿主视觉、读屏、大库与外部能力仍待 B-0002/B-0005；延后原因：无。
+- [x] **T-3324**（P1，2026-10-10）优化双语 README：前置 v1.3.1 后待发布更新摘要与八款小驴插件表，标注四款内测插件，折叠已发布历史，补齐中文关键词和 QQ 群用途；核对四个内测仓库现有置顶说明并参考系列 README。代码状态：完成；隔离验证：`pnpm check`、`pnpm test` 1229/1229、`pnpm build`、`pnpm check:release`、`pnpm task:ledger -- --check`、`git diff --check` 通过；真实验收：不适用（文档整理）；延后原因：无。
+- [x] **T-3323**（P1，2026-10-09）按真机截图收口今日拾遗与统计视觉：桌面拾遗卡动作区固定两列、来源缺失保留等宽占位、动作文字统一居中；读库下拉筛选文字居中；统计“期间完成”辅助说明恢复小字号；确认五态仍是生命周期状态，新增分类继续使用标签/来源/载体筛选，不改状态枚举。代码状态：完成；隔离验证：`pnpm check`、`pnpm test`、`pnpm build`、`pnpm check:release`、`pnpm task:ledger -- --check`、`git diff --check` 通过；真实验收：待 B-0002（今日拾遗三卡底线、筛选控件和统计层级）；延后原因：静态检查无法替代真实宿主视觉。
+
+- [◐] **T-3331**（P2，2026-10-10）今日拾遗“换一篇”：从当前清单和会话换出记录之外随机补位，保持每日卡片数量；换篇提示可见，刷新/重新对账后恢复确定性清单，不写文章属性或 saveData。代码状态：完成；隔离验证：定向 19/19，完整门禁通过（check/test 1237/build/release/perf/visual/ledger/diff）；真实验收：待 B-0002（宽窄画布按钮与卡片反馈）；延后原因：会话级记录不承诺跨重启审计。
+- [◐] **T-3332**（P2，2026-10-10）快照覆盖率治理：维护页统计非 internal 已收录文章覆盖率，逐篇串行补拍并保留失败项重试；已有快照不覆盖。代码状态：完成；隔离验证：定向 8/8，完整门禁通过（check/test 1237/build/release/perf/visual/ledger/diff）；真实验收：待 B-0002/B-0006（维护页与 assets 真实写入）；延后原因：资产回写失败可能保留孤儿资产，按现有端点边界明示。
+- [◐] **T-3333**（P3，2026-10-10）单篇 Markdown 导出：读库行与预览入口导出 allowlist 元数据+正文 `.md`。代码状态：完成；隔离验证：定向 3/3，完整门禁通过（check/test 1237/build/release/perf/visual/ledger/diff）；真实验收：待 B-0002/B-0005（真实浏览器下载与文件内容核对）；延后原因：内核导出保真仍需真实文件验收。
+- [◐] **T-3335**（P2，2026-10-10）全库 Markdown 归档：完整对账后生成含索引的 ZIP 分卷，目标 16 MiB，逐篇失败列入索引且不截断超大篇。代码状态：完成；隔离验证：定向 3/3，完整门禁通过（check/test 1237/build/release/perf/visual/ledger/diff）；真实验收：待 B-0002/B-0005（大库下载、分卷与失败报告）；延后原因：真实大库体积和浏览器多文件下载需作者验收。
+
+- [x] **T-3322**（P1，2026-10-09）全插件 UI 入口、按钮条件、反馈、空态与文案核对：修复无块定位摘录仍可制卡、超龄归档失败结果不可重试/反馈不完整、设置测试连接异常无提示；保存设置时锁定草稿；读库行/卡/看板改用标题原生按钮，解除交互卡片嵌套按钮语义；保留 AI 相关旧文失败静默降级契约；不新增数据字段、端点或设置。代码状态：完成；隔离验证：`pnpm check`、`pnpm test` 1227/1227、`pnpm build`、`pnpm check:release`、`pnpm task:ledger -- --check`、`git diff --check` 通过；真实验收：待 B-0002（真实宿主/读屏与三视口视觉）；延后原因：静态审查无法替代宿主实测。
+
+- [x] **T-3321**（P1，2026-10-09）发布 v1.3.1 性能补丁：同步双 manifest、双语 README、CHANGELOG、RELEASE、发布候选与交接记录；构建并校验 `package.zip`，推送 `main`、annotated tag 和 GitHub Release；不提交集市 PR；代码状态：完成；隔离验证：`pnpm check`、`pnpm test` 1226/1226、`pnpm build`、`pnpm check:release`、`pnpm perf:check`、任务账本、`git diff --check` 全通过；真实验收：真实宿主大库首屏、滚动、内存和低端设备仍待 B-0002/B-0005；延后原因：无。
+
+- [x] **T-3320**（P1，2026-10-09）大库性能热点优化：读库数据库绑定刷新用 `Set` 替代逐篇 `includes` 查重；看板列由五次重复扫描改为一次筛选排序后单遍分桶；不改数据契约、端点或版本；代码状态：完成；隔离验证：定向类型检查、`library-db` 55/55、看板/架构定向测试、`pnpm perf:check`、`git diff --check` 通过；真实验收：待 B-0002/B-0005（真实宿主首屏、滚动、内存与低端设备）；延后原因：无。
+
+- [x] **T-3319**（P1，2026-10-09）发布 v1.3.0：同步双 manifest 版本 1.2.1→1.3.0、CHANGELOG v1.3.0 条目（六轮走查汇总）、双语 README 版本区块与发布候选/发布手册版本引用刷新；重新构建并校验 package.zip（377582B，SHA-256 70f5d917…ba0e21，远端附件校验一致）；幂等发布脚本修复与 E2E token 修复后的 S1 E2E 58/58；代码状态：完成；隔离验证：pnpm check 0 错误/0 警告、pnpm test 1226/1226、pnpm build、pnpm check:release、pnpm perf:check、pnpm visual:check、任务账本、git diff --check 全通过；发布提交 197833f 已推送 main，annotated tag v1.3.0 与 GitHub Release（release id 407403183，附件 package.zip）对齐，Quality gates 37869343819 与 CodeQL 37869343826 成功；真实验收：保留能力矩阵与 blockers 边界，集市 PR 未授权不执行；延后原因：无。
+- [x] **T-3318**（P1，2026-10-09）保存视图持久化回归修复：实证 T-3317 的并集合并写回会让已删除视图复活（删除功能失效），重构为四个精确写 API（saveLastViewPref/upsertSavedViewPref/deleteSavedViewPref/setDefaultSavedViewPref，串行队列内读最新文件定点修改，读失败拒绝写回），DockPanel 自动保存只同步 lastView、增删改由操作点精确写回并带失败提示；回归测试改写为精确写语义（14/14）；代码状态：完成；隔离验证：pnpm check 0 错误/0 警告、pnpm test 1226/1226、pnpm build、pnpm check:release、git diff --check 通过；真实验收：归 B-0002；延后原因：无。
+- [x] **T-3317**（P1，2026-10-09）第五轮全方位走查（近两轮回归自查 / 次级模块 / 数据风险）：修复双 DockPanel 实例整体回写 savedViews 导致跨画布静默丢用户保存视图（新增 services/prefs.ts 的 saveLibraryViewPrefs 条目级并集合并写回，读失败拒绝写回，DockPanel 加载失败时阻断自动保存，补 2 条回归测试）；修复 T-3316 引入的导入进度强制逃生按钮从 UI 永远无法触发的守卫矛盾（progressReadFailed 时强制走按文件名逃生），服务层删除前 200ms 二次校验仍失败才删（瞬时 busy/超时不误删健康进度）；保存视图重名时提示（原静默失败）；行内状态/优先级/评分按钮改全局忙碌互斥（原跨行点击静默无反应）、优先级/评分早退时提示；归档/恢复对话框按文档 ID 防重复叠开；恢复对话框部分失败文案区分移出成败；ageDays 拒绝日历非法日期；stats 的 totalWords 口径统一与 bySite locale 归一；quotes 分面同篇重复标签去重；引导向导 onDestroy 保存已请求目标步骤（关窗竞态不再回退进度）；阅读位置控件状态着色改显式正则；收集箱失败态 aria-label 悬空修复；Pocket HTML 状态机在 raw 上扫描（码点变长索引错位隐患）；Omnivore/wallabag site 兜底补截断；forceResetConfirmed 刷新成功后复位；回归自查确认 T-3315/3316 其余改动 20+ 项无新缺陷；新增 2 个 i18n 键（双语各 1036）；不新增端点或文章属性；代码状态：完成；隔离验证：pnpm check 0 错误/0 警告、pnpm test 1225/1225、pnpm build、pnpm check:release、pnpm perf:check、任务账本与 git diff --check 通过；真实验收：归 B-0002；延后原因：无。
+- [x] **T-3316**（P1，2026-10-09）第四轮全方位走查（解析器畸形输入防御 / 剩余模块深查 / 数据契约核对）：修复 Pocket HTML 解析的全局正则在"存在未闭合 `<a>`"时的 O(n²) 惰性扫描（32MiB 恶意输入可冻结主线程数小时）——改用 indexOf 状态机线性切片，20 万未闭合锚点 2ms 完成；导入字段统一截断（title/site 512 码点、url 8KB、标签 64×20 个），覆盖 Pocket HTML/CSV、Omnivore、wallabag 四格式；`toSiyuanTime` 拒绝产生 1-9999 之外年份的时间戳；CSV 解析加 200 万行上限；属性内嵌 `>` 的锚点计入 dropped（此前静默消失）；单引号 href 支持；进度文件损坏时提供"重置导入状态"强制逃生（`discardImportProgress` 按文件名直删 + UI 确认勾选），进度明细区最多渲染前 200 条（此前 5 万行全量建 DOM 数秒卡顿）；收集箱区分"查询失败（附重试）"与"未订阅"、云端删除失败不再连发两条互相覆盖的 toast、dismiss 先更新列表再清检查点、非 InboxRecoveryError 回落本地化文案；归档对话框彻底删除的前置信息读取失败补 catch（原为 unhandled rejection）；摘录视图标题查询失败不再污染成"加载失败"、筛选无结果显示 noMatch+清除筛选、加载失败时不再渲染过期列表；恢复对话框"移出+写状态"两步部分失败时提示已完成进度；引述墙（QuotesView）确认功能完整但从未接线（与已接线的摘录视图数据源不同），头注释标记状态待产品决策、内部竞态已修（latest-request 门禁 + 颜色循环 busy 守卫）；归档入口注释与 D-0032 实际行为对齐；数据契约核对：代码与文档 27 个 `custom-clip-*` 键完全一致；新增 5 个 i18n 键（双语各 1034）；不新增端点或文章属性；代码状态：完成；隔离验证：`pnpm check` 0 错误/0 警告、`pnpm test` 1223/1223、`pnpm build`、`pnpm check:release`、账本与 `git diff --check` 通过；真实验收：归 B-0002；延后原因：无。
+- [x] **T-3315**（P1，2026-10-09）第三轮全方位走查（近三轮变更自查 / CSS 样式层 / 文档一致性 / E2E 修复）：修复设置页分类切换会静默中止进行中的备份恢复/闪卡恢复/AI 标签扫描（data/maintenance 分类改为"首次访问后常驻挂载 + display 切换"，切分类只隐藏不卸载）；`kernelPost` 回退分支的超时 timer 补 `clearTimeout`（批量导入/迁移不再积累存活定时器）；备份预览取消的裸字符串契约改为共享常量 `BACKUP_PREVIEW_CANCELLED`；AI 标签合并后的重扫失败保留剩余待合并分组（仅 apply 刷新路径，手动扫描仍报错）；设置保存冲突后的二次读盘加兜底（失败退化为保存失败提示）；锚点笔记本区分"还没有笔记本"与"筛选无匹配"两种空态；搜索清除按钮补专用 aria-label；分类导航补 ARIA tabs 方向键/Home/End 键盘模式；44px 触控命中区并入容器断点（宽视口窄 Dock 同样生效）；tabpanel 移除 outline:none 保留键盘位置线索；CSS 清理旧版式死规则（`__head` sticky 套装、scroll-padding、重复容器声明）、`.glean-card__title` 死代码、639→640 断点统一；阅读上下文条的状态动作按钮补 focus-visible；AuthorEditor/FlashcardRecoveryPanel 补本地 reduced-motion；`launch-e2e` 的 token 读取修复为优先 `conf.json api.token`（此前误读网页访问码导致 E2E 无法启动）；DECISIONS.md 重复的 D-0183 重编号为 D-0193；双语 README 补快捷键说明与 CHANGELOG 链接；新增 2 个 i18n 键（双语各 1029）；不新增端点或文章属性；代码状态：完成；隔离验证：`pnpm check` 0 错误/0 警告、`pnpm test` 1223/1223、`pnpm build`、`pnpm check:release`、`pnpm perf:check`、任务账本与 `git diff --check` 通过，隔离 S1 E2E 58/58；真实验收：归 B-0002；延后原因：无。
+- [x] **T-3314**（P1，2026-10-09）设置页分类导航重构（原型先行的 UI 落地）：调研 Obsidian/思源/Notion 的"左导航+右内容"设置范式后产出 `design/prototype-settings.html`（桌面 760×640 与窄容器两种形态、亮暗双色）；把 11 个平铺分组归并为 8 个大类（工作区 / 每日拾遗 / 阅读 / AI 增强 / AI 通道 / 集成 / 数据与恢复 / 维护——挂载看板与 CSV/诊断导出归入数据、AI 标签规范化归入维护），每个分类配一句话职责描述；对话框由 560×620 加宽到 720×640；`glean-settings` 升级为容器查询容器——宽容器左侧竖排导航（品牌区+tab+选中指示条+锚点计数徽标），≤600px 容器自动降级为顶部横向滚动 tab，移动端保持 44px 命中区；工作区锚点笔记本补搜索筛选（名称子串、大小写不敏感）、已选 n/total 计数与一键清空、过滤空态提示；新增 21 个双语键（导航、分类描述、筛选文案，双语各 1026）；新增 `scripts/preview-settings.mjs`（Svelte SSR + 组件 scoped CSS 注入）生成静态 fixture 供截图验证；无障碍保留全部既有契约（chips aria-pressed、三个 role=group 等）并新增 tab/tablist/tabpanel 语义断言；桌面/窄容器 SSR 截图与原型对照通过；不新增端点或文章属性，不改设置数据契约；代码状态：完成；隔离验证：`pnpm check` 0 错误/0 警告、`pnpm test` 1223/1223、`pnpm build`、`pnpm check:release`、i18n/无障碍/账本门禁与 `git diff --check` 通过；真实验收：真实浮窗的分类导航密度、触控与暗色主题仍待 B-0002；延后原因：无。
+- [x] **T-3313**（P1，2026-10-09）第二轮全方位走查（服务层/域层/API/主入口）：`pickDaily` 置顶项以 `MAX_SAFE_INTEGER` 作比较基准导致有钉住时每日拾遗坍缩为仅置顶、且分数差大于 2 的无重叠候选被整批跳过（同时修复"读完并下一篇"永远返回置顶项）；滑动背景动作标签 CSS 位置与实际执行动作相反；`currentDocId()` 多编辑器时取布局序第一个而非活动文档（选区→焦点→布局序三级锚定）；插件未覆盖基类 `openSetting()` 导致思源设置齿轮静默失效；`kernelPost` 的 fetchSyncPost 回退分支无超时且网络失败干等 60s（补 race 超时与 failCallback）；`KERNEL_TIMEOUT_LONG_MS` 接线到 exportMdContent/exportHTML/putFile；`⌥⌘G` 在 dock 与命令双重注册；`writeClip` 与完整对账的索引读改写段补 `withIndexLock`（并发增量写/对账交错不再互相覆盖）；索引损坏保护路径补日志；导入文件补 32MiB 上限；Omnivore 导入解析 `state` 归档语义；`toSiyuanTime` 支持 13 位毫秒；朗读分块保护小数点；`reader-ai` 截断口径统一码点；排版标题码点截断；迁移 URL 裁决合并为一次 patch；`pickNextUnread` 空 time 垫底；`csvCell` 补公式注入防护；stats byTag 同篇重复标签去重；删除 weeklyReport 死代码链（buildWeeklyReportMarkdown/weeklyReportDocPath/exportWeeklyReport 及其测试）；`ai-batch` 意外异常按阶段映射默认原因；fetchDocMeta/docBox SQL 转义；架构护栏端点模式补齐 file/av/inbox/riff 等；主入口 onboarding 定时器随 onunload 取消、`dockInstance` 死字段移除、5 处原始错误本地化、`getShorthand` 吞错补日志、命令 `cmd.archiveCurrent` 无文档时给提示；移动返回键补 `markPrefsInteraction`、筛选抽屉随视图切换释放焦点陷阱；i18n 清理 30 个死键（双语各 1035→1005）并新增 `import.progress.error.size`；审查判定不推翻既有契约：`uncertainUsage` 计量未知暂停与 author 非法 ID reason=changed 均有测试锁定，保持原样；不新增端点或文章属性；代码状态：完成；隔离验证：`pnpm check` 0 错误/0 警告、`pnpm test` 1222/1222、`pnpm build`、`pnpm check:release`、i18n/架构/账本门禁与 `git diff --check` 通过，隔离 S1 E2E 见 PROGRESS；真实验收：多编辑器当前文档语义、滑动标签视觉与置顶拾遗观感待 B-0002；延后原因：无。
+- [x] **T-3312**（P1，2026-10-09）全方位走查找缺修复：阅读页签切文后残留的朗读分段会读出上一篇正文、上下文读取失败误清会话阅读计时、外观按钮声明 aria-expanded 却只开不关；Dock/工作台筛选无结果时空态被候选特判抑制成空白、候选行收录/忽略/改链接缺忙碌防护可重复提交；迁移弹窗 resume/startRun 双击可并发两条回填循环、丢弃进度无确认且失败静默、暂停无反馈、行内 URL 编辑不支持回车；备份文件选择失败后同文件无法重选、预览取消被当错误展示、二次恢复失败时新旧报告并存、停止按钮在预览阶段文案不符；导入恢复/重试按钮禁用条件与静默 guard 不一致、浮窗收尾期关闭丢完成提示；设置保存补 `expected` 乐观锁并在冲突时刷新基准、设置页笔记本/打卡/AI 日志加载失败补错误与重试（收尾 T-3311 遗留）；修正候选 URL 保存误报“优先级与评分已保存”、AI 标签合并成功被重扫失败吞掉、摘录墙筛选芯片误清全部条件、快照/置顶/拾遗/摘录导出等原始英文错误直显、首启欢迎页“三步”与四步进度条矛盾；Protyle 迟到 ready 对已销毁实例二次 destroy；同步修正约 25 处双语文案（AI 调用量英文口径、导入确认“条条目”、移动导航“图书馆”→“读库”、快照写入笔记本资产等）并新增 9 个键；不新增端点或文章属性；代码状态：完成；隔离验证：`pnpm check` 0 错误/0 警告、`pnpm test` 1221/1221、`pnpm build`、`pnpm check:release`、任务账本与 `git diff --check` 通过；真实验收：交互修复项待 B-0002 走查；延后原因：无。
+- [x] **T-3311**（P2，2026-10-09）补齐 AI 标签规范化用户入口：设置页按需扫描相似 `custom-clip-ai-tags`，逐组选择保留名称后经 `clip-store` 合并；扫描只读、不改用户标签和手填字段；代码状态：完成；隔离验证：`pnpm check`、`pnpm test` 1216/1216、AI 标签面板 SSR 回归、build/release/perf/visual/task-ledger/diff 全通过；真实验收：待 B-0002/B-0004（设置浮窗与真实 AI/大库标签仍需作者验收）；延后原因：无。
+- [x] **T-3310**（P2，2026-10-08）发布 v1.2.1 补丁版：同步双 manifest、CHANGELOG、双语 README 与发布候选记录，重新构建并校验 `package.zip`，推送 `main`、tag 和 GitHub Release；不提交集市 PR；代码状态：完成；隔离验证：`pnpm check`、`pnpm test` 1215/1215、S1 E2E 58/58、build/release/perf/visual/task-ledger/diff 全通过，Quality gates/CodeQL 成功；真实验收：保留能力矩阵与 blockers 边界；延后原因：无。
+- [x] **T-3309**（P2，2026-10-08）README 更新摘要约定：中英文首页靠前位置按“新增 / 优化 / 修复”分组列出本次用户可见变化；同步记录 D-0190，后续每轮更新以当前提交和能力矩阵为准；代码状态：文档完成；隔离验证：README/i18n/任务账本门禁通过；真实验收：不适用；延后原因：无。
+- [◐] **T-3308**（P1，2026-10-08）修复设置浮窗内容横向塌缩：在共享 Svelte 弹窗内容区显式拉伸交叉轴，并让 `.glean-settings` 以 100% 宽度和最小宽度约束铺满内容区，避免设置项逐字竖排、按钮互相挤压；不新增端点、属性或存储字段；代码状态：完成；隔离验证：待本轮门禁；真实验收：待 B-0002；延后原因：需要作者在设置浮窗确认分组、滚动和底部操作区布局。
+- [◐] **T-3307**（P1，2026-10-08）修复独立浮窗工作台横向容器塌缩：让 Svelte 弹窗内容区按纵向 flex 填满对话框，避免 `glean-panel` 按最小内容宽度收缩后触发窄容器查询，导致中文逐字竖排和按钮挤压；不新增端点、属性或存储字段；代码状态：完成；隔离验证：待本轮门禁；真实验收：待 B-0002；延后原因：需要作者在独立浮窗确认宽画布排版、滚动和关闭行为。
+- [◐] **T-3306**（P1，2026-10-08）修复宽画布今日拾遗卡片底部错位：CSS Grid 行高拉伸时让滑动包装层与卡片同步填满，操作区贴底，避免短标题卡片露出灰色滑动背景；不新增端点、属性或存储字段；代码状态：完成；隔离验证：待本轮门禁；真实验收：待 B-0002；延后原因：需要作者在宽画布今日拾遗中确认三张卡片底线、阴影和窄屏布局。
+- [x] **T-3305**（P2，2026-10-08）GitHub 内容与分支收口：恢复 README 中小驴系列和交流群说明，核对 main/Release/PR/分支关系；代码状态：文档整理完成；隔离验证：完成（`pnpm check`、`pnpm test` 1214/1214、`pnpm build`、`pnpm perf:check`、`pnpm visual:check`、`pnpm check:release`、任务账本、`git diff --check`，PR #11 Quality gates/CodeQL 通过）；真实验收：不适用；延后原因：无，历史 PR/Release/tag 保留审计链，`dev/thispc-1002` 已确认无独有提交后删除，`codex/main-sync-20261008` 按纪律保留。
+- [◐] **T-3303**（P1，2026-10-08）修正移动快捷动作语义：原型首项是当前文档“收录”，复用 `GleanFacade.addCurrentDocToLibrary()`，外部 Pocket/Omnivore/wallabag 导入继续留在更多菜单；快捷动作标题改为语义化 heading，并在 DOM 中置于主卡片/空态之后；不新增端点、属性或存储字段；代码状态：完成；隔离验证：完成（定向 UI/i18n、`pnpm check`、全量 `pnpm test` 1174/1174、`pnpm build`、`pnpm perf:check`、`pnpm task:ledger -- --check`、`pnpm check:release`）；真实验收：待 B-0002；延后原因：需确认真机当前文档语义、按钮状态和安全区布局。
+- [◐] **T-3302**（P1，2026-10-08）桌面工作台快速收录对齐原型：在宽画布首页与图书馆头部显示主操作，复用 `GleanFacade.addCurrentDocToLibrary()` 与既有手动收录链路；Dock/移动端保持窄布局，不复制业务逻辑；代码状态：完成；隔离验证：完成（定向 UI/i18n、`pnpm check`、全量 `pnpm test` 1174/1174、`pnpm build`）；真实验收：待 B-0002；延后原因：需作者在工作台、独立浮窗和多编辑器场景确认当前文档语义与按钮密度。
+- [◐] **T-3301**（P1，2026-10-08）移动端首页快捷动作对齐原型：在今日拾遗首屏提供收录、搜索、候选三个 44px 入口；通过父级回调切换图书馆/搜索/候选队列，不复制业务逻辑；代码状态：完成；隔离验证：完成（定向 UI/i18n、`pnpm check`、全量 `pnpm test` 1173/1173 通过）；真实验收：待 B-0002；延后原因：真实 Android 安全区、触控误触和当前文档收录语义仍需作者走查。
+- [◐] **T-3292**（P1，2026-10-06）Dock 搜索可发现性与清空动作：窄 Dock 打开搜索后自动聚焦，输入关键词时提供双语、44px 触控安全的清空按钮；补齐关闭按钮、Esc 收起和焦点回到搜索入口；代码状态：完成；隔离验证：完成（无障碍/i18n 定向、`pnpm check`、全量 `pnpm test` 1172/1172 通过）；真实验收：待 B-0002；延后原因：真实 Dock 宽度、键盘和移动触控仍需作者走查。
+- [◐] **T-3293**（P0，2026-10-06）写型冒烟/E2E 靶场安全加固：新增共享内核防呆、项目临时库前缀注册表、崩溃残留清扫、argv/env 目标与 token 解析、AI 外发默认关闭；s1-flow 支持附着隔离靶场，M0/AV/事务/大纲/launch 写入脚本启动前统一检查；事务探针识别并拒绝附着参数，避免其重启步骤误伤外部内核；代码状态：完成；隔离验证：完成（smoke-kernel 8/8、脚本语法、`pnpm test` 1146/1146、`pnpm check`、`pnpm build`、`pnpm check:release`、任务账本均通过）；真实验收：待 B-0012（独立 6807 靶场全套写型脚本）；延后原因：当前环境不触碰作者主工作区，需作者按 `docs/SMOKE-E2E.md` 运行隔离靶场并确认主工作区拒跑、残留自动清扫和结束无残留。
+- [x] **T-3294**（P1，2026-10-07）修复 CodeQL 生产告警：Pocket HTML 标题用纯函数去标签、规范成单行并在 Markdown 标题处转义角括号；识别 HTML 注释 `--!>` 结束符；保留数据和正文语义。代码状态：已修复；隔离验证：格式化/导入定向 61/61、全量 `pnpm test` 1163/1163、`pnpm check`、`pnpm build`、性能/视觉/发布门禁通过，CodeQL #1/#2 已标记 fixed；真实验收：不适用（安全解析边界由单元和服务测试验证，T-3286 仍负责真实外部文件验收）；延后原因：无。
+- [x] **T-3295**（P2，2026-10-07）清理 CodeQL 测试专用误报：核对固定 URL 字符串只用于结果断言，不参与跳转/请求/安全决策；保留断言并按 `used in tests` 原因关闭 #3–#6；代码状态：完成；隔离验证：源码流向复核、CodeQL 告警状态和测试门禁通过；真实验收：不适用（测试代码分类）；延后原因：无。
+- [x] **T-3296**（P2，2026-10-07）统一 CodeQL 开发分支触发范围：补齐 `codex/**` push 扫描，与 Quality gates 保持一致；代码状态：完成；隔离验证：workflow YAML 解析、任务账本和差异检查通过，GitHub Quality gates 与 CodeQL 均通过；真实验收：不适用（GitHub 自动化配置）；延后原因：无。
+- [x] **T-3297**（P2，2026-10-07）收口帮助弹窗与对外文档边界：帮助内容改用 `textContent` 和 `glean-reader-help` 令牌样式；中英文 README 同步 `dev/**`/`codex/**` 稳定性说明、Node/pnpm 前置版本及小驴雷切仓库链接；代码状态：完成；隔离验证：阅读帮助结构回归、README 本地链接检查、任务账本和格式检查通过；`docs/media/demo.gif` 仍是作者真机素材清单中的预留文件；真实验收：不适用（安全/文档边界）；延后原因：无。
+- [x] **T-3298**（P2，2026-10-07）修正文档范围与交接证据：README 将生态列表明确为精选项目，避免“四款”总数过时；HANDOFF 回填 T-3296/T-3297 已通过的本地和远端门禁；代码状态：完成；隔离验证：GitHub 项目元数据核验、README 本地链接和任务账本检查通过；真实验收：不适用（文档事实）；延后原因：无。
+- [x] **T-3299**（P1，2026-10-07）收紧收集箱与外部导入 Markdown 元数据边界：标题、描述、站点和标签按纯文本转义，描述逐行保持引用，来源链接仅接受 HTTP(S)；完整正文 Markdown 保持原样；代码状态：完成；隔离验证：收集箱/导入定向回归 52/52、`pnpm check`（0 错误/0 警告）、`pnpm test`（1166/1166）、`pnpm build`、`pnpm visual:check`（24 个真实宿主案例仍待验收）、`pnpm check:release`、任务账本和 `git diff --check` 通过，GitHub Quality gates `37634094181` 与 CodeQL `37634094243` 成功；真实验收：不适用（序列化安全边界，真实外部集成仍归 T-3286/B-0005–B-0008）；延后原因：无。
+- [x] **T-3300**（P1，2026-10-07）收集箱迁入恢复检查点：持久化 `inbox-recovery.json` 的创建意图、确切文档 ID、属性/索引阶段和云端删除阶段；已知 ID 失败只重试后续阶段，创建响应未知禁止按标题/路径认领或重建；代码状态：完成；隔离验证：收集箱/检查点定向回归 42/42，`pnpm check`（0 错误/0 警告），`pnpm test`（1172/1172），`pnpm build`、`pnpm visual:check`（24 个真实宿主案例仍待验收）、`pnpm check:release`、任务账本和 `git diff --check` 通过；真实验收：待 B-0002/B-0007（真实收集箱、重载和双窗口）；延后原因：需要真实云端订阅与宿主重载验证。
+- [x] **T-3274**（P0，2026-10-06）修复并复跑全量门禁：导入进度测试改为相对时间，定向测试 22/22；代码状态：完成；隔离验证：完成（全量 `pnpm test` 1138/1138、`pnpm check` 0 错误/0 警告、`pnpm build`、`pnpm check:release` 通过）；真实验收：不适用（测试/门禁治理）；延后原因：无。
+- [ ] **T-3275**（P0，2026-10-06）作者桌面主链真实走查：首启→候选→确认→五态→正文/原文→读完→今日拾遗→统计→卸载重装数据保留；代码状态：已有入口；隔离验证：已有 S1–S4 证据；真实验收：待 B-0002；延后原因：需要作者独立测试工作区与真实宿主操作。
+- [ ] **T-3276**（P0，2026-10-06）Android 真机主链走查：底栏、顶部栏、筛选抽屉、候选决策、阅读动作、键盘、安全区、横屏、断网恢复；代码状态：已有移动端实现；隔离验证：静态/逻辑回归已有；真实验收：待 B-0002；延后原因：桌面响应式和浏览器截图不能替代真实 Android SiYuan。
+- [ ] **T-3277**（P0，2026-10-06）真实剪藏边界验收：全文、仅链接、登录失败、普通笔记、跨笔记本 `#剪藏`；代码状态：候选规则完成；隔离验证：payload 模拟通过；真实验收：待 B-0001；延后原因：需要真实浏览器扩展和站点样本。
+- [ ] **T-3278**（P0，2026-10-06）数据主权与恢复抽查：清空派生数据、索引重建、属性写失败、批量部分失败、卸载/重装；代码状态：服务与门禁已有；隔离验证：数据主权/恢复回归已有；真实验收：待 B-0002；延后原因：必须在独立测试文章上核对原属性保留。
+- [ ] **T-3279**（P1，2026-10-06）完成 3×8 视觉矩阵真实宿主截图，补亮/暗主题、长标题和失败/撤销状态；代码状态：矩阵与校验器已有；隔离验证：登记检查通过；真实验收：待 B-0002；延后原因：24 个 `pending-host` 槽位需要真实截图。
+- [ ] **T-3280**（P1，2026-10-06）运行时无障碍走查：首次入焦、Tab、Esc、焦点回归、读屏、键盘-only、高对比度、减少动效；代码状态：静态契约已有；隔离验证：a11y 回归已有；真实验收：待 B-0002；延后原因：需要桌面与移动系统辅助功能证据。
+- [ ] **T-3281**（P1，2026-10-06）三画布交互一致性：Dock/Tab/浮窗/移动端统一主动作、反馈、返回定位、草稿和筛选恢复；代码状态：共享服务已有；隔离验证：组件/服务回归已有；真实验收：待 B-0002；延后原因：真实宿主切文、焦点和触控尚未走查。
+- [ ] **T-3282**（P1，2026-10-06）设置与维护体验审查：分组、草稿、恢复默认、索引状态、诊断、缓存清理影响预览、危险操作确认和撤销；代码状态：主要入口已有；隔离验证：设置/恢复回归已有；真实验收：待 B-0002；延后原因：需要真实弹层、滚动和焦点证据。
+- [ ] **T-3283**（P1，2026-10-06）阅读舒适度审查：长文滚动、正文缺失、原文降级、预计/真实时长、阅读页签、最近阅读、选区摘录和焦点不抢夺；代码状态：能力已落地；隔离验证：阅读/选区/计时回归已有；真实验收：待 B-0002；延后原因：Protyle、多窗口和移动布局仍未验证。
+- [ ] **T-3284**（P1，2026-10-06）大库真实体验：1k/5k/10k 首屏、滚动、筛选、加载更多、定位、内存和移动低端设备；代码状态：窗口挂载与基线已有，CI 增加合成性能退化检查；隔离验证：`pnpm perf:check` 本地重复通过并纳入 GitHub Quality gates；真实验收：待 B-0002/B-0005；延后原因：合成 Node 基线不能代替宿主和真实导入文件。
+- [ ] **T-3285**（P1，2026-10-06）AI 信任与真实质量：富化、相关、伴读、本文问答、排版计划、自定义通道、额度竞争和失败恢复；代码状态：入口与失败语义已有；隔离验证：AI 矩阵与服务回归已有；真实验收：待 B-0004；延后原因：需要真实模型、嵌入、TLS 和脱敏证据。
+- [ ] **T-3286**（P1，2026-10-06）外部集成验收：Pocket/Omnivore/wallabag、收集箱、快照 assets、打卡桥、对外桥；代码状态：入口与降级已有；隔离验证：解析/服务/spike 已有；真实验收：待 B-0005–B-0008；延后原因：需要真实文件、订阅、assets 和双插件环境。
+- [ ] **T-3287**（P2，2026-10-06）产品信息架构收敛：首页只保留继续阅读、待确认、今日拾遗、最近收录四条主线，低频能力收纳且与命令面板一致；代码状态：现有入口较多；隔离验证：待交互契约；真实验收：待 B-0002；延后原因：依赖主链走查后的用户反馈。
+- [◐] **T-3288**（P2，2026-10-06）用户反馈闭环：问题模板、截图/录屏/环境字段、失败重试说明、版本与能力矩阵链接，形成发现→修复→验证记录；代码状态：三类 Issue 模板补齐版本、文章载体、失败重试和能力矩阵入口，新增 `docs/FEEDBACK-LOOP.md` 并与 CONTRIBUTING/PR 互链；隔离验证：模板内容核对、任务账本和文档差异检查通过；真实验收：待作者使用反馈；延后原因：需先完成一轮真实走查并验证反馈流程是否足够。
+- [ ] **T-3289**（P2，2026-10-06）产品头像与品牌资产：1:1 头像、深浅背景安全区、集市图标、README 头图和五张真实截图；代码状态：已有 `icon.png`/`preview.png`，素材未闭环；隔离验证：待尺寸/压缩检查；真实验收：待作者视觉确认；延后原因：不能用未验证功能制造宣传画面。
+- [◐] **T-3290**（P2，2026-10-06）README/GitHub 对外整理：中英文首页聚焦安装、核心闭环、隐私和验收边界，Issue 模板要求填写实际版本；代码状态：README、Issue 模板、徽章、安装入口、反馈模板、CI、Dependabot、SECURITY 和 CONTRIBUTING 已整理，GitHub 描述/主页/主题与 v1.2.0 保持一致；隔离验证：README 能力矩阵边界、双语链接和 Issue 模板内容已核对，类型/测试/任务账本及差异检查通过；真实验收：24 个真实宿主视觉案例仍待作者审阅；延后原因：不能用占位图替代真实宿主素材，真机验收继续按 B-0002。
+- [◐] **T-3291**（P2，2026-10-06）发布候选收口：覆盖安装、重启、卸载保留属性、package.zip 哈希、CHANGELOG、版本和集市说明一致；代码状态：v1.2.0 已定版，发布提交 `faf046c` 已推送；隔离验证：发布门禁与 S1 E2E 已通过，`v1.2.0` tag/Release 已创建，GitHub 默认分支已切为 `main`；真实验收：待 B-0002–B-0008；延后原因：覆盖安装、卸载保留属性、真实宿主/移动端和外部集成仍需作者走查，集市 PR 未授权。
+
+- [◐] **T-3260**（P1，2026-10-05）代码与隔离验证完成：D-0107完成宽画布全视图审计；统计宽工作台使用四列指标/双列分布，Dock/Tab/独立浮窗共用 `glean-workbench` 容器查询，设置/迁移/导入确认标准对话框宽度与内部滚动；真实三画布观感与触控仍待 B-0002。代码状态：完成；隔离验证：完成；真实验收：待 B-0002；延后原因：真实三画布观感与触控必须作者走查。
+- [◐] **T-3261**（P2，2026-10-05）代码与隔离验证完成：D-0108为今日拾遗增加独立日期属性 `custom-clip-pinned`，用户可从今日拾遗、库卡片和工作台行表明确置顶/取消；当天置顶、次日自然失效；真实三画布验收仍待 B-0002。代码状态：完成；隔离验证：完成；真实验收：待 B-0002；延后原因：真实三画布观感与触控必须作者走查。
+- [◐] **T-3262**（P1，2026-10-05）代码与本地门禁完成：D-0109为大库列表加入固定窗口分批挂载；完整索引仍用于筛选/排序/计数，卡片、行表和看板按 80 条逐批显示并支持显式加载更多，窗口外定位自动扩展；定向、全量、类型、构建、性能和发布门禁通过，真实宿主性能验收仍待 B-0002。代码状态：完成；隔离验证：完成；真实验收：待 B-0002；延后原因：真实宿主滚动、内存和低端设备收益必须实测。
+- [◐] **T-3263**（P1，2026-10-05）代码与双会话隔离验证完成：s1-flow 已使用临时工作区和动态端口；launch-e2e 现支持唯一运行名、工作区、端口、后台 PID、日志和 manifest，manage-e2e 提供按 manifest 安全停止；两个 3.8.6 会话已并行启动并分别得到独立端口、工作区和笔记本 ID。跨插件仓库的统一约定与桌面/真机走查仍由 T-3264 追踪。代码状态：完成；隔离验证：完成；真实验收：待 B-0002/B-0008；延后原因：桌面宿主单实例、真机和双插件环境需要作者或独立设备。
+- [◐] **T-3264**（P1，2026-10-05）编排器代码完成：新增 `scripts/e2e/acceptance-session.mjs` 和 `pnpm e2e:acceptance`，按隔离内核、桌面宿主、Android/iOS 设备或模拟器、AI、外部文件、双插件分别建账；逐项结果必须带证据 SHA-256，ready manifest 只能关联运行环境，失败项未解决、证据变更或缺设备确认时拒绝登记 `passed`。M0/AV spike 已支持独立临时工作区、动态端口和结果路径；真实宿主/设备/模型/外部文件证据仍待 B-0001/B-0002/B-0004–B-0008。代码状态：完成；隔离验证：完成；真实验收：待 B-0001/B-0002/B-0004–B-0008；延后原因：真实设备、模型、外部文件和双插件条件不在当前隔离环境。
+- [x] **T-3265**（P2，2026-10-05）任务账本收口：当前执行板作为唯一承诺源，历史需求池仅作候选；核对重复任务、旧交接中的过期“下一任务”描述，并为每项补齐代码、隔离验证、真实验收和延后原因四态。代码状态：完成；隔离验证：通过 `pnpm task:ledger --check`；真实验收：不适用（治理工具）；延后原因：无，治理任务不需要产品真机验收。
+- [x] **T-3266**（P1，2026-10-05）跨插件 E2E 会话契约：启动器和工作区准备器支持 `--plugin-dir`，从目标插件 `plugin.json` 与 `dist` 派生名称/版本/产物，manifest 记录插件身份；停止器和验收账本接受通用会话标识并兼容旧小驴 manifest。代码状态：完成；隔离验证：通过跨插件身份纯函数回归、显式 `--plugin-dir` 会话启动/停止、工作区准备器、全量测试、类型检查、构建和发布门禁；真实验收：不适用（开发工具契约，真实宿主仍按各插件自己的验收账本执行）；延后原因：无。
+- [◐] **T-3267**（P1，2026-10-05）制卡分步失败跨重载恢复：为插入意图、已插入待登记和已登记待清理保存最小派生检查点；重载后按确切卡片块 ID/宿主归属核对，用户明确重试登记或清理，不保存正文、引文、模型输出或密钥。代码状态：完成；隔离验证：完成（定向恢复/服务回归、全量 `pnpm test` 1114/1114、`pnpm check`、生产构建通过）；真实验收：待 B-0002/B-0006；延后原因：需要真实思源 riff 牌组和重载操作验收。
+
+- [◐] **T-3268**（P2，2026-10-05）收录后自动快照：承接 T-1798，新增默认关闭的显式设置，统一收录成功后生成本地 HTML 快照；快照失败不回滚收录，已有快照和重复收录不重拍，备份恢复关闭自动写能力。代码状态：完成；隔离验证：完成（自动快照服务回归、全量 `pnpm test` 1129/1129、`pnpm check`、生产构建、性能与发布门禁通过）；真实验收：待 B-0002/B-0006；延后原因：真实宿主 assets、图片/链接保真、移动端及大文档需要单独验收。
+- [◐] **T-3269**（P2，2026-10-05）Dock 治理统计单次索引扫描：状态 rail、收件箱配额和超龄池共享一次 `index.clips` 遍历，保持完整筛选与治理语义。代码状态：完成；隔离验证：完成（`pnpm test`、`pnpm check`、性能基线通过）；真实验收：待 B-0002；延后原因：真实宿主大库滚动、重渲染和低端设备收益需要作者实测。
+- [◐] **T-3270**（P3，2026-10-05）自定义 AI 通道明文地址提示：设置页检测 `http://` API 地址并给出双语 HTTPS 建议，不改变通道请求、密钥读取或默认开关。代码状态：完成；隔离验证：完成（i18n、无障碍、类型检查与全量测试通过）；真实验收：待 B-0004；延后原因：真实自定义通道是否可达、TLS 配置和模型服务行为需作者环境验证。
+- [◐] **T-3271**（P2，2026-10-05）会话内最近阅读历史：保留最多 8 篇最近打开文档，按文档 ID 去重并在阅读伴生栏显示；标题只读回文档上下文，不写文章属性、索引或 saveData，重启自然清空。代码状态：完成；隔离验证：完成（纯函数、i18n、类型检查与全量测试通过）；真实验收：待 B-0002；延后原因：真实阅读页签宽窄布局、触控与宿主切文行为需要作者走查。
+- [◐] **T-3272**（P2，2026-10-05）真实阅读计时：新增独立 `custom-clip-read-minutes`，仅在阅读页签可见/获焦/正文宿主可用时累计；显式标记已读成功后按完整分钟经 clip-store 安全写回，失败不回滚状态、不复用预计分钟。代码状态：完成；隔离验证：完成（计时纯函数、存储并发/位置校验、CSV/桥接、i18n、类型检查与全量测试通过）；真实验收：待 B-0002；延后原因：真实宿主前台判定、切文和移动端体验需要作者走查。
+- [◐] **T-3273**（P2，2026-10-05）选区事件快速门禁：全局 `selectionchange` 先确认当前选区锚点/焦点属于正文宿主，再调用摘录解析，覆盖阅读页签与工作台预览，不改变摘录块定位和复制降级语义。代码状态：完成；隔离验证：完成（选区端点/折叠/跨宿主回归、阅读页与工作台接入、类型检查和全量测试通过）；真实验收：待 B-0002；延后原因：真实 Protyle 选区事件和多窗口预览仍需作者走查。
+
+### 先闭环：阻断发布与主流程的事项
+
+- [x] **T-3183**（P0，2026-10-03）完成移动端 44×44px 命中区代码与静态回归；真机尺寸和误触验收仍待 B-0002。
+- [x] **T-3184**（P0，2026-10-03）完成移动端候选卡操作区和选择框的默认可见化；真机可发现性和误触验收仍待 B-0002。
+- [x] **T-3185**（P0，2026-10-03）补齐移动端在线/离线状态、缓存可查看提示和重试入口；收录/状态失败提示明确引导恢复连接后重试；真机断网、恢复和内核不可用验收仍待 B-0002。
+- [x] **T-3186**（P0，2026-10-03）在 `docs/BLOCKERS.md` 建立作者真实环境验收分工表，明确代码/隔离验证、作者操作和 blocker 归属。
+- [x] **T-3202**（P0，2026-10-03）重跑隔离内核主链 E2E：候选确认、迁移暂停/恢复、状态流转、导入、四载体、今日拾遗、筛选、索引重建和数据主权全部通过。
+- [x] **T-3203**（P0，2026-10-03）建立当前执行板、依赖/验收证据/阻塞规则；旧 T-18xx–T-30xx 保留为需求池，不再把“设计、实现、验收”混成下一轮开发承诺。
+
+### 再补质量：完成后才能称为可发布候选
+
+- [x] **T-3204**（P1，2026-10-03）补齐图标按钮 aria-label、焦点顺序、弹层焦点陷阱/Esc/焦点回归和 aria-live 范围；公共弹窗与移动筛选抽屉统一使用模态焦点管理，新增静态契约回归；运行时宿主/读屏/真机证据仍待 B-0002。
+- [◐] **T-3205**（P1，2026-10-03）已建立桌面/窄屏/移动端 3×8 状态矩阵、命名规则和 `pnpm visual:check` 校验器；24 个真实宿主截图槽位均明确登记为 `pending-host`，作者采集后再以 `--strict` 关闭，录屏仅作为动态路径证据。
+- [◐] **T-3206**（P1，2026-10-04）已建立 1k/5k/10k 合成大库的扫描、索引重建、筛选/分面、导入解析和今日拾遗基线；`pnpm perf:check` 已通过分页、属性批次、结果规模和中位耗时预算，真实宿主 UI 渲染与实际外部导入文件速度仍待 B-0002/B-0005。
+- [◐] **T-3207**（P1，2026-10-04）已完成属性写端点静态审计、失败成功数审计、智能体超龄归档真实计数、命令入口失败反馈和清空派生索引恢复回归；真实宿主卸载/重装和全部外部协同失败路径仍需隔离内核/作者复测。
+- [x] **T-3208**（P1，2026-10-04）新增 `docs/CAPABILITY-MATRIX.md` 与能力矩阵静态回归；审阅 README、中英文设置/首启能力卡、集市描述和发布媒体脚本，补齐 AI、收集箱、快照、打卡桥、导入、移动/浏览器 UI 的前置条件、降级和真实验收状态；未把代码入口写成全平台已验收。
+- [x] **T-3209**（P1，2026-10-04）新增 `docs/TERMINOLOGY.md` 与术语静态回归；统一中英文状态、候选/来源证据、移动端、撤销、失败、离线、重试和今日拾遗用词，修正英文统计单位、过时 M3 提示和不自然的移动/重浮文案。
+
+### 最后扩展：主链稳定后的增强项
+
+- [x] **T-3210**（P2，2026-10-04）新增 `docs/READER-ACCEPTANCE.md` 与 `tests/reader-acceptance.test.ts`，覆盖正文缺失诊断、原文降级、选区摘录、制卡、回跳、快照/状态边界和移动端可见动作条；修复阅读页签重复“读完并下一篇”、快照图标无名称、移动阅读动作不足 44px。真实编辑器选区、riff、移动安全区和宿主 assets 仍待 B-0002/B-0006。
+- [◐] **T-3211**（P2，2026-10-04）已新增 `docs/AI-ACCEPTANCE.md` 与 `tests/ai-acceptance.test.ts`，固定 AI-01–AI-09 主流程、AI-F01–AI-F09 失败样本、数据主权和结果记录格式；真实模型、嵌入、自定义通道和额度操作仍待 B-0004。
+- [◐] **T-3212**（P2，2026-10-04）已新增 `docs/INTEGRATION-ACCEPTANCE.md` 与 `tests/integration-acceptance.test.ts`，固定 INT-01–INT-04 联调矩阵、INT-F01–INT-F08 失败样本、成功/跳过/失败/可重试计数和数据主权边界；真实文件、订阅、assets 与双插件操作仍待 B-0005–B-0008。
+- [◐] **T-3213**（P2，2026-10-04）已新增 `docs/RELEASE-CANDIDATE.md` 与 `tests/release-candidate.test.ts`，静态核对版本 `1.1.0`、CHANGELOG、构建/发布门禁、媒体手册和能力矩阵；真实截图/GIF、覆盖安装/卸载数据保留及 tag/Release/集市授权仍待作者。
+- [◐] **T-3214**（P0，2026-10-04）修复摘录制卡在最终一致性 SQL 索引刷新前找不到列表项的问题：列表项使用显式节点 ID，事务回传优先、旧内核保留 SQL 回退；当前 `pnpm test` 通过 `425/425`、`pnpm check` 通过、制卡尖刺 `1/1`、完整 `pnpm spike` `9/9`；真实闪卡复习显示仍待 B-0002。
+- [◐] **T-3215**（P1，2026-10-04）完成颜色、图标、文字三重状态表达，并补齐 reduced-motion、prefers-contrast、forced-colors 和键盘-only focus-visible 样式；定向无障碍回归 25/25、`pnpm check` 和 `pnpm build` 通过；真实系统主题、读屏和键盘走查仍待 B-0002。
+- [◐] **T-3216**（P0，2026-10-04）已建立六类故障的 `docs/RECOVERY-MATRIX.md`；导入保留 `failedUrls`/已建文档 ID，仅重试失败行，属性已成功时只修复索引；笔记本加载失败支持保留预览重试。定向恢复/导入/i18n **19/19**、全量 **436/436**、`pnpm check` 通过；真实断网、权限、草稿/滚动和宿主操作仍归 B-0002/B-0004/B-0005。
+- [◐] **T-3217**（P0，2026-10-04）已修复宿主 `fetchPost` 丢失失败结果、收集箱双层错误和快照/云端删除异常响应误报成功；SDK 异步 Promise 传输和 14 项运行时故障回归落地，最终全量 455/455、内核 E2E 16 条主链通过；真实云端和 assets 验收仍归 B-0006/B-0007。
+- [◐] **T-3218**（P0，2026-10-04）已修复后台对账卸载列表导致的滚动/焦点丢失；并发刷新串行补跑、批量防重入且仅保留未成功选择；云删除失败保留条目、专用删除重试和本地文章入口落地，定向 48/48、全量 455/455、类型/构建/产物门禁通过；真实 DOM/草稿/滚动验收仍归 B-0002/B-0007。
+
+- [◐] **T-3219**（P1，2026-10-04）代码与隔离验证已完成：基础整理、可选广告/图片候选、乱码诊断、AI 结构计划、双语对照预览和独立整理稿；原文变更校验、共享队列/额度与建稿后无重复恢复；真实内核导出参数和回链实证已补齐，契约 D-0063；真实宿主/模型仍待 B-0002/B-0004，边界见 `docs/FORMATTING.md`。
+- [◐] **T-3220**（研究，2026-10-05）3.8.6 严格隔离事务探针复跑通过：独立工作区 `C:\Users\sunku\AppData\Local\Temp\siyuan-glean-t3220-1791149318797-404`、动态端口 `52987`、15 项验收检查全部通过；复杂文档叶块/容器、插入删除、标题层级、并发客户端、部分失败、响应丢失和重启边界均有结构化报告。原生树/SQL/API父级分别核对，禁止虚构邻接列和按随机ID选样本；源列表保留其他项时嵌套跨父级移动/恢复、深层子树 5 个块、移走唯一列表项和删除后读回、真实PNG写入/覆盖/恢复、跨笔记本引用均已复核。双编辑器、用户中间编辑、真实网络故障、资源权限/删除和真实宿主撤销仍待验证，继续禁止生产原地排版和插件专属撤销。
+- [◐] **T-3221**（后续研究，2026-10-04）已完成代码侧图片隐私边界：排版 prompt 仅发送 `[image]`，不发送 URL、alt、文件名、外链参数或图片字节；AI 计划禁止直接提交图片清理，重复/无说明/推广候选仍默认不选且只影响独立整理稿。D-0076 与 DATA-CONTRACT §3.4 已同步；视觉模型、多模态通道、资源权限和真实模型验收仍待完成，不能把文本模型结果当作图片语义。
+
+- [◐] **T-3222**（P1，2026-10-04）全库摘录墙：已落契约 D-0064；聚合、分面、分页、多选、回跳和校验后 Markdown/CSV 导出，承接 T-1750/T-1752/T-1753 的范围内能力；真实宿主验收归 B-0002。
+- [◐] **T-3223**（P1，2026-10-04）阅读回顾：已落契约 D-0065；周/月/年、年度完成热力图、独立标签口径、报告预览/恢复与 CSV；真实宿主验收归 B-0002。
+- [◐] **T-3224**（P1，2026-10-04）对外桥 v1：已落契约 D-0066；只读属性投影、默认关闭的五态写入、注册冲突与卸载失效；真实双插件验收归 B-0008。
+
+- [◐] **T-3225**（P0，2026-10-04）AI 共享额度与建议范围：审阅发现伴读未入共享队列、富化解析失败漏计调用消耗、相关旧文开关和范围未守门；按 D-0067 修复并补跨入口并发/资格回归，真实模型仍待 B-0004。
+
+- [◐] **T-3226**（P1，2026-10-04）三画布提示一致性：从卡片分支抽出共用的配额、超龄清单与候选提示，保留勾选与真实归档计数，承接 T-1817/T-1818；真实宿主待 B-0002。
+- [◐] **T-3227**（P0，2026-10-04）选区完整边界：校验 anchor/focus/全部 Range 起止都在正文宿主内及合法块 ID，跨宿主拒绝，无定位仅复制；不把外部文本带入摘录或 AI。
+
+- [◐] **T-3228**（P0，2026-10-04）AI 逐功能默认关闭和严格开关校验：保留已有布尔选择，修正新用户默认值、非法值降级、共享调用用量文案和额度插值；不更改富化默认 manual。
+
+- [◐] **T-3229**（P1，2026-10-04）大纲代码完成，T-3235 已修正同sort乱序：SQL游标取全、原生子块顺序、真实层级、DOM定位/原块降级和切文隔离；3.8.6只读服务已验证，真实宿主滚动仍待B-0002；承接T-1740。
+- [◐] **T-3230**（P2，2026-10-04）代码完成：字号/行距/栏宽三档与跟随/纸感/护眼主题写入 ui-prefs，只作用于阅读页签；真实 Protyle 样式与移动端体验待 B-0002；承接 T-1742/T-1743。
+- [◐] **T-3231**（P1，2026-10-04）代码完成：白名单筛选、命名/重复校验、默认视图/删除与重载恢复，prefs 多入口串行已实现；真实跨重载和多画布操作待 B-0002；承接 T-3088/T-3089/T-3095。
+- [◐] **T-3232**（P1，2026-10-04）代码完成：完整对账、非 internal 属性 CSV、未知值为空、标签分列、公式防护、匿名诊断和设置页错误重试已实现；真实下载文件与外部导入记录待 B-0002/B-0005；承接 T-1772/T-3169 的范围内能力。
+
+- [◐] **T-3233**（P1，2026-10-04）代码完成：页签焦点快捷键、可见帮助、伴生栏收起/恢复偏好及异步切文隔离；按 D-0079 承接 T-1741/T-3113/T-3114，真实宿主焦点/快捷键冲突/resize 仍归 B-0002。
+
+- [◐] **T-3234**（P1，2026-10-04）代码完成：队列/站点/用户标签/AI 标签折叠记忆、Top8/全部切换、当前筛选保留和大分面快速过滤；按 D-0080 承接 T-1804/T-1805/T-1806，真实工作台/浮窗焦点与重载待 B-0002。
+
+- [◐] **T-3235**（P0 质量修复，2026-10-04）代码完成：按D-0081修正heading同sort乱序，原生子块顺序、嵌套、缺项/循环/源变化/预算/切文取消和重试通过回归；只读spike和生产服务已在3.8.6验证，真实宿主定位仍待B-0002。
+
+- [◐] **T-3236**（P0重点，2026-10-04）代码/服务验证完成：工作台只读预览、候选确认/来源修正、状态后就地推进、快速摘录、共享Protyle生命周期、拖动/键盘宽度偏好及移动sheet；首启直达候选、默认视图不得覆盖明确定位、浮窗Esc先关闭预览/Popover。承接T-1827–T-1831，真实宿主与性能阈值待B-0002/T-1832。
+
+- [◐] **T-3237**（P2，2026-10-04）代码完成：常用3项/更多筛选、可移除条件chip与行表高频动作/原生顶层Popover；承接T-1807/T-1808，移动应用边界保留，真实宿主与看板密度评估待B-0002。
+
+- [x] **T-3238**（P0质量修复，2026-10-04）代码/隔离完成：修复刚写URL/status未入SQL导致的漏查重；索引ID提示补读真实属性，缓存字段不判事实，读取失败拒绝无冲突，全满页仍继续取全，所有生产查重入口接线。3.8.6证据sqlKnown=false/conflictFromKnownIds=true，不承诺跨客户端原子唯一。
+
+### T-3220 本轮增量证据
+
+- [x] 两个 API 客户端并发更新不同叶块均可读回并完成 undo/redo；同块并发只保留一个标记，必须读回核对后再决定；嵌套 `NodeList` 间单个列表项移动保持 ID/根属性/用户 IAL 且不进 undo。
+- [x] 真PNG写入/覆盖/恢复逐次字节读回通过；两个笔记本资源引用均列出；源列表保留兄弟项时跨父级恢复完整原生关系/ID/IAL通过；不外推权限隔离或资源undo。
+- [x] 增量探针补测移走唯一列表项、深层嵌套子树身份/关系和删除后读回，并输出可导入验收账本的结构化事务报告；空列表行为按内核实际结果记录，不预设删除语义。
+- [ ] 双Protyle、用户中间编辑、真实网络故障、资源权限/删除和真实宿主撤销仍未验证；资源删除/权限端点也未被臆造，不能关闭T-3220或开放原文排版。
+
+### 账本治理规则
+
+- 旧的 T-18xx–T-30xx 规划项继续保留为需求池，但未进入当前执行板前不作为下一轮开发承诺。
+- 已由 T-3165–T-3182 实现的事项不再重复开同名实现任务；后续只新增缺失的“真实验收、回归证据或恢复路径”。
+- 按依赖与风险持续推进可独立完成的主任务，同时补充测试、文档和验收证据；未解决的作者阻塞不得伪标为完成。
+
+## M0 尖刺验证
+
+- [x] T-1000 真值文档八件套 + AGENTS.md + git init（2026-09-29）
+- [x] T-1001 D-0001~D-0010 决策落账（2026-09-29）
+- [x] T-1002 小驴系列风格头像 icon.png
+- [x] T-1003 Vite+Svelte5+TS 脚手架 + plugin.json + 空面板构建通过
+- [x] T-1004 M0 spike：属性写读闭环 + tags 落位
+- [x] T-1005 M0 spike：`ial LIKE` 千篇库性能
+- [x] T-1006 M0 spike：semanticSearchBlock / embeddingStat 双态行为
+- [x] T-1007 M0 spike：隔离内核加载本插件 + i18n 双名加载
+- [x] T-1008 spike-report.md 产出
+- [x] T-1009 addDock/addTab 呈现（代码层落定；真机目视验收后置给作者）
+- [x] T-1010 官方剪藏扩展实剪核对（程序侧模拟验证；实剪操作后置给作者）
+
+## M1 地基 v1.0.0
+
+- [x] T-1100 属性服务层 clip-store（schema 校验 + 幂等 + 批量）
+- [x] T-1100a domain 层纯函数（schema/状态机/迁移启发式/字数时长）+ 单测
+- [x] T-1100b api 层端点封装（attr/sql/notebook/filetree/ai/semantic）
+- [x] T-1101 设置面板 v1（锚点笔记本多选、AI 开关组、重浮参数、索引重建）
+- [x] T-1102 存量迁移器（dry-run 报告 → 分批回填 ≤50 可中断 → 完成报告三类）
+- [x] T-1103 状态机与批量操作（五态流转、多选改状态/归档）
+- [x] T-1104 Dock 面板 v1（三队列 + 筛选 + 排序 + 搜索）
+- [x] T-1105 收录入口三件套（面板/右键菜单/命令）
+- [x] T-1106 命令面板命令（加入读库/打开面板/重建索引/迁移器）
+- [x] T-1107 派生索引 glean-index.json + 重建命令 + 面板对账
+- [x] T-1108 隔离内核 E2E：收录→迁移→流转→数据主权（2026-09-30；scripts/e2e/s1-flow.mjs 扩至 16 项断言：直接经内核属性端点读 + 清空插件 saveData 后 custom-clip-* 仍在；作者桌面走查仍由 T-1713 追踪）。
+- [x] T-1109 README 首版 + 「3 分钟整理你的剪藏库」教程
+- [x] T-1110 预览图 preview.png
+
+## UI 标准线（贯穿周期）
+
+- [x] T-1400a docs/UI-STANDARD.md 成文（v1.1：桌面四帧定稿 + 三档画布 + 组件词表）(2026-09-29)
+- [x] T-1400b 看板 v1（tab 画布拖卡改状态）+ tab 宽幅响应式 (2026-09-29)
+- [x] T-1400c 桌面 rail（队列/站点/标签，点击即筛）+ drow 行式表格 (2026-09-29)
+
+## M2 数据库视图与统计 v0.2.0
+
+- [x] T-1200a UI 设计系统（D-0011：三轮原型迭代 + index.scss 回 port + 面板三视图改版）(2026-09-29)
+
+- [x] T-1200 挂库向导（AV 建库 + 收录文档挂入 + 状态列对齐；av-spike 6/6）(2026-09-29)
+- [x] T-1201 统计页 + Markdown 周报导出（Bento 卡）(2026-09-29)
+- [x] T-1202 高亮列表视图（当前文档引述块聚合）(2026-09-29)
+
+## M3 AI 富化 v1.2.0
+
+- [x] T-1300 富化管线（摘要/AI标签/语义查重，静默降级 ai-log）(2026-09-29)
+- [x] T-1301 关联推荐（高亮视图 ✨ 相关旧文）(2026-09-29)
+- [x] T-1302 预置 AI 动作（拾遗·总结/要点/反方观点，editor 动作幂等补建）(2026-09-29)
+- [x] T-1303 智能体工具三件（list_unread/archive_stale/weekly_digest）(2026-09-29)
+
+## M4 抗吃灰内核 v1.3.0
+
+- [x] T-1400 每日重浮（确定性挑选/多样性降权/last-surfaced 行动时写入；11 单测）(2026-09-29)
+- [x] T-1401 队列配额横幅 + 超龄归档候选一键归档 (2026-09-29)
+- [x] T-1402 今日拾遗视图（默认首屏，读了/改天/归档，平静文案）(2026-09-29)
+
+## 发布准备与技术债（第七轮）
+
+- [x] T-1200b 面板视图偏好持久化 (2026-09-29)
+- [x] T-1300e AI 日志查看入口（设置-维护）(2026-09-29)
+- [x] T-1600 CHANGELOG.md + RELEASE-MEDIA.md（GIF 脚本/五图清单/上架检查单）(2026-09-29)
+- [ ] T-1601 真机截图与 GIF 拍摄（作者，按 RELEASE-MEDIA 清单）
+
+## 小项池（第十四轮清空）
+
+- [x] T-1501a 导入器大文件分页预览 (2026-09-29)
+- [x] T-1402a 批量收录进度提示 + 重浮卡渐显动效 (2026-09-29)
+- [x] T-1600a docs/media/ 目录建立 (2026-09-29)
+
+## AI 消耗控制（作者命题，第六轮）
+
+- [x] T-1300a 富化三态触发 + 每日上限 + 今日用量 + 查重独立开关 (2026-09-29)
+- [x] T-1300b 拾遗专用 AI 通道研究（方案 B 可行，待作者拍板实施）(2026-09-29)
+- [x] T-1300c 方案 B 实施（getSecret 密钥库读 key + 桌面直连 + 浏览器降级 + 测试连接）(2026-09-29)
+- [x] T-1300d 富化队列串行化（promise 链，手动/自动共享队列）(2026-09-29)
+
+## M5 生态与承接 v1.4.0+（逐项向作者确认后启动）
+
+- [x] T-1500 收集箱消费（面板折叠区+open-menu-inbox 迁入；联调待 B-0007）(2026-09-29)
+- [x] T-1501 迁移导入器（四格式解析+预览去重+分批导入+设置入口）(2026-09-29)
+- [x] T-1502 摘录制卡（内置 riff 闪卡起步；选中文本/高亮卡两入口；V2 开门后升级；嵌套列表项 ID 闭环修复见 T-3214）(2026-09-29；2026-10-04 修复)
+- [ ] T-1503 推入渐进阅读集成动作
+- [x] T-1504 全页快照（exportHTML→assets 单文件 HTML，📷 拍摄/⟐ 打开，spike ⑦ 实证）(2026-09-29)
+- [x] T-1505 小驴协同·打卡桥（externalRef 幂等；默认关）；雷切待其公开 API 文档 (2026-09-29)
+- [ ] T-1506 D-0008 预留：批注/阅读调度方向探索（按作者需求立项）
+
+## 产品重整（D-0016；当前有效开发顺序见 docs/PRODUCT-REPLAN.md）
+
+> 旧任务的 `[x]` 表示当时的代码落地，不代表隔离端到端或作者真机验收。新任务按 S1→S6 顺序推进，逐项记录“实现/隔离验证/真机验收”。
+
+- [x] T-1700 审阅 v1.0.4 代码、调研、契约、待办及测试覆盖，写产品主线、使用步骤与验收方案（S0）
+- [x] T-1701 修正锚点笔记本 SQL、查询失败提示与真实 ID 隔离验证（S1，2026-09-29；隔离内核 E2E 通过）
+- [x] T-1702 打通迁移扫描→确认→持久化→分批→暂停/恢复→三类报告；预览即识别无 URL，暂停不置完成，UI 显示逐条真实结果，失败可重试（S1，2026-09-29；隔离内核 E2E 通过）
+- [x] T-1703 区分用户显式状态操作与自动写入保护；单篇/批量/看板反馈实际成功数（S1，2026-09-29；服务回归 + 隔离内核 E2E）
+- [x] T-1704 修复自动富化串行队列自等；覆盖关闭/手动/自动及每日额度（S1，2026-09-29；4 条服务回归）
+- [x] T-1705 迁移器、导入器所有 `custom-clip-*` 写入统一经 clip-store，维护属性与索引一致（S1，2026-09-29；服务回归 + 隔离内核 E2E）
+- [x] T-1706 候选资格、普通笔记/插件内部文档排除、跨笔记本标签、URL-only 半成品与分页对账（S2；实现与服务测试通过，作者真机验收待 B-0002）
+- [x] T-1707 统一各收录入口的 URL/正文类型/字数/时长/时间来源与缺失提示；先修订数据契约（S2；实现与服务测试通过，作者真机验收待 B-0002）
+- [x] T-1708 统一工作台、Dock、看板的分拣/开始读/读完/归档/恢复动作；补优先级、评分、标签筛选和排序（S3；代码与服务/隔离内核验证，桌面/移动交互待 B-0002）
+- [x] T-1709 定义完成历史与归档关系，记录可信完成时间；先修订数据契约和存量迁移规则（S3–S4，2026-09-30；D-0028：显式标记读完结束写入 `custom-clip-done-time`，导入仅采信 Pocket time_read，统计/周报只认可信完成时间；隔离内核 E2E 通过，真机验收随 B-0002）
+- [x] T-1710 重浮、略过、超龄归档与周报按真实属性对账；批量归档前展示清单（S4，2026-09-30；重浮/超龄清单改为对账后索引的纯投影，归档按显式勾选清单执行并报告真实成功数；周报口径已于 D-0028 落地；隔离内核 E2E 通过，真机随 B-0002）
+- [◐] T-1711 AI 开关/通道/失败语义、相关旧文与查重库范围逐项验收（S5）：代码与服务/静态隔离证据已覆盖富化、额度、队列、官方/自定义通道、伴读、本文问答、作者建议、查重/相关资格和失败分类；真实模型、嵌入命中、TLS/CORS 与质量样本待 B-0004。
+- [◐] T-1712 AV 明确单向投影或补实证后的双向同步；收集箱、外部导入、快照、制卡、打卡桥逐项验收（S5）：当前按 D-0094 只承诺属性→AV 状态列投影，其他 AV 列和反向同步未承诺；服务/隔离回归及验收矩阵已补齐，真实 AV 刷新、Pocket/Omnivore/wallabag 文件、订阅、assets、riff 和双插件样本待 B-0002/B-0005–B-0008。
+- [◐] T-1713 完成 T-1108 隔离内核端到端、作者桌面走查、移动/浏览器主链冒烟、数据主权验证；校准 README/ROADMAP/HANDOFF/BLOCKERS/发布材料（S6）：隔离门禁和材料校准持续通过，作者真实宿主、设备、读屏、卸载保留属性和写后刷新仍待 B-0002/B-0001。
+- [x] T-1714 重构 README：按当前产品主线更新功能、使用步骤、验收边界、小驴四款插件清单与交流 QQ 群（中英文同步，2026-09-29；平台验收仍由 T-1713 追踪）
+
+## 阅读体验与 Folo/RSS 借鉴（D-0021/0022，调研见 docs/RESEARCH-folo.md）
+
+- [x] T-1715（S3）统一 Dock/工作台/看板的阅读时间线：真实状态、站点、用户标签、来源、时间来源和载体筛选与排序；同一纯投影供各画布消费，筛选不写属性（域层/隔离内核验证；画布目视待 B-0002）。
+- [x] T-1716（S3）全文/仅链接/本地文档的载体徽章与打开策略：全文优先读思源文档，仅链接可明确打开原文，本地/未知不显示网页动作（四载体隔离内核验证；移动端逐项待 B-0002）。
+- [x] T-1717（S4）今日拾遗展示等待天数、优先级、来源及选中理由；“开始阅读”只进 reading，今天略过幂等，读完须显式完成；完成时间契约先行（2026-09-30；`domain/resurface.ts` surfaceReasons 事实理由投影，卡上“为什么出现”行；改天幂等与“开始阅读只进 reading”经隔离 E2E 验证；完成时间契约见 D-0028；真机随 B-0002）。
+- [◐] T-1718（S5）AI 阅读动作逐项验证：摘要、翻译、相关旧文、本文问答和作者建议的手动入口、关闭/额度/失败回退、AI 来源标记和成本提示；代码/隔离验证已完成，真实模型质量与嵌入命中仍待 B-0004；不自动代读，不影响五态。
+- [x] T-1719（S2–S3）首启引导第 3 步改为只读扫描预览：已收录/待确认候选/候选缺来源三计数 + “普通笔记不会入库”说明（2026-09-30；只读属性重建索引缓存，不写文章属性；真机随 B-0002）。
+- [x] T-1720（S6）README 中英文按真实验收重构，说明 Folo 借鉴边界、数据主权和未验收平台能力；保留四款小驴插件及 QQ 群 871707735（2026-09-29；主链/真机门禁仍由 T-1713 追踪）。
+
+## 阅读体验延伸调研（Readwise Reader / Inoreader，调研见 docs/RESEARCH-reading.md）
+
+- [x] T-1721（S3）增加聚焦阅读协议：在思源原生编辑器外显示标题、载体、来源、当前状态和显式动作，提供返回同篇文章与会话内继续阅读（属性回读服务验证；编辑器事件、返回定位和移动布局待 B-0002 真机验收）。
+- [x] T-1722（S3）正文/原文/本地文档导航统一，来源打开不改五态且仅链接缺 URL 有提示；全文正文缺失诊断与重新剪藏入口已随 T-1727 落地（2026-09-30；隔离内核验证通过，桌面/移动动作待 B-0002）。
+- [x] T-1723（S3–S4）"读完并下一篇"显式动作：伴生栏按钮 + 命令面板（打开下一篇不写状态）；完成写入成功后才切下一篇，队列空不回滚完成状态，无自动前进开关（2026-09-30；pickNextUnread 隔离 E2E 实证；切页交互待 B-0002）。
+- [x] T-1724（S3）命令面板阅读动作 7 项：标记已读/打开下一篇/稍后读/归档/打开原文/摘录选中文本为引述/帮助（`?` 清单提示快捷键在思源 设置→快捷键 自定义；默认不占键位）（2026-09-30；命令回调复用统一服务；真机随 B-0002）。
+- [x] T-1725（S4）选中文本→摘录→制卡闭环已交付（D-0030/T-1730d，2026-09-30）：摘录=引述块落原文档（块定位即位置、落库即时间），定位失败明示降级复制；选区与 AI 结果均不写用户标签；页签内与原生编辑器命令双入口。
+- [x] T-1726（S5）AI 上下文三档已交付（D-0030/T-1730e，2026-09-30）：全文→总结、选区→翻译、相关旧文→关联（页签内跳转）；结果卡带「AI·通道·动作」来源标记、可复制、总结显式保存；开关/额度/静默降级与富化共享。"提问"不做——不做通用聊天窗（铁律 8/D-0030），真实模型效果待 B-0004。
+- [x] T-1727（S3 收尾提前落地）正文解析异常的显式反馈路径：阅读条"检测正文"导出重算字数并写回（不改用户正文、不删快照），确认空正文后提供"重新剪藏"导航（打开原文，官方剪藏扩展产出新文档，同 URL 冲突按 D-0023 裁决）；三画布加"正文待核"标记（2026-09-30；隔离内核 E2E 通过，真机待 B-0002）。
+- [ ] T-1728（S3–S4）在新增阅读进度、断点或自动高亮前先修订 DATA-CONTRACT：明确字段、更新时机、跨设备冲突、归档关系和重建规则；契约未定前不显示伪精确百分比。
+- [x] T-1729（S3）补 AI 标签独立展示与筛选：与用户 `IAL.tags` 分面分开，显示 AI 来源标记；关键词搜索可继续同时匹配 AI 标签，但不能把它冒充成用户标签分面。
+
+## 精品化强化路线图（D-0030 后作者命题：打造绝对精品；T-1740 起，只立项不排期）
+
+> 2026-09-30 调研盘点：对标 Matter（付费点=TTS 朗读/摘要/高亮）、GoodLinks（纯净阅读视图/彩色高亮）与仓库内 RESEARCH-folo/reading 调研。
+> 纪律不变：AI 一律手动+额度+静默降级；平静原则不许打卡羞辱；涉及新属性先改 DATA-CONTRACT；"提问/聊天窗"仍不做。
+> 优先级：P1=直接提升主链体验 / P2=精品差异化 / P3=锦上添花或需外部条件。
+
+### 阅读页签与阅读体验（T-1740 组）
+
+- [◐] T-1740（P1）大纲代码与隔离服务验证由T-3229/T-3235承接，标题取全与真实顺序分开，真实Protyle滚动仍待B-0002。
+- [◐] T-1741（P1）代码由 T-3233/D-0079 承接：j/k 滚动、e 切编辑、m 标记已读、x 摘录选区、? 帮助及焦点/IME 门禁；与思源全局快捷键冲突仍需 B-0002 真机核验。
+- [ ] T-1742（P2）排版偏好：正文字号/行距/栏宽各三档，存 ui-prefs（纯视图状态），页签头部一行控件。
+- [ ] T-1743（P2）阅读主题：跟随思源明暗之外，加"纸感/护眼"两套纯 CSS 主题。
+- [◐] T-1744（P1）TTS 朗读：Web Speech API（调研确认 Electron 内走系统 TTS、离线可用）——朗读全文/选区/从当前位置继续，语速调节与暂停续读；先 spike 思源桌面端 voice 可用性；移动端不可用则隐藏。（2026-10-02 开发中：已接入页签，待桌面端真机 voice 验收）
+- [ ] T-1745（P2）双语对照阅读：AI 全文翻译放入伴生栏第二栏（手动、额度、AI 来源标记；D-0030 延伸，不做聊天窗）。
+- [ ] T-1746（P2，契约先行）阅读进度：先按 T-1728 修订 DATA-CONTRACT（字段/更新时机/跨设备冲突），再实现页签进度条与"从上次位置继续"。
+- [ ] T-1747（P2，契约先行）真实阅读计时：页签内前台计时，标记已读时写入真实阅读分钟；先讨论契约（新键 or 复用 minutes 语义）。
+
+### 摘录与知识沉淀（T-1750 组）
+
+- [ ] T-1750（P1，远期池转正）全库摘录墙：引述块全库聚合视图，支持站点/用户标签/AI 标签筛选，点击跳回原文块位置（openTab 定位）。
+- [ ] T-1751（P1）AI 问句制卡：接通 T-1502 预留的"AI 问句化"钩子——选区→AI 生成问句卡面，结果可编辑确认后再入卡（手动+额度）。
+- [ ] T-1752（P2）摘录批量导出 Markdown：按筛选结果把引述块导出为普通笔记（含原文回链）。
+- [ ] T-1753（P2）高亮视图增强：每条高亮加"跳到原文位置"动作；显示摘录时间。
+
+### AI 强化（T-1760 组）
+
+- [ ] T-1760（P1）"问这篇文章"单轮动作：限定上下文=本文/选区，动作+结果卡（与 D-0030"不做通用聊天窗"口径一致，单轮不追问）。
+- [ ] T-1761（P2）AI 标签规范化：富化时对照库内已有 AI 标签提示同义合并（如 机器学习/ML），用户确认后改写 custom-clip-ai-tags（非手填字段，但要展示 diff）。
+- [ ] T-1762（P2）批量富化：多选文章逐个入串行队列（额度统一把守，进度提示）。
+- [ ] T-1763（P2）富化失败重试入口：富化失败的卡显示可重试标记（数据已在 ai-log），一键重跑。
+- [ ] T-1764（P2，远期池转正）AI 每日简报：今日拾遗一键生成"三篇速览"文本卡；可选接 T-1744 TTS 语音化。
+- [ ] T-1765（P3）自定义通道安全提示：baseUrl 为 http:// 明文时设置页警示（密钥经思源密钥库，但传输明文需告知）。
+
+### 统计与回顾（T-1770 组）
+
+- [ ] T-1770（P1，远期池转正）阅读热力图：按 custom-clip-done-time 画年度热力图（D-0028 契约已就绪）。
+- [ ] T-1771（P2）月度/年度回顾报告：本月读完 N 篇/M 万字/Top 站点与标签，Markdown 导出（复用周报管线）。
+- [ ] T-1772（P3）统计导出 CSV：读库全量属性表导出。
+- [ ] T-1773（P2）收录漏斗：候选→收录→完成各环节转化率一览（用现有候选/状态数据纯投影，不新增写入）。
+
+### 参考产品强化（T-3330 组，2026-10-09 调研：RESEARCH-feature-gap-2026-10.md，只立项不排期）
+
+- [x] T-3330（P2）连续完成记录（原连续阅读天数）：由 T-3343 按每篇当前保留的最近一次可信完成时间派生，在今日拾遗和统计页显示；不代表每日阅读时长或完整重读历史，不接入打卡桥、不新增持久化字段。
+- [x] T-3331（P2）今日拾遗"换一篇"：从已 surfaced 排除池与未入清单随机补位一篇，保持每日数量口径，替换可追溯。
+- [x] T-3332（P2）快照覆盖率治理：统计无快照已收录文章，治理提醒中提供批量补拍入口（沿用单篇快照服务与重试语义）。
+- [x] T-3333（P3）单篇导出 Markdown 文件：读库行/预览动作导出元数据+正文为 .md 下载。
+- [ ] T-3334（P2）库级 AI 问答：基于读库索引与可选嵌入的检索式问答，答案列来源文章并可跳转；需先做检索证据契约防 AI 冒充正文；依赖 B-0004。
+- [x] T-3335（P2）全库 Markdown 归档导出：人可读的全库归档（每篇一文件+索引），作为 JSON 备份之外的最终退路；注意体积分卷。
+- [ ] T-3336（P3）阅读位置百分比显示：T-1728/T-1746 数据契约先行的轻量"读到约 X%"展示。
+- [ ] T-3337（P3）TTS 朗读增强：从上次朗读处继续、语速与音色记忆（T-1744 spike 结论上增强）。
+
+### 数据、生态与多端（T-1780 组）
+
+- [◐] **T-3241**（P1，2026-10-04）代码/隔离验收完成：D-0088版本化原始属性/规范设置偏好/索引快照备份，恢复逐字段preview/diff/手填覆盖选择、当前位置/属性核对、写后读回与索引重建；承接T-1780，设置/偏好应用及真机下载/迁移仍按 B-0002 差额追踪。
+- [◐] **T-3242**（P1，2026-10-04）代码/隔离验收完成：D-0089作者AI建议默认关闭、逐字原文证据、共享队列/额度、采纳草稿与逐条明确保存；承接T-1813，不批改真实存量，真实模型归B-0004。
+- [◐] **T-3243**（P1，2026-10-04）代码/隔离验收完成：D-0090统一制卡可编辑预览/明确确认、默认关闭AI问句、riff登记失败仅重用确切卡块；承接T-3131/T-1751，跨重载恢复与真实riff验收分别追踪。
+- [◐] **T-3244**（P0质量，2026-10-04）代码/隔离验收完成：D-0091修复保存设置替换对象后排队AI继续用旧开关/通道；共享队列各异步边界复查当前配置，停用后的返回不自动应用，成功调用仍计量。
+- [◐] **T-3245**（P1，2026-10-04）代码/隔离验收完成：D-0092批量富化清单/覆盖预览、共享队列、暂停、派生检查点、重载续跑和逐项失败/未知核对；承接T-1762/T-1763/T-3147，不提供伪撤销或自动重发。
+- [◐] **T-3246**（P1，2026-10-04）代码/隔离验收完成：D-0093导入文件指纹/目标确认、创建意图/确切ID检查点、跨重载回读/暂停/失败恢复和未知不再建；承接T-1878/T-1953及导入恢复旧项，真实文件/宿主归B-0005/B-0002。
+- [◐] **T-3247**（P1质量，2026-10-04）代码/隔离验收完成：D-0094 AV单向状态投影、完整属性对账、绑定ID映射与状态读回、失败计数/再刷新；承接T-2213及T-1712的AV代码差额，其他列填值/稳定列映射和真机仍保留。
+- [◐] **T-3248**（P2，2026-10-04）代码/隔离验收完成：D-0095真实块阅读书签、明确保存/恢复、位置/属性冲突与块归属校验、备份/CSV；承接T-1728契约和T-1746定位部分，自动断点/计时/多端合并仍独立待办。
+- [◐] **T-3249**（P0质量，2026-10-04）代码/隔离验收完成：D-0096用量读取/计数非法不当零，成功计量写后读回与未知时阻止后续模型调用；设置用量未知可见，多客户端/跨重载限制保留。
+- [◐] **T-3250**（P2，2026-10-04）代码/服务回归/隔离验收完成：D-0097本文/核验选区单轮问答、独立默认关闭、共享队列/额度、可见截断/逐字引文/依据不足、源变更与切文隔离；服务层补充选区块 ID 与 `root_id` 归属复核。承接T-1760，真实模型效果归B-0004。
+- [x] **T-3251**（P1反馈，2026-10-04）完成：D-0098兼容缺失/未知 contentType 的有效中文来源 URL，周报和 `weekly_digest` 增加本周完成文章名单，读库首屏缓存先显、并发对账合并和有界模板探测；定向回归、全量门禁、性能基线和隔离验收完成。
+- [◐] **T-3252**（P1交互，2026-10-04）代码与静态回归完成：D-0099工作台/独立浮窗头部“浮窗、整理、设置”在容器宽度≥760px显示图标+短文字，窄画布与Dock保持图标；真实桌面宽窄布局验收归B-0002。
+- [◐] **T-3253**（P2交互，2026-10-04）代码与静态回归完成：D-0100多条配额/超龄/候选提醒按会话收纳为可展开摘要，单条提醒仍直接显示；真实三画布密度与触控验收归B-0002。
+- [◐] **T-3254**（P1交互，2026-10-04）代码与静态回归完成：D-0101工作台/独立浮窗的今日拾遗在宽度≥760px时使用310px最小宽度的2–3列自适应卡片网格，动作可换行，Dock/移动端保持单列；真实三画布密度验收归B-0002。
+- [◐] **T-3255**（P2交互，2026-10-04）代码与静态回归完成：D-0102工作台/独立浮窗的摘录卡片区域在宽度≥760px时按360px最小宽度自适应双栏，工具栏/预览/分页整行，空态居中；Dock/移动端保持单列，真实三画布密度验收归B-0002。
+- [◐] **T-3256**（P1交互，2026-10-04）代码与静态回归完成：D-0103宽工作台将紧凑“更多操作”和排序方向入口显示为图标+文字，Dock/移动端保持图标；可访问名称、动作和存储不变，真实桌面密度归B-0002。
+- [◐] **T-3257**（P2交互，2026-10-04）代码与静态回归完成：D-0104候选检测横幅增加“查看候选”，统一进入 inbox 候选列表；宽工作台看板自动切列表，超龄清单动作保持不变，真实三画布验收归B-0002。
+- [◐] **T-3258**（P3交互，2026-10-04）代码与静态回归完成：D-0105配额/超龄/候选提醒分别支持“今天不再显示”，按本地日期写入 ui-prefs，次日自动恢复，失败不吞提示；真实三画布观感归B-0002。
+- [◐] **T-3259**（P2交互，2026-10-04）代码与静态回归完成：D-0106桌面/工作台/浮窗头部副题显示当前视图、真实读库数量和图书馆筛选项数；移动端保持紧凑副题；确认当前无独立红色角标，不臆造其语义，真实宽窄观感归B-0002。
+
+- [ ] T-1780（P1）一键备份/恢复：读库全部 custom-clip-* 属性 + 设置 + 索引导出为 JSON 包，可导入恢复——数据主权的自我证明，卸载/迁移场景刚需。
+- [ ] T-1781（P2）对外桥接 API：window.siyuanGlean v1（DATA-CONTRACT §6 预留转正，版本化 + docs/BRIDGE.md）。
+- [ ] T-1782（P3，先研究）多设备冲突对账：双设备同文档属性 last-writer 语义与合并策略，先出研究文档再立项。
+- [ ] T-1783（P2，远期池转正）移动端卡片式重浮：移动工作台首屏改今日拾遗大卡；依赖 B-0002 移动验收基础。
+- [ ] T-1784（P3，保持延后）渐进阅读集成：仍等公开 API（T-1503 不变）。
+
+### 交互与信息架构打磨（T-1794 组；2026-09-30 作者截图反馈 + 同类扩展）
+
+- [◐] T-1794（P1，作者反馈）由 T-3252/D-0099 完成代码：⧉浮窗 / 🧹整理 / ⚙设置在工作台 tab 与独立浮窗宽度足够时显示图标+文字，Dock 窄栏保留图标+title；响应式规则已入 UI-STANDARD，真实桌面宽窄布局待 B-0002。
+- [◐] T-1795（P1，同类扩展）由 T-3256/D-0103 完成首轮代码审计：已有完整文字的状态动作保持原样；宽工作台的紧凑“更多操作”和排序方向入口显示图标+文字，Dock/移动端保留图标并保留 title/aria-label；低频卡片图标仍遵循独立标签与溢出入口规则，真实宿主逐项观感待 B-0002。
+- [◐] T-1796（P2，同类扩展）由 T-3259/D-0106 完成代码：品牌副题动态显示当前视图与真实读库数量，图书馆筛选时显示筛选项数；当前实现无独立红色角标，候选数继续由治理提示表达，真实宿主观感待 B-0002。
+- [◐] T-1797（P2，契约先行）由 T-3261/D-0108 承接：使用独立 `custom-clip-pinned=YYYYMMDD` 表达当天置顶，次日失效且不后台清理；priority、状态与 last-surfaced 语义不变；代码与隔离验证完成，真实三画布验收归 B-0002。
+- [x] T-1798（P2）收录自动快照选项（已由 T-3268/D-0117 完成代码与隔离验证；真实 assets、图片/链接保真、移动端及大文档仍待 B-0002/B-0006）：设置开关默认关，收录成功后独立生成全页快照，失败不回滚收录。
+- [ ] T-1799（P2）重复/相似剪藏合并建议：现有同 URL 冲突检测之外，增加相似标题与 URL 变体（跟踪参数差异）识别，候选/新收录时提示"库内已有可能相同文章"并给合并指引。
+- [ ] T-1800（P2）最近阅读历史：阅读页签伴生栏/命令增加会话内最近打开列表（多条），增强现在"继续阅读最近一篇"的单条历史。
+- [ ] T-1801（P3）候选分组浏览：候选区支持按站点/日期折叠分组，多候选时批量确认更顺手。
+- [ ] T-1802（P3）阅读页签右键菜单增强：选区右键补"摘录为引述 / 从此处朗读"（与 T-1744 TTS 衔接）。
+- [ ] T-1803（P3）高亮分享卡：引述块一键复制为格式化引用文本（含来源与回链）；图片卡片导出先做可行性研究。
+
+### 工作台侧栏与操作密度（T-1804 组；2026-09-30 作者截图反馈 + 同类扩展）
+
+- [◐] T-1804（P1，作者反馈）代码由 T-3234/D-0080 承接：四组折叠、项数与展示偏好记忆，站点/标签默认 Top8；真实恢复与焦点待 B-0002。
+- [◐] T-1805（P1，同类）代码由 T-3234 承接：显示全部/前8项与当前筛选保留；真实长分面布局待 B-0002。
+- [◐] T-1806（P2，同类）代码由 T-3234 承接：超过15项显示组内过滤框，会话关键词不持久化；真实键盘操作待 B-0002。
+- [◐] T-1807（P2，同类）筛选器收敛：七个下拉（站点/用户标签/AI 标签/收录来源/时间来源/内容载体/排序）改"常用 3 个 + 更多筛选"弹层；当前激活的筛选以可移除的 chip 显示在列表上方，一眼看清当前视图状态。 代码由T-3237承接；真实宿主/移动/密度仍待B-0002。
+- [◐] T-1808（P2，同类）行操作溢出菜单：行内 8 个交互点收纳——高频（开始阅读/标记已读）保留为按钮，📷✨↗/移到稍后读/归档/多选收进 ⋯ 溢出菜单；看板卡同策略评估。 代码由T-3237承接；真实宿主/移动/密度仍待B-0002。
+- [ ] T-1809（P3，研究）站点智能分组：域名类别聚类（gov.cn 政府 / 组织 / 媒体 / 其他），先出分组规则研究再实现。
+- [ ] T-1810（P3）rail 手风琴模式：展开某组自动收起其他组（设置开关，默认关）。
+
+- [◐] **T-3239**（P1，2026-10-04）代码/隔离完成：D-0085来源作者手填保护含清空、同文多入口串行/写前核对/写后读回、失败保草稿、列表/预览/阅读编辑、作者筛选/rail/保存视图/全状态时间线与CSV；承接T-1811/T-1812/T-1816及T-1813手动部分，真实UI/AI建议/真实回填仍独立验收。
+
+### 来源作者细化（T-1811 组；2026-09-30 作者提问"微信剪藏能否细化到公众号" + 同类扩展）
+
+- [◐] **T-3240**（P2，2026-10-04）代码/隔离完成：D-0086期间作者/站点→作者统计、缺失数、Top8+其他可展开及完整报告作者字段；修复有状态internal混入回顾，不抹除原状态。承接T-1812统计部分/T-1814，真实宿主验收待B-0002。
+
+> 可行性分析（2026-09-30）：微信文章公众号名不在 custom-clip-site（固定 mp.weixin.qq.com）里，插件也无法直接抓取微信页面（内核无通用代理、浏览器 CORS 拦截、微信反爬）。可行来源三层：①官方剪藏扩展自定义模板若支持抓取页面 meta/元素则收录时零成本获得（需研究）；②AI 富化时从正文/标题推断（正文常含"点击上方蓝字关注 XX"等线索），prompt 加 author 字段、用户确认后写入；③用户手动编辑。存量 109 篇走 AI 批量推断+手动内联编辑补全。
+
+- [◐] T-1811（P1，作者反馈，契约先行）来源作者属性：新增 `custom-clip-author`（公众号/频道/专栏作者名，通用不限于微信）；手填保护与站点旁作者显示由T-3239实现，代码/隔离通过，真实UI待B-0002。
+- [◐] T-1812（P1，同类）作者分面：独立作者rail、作者筛选、站点→作者二级统计由T-3239/T-3240实现；候选不计作者分面，期间可信完成/缺失口径不猜测，真实UI待B-0002。
+- [ ] T-1813（P1，同类）存量回填：作者反馈的 109 篇微信文章批量补 author——AI 批量推断（独立默认关闭开关、共享额度、逐条展示待确认）+ 列表手动编辑。author 属手填保护字段，AI只给建议，不能自动覆盖或清空已有署名；真实存量数量与确认效果需作者实例验收。
+- [◐] T-1814（P2，同类）统计分布聚合：T-3240实现站点/作者/用户标签/AI标签Top8+其他项/次数之和，展开钻取，报告保留全量不截断；真实UI待B-0002。
+- [x] T-1815（P3，研究）固定版本研究完成：官方1.15.15/00182d4b的Readability署名未传入消息/模板，不支持运行DOM选择器；真实模板函数探针通过。见CLIPPER-AUTHOR-RESEARCH/D-0087；不宣称已安装扩展实剪已验收，不把siteName当公众号。
+- [◐] T-1816（P3）作者页聚合视图：T-3239实现点击作者/rail聚合全部五态文章，默认按收录时间排序，支持筛选/保存视图；不改文章状态，真实宿主待B-0002。
+
+### 横幅与提示一致性（T-1817 组；2026-09-30 作者截图反馈：横幅只出现在 Dock，工作台/浮窗没有）
+
+> 根因（2026-09-30 静态定位）：配额超限/超龄候选/候选检测三条横幅的模板只写在 DockPanel 的卡片流分支（Dock 窄栏渲染路径），工作台 tab 与独立浮窗走行表/看板分支（isTabCanvas），没有这段模板——三画布不一致，违反"同一状态动作、相同结果反馈"的 S3 协议精神。
+
+- [◐] T-1817（P1，作者反馈）由 T-3226/D-0068 把配额/超龄/候选提示放在布局分支外共用区域；代码与服务入口完成，真实三画布观感待 B-0002。
+- [◐] T-1818（P1，同类）由 T-3226/D-0068 覆盖看板：拖卡前可见相同的超龄候选提醒；真实看板布局待 B-0002。
+- [◐] T-1819（P2，同类）由 T-3253/D-0100 完成代码：多条横幅同时出现时折叠为单行摘要，用户明确展开后复用原提醒动作；真实三画布密度待 B-0002。
+- [◐] T-1820（P2，同类）由 T-3257/D-0104 完成代码：候选检测横幅统一“查看候选”入口，切到 inbox 并在看板下自动使用列表；超龄横幅继续展开同一清单，真实三画布观感待 B-0002。
+- [◐] T-1821（P3，平静原则）由 T-3258/D-0105 完成代码：三类横幅分别按本地日期静默，次日自动恢复，只影响展示，不改数据；保存失败反馈并恢复提醒，真实三画布观感待 B-0002。
+
+### 宽画布适配一致性（T-1822 组；2026-09-30 作者截图反馈：工作台/浮窗下视图宽度不统一）
+
+> 根因（2026-09-30 静态定位）：UI-STANDARD §3 定义了三档画布与响应式规则，但只覆盖了库列表/统计；**今日拾遗与高亮视图没有宽画布适配**——ResurfaceView 按 Dock 窄栏单列卡片流写死，在工作台 tab 与独立浮窗（glean-tab-root 宽画布）里就缩在左侧，右侧大片空白（作者截图）。属"制度有、实现漏"。
+
+- [◐] T-1822（P1，作者反馈）由 T-3254/D-0101 完成代码：宽画布下卡片改 2–3 列网格，理由行/动作随列宽自适应；Dock 窄栏保持现单列，真实三画布密度待 B-0002。
+- [◐] T-1823（P1，同类）由 T-3260/D-0107 完成代码审计与统计视图修复：统计宽画布使用四列指标/双列分布；设置、迁移器、导入器核对为标准 560–760px 对话框并保留内部滚动；高亮/今日拾遗已由 T-3254/T-3255覆盖，真实三画布密度待 B-0002。
+- [◐] T-1824（P2，同类）由 T-3255/D-0102 完成代码：宽画布下摘录改360px最小宽度自适应双栏/多栏，工具栏、预览、分页整行；真实瀑布流取舍与三画布密度待 B-0002。
+- [◐] T-1825（P2，同类）由 T-3255/D-0102 完成代码：宽画布下无摘录时空态限制宽度并居中，Dock/移动端保持原有空态流；真实观感待 B-0002。
+- [◐] T-1826（P2，同类）由 T-3260/D-0107 完成代码：Dock、Tab、独立浮窗根面板统一使用 `glean-workbench` 容器名，库列表从 600px 起使用容器查询；新宽布局不再依赖 `.glean-tab-root` 专属样式，真实三画布仍待 B-0002。
+
+### 工作台预览窗格（T-1827 组；2026-09-30 作者提出，**作者定为重点**：Folo 式"不进页面即可预览确认、边读边处理"）
+
+> 与既有能力的边界：内嵌阅读页签（D-0029，设置开关默认关）=完整阅读+编辑+伴生栏；本组=**工作台内的预览窗格**——列表/候选点击即在右侧显示文章（Protyle preview 只读），用于分拣前快速确认，不改变任何状态。两者互补不互替。技术底座已有：ReaderTab 已验证 Protyle 内嵌/单实例切换/销毁纪律，预览窗格复用同一封装。
+
+- [◐] T-1827（**P0 重点**，作者提出）工作台三栏预览窗格：rail | 列表 | 预览——点击列表条目，右侧窗格以 Protyle preview 只读显示文章（候选也可预览正文证据）；不写状态、不进阅读页签；窗格可关闭（Esc/按钮），分隔条可拖拽调宽。 代码由T-3236承接；真实宿主/移动/密度仍待B-0002。
+- [◐] T-1828（**P0 重点**，作者提出）预览窗格"边读边处理"：预览态直接提供分拣动作（待分拣/稍后读/标记已读/归档）与快速摘录（引述块，遵守 D-0030）；标记已读走统一完成时间链路（D-0028）——读完列表自动流动，不离开工作台。 代码由T-3236承接；真实宿主/移动/密度仍待B-0002。
+- [◐] T-1829（P1，同类）Protyle 封装复用：预览窗格与内嵌阅读页签共用同一 Protyle 包装组件（preview/wysiwyg 模式参数化、单实例切换、destroy 纪律、resize 自适应），避免两套生命周期实现漂移。 代码由T-3236承接；真实宿主/移动/密度仍待B-0002。
+- [◐] T-1830（P1，同类）候选预览确认流：候选卡点击 → 预览窗格显示正文与来源证据，"确认收录/排除/补 URL"就地完成；首启引导"去工作台确认候选"（T-1719）直达此流——首次整理 100 篇不再逐篇开文档。 代码由T-3236承接；真实宿主/移动/密度仍待B-0002。
+- [◐] T-1831（P2）预览布局持久化：窗格开关状态与宽度比例存 ui-prefs；Dock 窄栏不提供预览（空间不足），移动端降级为全屏 sheet（依赖 B-0002 移动验收）。 代码由T-3236承接；真实宿主/移动/密度仍待B-0002。
+- [ ] T-1832（P2，先实测）预览性能守门：大文档 Protyle preview 打开耗时与内存实测定阈值；超阈值降级为 Markdown 轻渲染预览（Lute 纯前端渲染，无 Protyle 实例）。
+
+### 工程质量（T-1790 组）
+
+- [ ] T-1790（P1）a11y 清零：39 条 svelte a11y 告警逐条修复（aria-label/role），目标 svelte-check 零告警。
+- [ ] T-1791（P2）大库虚拟滚动：行表 1000+ 条时虚拟列表渲染（先实测当前性能定阈值）。
+- [ ] T-1792（P3）键盘完全可达：批量条/筛选器/卡片焦点管理与 Enter 激活。
+- [ ] T-1793（P2）i18n 文案终审：中英双语母语级润色一遍（术语表入 UI-STANDARD）。
+
+## 内嵌阅读页签（D-0029，T-1730 系列；D-0008/T-1506 预留方向立项）
+
+> 作者已拍板方案 A：内嵌真实 Protyle 的阅读页签 + 伴生栏，不做自绘渲染器。逐项记录"实现/隔离验证/真机验收"；页签与编辑器的实际行为（挂载、双实例同步、销毁、快捷键）必须作者真机验收（B-0002 扩充）。
+
+- [x] T-1730a D-0029 决策 + DATA-CONTRACT §3.3 + UI-STANDARD §5.10 规格（2026-09-30）
+- [x] T-1730b 设置组 `reader`（openInTab 开关默认关 + defaultMode read/edit）+ 设置 UI + i18n 双名 + 归一化单测（2026-09-30）
+- [x] T-1730c 阅读页签 MVP：`glean-reader` 自定义页签 + ReaderTab（左 Protyle 右伴生栏）+ facade.openReader 接线（开始阅读按设置走页签）+ 伴生栏（状态动作/优先级评分/正文诊断/原文/快照/返回读库）+ 模式切换（2026-09-30；类型与构建门禁通过，运行时行为待 B-0002 真机）
+- [x] T-1730d 摘录与标注闭环落进伴生栏（= T-1725 的页签落点）：选区捕获（selectionchange 限定正文宿主）→ 摘录为引述（插所选块之后，D-0030）/ 制卡（复用 riff 卡）/ 复制；无法定位块时明示降级为仅复制（2026-09-30；**隔离内核 E2E 实证**引述块插入与高亮聚合；选区交互待 B-0002 真机）。
+- [x] T-1730e AI 伴读区落进伴生栏（= T-1726 的页签落点）：总结全文 / 翻译选区 / 相关旧文三个显式动作，结果卡带「AI · 通道 · 动作」来源标记，可复制；总结可显式保存为 AI 摘要（仅写 custom-clip-summary）；额度与富化共享（aiQuotaAvailable/recordAiUsage），off 整段提示（2026-09-30；服务/隔离门禁通过，真实模型效果待 B-0004 真机）。
+- [ ] T-1730f 真机验收：页签挂载/编辑同步/模式切换/销毁内存/快捷键冲突/大文档性能（B-0002 扩充）
+
+## 合并前产品全量梳理待办（T-1833 起）
+
+### 产品定位、边界与用户模型
+
+- [ ] T-1833 形成“小驴拾遗”的一句话定位、三条核心价值与三条明确边界，并写入决策记录。
+- [ ] T-1834 梳理收藏整理者、持续阅读者、研究型用户和移动端快速记录者四类用户画像。
+- [ ] T-1835 为四类用户各写出首次使用、日常使用、批量整理和长期回顾四条主场景。
+- [ ] T-1836 建立“剪藏、候选、收件箱、阅读中、已读、归档、证据、载体”等产品术语中英文词表。
+- [ ] T-1837 建立功能能力矩阵，标记桌面端、移动端、Web 端的可用性、降级方式和验收状态。
+- [ ] T-1838 绘制从发现内容到归档回顾的完整用户旅程，并标注每个可能中断点。
+- [ ] T-1839 建立五状态与候选状态的状态转移矩阵，明确允许的入口、出口和失败回退。
+- [ ] T-1840 明确插件“不负责”的能力边界，包括全文抓取、云端同步、自动发布和通用聊天。
+- [ ] T-1841 梳理不同入口产生的用户意图，确保剪藏、导入、候选识别和手动新建不会混淆。
+- [ ] T-1842 定义每类核心任务的完成判定，避免把页面打开、字段写入误认为任务完成。
+- [ ] T-1843 建立产品原则检查表，覆盖数据主权、可解释、可撤销、渐进增强和静默降级。
+- [ ] T-1844 为所有重要操作定义“用户看到什么、系统写什么、失败后怎么办”的三列说明。
+- [ ] T-1845 设计新用户无数据时的空库路径，确保首次打开仍能理解价值并完成最小闭环。
+- [ ] T-1846 设计已有大量剪藏用户的快速接管路径，避免强制完整导览阻塞使用。
+- [ ] T-1847 设计回访用户的首页信息优先级，区分继续阅读、待处理候选和近期变化。
+- [ ] T-1848 建立高风险操作确认、可撤销和恢复期限策略，并统一各页面文案。
+- [ ] T-1849 建立用户反馈分类，包括数据错误、理解困难、操作失败、性能问题和需求建议。
+
+### 首次启动、导览与核心流程
+
+- [ ] T-1850 梳理首次启动扫描、扫描预览、候选确认、迁移完成和首次阅读的页面顺序。
+- [ ] T-1851 为首次启动设计可跳过、可恢复、可重新进入的导览节点。
+- [ ] T-1852 为扫描过程设计阶段进度、已处理数量、待处理数量和异常数量的反馈。
+- [ ] T-1853 设计扫描中关闭窗口、切换工作区和插件重载后的恢复行为。
+- [ ] T-1854 设计候选解释面板，展示命中依据、来源、置信度和用户可采取的动作。
+- [ ] T-1855 设计候选批量确认、批量忽略、逐项修正和撤销的交互状态。
+- [ ] T-1856 设计候选与已存在剪藏重复时的合并、保留、忽略和查看原文路径。
+- [ ] T-1857 设计缺失 URL、失效文档引用和无法识别载体的修复流程。
+- [ ] T-1858 设计导入中断后的继续、重试、跳过错误项和重新开始选项。
+- [ ] T-1859 设计从收件箱进入阅读的最短路径，并记录用户如何回到原始上下文。
+- [ ] T-1860 设计“阅读完成”动作的确认反馈，避免误触造成状态跳跃。
+- [ ] T-1861 设计从已读回到待复习、重新阅读和归档的分支流程。
+- [ ] T-1862 设计所有主流程的首次成功、空结果、部分成功、失败和恢复状态。
+- [ ] T-1863 为每条主流程建立桌面端与移动端的操作步骤对照表。
+- [ ] T-1864 设计用户离开流程后的恢复入口，避免只能从头开始。
+- [ ] T-1865 为不可逆或影响多条记录的动作补充二次确认和影响范围预览。
+- [ ] T-1866 设计完成动作后的轻量反馈，明确下一步建议但不强迫用户继续。
+
+### 剪藏发现、候选与收件箱
+
+- [ ] T-1867 细化剪藏来源、导入来源、手动创建来源和候选来源的显示规则。
+- [ ] T-1868 定义候选置信度分层及各层默认操作，避免单一阈值造成误收录。
+- [ ] T-1869 设计候选证据不足时的人工补证入口，并记录补证后的状态变化。
+- [ ] T-1870 设计批量 triage 的键盘、鼠标、触控和可访问性操作。
+- [ ] T-1871 设计收件箱按来源、载体、时间、置信度和缺失字段的组合筛选。
+- [ ] T-1872 设计收件箱中已处理、暂缓、忽略和失败条目的可见历史。
+- [ ] T-1873 设计同一内容多次剪藏时的重复判断提示和用户选择记忆。
+- [ ] T-1874 设计本地文件、思源文档、网页链接和未知载体的统一预览信息。
+- [ ] T-1875 为失效来源提供重新检查、手动修正和保留原记录三个分支。
+- [ ] T-1876 设计导入文件的字段映射预览，明确哪些值会写入文档属性。
+- [ ] T-1877 设计导入错误报告，包含行号、原因、建议动作和导出能力。
+- [ ] T-1878 设计大批量导入的分批提交、暂停、恢复和取消策略。
+- [ ] T-1879 设计收件箱排序稳定性规则，避免用户处理过程中条目跳动。
+- [ ] T-1880 设计收件箱空状态，分别覆盖“没有内容”“没有符合筛选”“全部已处理”。
+- [ ] T-1881 设计剪藏来源的可信度与可追溯展示，但不引入未经约定的新数据主权字段。
+- [ ] T-1882 设计候选误判的反馈入口，为后续策略优化保留可分析信息。
+- [ ] T-1883 验证候选条目在文档移动、重命名和删除后的显示与修复行为。
+- [ ] T-1884 设计无法读取来源内容时的静默降级和明确提示边界。
+
+### 图书馆、状态与批量操作
+
+- [ ] T-1885 建立图书馆列表、卡片、看板三种视图的字段和动作一致性矩阵。
+- [ ] T-1886 设计状态筛选、来源筛选、载体筛选、优先级筛选和评分筛选的组合语义。
+- [ ] T-1887 设计筛选条件为空、冲突和结果过多时的解释文案。
+- [ ] T-1888 设计批量状态变更的影响预览、执行进度、部分失败和撤销。
+- [ ] T-1889 设计批量编辑不覆盖用户手填字段的可视化提示。
+- [ ] T-1890 设计索引滞后、索引损坏和索引重建中的页面状态。
+- [ ] T-1891 设计文档被删除、移动、改名或权限变化时的列表占位和修复入口。
+- [ ] T-1892 设计归档历史浏览、恢复和再次归档的交互。
+- [ ] T-1893 设计保存视图的命名、排序、复制、编辑和删除流程。
+- [ ] T-1894 设计保存视图与临时筛选之间的关系，避免用户误以为筛选自动保存。
+- [ ] T-1895 设计列表多选的进入、退出、跨页保留和键盘导航规则。
+- [ ] T-1896 设计卡片密度、截断、长标题、无封面和超长标签的统一规则。
+- [ ] T-1897 设计看板列过多、列为空、拖动失败和移动端替代交互。
+- [ ] T-1898 设计列表更新后的稳定排序和当前选择保留策略。
+- [ ] T-1899 设计用户执行状态动作后“已确认写入”和“仍在同步”的差异反馈。
+- [ ] T-1900 设计从列表直接进入阅读、回到列表并保留筛选上下文的流程。
+- [ ] T-1901 设计列表中外部链接、思源文档链接和插件内部链接的打开策略。
+- [ ] T-1902 设计列表页面的空、加载、错误、部分数据和离线降级状态。
+- [ ] T-1903 建立列表操作的可访问性检查表，覆盖焦点顺序、快捷键和屏幕阅读器名称。
+- [ ] T-1904 设计列表数据刷新、手动重建和自动恢复的用户触发方式。
+
+### 阅读体验与内容上下文
+
+- [ ] T-1905 梳理阅读页首屏信息优先级，保证标题、来源、状态和主要动作可立即理解。
+- [ ] T-1906 设计阅读上下文的打开、切换、关闭、重开和失效恢复生命周期。
+- [ ] T-1907 设计阅读页在正文缺失、正文过长、正文格式异常时的分层降级。
+- [ ] T-1908 设计网页、思源文档、本地文件和未知载体的阅读页差异化提示。
+- [ ] T-1909 设计来源链接、原文打开、回到剪藏文档和查看属性的统一入口。
+- [ ] T-1910 设计选择文本后的动作优先级，避免复制、引用、AI 和外部菜单互相遮挡。
+- [ ] T-1911 设计选区跨段落、跨列表、跨代码块和无有效文本时的行为。
+- [ ] T-1912 设计引用结果与原文位置的双向追溯展示。
+- [ ] T-1913 明确阅读笔记、批注和摘录的存储边界，先完成契约再实现。
+- [ ] T-1914 设计阅读页的窄屏、横屏、触控和软键盘适配。
+- [ ] T-1915 设计阅读页的字体、行距、宽度和主题偏好，并明确保存范围。
+- [ ] T-1916 设计阅读页进入后台、切换文档和网络变化后的加载恢复。
+- [ ] T-1917 设计阅读操作失败时的原文保留、重试和复制兜底。
+- [ ] T-1918 设计阅读完成后的下一条推荐规则，默认保持用户可控。
+- [ ] T-1919 设计从阅读页直接调整优先级、评分和状态的反馈与撤销。
+- [ ] T-1920 设计阅读页帮助入口，解释关键动作但不引入通用聊天窗。
+- [ ] T-1921 建立阅读页真实内容样本集，覆盖短文、长文、图片、表格、代码和异常字符。
+- [ ] T-1922 建立阅读页性能基线，分别测量首屏、滚动、切换和销毁时间。
+
+### AI、富化与可解释性
+
+- [ ] T-1923 建立 AI 功能能力矩阵，标注默认关闭、手动触发、批量触发和不可用条件。
+- [ ] T-1924 设计 AI 设置页中的通道、模型、密钥来源、超时和失败语义。
+- [ ] T-1925 设计 AI 功能首次启用的隐私说明、范围说明和撤回方式。
+- [ ] T-1926 设计提示词长度估算、截断提示和用户主动缩短入口。
+- [ ] T-1927 设计 AI 任务的排队、取消、超时、重试和部分结果显示。
+- [ ] T-1928 设计 AI 失败分类，包括通道不可用、权限失败、内容不足和输出无效。
+- [ ] T-1929 设计 AI 输出的来源范围、生成时间、模型信息和用户采纳状态。
+- [ ] T-1930 设计 AI 结果编辑、局部采纳、全部丢弃和重新生成流程。
+- [ ] T-1931 设计 AI 标签、摘要和关联建议与已有手填字段的合并策略。
+- [ ] T-1932 设计 AI 结果写入前的预览和差异对比，避免静默覆盖。
+- [ ] T-1933 设计 AI 通道测试的诊断信息脱敏和用户可读错误。
+- [ ] T-1934 设计自选 AI 通道的密钥读取、缺失、过期和撤销状态。
+- [ ] T-1935 设计 AI 成本、调用次数或估算信息的本地展示边界。
+- [ ] T-1936 设计相关文档建议的证据解释、关闭入口和误关联反馈。
+- [ ] T-1937 建立 AI 功能的离线降级，不影响基础列表、阅读和状态操作。
+- [ ] T-1938 建立 AI 输出安全审查清单，覆盖 HTML、Markdown、链接和异常长文本。
+- [ ] T-1939 建立 AI 功能的可重复测试样本和人工评分标准。
+
+### 复习、统计与回顾
+
+- [ ] T-1940 明确统计页每个指标的定义、时间范围、数据源和缺失数据解释。
+- [ ] T-1941 设计时区、日界线、夏令时和系统时间变化下的统计行为。
+- [ ] T-1942 设计统计页无数据、数据不足、索引过期和计算失败的状态。
+- [ ] T-1943 设计复习队列的生成、跳过、延后、完成和重新出现规则。
+- [ ] T-1944 设计复习页对“长期未读”“已读未回顾”“近期高优先级”的区分。
+- [ ] T-1945 设计复习项目排序解释，避免黑箱式推荐。
+- [ ] T-1946 设计统计结果进入具体文档列表的跳转并保留筛选上下文。
+- [ ] T-1947 设计统计报告的轻量导出或复制能力，并明确隐私边界。
+- [ ] T-1948 设计历史趋势在数据迁移、删除和重建后的连续性说明。
+- [ ] T-1949 研究可选阅读目标和提醒的非游戏化方案，先产出决策材料再实现。
+- [ ] T-1950 设计统计卡片在移动端的折叠、分页和触控交互。
+
+### 导入、快照、外部集成与恢复
+
+- [ ] T-1951 建立各导入来源的字段映射、冲突处理和数据主权检查表。
+- [ ] T-1952 设计导入前的样本预览，展示新增、更新、跳过和错误数量。
+- [ ] T-1953 设计导入任务的暂停、恢复、取消和结果保留策略。
+- [ ] T-1954 设计导入后索引更新与用户可见完成条件。
+- [ ] T-1955 设计损坏文件、编码异常、重复列和超大字段的诊断文案。
+- [ ] T-1956 建立外部来源插件兼容性验证矩阵，记录版本、端点和降级行为。
+- [ ] T-1957 设计快照列表、命名、保留、删除和恢复的用户流程。
+- [ ] T-1958 设计快照恢复前的影响预览、冲突处理和失败回滚。
+- [ ] T-1959 设计快照空间占用、清理建议和过期策略，避免未经用户同意删除。
+- [x] T-1960 设计 AV、inbox、checkin、riff 等桥接功能的独立失败边界（已由 D-0056、D-0090、D-0094、`docs/INTEGRATION-ACCEPTANCE.md` 和 `docs/AI-ACCEPTANCE.md` 承接；后续只维护真实验收样本）。
+- [ ] T-1961 设计外部集成认证失效、网络中断和限流时的重试策略。
+- [ ] T-1962 设计外部操作完成后的本地状态确认和重复提交保护。
+- [ ] T-1963 建立集成契约变更的 spike、决策和回归记录模板。
+- [ ] T-1964 设计卸载、重装、换工作区和重新启用后的数据恢复行为。
+
+### UI 原型、视觉系统与响应式设计
+
+- [ ] T-1965 补齐原型中的首次启动、候选处理、图书馆、阅读、复习和设置主路径。
+- [ ] T-1966 为每个核心组件补齐默认、悬停、聚焦、按下、禁用、加载、错误和空状态。
+- [ ] T-1967 对原型中的颜色、间距、圆角、阴影和字体建立 b3 变量映射表。
+- [ ] T-1968 审核所有新增类名是否使用 `glean-` 前缀，并建立组件命名规则。
+- [ ] T-1969 建立桌面窄宽度、平板、手机竖屏和手机横屏四档布局基线。
+- [ ] T-1970 设计移动端底部操作栏、抽屉、底部表单和全屏阅读的统一模式。
+- [ ] T-1971 完成浅色、深色、高对比度和思源主题变化下的视觉检查。
+- [ ] T-1972 建立文字对比度、焦点可见性和触控目标尺寸的人工验收表。
+- [ ] T-1973 设计减少动效模式，并检查加载、切换和反馈动画的降级行为。
+- [ ] T-1974 统一图标语义、图标尺寸、文字替代和危险操作图标使用规则。
+- [ ] T-1975 建立 UI 文案语气、长度、标点、按钮动词和错误提示规范。
+- [ ] T-1976 建立中文、英文切换后的布局溢出、截断和缺失键验收样本。
+- [ ] T-1977 为复杂表单设计键盘顺序、回车提交、Esc 取消和焦点回收。
+- [ ] T-1978 为所有弹窗设计滚动、遮罩、关闭、返回和系统返回键行为。
+- [ ] T-1979 建立可复用的空状态、加载状态、错误状态和成功反馈组件清单。
+- [ ] T-1980 设计组件在思源主题变量变化后的稳定边界，避免硬编码颜色。
+- [ ] T-1981 为原型主要页面建立可点击演示路径，供合并前产品评审使用。
+- [ ] T-1982 为每条主流程准备至少一个真实数据样本和一个异常数据样本。
+
+### 架构、数据一致性与可靠性
+
+- [ ] T-1983 复核 domain、api、services、ui 的单向依赖，登记所有边界例外。
+- [ ] T-1984 建立端点字符串、spike 证据和正式 api 封装的完整清单。
+- [ ] T-1985 建立属性写入路径审计，确认所有 `custom-clip-*` 写入均经过 clip-store。
+- [ ] T-1986 设计索引更新的幂等、事务边界和失败重试行为。
+- [ ] T-1987 设计 saveData 缺失、损坏、版本不一致和部分写入时的恢复流程。
+- [ ] T-1988 设计文档属性与派生索引不一致时的检测、提示和修复。
+- [ ] T-1989 建立文档删除、移动、重命名、复制和跨工作区变化的回归案例。
+- [ ] T-1990 建立并发写入、重复点击、快速切换和插件重载的竞态测试案例。
+- [ ] T-1991 为长任务统一 AbortController、取消原因和资源清理约定。
+- [ ] T-1992 建立错误分类、用户文案、日志级别和开发诊断信息的映射。
+- [ ] T-1993 审计本地日志与错误信息是否泄露正文、密钥或完整 URL。
+- [ ] T-1994 建立 schema 演进、旧属性、未知属性和未来字段的兼容策略。
+- [ ] T-1995 建立迁移任务的幂等、断点续跑、回滚和人工介入规则。
+- [ ] T-1996 建立可复用测试夹具，覆盖空库、脏数据、重复数据和超大数据集。
+- [ ] T-1997 建立端到端场景矩阵，覆盖桌面端、移动端、无网络和异常权限。
+- [ ] T-1998 建立首屏、列表滚动、索引重建、批量导入和阅读切换性能基线。
+- [ ] T-1999 建立包体、静态资源、启动时间和内存占用预算。
+- [ ] T-2000 完成 Markdown、HTML、链接、文件名和用户输入的安全审计。
+- [ ] T-2001 审核外部 URL 打开、重定向、协议处理和危险链接提示。
+- [ ] T-2002 建立不同思源前端环境和移动端能力的兼容性矩阵。
+- [ ] T-2003 设计开发环境下的契约 spike、测试、快照和清理脚本，减少人工误操作。
+
+### 验收、文档与合并准备
+
+- [ ] T-2004 将产品主流程逐项映射到验收清单，标注自动化、人工和真机验证方式。
+- [ ] T-2005 清理验收项中的重复表述，建立一个验收项对应一个可观察结果的规则。
+- [ ] T-2006 统一 BLOCKERS 条目格式、严重级别、复现步骤、临时规避和解除条件。
+- [ ] T-2007 建立数据异常、端点失败、AI 失败、导入失败和性能退化的排障入口。
+- [ ] T-2008 为维护者编写从问题复现到 spike、契约、实现和验收的最短操作指南。
+- [ ] T-2009 为用户编写常见问题，覆盖候选误判、索引滞后、来源失效和恢复数据。
+- [ ] T-2010 完成中英文 i18n 键集合、文案长度和上下文含义的人工审校。
+- [ ] T-2011 完成键盘导航、焦点、对比度、触控目标和读屏标签的人工可访问性审查。
+- [ ] T-2012 准备一套不含私人内容的作者验收数据集，覆盖完整主流程。
+- [ ] T-2013 准备一套极端数据集，覆盖空值、长值、重复值、异常字符和大数量。
+- [ ] T-2014 设计安装、升级、降级、卸载、重装和换工作区的手工验收脚本。
+- [ ] T-2015 建立每个分支任务的合并前检查项，包括契约、决策、测试、文档和冲突风险。
+- [ ] T-2016 建立跨分支文件冲突风险清单，优先拆分高频修改文件。
+- [ ] T-2017 为功能任务补充依赖关系、并行开发边界和合并顺序建议。
+- [ ] T-2018 为每个任务补充 Definition of Done，避免只完成代码而没有可验收结果。
+- [ ] T-2019 建立待办优先级模型，按用户价值、数据风险、合并风险和验证成本排序。
+- [ ] T-2020 合并前冻结一次产品术语、核心流程和状态机，后续变更必须留下决策记录。
+- [ ] T-2021 汇总仍未覆盖的用户场景，确保每一项都能落到具体页面、服务或验收动作。
+
+### 远期探索与候选产品方向
+
+- [ ] T-2022 研究用户自定义集合、专题库和智能队列的最小数据模型。
+- [ ] T-2023 研究基于现有属性和索引的语义搜索，并要求结果可解释、可关闭。
+- [ ] T-2024 研究来源可靠性、内容质量和重复程度的可选评分机制。
+- [ ] T-2025 研究阅读关系、引用关系和来源关系的可视化，先验证用户任务价值。
+- [ ] T-2026 研究个人知识库中的轻量关联推荐，明确与通用推荐产品的边界。
+- [ ] T-2027 研究批量规则和自动化的安全边界，默认保持手动可控。
+- [ ] T-2028 研究离线优先的备份、恢复和跨设备迁移方案，先完成威胁模型。
+- [ ] T-2029 研究插件生态接口的稳定边界，避免过早承诺未验证端点。
+- [ ] T-2030 研究可选阅读目标、回顾节奏和提醒策略，避免引入强制打卡机制。
+- [ ] T-2031 研究历史数据归档、保留和清理策略，确保删除前可理解、可撤销。
+- [ ] T-2032 将远期方向按“用户问题、最小实验、成功信号、失败退出条件”整理为探索卡片。
+- [ ] T-2033 对远期方向做一次反向审查，确认没有把插件带向云同步、通用社交或通用聊天。
+
+## 精品化调研扩展待办（T-2034 起）
+
+### 产品标准与数据对象
+
+- [ ] T-2034 将“精品插件”拆成可靠性、效率、审美、可理解性、可恢复性五个可衡量维度。
+- [ ] T-2035 为每个核心用户场景定义首次成功时间、操作步数、失败恢复率和误操作率。
+- [ ] T-2036 建立核心能力、增强能力、实验能力、明确不做能力四级目录。
+- [ ] T-2037 建立功能进入产品的门槛：契约、原型、实现、自动化验证、真机验收和失败降级。
+- [ ] T-2038 建立实验功能撤回机制，允许隐藏不成熟能力而不破坏已有数据。
+- [ ] T-2039 设计每个功能关闭后的完整性检查，确保基础收录、阅读和回顾仍可用。
+- [ ] T-2040 记录功能收益、数据副作用、维护成本和未来迁移成本。
+- [ ] T-2041 设计能力地图，解释收录、阅读、回顾、AI 和外部集成之间的关系。
+- [ ] T-2042 研究文章、网页、链接、笔记、摘录、快照和 AI 结果之间的对象关系。
+- [ ] T-2043 建立文章生命周期图，覆盖发现、候选、确认、阅读、完成、归档、删除和恢复。
+- [ ] T-2044 设计来源失效但本地正文存在、正文删除但来源仍存在等混合状态。
+- [ ] T-2045 设计文档复制、移动、重命名后的属性继承、冲突和重新识别。
+- [ ] T-2046 设计块级引用、文档级引用和外链引用的统一追溯模型。
+- [ ] T-2047 研究原始文章、重复剪藏、翻译副本和用户改写版本是否需要区分。
+- [ ] T-2048 设计文章合并前后的属性、摘录、快照和 AI 结果迁移规则。
+- [ ] T-2049 设计未知字段、未来字段和第三方字段的保留策略。
+- [ ] T-2050 研究属性被用户手工清空后的语义，确保不会自动恢复旧值。
+- [ ] T-2051 设计标题、URL、正文重剪藏后的文章身份判断。
+- [ ] T-2052 设计属性异常值分级：可自动修复、需确认、不可识别。
+- [ ] T-2053 为所有数据修复动作提供预览、执行、结果和撤销记录。
+
+### 收录与剪藏入口
+
+- [ ] T-2054 研究官方剪藏扩展不同模板版本的字段兼容性。
+- [ ] T-2055 研究浏览器扩展产生的标题、URL、正文、作者、站点和时间字段差异。
+- [ ] T-2056 研究微信公众号、知乎、少数派、Medium、Substack、GitHub、PDF 等来源特征。
+- [ ] T-2057 建立站点解析能力矩阵，区分已验证、部分支持、仅链接和不支持。
+- [ ] T-2058 设计来源站点识别失败时的手动修正流程。
+- [ ] T-2059 设计多 URL 文章的主 URL、规范 URL 和备用 URL 关系。
+- [ ] T-2060 设计跟踪参数、短链、跳转链和重定向 URL 的归一化策略。
+- [ ] T-2061 设计 URL 归一化结果展示，避免用户误以为原链接被篡改。
+- [ ] T-2062 研究网页 canonical、og:url、短链和最终 URL 的可信度排序。
+- [ ] T-2063 设计无法访问网页时仍能完成本地文档收录的流程。
+- [ ] T-2064 设计同一链接已有条目时的打开原条目、合并、继续收录和取消选择。
+- [ ] T-2065 设计多来源导入时的来源优先级和字段覆盖规则。
+- [ ] T-2066 设计拖拽文件、粘贴 URL、粘贴 Markdown、粘贴 HTML 的统一入口。
+- [ ] T-2067 研究从思源当前选中文本或当前文档快速加入读库。
+- [ ] T-2068 设计命令面板中收录当前文档、收录当前 URL、加入稍后读的差异。
+- [ ] T-2069 设计收录失败后保留原始输入，避免用户重新查找内容。
+- [ ] T-2070 设计批量收录中单项失败的再次执行入口。
+- [ ] T-2071 设计重复点击产生多个收录任务时的检测与合并。
+- [ ] T-2072 设计收录后立即进入阅读、稍后读、继续添加三种后续动作。
+
+### 候选识别与迁移
+
+- [ ] T-2073 研究候选证据的权重和组合规则。
+- [ ] T-2074 区分疑似剪藏、明确剪藏和用户手工指定三种候选来源。
+- [ ] T-2075 设计候选长期忽略后的再次发现机制。
+- [ ] T-2076 区分不是文章、暂不处理和永久排除三个语义。
+- [ ] T-2077 设计候选排除名单的查看、恢复和迁移策略。
+- [ ] T-2078 设计候选扫描的增量、全量和指定范围模式。
+- [ ] T-2079 设计扫描过程中笔记发生变化时的结果失效提示。
+- [ ] T-2080 设计候选结果按来源、笔记本、日期、证据和缺失字段分组。
+- [ ] T-2081 设计候选预览中的属性差异对比。
+- [ ] T-2082 设计迁移任务唯一 ID、状态、进度和结果保留时长。
+- [ ] T-2083 设计迁移任务中断后检测已写入项目，避免重复覆盖。
+- [ ] T-2084 设计迁移发现用户手工修改后的冲突处理。
+- [ ] T-2085 设计迁移报告的机器可读导出格式。
+- [ ] T-2086 设计迁移失败条目的复制、导出和重试。
+- [ ] T-2087 设计大库扫描的分批加载、取消和后台执行体验。
+- [ ] T-2088 设计扫描期间关闭插件、切换工作区和思源重启后的恢复。
+- [ ] T-2089 设计只查看不写入的审计模式。
+- [ ] T-2090 设计迁移前后属性快照对比。
+- [ ] T-2091 设计迁移操作的最小回滚粒度。
+
+### 图书馆与检索
+
+- [ ] T-2092 研究标题、正文、URL、站点、标签、作者、AI 标签和摘录的统一搜索体验。
+- [ ] T-2093 设计搜索语法和普通关键词搜索的区分。
+- [ ] T-2094 设计搜索结果高亮和匹配字段解释。
+- [ ] T-2095 设计搜索无结果时的建议动作。
+- [ ] T-2096 设计搜索历史的保存、清除和隐私边界。
+- [ ] T-2097 设计最近访问、最近收录、最近完成和最近修改的独立视图。
+- [ ] T-2098 设计继续阅读、未读全文、只有链接和正文待核快捷队列。
+- [ ] T-2099 设计用户自定义筛选组合的保存、重命名、复制和删除。
+- [ ] T-2100 设计筛选视图在不同画布之间的同步规则。
+- [ ] T-2101 设计列表、网格、看板三种视图的状态保持。
+- [ ] T-2102 设计大库分页、虚拟滚动、增量搜索和索引预热。
+- [ ] T-2103 设计列表中字段缺失、字段异常和字段过期的显示层级。
+- [ ] T-2104 设计长标题、长站点名和多标签的信息压缩规则。
+- [ ] T-2105 设计站点图标加载失败、禁止外链和本地缓存策略。
+- [ ] T-2106 设计文档不存在时的占位项、修复入口和清除选项。
+- [ ] T-2107 设计排序切换后的稳定顺序和分页连续性。
+- [ ] T-2108 设计批量选择跨页、跨筛选和跨视图的语义。
+- [ ] T-2109 设计选择状态在数据刷新、索引重建和状态修改后的处理。
+- [ ] T-2110 设计误操作后的单项撤销、批量撤销和撤销过期提示。
+- [ ] T-2111 设计列表与原生思源搜索结果之间的差异解释。
+
+### 阅读体验
+
+- [ ] T-2112 研究长文、短文、代码、表格、图片、公式和嵌入块的阅读体验差异。
+- [ ] T-2113 设计阅读页标题、来源、状态、优先级和评分的固定信息层级。
+- [ ] T-2114 设计阅读页窄屏、宽屏和超宽屏正文宽度策略。
+- [ ] T-2115 设计阅读页字体、行距、段距和主题偏好。
+- [ ] T-2116 设计阅读设置的全局偏好与单篇临时偏好。
+- [ ] T-2117 设计恢复上次阅读位置时的安全边界。
+- [ ] T-2118 设计正文加载慢、加载失败、内容为空和内容过期的反馈。
+- [ ] T-2119 设计图片加载失败、外链图片阻断和图片过大的降级。
+- [ ] T-2120 设计代码块、表格和数学公式的阅读模式。
+- [ ] T-2121 设计纯链接文章的来源打开前检查。
+- [ ] T-2122 设计网页来源无法访问时的本地替代入口。
+- [ ] T-2123 设计编辑模式与只读模式的切换确认。
+- [ ] T-2124 设计阅读页未保存修改、离开页面和关闭标签时的提示。
+- [ ] T-2125 设计阅读页返回读库后保持筛选、滚动和定位。
+- [ ] T-2126 设计下一篇选择规则、预览和取消。
+- [ ] T-2127 设计阅读页状态动作失败后的重试与回到列表。
+- [ ] T-2128 设计外部网页打开后无法确认阅读完成的文案。
+- [ ] T-2129 设计阅读页中摘录、复制、制卡、AI 操作的优先级。
+- [ ] T-2130 研究 TTS、选区朗读、暂停恢复和不可用时的隐藏规则。
+- [ ] T-2131 研究双语对照、翻译结果缓存和用户编辑边界。
+- [ ] T-2132 设计阅读页打印、复制全文和导出引用的边界。
+- [ ] T-2133 设计阅读页链接、脚注和思源块引用跳转。
+- [ ] T-2134 设计异常 HTML、脚本、iframe 和危险链接的安全呈现。
+
+### 摘录、引用与知识回流
+
+- [ ] T-2135 设计摘录的来源文档、块 ID、选区文本、创建时间和上下文展示。
+- [ ] T-2136 设计选区跨块、跨段落、包含图片和包含代码时的摘录行为。
+- [ ] T-2137 设计选区失效后的摘录定位和降级复制。
+- [ ] T-2138 设计摘录被原文删除后的孤儿状态。
+- [ ] T-2139 设计摘录墙中的全文搜索、站点筛选、标签筛选和时间排序。
+- [ ] T-2140 设计从摘录回到原文的精确定位失败反馈。
+- [ ] T-2141 设计引用卡片的 Markdown、纯文本和富文本复制格式。
+- [ ] T-2142 设计摘录批量导出时的标题、来源、时间和回链模板。
+- [ ] T-2143 设计摘录转普通笔记时的目标笔记本与命名。
+- [ ] T-2144 设计摘录转闪卡时的正面、背面、来源和去重。
+- [ ] T-2145 设计同一文本重复摘录的提示和保留策略。
+- [ ] T-2146 设计摘录编辑后的原文关系是否保留。
+- [ ] T-2147 设计摘录标签、用户标签和 AI 标签的边界。
+- [ ] T-2148 研究高亮颜色、来源标识和主题适配。
+- [ ] T-2149 设计摘录删除、恢复和批量清理。
+
+### 状态、优先级与评分
+
+- [ ] T-2150 建立状态机非法跳转清单与用户可见处理。
+- [ ] T-2151 设计状态动作幂等性和重复点击反馈。
+- [ ] T-2152 设计优先级的数值、文字和视觉表达统一规则。
+- [ ] T-2153 设计评分空值、零分和未评分的区别。
+- [ ] T-2154 研究状态变更历史是否需要独立持久化，先完成数据契约研究。
+- [ ] T-2155 设计阅读完成后自动进入回顾、归档或留在已读列表的选择。
+- [ ] T-2156 设计恢复归档文章时默认状态和可选状态。
+- [ ] T-2157 设计暂时不想看和永久放弃的区别。
+- [ ] T-2158 设计用户批量改状态时的条件预览。
+- [ ] T-2159 设计状态动作在索引未同步时的中间态。
+- [ ] T-2160 设计多设备或多窗口同时修改的冲突提示。
+- [ ] T-2161 设计状态变化通知是否需要，以及默认关闭策略。
+- [ ] T-2162 设计评分和优先级的快捷键、触控和可访问性操作。
+- [ ] T-2163 设计排序中评分为空值的位置。
+- [ ] T-2164 验证已读历史不因归档而丢失。
+
+### AI 能力深挖
+
+- [ ] T-2165 研究不同模型在摘要、翻译、标签、关联和结构化提取上的能力差异。
+- [ ] T-2166 建立 AI 操作输入、输出、来源和保存范围矩阵。
+- [ ] T-2167 设计 AI 结果版本、模型名、通道和时间显示。
+- [ ] T-2168 设计用户修改 AI 摘要后的来源标识。
+- [ ] T-2169 设计 AI 结果过期、重新生成和保留旧结果的规则。
+- [ ] T-2170 设计不同语言文章的摘要与标签一致性。
+- [ ] T-2171 设计长文分段、合并和上下文丢失提示。
+- [ ] T-2172 设计 AI 输出包含 Markdown、HTML、链接和脚本时的安全清洗。
+- [ ] T-2173 设计 AI 结果保存前的差异比较。
+- [ ] T-2174 设计 AI 结果撤销、删除和重新生成。
+- [ ] T-2175 设计 AI 调用失败后的分类诊断与重试。
+- [ ] T-2176 设计限额、超时、并发、速率限制和网络错误的用户提示。
+- [ ] T-2177 设计本地模型、思源密钥库和自定义通道的能力差异。
+- [ ] T-2178 设计 API 响应格式不兼容时的诊断。
+- [ ] T-2179 设计 AI 功能完全关闭时的界面收敛。
+- [ ] T-2180 设计 AI 产生的相关文档建议的解释、反馈和关闭。
+- [ ] T-2181 设计 AI 标签与用户标签的冲突提示。
+- [ ] T-2182 设计批量 AI 任务的暂停、继续、取消和部分失败结果。
+- [ ] T-2183 设计 AI 调用缓存的生命周期、清理和隐私策略。
+- [ ] T-2184 建立 AI 输出人工评分集，覆盖事实性、完整性、可读性和可操作性。
+- [ ] T-2185 研究不发送正文、仅发送选区或仅发送元数据的隐私模式。
+- [ ] T-2186 设计 AI 处理前的正文长度、敏感信息和外链提醒。
+- [ ] T-2187 设计 AI 结果中不可信事实的提示方式。
+- [ ] T-2188 设计 AI 功能的完全离线替代体验。
+
+### 统计、回顾与个人节奏
+
+- [ ] T-2189 明确收录数、完成数、归档数、未读数、等待天数和阅读时长的统计口径。
+- [ ] T-2190 研究完成时间缺失时的显示方式，避免伪精确。
+- [ ] T-2191 设计每日、每周、每月、年度视图之间的时间边界。
+- [ ] T-2192 设计跨时区、夏令时、系统时间修改和未来时间数据。
+- [ ] T-2193 设计统计数字点击后的明细列表。
+- [ ] T-2194 设计统计异常值、数据不足和索引过期提示。
+- [ ] T-2195 设计回顾页按主题、站点、作者和标签的分布。
+- [ ] T-2196 设计回顾页的空状态和低压力文案。
+- [ ] T-2197 设计阅读目标完全可选、可关闭且不制造惩罚感的方案。
+- [ ] T-2198 设计提醒的本地化、关闭、免打扰和失败降级。
+- [ ] T-2199 设计连续阅读、最长等待和完成趋势等指标是否值得保留。
+- [ ] T-2200 设计统计导出 CSV、Markdown 和 JSON 的字段边界。
+- [ ] T-2201 设计统计数据删除、重建和迁移后的历史解释。
+- [ ] T-2202 设计统计页大数据量下的计算缓存和增量更新。
+- [ ] T-2203 设计周报生成失败、内容为空和重复生成的处理。
+- [ ] T-2204 研究将统计结果写入普通思源文档时的命名与冲突。
+- [ ] T-2205 设计用户自定义统计时间范围。
+- [ ] T-2206 设计统计图表无障碍替代文本和表格视图。
+
+### 外部集成与生态
+
+- [x] T-2207 建立收集箱、AV、闪卡、打卡桥、快照和外部导入的能力矩阵（已由 `docs/CAPABILITY-MATRIX.md` 与 `docs/INTEGRATION-ACCEPTANCE.md` 承接）。
+- [ ] T-2208 研究各集成的版本探测和最低支持版本。
+- [ ] T-2209 设计集成不可用时的隐藏、禁用或说明策略。
+- [ ] T-2210 设计集成认证失效、权限不足、网络超时和限流处理。
+- [ ] T-2211 设计外部操作重复提交和幂等键。
+- [ ] T-2212 设计集成结果回写失败时的本地补偿记录。
+- [x] T-2213 设计 AV 单向投影的数据刷新、删除和重建（已由 D-0094、T-3247、`AV-01/AV-F01` 承接；反向同步未承诺）。
+- [x] T-2214 设计闪卡创建失败时的重试与重复卡检测（已由 D-0090、T-3243、`CARD-01/CARD-F01` 承接）。
+- [x] T-2215 设计打卡桥失败时不影响阅读状态（已由 D-0056、T-1505、`INT-04/INT-F07/INT-F08` 承接）。
+- [x] T-2216 设计快照生成失败、资产缺失和资产清理（已由 D-0056、T-3268、`INT-03/INT-F06/INT-F09` 承接）。
+- [ ] T-2217 研究 PDF、EPUB、RSS、Readwise、Omnivore、Pocket、Wallabag 等来源的导入差异。
+- [ ] T-2218 设计导入格式版本变化和未知字段保留。
+- [ ] T-2219 设计外部服务停止维护时的迁移方案。
+- [ ] T-2220 设计集成设置的诊断报告导出。
+- [ ] T-2221 设计外部服务产生的重复条目合并。
+- [ ] T-2222 设计跨插件动作的来源追踪。
+- [ ] T-2223 建立可选插件 API 的最小稳定接口研究。
+- [ ] T-2224 设计集成能力的开发者测试桩和隔离环境。
+- [ ] T-2225 设计无网络环境下的队列、重试和失败保留。
+
+### UI 与交互细节
+
+- [ ] T-2226 为所有按钮补充可见动词或明确 aria-label。
+- [ ] T-2227 审计所有 hover-only 操作在移动端的替代入口。
+- [ ] T-2228 审计所有图标的语义、尺寸、对比度和加载失败。
+- [ ] T-2229 设计首次进入每个页面的解释性空态。
+- [ ] T-2230 统一加载、空、错误、部分成功和完全成功五种反馈。
+- [ ] T-2231 设计批量操作浮条在窄屏和键盘焦点下的行为。
+- [ ] T-2232 设计弹窗多层打开、返回和 Esc 关闭规则。
+- [ ] T-2233 设计系统返回键、浏览器返回和思源返回的统一处理。
+- [ ] T-2234 设计焦点恢复到触发按钮、列表项或原文位置。
+- [ ] T-2235 设计长列表滚动位置记忆和清理条件。
+- [ ] T-2236 设计操作反馈的持续时间、可关闭性和重复消息合并。
+- [ ] T-2237 设计危险操作确认内容，明确影响数量与可撤销性。
+- [ ] T-2238 设计撤销成功、部分撤销和撤销失败文案。
+- [ ] T-2239 设计窄 Dock 中筛选器的滚动、折叠和返回。
+- [ ] T-2240 设计移动端底部操作 sheet 的安全区域和键盘避让。
+- [ ] T-2241 设计宽 Tab 中 rail、主区和伴生栏的最小宽度。
+- [ ] T-2242 设计高对比度、缩放字体和系统字体变化。
+- [ ] T-2243 设计减少动效模式下的状态变化反馈。
+- [ ] T-2244 设计主题切换期间的颜色过渡和闪烁避免。
+- [ ] T-2245 设计国际化长文本、复数、日期、数字和 RTL 预留。
+- [ ] T-2246 设计空标题、特殊字符、emoji 和多语言站点名。
+- [ ] T-2247 设计屏幕阅读器对状态、计数、按钮和进度的朗读顺序。
+- [ ] T-2248 建立组件视觉回归截图基线。
+- [ ] T-2249 建立原型与实际实现之间的逐帧验收表。
+- [ ] T-2250 设计功能不可用时的平静说明，避免显示假按钮。
+- [ ] T-2251 设计用户首次完成主流程后的轻量反馈入口。
+
+### 工程质量与性能
+
+- [ ] T-2252 建立所有服务方法的输入、输出、异常和副作用清单。
+- [ ] T-2253 建立端点调用的超时、取消和重试统一策略。
+- [ ] T-2254 统一错误对象、错误码和用户文案映射。
+- [ ] T-2255 审计所有异步任务的并发上限和清理逻辑。
+- [ ] T-2256 审计插件卸载、重载和销毁时的事件监听器。
+- [ ] T-2257 审计 Protyle 实例、定时器、订阅和 DOM 节点泄漏。
+- [ ] T-2258 建立索引重建的进度、取消、失败和恢复协议。
+- [ ] T-2259 建立 100、1,000、10,000、50,000 篇文章的测试数据。
+- [ ] T-2260 建立导入 1 万条记录的内存和耗时预算。
+- [ ] T-2261 建立 AI 队列、快照生成和批量状态修改的压力测试。
+- [ ] T-2262 建立包体大小、启动耗时和首屏渲染预算。
+- [ ] T-2263 建立浏览器、桌面端、移动端和低性能设备矩阵。
+- [ ] T-2264 审计 Markdown、HTML、URL、文件名和属性值的注入风险。
+- [ ] T-2265 审计外部网页打开和重定向风险。
+- [ ] T-2266 审计日志是否泄露正文、URL、密钥或个人标签。
+- [ ] T-2267 设计本地调试日志开关和一键脱敏导出。
+- [ ] T-2268 建立数据损坏检测、备份和恢复演练。
+- [ ] T-2269 建立升级前后 schema、索引和设置兼容测试。
+- [ ] T-2270 建立随机数据、模糊输入和属性异常的 property-based 测试。
+- [ ] T-2271 建立服务层、UI 层和隔离内核 E2E 的测试边界。
+- [ ] T-2272 为每个 P0/P1 功能补充失败路径测试。
+- [ ] T-2273 建立并行分支修改高频文件的冲突拆分策略。
+- [ ] T-2274 建立代码所有权、审查责任和高风险文件清单。
+- [ ] T-2275 建立合并前自动检查：契约、i18n、架构、测试、文档和未跟踪文件。
+- [ ] T-2276 建立真实思源版本兼容性回归矩阵。
+- [ ] T-2277 设计开发环境与作者工作区隔离方案。
+- [ ] T-2278 设计测试数据一键创建、清理和重置脚本。
+- [ ] T-2279 设计测试失败后的最小复现包。
+
+### 用户支持与维护
+
+- [ ] T-2280 编写候选误判、索引滞后、导入失败、正文缺失和 AI 失败的排障指南。
+- [ ] T-2281 建立用户反馈模板，收集插件版本、思源版本、平台和脱敏错误信息。
+- [ ] T-2282 设计用户主动导出诊断包的流程。
+- [ ] T-2283 设计诊断包字段白名单和正文、密钥、URL 脱敏。
+- [ ] T-2284 设计崩溃或异常后的恢复提示。
+- [ ] T-2285 设计插件更新后新功能和行为变化的说明入口。
+- [ ] T-2286 设计实验功能变更和移除的提示。
+- [ ] T-2287 建立常见问题与实际 UI 文案同步检查。
+- [ ] T-2288 建立中英文帮助文档同步检查。
+- [ ] T-2289 设计新用户教程与熟练用户快捷入口的分层。
+- [ ] T-2290 设计重新查看入门入口。
+- [ ] T-2291 设计用户反馈分类统计，但默认不上传数据。
+- [ ] T-2292 设计离线反馈保存与用户主动复制。
+- [ ] T-2293 建立社区问题复现所需的最小信息清单。
+- [ ] T-2294 设计数据导出后用户可读的格式说明。
+- [ ] T-2295 设计卸载前数据保留提醒和属性清理说明。
+- [ ] T-2296 设计迁移失败后的人工修复指导。
+- [ ] T-2297 设计旧版本遗留属性的诊断与清理建议。
+- [ ] T-2298 验证插件停用后用户仍能访问原文和属性。
+
+### 远期高价值探索
+
+- [ ] T-2299 研究用户自定义阅读工作流和智能队列。
+- [ ] T-2300 研究基于规则的本地自动化，并设计预览、模拟和撤销。
+- [ ] T-2301 研究文章主题、来源、作者和摘录的关系图，先验证具体用户任务。
+- [ ] T-2302 研究语义搜索的本地索引、解释和隐私边界。
+- [ ] T-2303 研究文章质量、来源可靠性和重复程度的辅助提示。
+- [ ] T-2304 研究用户可选的主题集合和专题阅读空间。
+- [ ] T-2305 研究长期未读内容的温和清理建议。
+- [ ] T-2306 研究个人阅读节奏分析，避免游戏化和强制目标。
+- [ ] T-2307 研究跨工作区导出、导入和冲突解决。
+- [ ] T-2308 研究完全离线运行的摘要和关键词提取。
+- [ ] T-2309 研究高亮、摘录和文章之间的知识回流路径。
+- [ ] T-2310 研究文章完成后的复盘模板。
+- [ ] T-2311 研究基于用户明确反馈改进候选判断的本地规则。
+- [ ] T-2312 研究无需云端的内容相似度计算。
+- [ ] T-2313 研究多语言文章的统一搜索和标签规范化。
+- [ ] T-2314 研究 PDF/EPUB 阅读载体的边界，先完成可行性验证。
+- [ ] T-2315 研究音频朗读、播客转录和来源追溯。
+- [ ] T-2316 研究文章版本更新检测，先明确隐私与网络边界。
+- [ ] T-2317 研究来源站点失效后的快照与归档策略。
+- [ ] T-2318 研究面向维护者的插件扩展 API。
+- [ ] T-2319 研究用户自定义字段的安全扩展方式。
+- [ ] T-2320 研究插件间共享数据的最小契约。
+- [ ] T-2321 对所有远期方向增加用户问题、最小实验、成功信号和退出条件。
+
+## 第三轮精品化、Bug 与 AI 扩展待办（T-2322 起）
+
+### Bug 发现与缺陷治理
+
+- [ ] T-2322 建立 Bug 严重度、影响范围、可复现性、数据风险和修复优先级标准。
+- [ ] T-2323 建立 Bug 模板，要求记录环境、思源版本、前端类型、操作步骤、期望和实际结果。
+- [ ] T-2324 建立无法复现问题的诊断包流程，默认脱敏并由用户主动导出。
+- [ ] T-2325 建立回归 Bug 清单，按收录、迁移、状态、阅读、AI、索引和移动端分类。
+- [ ] T-2326 审计所有按钮重复点击导致的重复写入、重复请求和重复通知。
+- [ ] T-2327 审计异步响应晚于组件销毁后的状态更新和错误提示。
+- [ ] T-2328 审计页面切换时旧请求覆盖新请求结果的竞态。
+- [ ] T-2329 审计快速筛选、排序、分页时列表闪回、跳动和选择丢失。
+- [ ] T-2330 审计批量操作中部分成功后计数、状态和撤销行为。
+- [ ] T-2331 审计网络断开、恢复和代理变化后的请求重试。
+- [ ] T-2332 审计思源重载、工作区切换和插件重新启用后的订阅清理。
+- [ ] T-2333 审计 Dock、Tab、浮窗三种容器的宽度、滚动和焦点差异。
+- [ ] T-2334 审计手机旋转、软键盘弹出、系统返回和前后台切换。
+- [ ] T-2335 审计深色主题、系统高对比度和缩放字体下的文字溢出。
+- [ ] T-2336 审计中英文切换后按钮、表格、标签和错误提示的布局溢出。
+- [ ] T-2337 审计空标题、超长标题、零宽字符、emoji 和 HTML 实体。
+- [ ] T-2338 审计 URL 为空、非法、带空格、带认证信息和超长参数。
+- [ ] T-2339 审计日期为空、未来日期、非法日期、时区变化和毫秒精度差异。
+- [ ] T-2340 审计属性为数组、对象、旧枚举、未知枚举和错误 JSON 时的降级。
+- [ ] T-2341 审计文档被删除、移动、重命名、复制和跨笔记本移动后的索引。
+- [ ] T-2342 审计索引文件为空、截断、重复、字段缺失和版本未知。
+- [ ] T-2343 审计 saveData 写入失败、并发写入和磁盘空间不足。
+- [ ] T-2344 审计 Protyle 初始化失败、重复初始化、销毁失败和宿主节点消失。
+- [ ] T-2345 审计 iframe、图片、外链和不可信 HTML 的加载错误。
+- [ ] T-2346 审计 AI 响应为空、流式中断、格式错误、超长和包含非法标记。
+- [ ] T-2347 审计导入文件编码、BOM、换行、重复列、空行和超大单元格。
+- [ ] T-2348 审计取消操作后仍继续写入文档或索引的情况。
+- [ ] T-2349 为每个已修复 Bug 增加最小回归案例，避免只验证正常路径。
+- [ ] T-2350 建立线上用户反馈与本地测试用例的映射，避免重复漏修。
+
+### 数据一致性、迁移与恢复 Bug
+
+- [ ] T-2351 建立文档属性、派生索引、缓存、快照和 UI 状态的一致性关系图。
+- [ ] T-2352 设计属性写入成功但索引更新失败的恢复流程。
+- [ ] T-2353 设计索引更新成功但属性写入失败的回滚或重建流程。
+- [ ] T-2354 设计批量写入中断后逐条核验实际结果。
+- [ ] T-2355 设计用户手工修改属性与插件后台任务同时执行时的冲突处理。
+- [ ] T-2356 设计迁移任务重复启动、重复恢复和重复完成的幂等验证。
+- [ ] T-2357 设计迁移期间新剪藏进入时的队列隔离。
+- [ ] T-2358 设计迁移完成后新增属性、旧属性和未知属性的报告。
+- [ ] T-2359 设计旧版本索引升级失败时的只读保护。
+- [ ] T-2360 设计数据修复前后文档属性差异的可读对比。
+- [ ] T-2361 设计数据修复只改插件管理字段、不碰手填字段的黑盒验证。
+- [ ] T-2362 设计删除索引后从文档属性重建的进度和结果。
+- [ ] T-2363 设计快照恢复后索引、缓存和 UI 刷新的完整顺序。
+- [ ] T-2364 设计快照部分损坏时的逐项恢复和跳过策略。
+- [ ] T-2365 设计导出数据的校验和、版本号和完整性检查。
+- [ ] T-2366 设计导入导出往返测试，确保字段、中文、换行和链接不丢失。
+- [ ] T-2367 设计工作区路径变化、临时目录变化和权限变化后的数据定位。
+- [ ] T-2368 设计文档复制后的“原条目/新条目”判定和用户确认。
+- [ ] T-2369 设计多窗口同时处理同一条目的最后写入与提示规则。
+- [ ] T-2370 建立损坏数据的最小样本库，覆盖真实历史问题。
+
+### AI 工作流与智能辅助
+
+- [ ] T-2371 设计 AI 任务总览页，展示排队、运行、完成、失败、取消和待确认。
+- [ ] T-2372 设计 AI 任务按文档、选区、标签、批量和自动建议分类。
+- [ ] T-2373 设计 AI 任务的输入快照，明确生成时使用了哪些正文和属性。
+- [ ] T-2374 设计 AI 任务的输出快照、模型、通道、时间和提示版本。
+- [ ] T-2375 设计提示词模板版本升级后的兼容、重跑和结果保留。
+- [ ] T-2376 设计用户自定义提示词的变量、预览、验证和恢复默认。
+- [ ] T-2377 设计提示词中正文、选区、标题、标签和来源字段的显式开关。
+- [ ] T-2378 设计 AI 发送前的敏感词、密钥、邮箱、电话和身份信息提示。
+- [ ] T-2379 设计用户选择“继续发送”“缩小范围”“取消发送”的三分支。
+- [ ] T-2380 设计 AI 结果中引用依据缺失时的明确提示。
+- [ ] T-2381 设计 AI 结果与原文矛盾时的事实核验入口。
+- [ ] T-2382 设计 AI 结果中的不确定性、推测和事实的视觉区分。
+- [ ] T-2383 设计 AI 摘要的章节级折叠、展开和局部重生成。
+- [ ] T-2384 设计 AI 翻译的段落对齐、原文复制和译文编辑。
+- [ ] T-2385 设计 AI 术语解释的上下文、来源和关闭。
+- [ ] T-2386 设计 AI 反向提问的范围限制，不演变为通用聊天。
+- [ ] T-2387 设计 AI 生成阅读问题、复习题和闪卡的人工确认流程。
+- [ ] T-2388 设计 AI 从高亮生成“主张—证据—来源”结构化卡片。
+- [ ] T-2389 设计 AI 从多篇文章生成主题聚合前的去重和来源列表。
+- [ ] T-2390 设计 AI 相关文档建议的共同证据、相似段落和误关联反馈。
+- [ ] T-2391 设计 AI 自动标签的候选、置信度、接受和拒绝。
+- [ ] T-2392 设计 AI 自动提取作者、日期、站点和主题的字段预览。
+- [ ] T-2393 设计 AI 结构化输出校验失败后的原始结果保留。
+- [ ] T-2394 设计 AI 生成 Markdown、表格和链接的安全净化。
+- [ ] T-2395 设计 AI 生成内容写入前的目标文档、插入位置和冲突提示。
+- [ ] T-2396 设计 AI 生成失败时的局部重试，不重复消耗已成功结果。
+- [ ] T-2397 设计 AI 批量任务按优先级、并发和用户取消的调度。
+- [ ] T-2398 设计 AI 任务暂停后恢复时的正文和提示版本校验。
+- [ ] T-2399 设计 AI 结果的比较视图，支持旧结果、新结果和原文并排。
+- [ ] T-2400 设计 AI 结果的用户评分、纠错、采纳和撤回记录。
+- [ ] T-2401 设计 AI 功能对无网络、无密钥、配额耗尽和模型下线的降级。
+- [ ] T-2402 研究本地小模型做标题、关键词、重复检测和敏感信息识别的可行性。
+- [ ] T-2403 研究本地嵌入模型做相似内容检索的磁盘、内存和隐私代价。
+- [ ] T-2404 研究 AI 生成内容的缓存命中、失效和用户清理策略。
+- [ ] T-2405 建立 AI 质量评测集，覆盖中文、英文、混合语言、代码和表格。
+- [ ] T-2406 建立 AI 幻觉、遗漏、错引、格式破坏和隐私泄露的专项测试。
+- [ ] T-2407 建立不同模型、通道和提示版本的可比较评测报告。
+- [ ] T-2408 设计 AI 预算控制：单次、每日、批量和工作区级上限。
+- [ ] T-2409 设计 AI 调用统计的本地化、脱敏和不上传原则。
+- [ ] T-2410 设计 AI 全部关闭时的替代动作和入口隐藏。
+
+### 智能 Bug 辅助与开发工具
+
+- [ ] T-2411 研究用 AI 自动归类 Bug，但必须保留人工确认和原始描述。
+- [ ] T-2412 研究用 AI 从错误日志提取复现步骤和环境摘要，默认脱敏。
+- [ ] T-2413 研究用 AI 从代码变更生成回归测试候选，必须人工审查。
+- [ ] T-2414 研究用 AI 对 TODO 做重复项、依赖和风险提示，不自动改编号。
+- [ ] T-2415 设计开发者诊断助手，能解释索引状态、属性状态和任务队列。
+- [ ] T-2416 设计诊断助手的只读权限和禁止修改范围。
+- [ ] T-2417 设计诊断助手输出的证据链接，避免只给结论。
+- [ ] T-2418 设计错误信息到用户行动建议的规则库。
+- [ ] T-2419 设计开发模式下的请求、缓存、订阅和任务时间线。
+- [ ] T-2420 设计一键复制脱敏诊断上下文，方便作者复现问题。
+- [ ] T-2421 设计测试数据生成器，可生成空库、脏库、重复库和大库。
+- [ ] T-2422 设计测试数据销毁确认和工作区隔离。
+- [ ] T-2423 设计端点 spike 记录自动关联到契约和任务。
+- [ ] T-2424 设计架构守门失败时的依赖图提示。
+- [ ] T-2425 设计 i18n 缺键、未使用键和参数不匹配报告。
+
+### 全键盘、触控与可访问性
+
+- [ ] T-2426 建立命令面板完整命令表，覆盖收录、搜索、筛选、状态和阅读。
+- [ ] T-2427 设计快捷键冲突检测、重置和平台差异。
+- [ ] T-2428 设计 Vim 风格浏览快捷键是否作为可选模式。
+- [ ] T-2429 设计键盘焦点在列表、预览、弹窗和阅读器之间的移动规则。
+- [ ] T-2430 设计键盘完成批量选择、状态变更和撤销的闭环。
+- [ ] T-2431 设计屏幕阅读器对文章标题、状态、计数、进度和错误的朗读顺序。
+- [ ] T-2432 设计动态列表新增、删除和排序变化的 aria-live 策略。
+- [ ] T-2433 设计高亮颜色不依赖颜色本身，增加文字或图标语义。
+- [ ] T-2434 设计焦点环、禁用状态、悬停状态在主题变化下的可见性。
+- [ ] T-2435 设计触控滑动、长按、双击和拖动的冲突处理。
+- [ ] T-2436 设计移动端批量选择、批量动作和返回手势。
+- [ ] T-2437 设计大字体、系统缩放和横屏下的操作顺序。
+- [ ] T-2438 设计低视力用户的高对比度和减少信息密度模式。
+- [ ] T-2439 设计认知负担较低的首次启动、错误和恢复文案。
+- [ ] T-2440 建立键盘-only、屏幕阅读器、触控和高对比度四套人工验收脚本。
+
+### 跨端、主题与宿主环境
+
+- [ ] T-2441 建立 Windows、macOS、Linux、Android、iOS 和 Web 前端能力矩阵。
+- [ ] T-2442 建立思源不同版本、主题和前端模式的兼容性矩阵。
+- [ ] T-2443 审计宿主 CSS 变量覆盖、字体、滚动条和 z-index 冲突。
+- [ ] T-2444 审计插件样式是否污染思源宿主，反向验证宿主样式是否污染插件。
+- [ ] T-2445 设计主题切换时组件状态、弹窗和 Protyle 的刷新顺序。
+- [ ] T-2446 设计系统字体、字号、DPI 和缩放变化后的布局。
+- [ ] T-2447 设计低性能设备下的动画、图片和预览降级。
+- [ ] T-2448 设计触控设备无 hover 时的完整操作路径。
+- [ ] T-2449 设计系统返回键、浏览器返回和工作区返回的优先级。
+- [ ] T-2450 设计外部链接、文件链接和深链接在不同前端的打开方式。
+- [ ] T-2451 设计移动端横竖屏切换时的阅读位置和弹窗恢复。
+- [ ] T-2452 设计后台恢复后任务、索引和 UI 数据刷新。
+- [ ] T-2453 设计多显示器、窗口缩放和浮窗移动后的尺寸记忆。
+- [ ] T-2454 设计高 DPI 下图标、分隔线和截图导出的清晰度。
+- [ ] T-2455 建立跨平台截图基准和人工差异记录。
+
+### 用户引导、反馈与长期留存
+
+- [ ] T-2456 设计五分钟内完成第一次收录、整理和阅读的引导脚本。
+- [ ] T-2457 设计已有大量数据用户的快速扫描和风险说明。
+- [ ] T-2458 设计用户跳过引导后的重新进入入口。
+- [ ] T-2459 设计首次出现 AI、候选、复习、快照和外部集成时的就地说明。
+- [ ] T-2460 设计功能提示频率、按日静默和永久关闭策略。
+- [ ] T-2461 设计首次成功后的反馈邀请，不打断用户主流程。
+- [ ] T-2462 设计用户反馈中附加当前页面、动作和错误上下文的可选功能。
+- [ ] T-2463 设计用户反馈完全离线保存和复制。
+- [ ] T-2464 设计长期未使用功能的温和提示和关闭入口。
+- [ ] T-2465 设计版本升级后的行为变化、数据迁移和新功能说明。
+- [ ] T-2466 设计实验功能退出时的数据、设置和替代路径说明。
+- [ ] T-2467 设计用户离开插件前的未完成任务、待处理候选和错误提示。
+- [ ] T-2468 设计工作区级欢迎页和个人化空态。
+- [ ] T-2469 设计不上传数据前提下的使用统计自查看。
+- [ ] T-2470 设计帮助中心按任务而非按内部模块组织。
+
+### 安全、隐私和可信 AI
+
+- [ ] T-2471 建立正文、属性、索引、缓存、日志、快照、AI 请求和密钥引用的数据分类。
+- [ ] T-2472 为每类数据定义读取者、写入者、保存位置、保留时间和清理方式。
+- [ ] T-2473 审计所有日志、错误、诊断和 AI 请求的敏感内容泄露风险。
+- [ ] T-2474 设计用户查看、清除和导出插件派生数据的入口。
+- [ ] T-2475 设计清除缓存、清除索引、清除 AI 结果和保留文档属性的独立选项。
+- [ ] T-2476 设计密钥只读、最小权限、失效提示和不落盘验证。
+- [ ] T-2477 设计不可信 Markdown、HTML、SVG、图片和文件名的安全渲染。
+- [ ] T-2478 设计导入文件路径穿越、恶意压缩包和超大内容防护。
+- [ ] T-2479 设计备份、导出和诊断包的脱敏级别选择。
+- [ ] T-2480 设计共享工作区中的权限和数据泄露边界。
+- [ ] T-2481 设计用户删除数据后索引、缓存、快照和 AI 结果清理验证。
+- [ ] T-2482 设计隐私模式，暂时关闭日志、外部请求和推荐。
+- [ ] T-2483 建立 XSS、链接注入、路径注入、恶意元数据和提示词注入样本。
+- [ ] T-2484 设计 AI 提示词注入检测、来源隔离和用户确认。
+- [ ] T-2485 设计 AI 不能访问隐藏文档、密钥和无关工作区的权限测试。
+- [ ] T-2486 设计 AI 结果中的外部链接和指令内容的安全提示。
+- [ ] T-2487 建立可信 AI 说明：来源、局限、错误反馈和人工确认。
+- [ ] T-2488 设计 AI 生成内容的删除、导出和审计记录。
+- [ ] T-2489 建立安全回归测试和修复后的重复验证。
+
+### 产品运营与合并准备
+
+- [ ] T-2490 为全部待办增加用户价值、数据风险、实现成本、验证成本和依赖字段。
+- [ ] T-2491 将待办按 P0 核心闭环、P1 精品体验、P2 增强能力、P3 探索方向分层。
+- [ ] T-2492 建立“本轮只做一个核心结果”的分支任务拆分模板。
+- [ ] T-2493 建立高频冲突文件与低冲突文件的开发分工策略。
+- [ ] T-2494 建立每个功能的契约、决策、代码、测试、UI、验收和 blocker 链接。
+- [ ] T-2495 建立任务完成后必须更新的验证证据格式。
+- [ ] T-2496 建立任务取消、延期、拆分、替换和归档原因。
+- [ ] T-2497 建立重复待办扫描和编号冲突检查。
+- [ ] T-2498 建立受保护文件变更检测，防止误修改版本、CHANGELOG、徽章、PROGRESS、ROADMAP 和 HANDOFF。
+- [ ] T-2499 建立禁止任务区间检查，防止误触 T-1740–T-1827。
+- [ ] T-2500 建立未跟踪文件、临时产物和敏感文件提交前检查。
+- [ ] T-2501 建立分支推送前的工作区、远端、提交、测试和差异审查。
+- [ ] T-2502 建立合并前的冲突模拟、关键流程回归和作者真机验收计划。
+- [ ] T-2503 建立发布后首周问题收集、回滚判断和快速修复流程。
+- [ ] T-2504 建立用户价值复盘，避免只按新增功能数量评价进展。
+- [ ] T-2505 对 T-2322–T-2504 进行依赖、重复、优先级和可执行性二次整理。
+
+## 自上而下的全局产品重构待办（T-2506 起）
+
+### 1. 产品使命、品类与长期方向
+
+- [ ] T-2506 用一句话定义插件解决的核心问题，并验证用户是否能在十秒内复述。
+- [ ] T-2507 用“发现—收录—整理—阅读—理解—回流—回顾”定义完整产品闭环。
+- [ ] T-2508 明确插件属于个人阅读工作台、剪藏整理器、知识回流工具的交集与边界。
+- [ ] T-2509 建立竞品地图，比较小驴拾遗与 Readwise Reader、Zotero、Obsidian、Omnivore、Pocket 的差异。
+- [ ] T-2510 建立“最值得被选择的三件事”清单，所有新功能必须能关联其中至少一件。
+- [ ] T-2511 建立明确不做清单，防止产品滑向 RSS 平台、云同步平台或通用聊天应用。
+- [ ] T-2512 将精品标准拆成产品价值、数据可信、操作高效、视觉克制、故障可恢复五个一级指标。
+- [ ] T-2513 为一级指标定义可观察的验收证据和失败阈值。
+- [ ] T-2514 建立核心能力、增强能力、实验能力、废弃能力四级产品地图。
+- [ ] T-2515 为每项能力标注用户收益、数据影响、维护成本、学习成本和迁移成本。
+- [ ] T-2516 设计产品北极星指标，但禁止用功能数量、调用次数或连续打卡代替用户价值。
+- [ ] T-2517 设计首次成功、重复成功、长期成功三层用户结果指标。
+- [ ] T-2518 为个人用户、研究用户、内容重度用户和移动用户分别定义成功路径。
+- [ ] T-2519 设计产品定位的中英文表达，保证名称、描述和界面术语一致。
+- [ ] T-2520 设计插件能力地图的可视化，帮助用户理解各模块如何协作。
+- [ ] T-2521 评估“拾遗”品牌中的发现、保存、回顾和珍惜含义是否贯穿体验。
+- [ ] T-2522 建立产品反目标清单，防止为了功能丰富牺牲主流程的平静和清晰。
+- [ ] T-2523 建立重大方向评审模板：用户问题、证据、最小方案、风险、退出条件。
+- [ ] T-2524 每个里程碑完成后进行一次产品方向复盘，不以代码量作为完成标准。
+
+### 2. 信息架构与导航体系
+
+- [ ] T-2525 建立从全局首页、工作台、收件箱、图书馆、阅读器、摘录库、回顾页到设置的信息架构。
+- [ ] T-2526 明确一级导航和二级导航的数量上限，避免把所有能力堆进侧栏。
+- [ ] T-2527 设计首页的默认信息层级：继续阅读、待处理、近期收录、回顾和系统状态。
+- [ ] T-2528 设计用户可自定义首页卡片、顺序、隐藏和恢复默认。
+- [ ] T-2529 研究 Readwise 的保存过滤视图与 Zotero 智能搜索，设计本地保存视图的统一概念。
+- [ ] T-2530 设计导航中“库”“队列”“视图”“项目”“设置”的语义边界。
+- [ ] T-2531 设计当前上下文面包屑，明确用户正在处理哪个来源、视图和筛选。
+- [ ] T-2532 设计从任何详情页返回时保留列表筛选、滚动和选择。
+- [ ] T-2533 设计深链接和命令面板进入页面后的上下文恢复。
+- [ ] T-2534 设计导航项的数量徽标、未读提示和错误提示，避免通知泛滥。
+- [ ] T-2535 设计移动端底部导航与桌面端侧栏的语义对应。
+- [ ] T-2536 设计宽画布 rail、主区、伴生栏的职责边界和最小宽度。
+- [ ] T-2537 设计窄 Dock 下的优先内容、收起内容和转为全屏的规则。
+- [ ] T-2538 设计页面切换动画、加载占位和错误恢复的统一节奏。
+- [ ] T-2539 设计导航项在功能关闭、宿主能力不足和集成不可用时的隐藏规则。
+- [ ] T-2540 建立导航可达性矩阵，确保所有核心任务最多三次进入操作。
+- [ ] T-2541 设计全局搜索与页面内查找的入口、快捷键和反馈区别。
+- [ ] T-2542 设计“最近打开”“最近处理”“待恢复任务”的统一入口。
+- [ ] T-2543 设计用户迷路时的返回首页、查看上下文和恢复上一步。
+- [ ] T-2544 设计导航体系的首次使用教程和高级用户快捷方式。
+
+### 3. 内容对象与生命周期
+
+- [ ] T-2545 建立内容对象模型：来源、文章、文档、快照、正文、摘录、笔记、标签、AI 结果。
+- [ ] T-2546 明确每个对象的唯一标识、创建时间、修改时间、来源和生命周期。
+- [ ] T-2547 建立对象之间的关系图：来源到文章、文章到文档、文章到摘录、摘录到笔记。
+- [ ] T-2548 设计原始内容、用户修改内容和系统派生内容的边界。
+- [ ] T-2549 设计网页来源、思源文档、本地文件、PDF、EPUB 和纯链接的统一抽象。
+- [ ] T-2550 设计内容载体变化后的身份保持、迁移和回链。
+- [ ] T-2551 设计文章被重新剪藏、正文更新、来源失效和本地快照保留的状态。
+- [ ] T-2552 设计文档复制后是否继承剪藏身份、摘录关系和阅读进度。
+- [ ] T-2553 设计跨工作区复制、导出、导入和冲突解决。
+- [ ] T-2554 设计对象删除、软删除、归档、恢复和永久清理的区别。
+- [ ] T-2555 设计孤儿摘录、孤儿快照、孤儿 AI 结果和孤儿索引的处理。
+- [ ] T-2556 设计对象合并前后的属性、来源、标签、摘录和历史。
+- [ ] T-2557 设计对象拆分时的继承、复制和新身份确认。
+- [ ] T-2558 设计未知对象类型的只读展示和未来兼容。
+- [ ] T-2559 设计对象状态的可解释历史，不要求用户理解内部实现。
+- [ ] T-2560 为对象生命周期每个阶段定义用户可见动作和不可见派生动作。
+- [ ] T-2561 建立对象模型对 DATA-CONTRACT、schema 和 index-store 的映射。
+- [ ] T-2562 建立对象模型的空值、异常值、超长值和未来字段测试集。
+- [ ] T-2563 设计对象关系查询的性能和索引策略。
+- [ ] T-2564 设计对象关系损坏时的检测、修复和只读保护。
+
+### 4. 收录、候选、整理和处理队列
+
+- [ ] T-2565 把收录、候选、迁移、补证、修复和 AI 建议统一抽象为可观察任务队列。
+- [ ] T-2566 设计任务队列中的优先级、状态、进度、取消、重试和结果保留。
+- [ ] T-2567 设计任务队列与用户当前操作的关系，避免后台任务夺走注意力。
+- [ ] T-2568 设计收录入口的统一确认页，展示来源、正文、字段和将要写入的位置。
+- [ ] T-2569 设计来源可信度、正文可用性、重复风险和字段完整度评分。
+- [ ] T-2570 设计候选列表中的“为什么出现”“为什么推荐处理”“可以怎么处理”。
+- [ ] T-2571 设计批量处理的模拟模式，先展示预计影响再执行。
+- [ ] T-2572 设计任务中途发生文档变化时的重新确认。
+- [ ] T-2573 设计任务队列中的单项失败、批次失败、全部失败和部分成功。
+- [ ] T-2574 设计任务结果可复制、可导出、可回看和可撤销。
+- [ ] T-2575 设计任务队列空态、加载态、暂停态、错误态和完成态。
+- [ ] T-2576 设计用户暂停所有后台任务、只保留核心同步和恢复默认。
+- [ ] T-2577 设计任务队列的隐私模式，禁止外部请求和 AI 调用。
+- [ ] T-2578 设计大批量任务的资源预算、分片和后台让步。
+- [ ] T-2579 设计任务恢复时检查数据版本、文档版本和契约版本。
+- [ ] T-2580 设计任务失败后的下一步建议，避免只显示错误码。
+- [ ] T-2581 建立各任务类型的可观测事件，不记录正文和敏感字段。
+- [ ] T-2582 设计任务队列与 BLOCKERS、诊断包和作者验收的关联。
+- [ ] T-2583 建立任务队列压力测试和断电、重载、切换工作区恢复测试。
+- [ ] T-2584 设计处理队列的长期维护和历史清理策略。
+
+### 5. 检索、视图与知识发现
+
+- [ ] T-2585 设计普通搜索、字段搜索、查询语法、保存视图和智能推荐的层级关系。
+- [ ] T-2586 设计搜索与筛选结果的匹配字段、排序原因和结果数量解释。
+- [ ] T-2587 设计标题、正文、来源、作者、标签、摘录和 AI 结果的可选搜索范围。
+- [ ] T-2588 设计查询语法中的状态、时间、来源、载体、进度、标签和是否有摘录。
+- [ ] T-2589 设计查询语法补全、错误定位、示例和自然语言转查询的可选研究。
+- [ ] T-2590 设计保存视图的命名、图标、查询、布局、排序、分组和置顶。
+- [ ] T-2591 设计保存视图删除、恢复、复制和导出。
+- [ ] T-2592 设计视图之间的嵌套、分组和拆分，避免形成难以理解的层级。
+- [ ] T-2593 设计列表、表格、卡片、看板和摘录流的统一字段系统。
+- [ ] T-2594 设计不同视图对同一条目操作的一致性。
+- [ ] T-2595 设计视图的空状态与查询诊断。
+- [ ] T-2596 设计大库搜索索引、增量更新、索引预热和取消重建。
+- [ ] T-2597 设计站点、作者、标签和主题的关联浏览。
+- [ ] T-2598 设计相似文章、重复文章和相关摘录的解释。
+- [ ] T-2599 设计本地轻量关系图，突出可行动关系而非纯展示。
+- [ ] T-2600 设计关系图筛选、隐藏孤儿、限制范围和返回原列表。
+- [ ] T-2601 设计搜索结果的键盘浏览、批量选择和快速动作。
+- [ ] T-2602 设计移动端搜索历史、筛选抽屉和保存视图入口。
+- [ ] T-2603 设计搜索结果加载失败、索引过期和部分结果的平静反馈。
+- [ ] T-2604 建立检索质量测试集，覆盖中文、英文、混合语言、符号和长文。
+
+### 6. 阅读器与专注体验
+
+- [ ] T-2605 定义阅读器首屏的固定层级：标题、来源、状态、进度、主要动作。
+- [ ] T-2606 设计阅读器进入、恢复、切换、关闭、销毁和异常重建的生命周期。
+- [ ] T-2607 设计阅读位置与阅读进度的区别，先完成契约和用户解释。
+- [ ] T-2608 设计上次位置、最远进度、完成状态和用户手工标记的关系。
+- [ ] T-2609 设计长文目录、章节定位、页内查找和阅读进度条。
+- [ ] T-2610 设计窄屏、宽屏、超宽屏和移动全屏的正文宽度。
+- [ ] T-2611 设计字体、字号、行距、段距、主题、分页和高对比度。
+- [ ] T-2612 设计阅读设置全局偏好、载体偏好和单篇临时偏好。
+- [ ] T-2613 设计阅读器专注模式，隐藏非核心信息但保持可恢复。
+- [ ] T-2614 设计阅读器的上下文栏折叠、固定和自动隐藏。
+- [ ] T-2615 设计阅读器中的原文、编辑、只读、预览模式差异。
+- [ ] T-2616 设计未保存修改、离开、关闭和模式切换的确认。
+- [ ] T-2617 设计外部网页不可访问、正文缺失和图片失败的阅读降级。
+- [ ] T-2618 设计代码、表格、公式、图片、嵌入块和脚注的可读呈现。
+- [ ] T-2619 设计查找结果、摘录、引用、AI 和原文位置的联动。
+- [ ] T-2620 设计阅读器中的下一篇、上一篇、继续阅读和返回筛选。
+- [ ] T-2621 设计阅读完成动作后的下一步建议与用户关闭。
+- [ ] T-2622 设计 TTS、选区朗读、暂停和恢复的探索边界。
+- [ ] T-2623 设计移动端手势、软键盘、系统返回和前后台恢复。
+- [ ] T-2624 建立阅读器真实内容样本和长文性能基准。
+
+### 7. 摘录、理解与知识回流
+
+- [ ] T-2625 定义高亮、摘录、引用、笔记、闪卡和 AI 结果的对象边界。
+- [ ] T-2626 设计摘录的来源、上下文、块 ID、位置、时间和回链字段。
+- [ ] T-2627 设计选区跨块、跨段落、图片、代码、表格和无文本时的处理。
+- [ ] T-2628 设计摘录失效、孤儿摘录、正文更新和定位失败。
+- [ ] T-2629 设计高亮颜色与语义的可选映射，避免只依赖颜色。
+- [ ] T-2630 设计摘录库的列表、卡片、时间流和按来源聚合。
+- [ ] T-2631 设计摘录库搜索、标签、状态、来源和时间筛选。
+- [ ] T-2632 设计批量摘录生成笔记的模板、分组、预览和重复保护。
+- [ ] T-2633 设计摘录生成引用块的格式、来源、回链和用户编辑边界。
+- [ ] T-2634 设计摘录生成闪卡的正反面、来源、去重和失败回退。
+- [ ] T-2635 设计摘录转专题文档的目标选择、命名和冲突处理。
+- [ ] T-2636 设计从笔记回到原文、摘录和来源的反向追溯。
+- [ ] T-2637 设计同一摘录多次引用时的来源聚合和删除保护。
+- [ ] T-2638 设计摘录标签、文档标签和 AI 标签的边界。
+- [ ] T-2639 设计摘录编辑后的原文关系、版本和人工修改标记。
+- [ ] T-2640 设计用户删除、恢复、导出和批量清理摘录。
+- [ ] T-2641 设计从多篇文章生成主题卡片前的去重和来源列表。
+- [ ] T-2642 设计主张—证据—来源的结构化阅读结果。
+- [ ] T-2643 设计知识回流失败后的草稿保留和重试。
+- [ ] T-2644 建立摘录与回链的跨文档、跨工作区和导出回归测试。
+
+### 8. AI 作为理解层，而非聊天层
+
+- [ ] T-2645 明确 AI 在收录、阅读、摘录、回顾和维护中的角色边界。
+- [ ] T-2646 建立 AI 能力矩阵：摘要、翻译、术语、问题、标签、关联、结构化提取。
+- [ ] T-2647 为每个 AI 动作定义输入范围、输出形态、保存位置、撤销和失败降级。
+- [ ] T-2648 设计 AI 结果卡的来源、模型、通道、时间、提示版本和可信度。
+- [ ] T-2649 设计 AI 结果必须可回到原文证据的交互。
+- [ ] T-2650 设计 AI 生成摘要的章节、段落和局部重生成。
+- [ ] T-2651 设计 AI 生成阅读问题、复习题和闪卡的人工确认。
+- [ ] T-2652 设计 AI 术语解释、上下文引用和关闭入口。
+- [ ] T-2653 设计 AI 翻译的段落对照、编辑、复制和缓存。
+- [ ] T-2654 设计 AI 相关文档建议的依据、误关联反馈和关闭。
+- [ ] T-2655 设计 AI 自动标签、作者、日期、主题提取的预览和字段保护。
+- [ ] T-2656 设计 AI 多文档主题聚合的来源排序、去重和冲突展示。
+- [ ] T-2657 设计 AI 结果的事实、不确定性、推测和用户意见区分。
+- [ ] T-2658 设计 AI 处理前的敏感信息、正文范围和外部发送确认。
+- [ ] T-2659 设计 AI 无密钥、无网络、限额、超时、格式错误和模型下线降级。
+- [ ] T-2660 设计 AI 任务队列、取消、重试、部分成功和成本控制。
+- [ ] T-2661 设计 AI 结果版本比较、重新生成和历史清理。
+- [ ] T-2662 设计 AI 结果写入正文或属性前的差异预览。
+- [ ] T-2663 研究本地模型执行标题、关键词、重复判断和敏感信息识别。
+- [ ] T-2664 研究本地向量索引的资源占用、隐私和可删除性。
+- [ ] T-2665 建立 AI 质量、幻觉、错引、遗漏、格式破坏和提示词注入评测集。
+- [ ] T-2666 建立 AI 全部关闭后的完整替代流程。
+- [ ] T-2667 设计 AI 生成结果的删除、导出和审计。
+- [ ] T-2668 设计用户纠错、采纳、撤回和偏好反馈。
+
+### 9. 视觉语言、交互美学与细节
+
+- [ ] T-2669 建立品牌视觉语言：安静、清晰、可信、轻量和有阅读感。
+- [ ] T-2670 建立颜色角色系统：背景、表面、文字、弱文字、边框、强调、成功、警告、危险。
+- [ ] T-2671 确认所有颜色均映射到 b3 变量，并建立主题覆盖表。
+- [ ] T-2672 建立间距、圆角、阴影、边框、字体和图标尺寸的设计令牌。
+- [ ] T-2673 建立信息层级规则，确保每个页面只有一个主要视觉焦点。
+- [ ] T-2674 设计卡片、列表、表格、看板、弹窗和侧栏的共同骨架。
+- [ ] T-2675 设计内容密度档位：舒适、标准、紧凑，并明确默认值。
+- [ ] T-2676 设计空状态图形、说明、主要动作和次要动作的统一模式。
+- [ ] T-2677 设计加载骨架、进度、后台处理和静默完成的统一反馈。
+- [ ] T-2678 设计错误提示的层级：内联、字段、卡片、页面和全局。
+- [ ] T-2679 设计成功反馈的轻重级别，避免频繁 toast 打扰阅读。
+- [ ] T-2680 设计危险动作的颜色、确认内容、影响范围和撤销。
+- [ ] T-2681 设计弹窗、sheet、popover、tooltip 和 context menu 的使用边界。
+- [ ] T-2682 设计悬停、聚焦、按下、选中、拖拽和禁用的状态差异。
+- [ ] T-2683 设计动效时长、缓动、减少动效和低性能降级。
+- [ ] T-2684 设计图标语义、文字替代、图标与文字组合规则。
+- [ ] T-2685 设计长标题、空标题、长标签、多语言和特殊字符的视觉策略。
+- [ ] T-2686 设计主题切换、字体变化和高对比度的视觉回归。
+- [ ] T-2687 建立桌面、平板、移动和宽画布的视觉样板页。
+- [ ] T-2688 建立原型到实现的逐页对照验收。
+- [ ] T-2689 建立截图基准、差异阈值和人工审美评审。
+- [ ] T-2690 设计插件图标、空态插画和帮助插图的统一风格。
+
+### 10. 交互颗粒度与操作效率
+
+- [ ] T-2691 为每个主要动作定义鼠标、键盘、触控和命令面板入口。
+- [ ] T-2692 为每个主要动作定义成功、失败、部分成功和撤销反馈。
+- [ ] T-2693 设计批量操作前的数量、字段、范围和风险预览。
+- [ ] T-2694 设计批量操作中的暂停、继续、取消和失败明细。
+- [ ] T-2695 设计单项操作和批量操作的语义一致性。
+- [ ] T-2696 设计操作历史、最近动作和撤销栈的范围。
+- [ ] T-2697 设计高频操作快捷键、冲突检测和用户自定义。
+- [ ] T-2698 设计列表中直接编辑、详情编辑和思源原生编辑的边界。
+- [ ] T-2699 设计右键菜单、更多菜单和命令面板的动作去重。
+- [ ] T-2700 设计拖拽排序、拖拽归类、拖拽导入的启用条件和失败反馈。
+- [ ] T-2701 设计移动端长按、滑动和底部操作的可发现性。
+- [ ] T-2702 设计用户操作后页面不跳动、不丢上下文和不强制刷新。
+- [ ] T-2703 设计自动保存、手动保存和立即生效设置的差异。
+- [ ] T-2704 设计用户输入中的撤销、重做、Esc 取消和恢复草稿。
+- [ ] T-2705 设计表单验证在输入中、失焦、提交和异步检查时的反馈。
+- [ ] T-2706 设计通知合并、重复消息抑制和重要失败升级。
+- [ ] T-2707 设计帮助、示例和当前字段说明的就地出现。
+- [ ] T-2708 设计用户从错误直接进入修复动作，而不是只能关闭提示。
+- [ ] T-2709 设计主流程的最少步骤和高级设置的渐进展开。
+- [ ] T-2710 记录核心任务操作步数，并为过长路径建立优化项。
+
+### 11. 设置与个性化
+
+- [ ] T-2711 重构设置的信息架构，按任务和用户目标而非内部模块分组。
+- [ ] T-2712 为每个设置补充默认值、影响范围、即时性、重载要求和恢复默认。
+- [ ] T-2713 设计设置搜索、筛选和最近修改。
+- [ ] T-2714 设计设置导出、导入、冲突和敏感字段排除。
+- [ ] T-2715 设计功能开关的“关闭后影响”说明。
+- [ ] T-2716 设计 AI、外部集成、通知、隐私和性能设置的独立分区。
+- [ ] T-2717 设计实验功能的分组、标签、风险说明和关闭入口。
+- [ ] T-2718 设计阅读偏好与系统主题、思源主题的优先级。
+- [ ] T-2719 设计列表默认视图、排序、密度和列配置。
+- [ ] T-2720 设计快捷键设置、冲突提示和平台默认。
+- [ ] T-2721 设计数据维护设置：重建索引、清理缓存、导出、恢复和诊断。
+- [ ] T-2722 设计用户能看到的本地数据量、缓存占用和任务状态。
+- [ ] T-2723 设计设置修改后的即时预览、撤销和批量保存。
+- [ ] T-2724 设计设置损坏或未知字段的安全恢复。
+- [ ] T-2725 设计设置迁移和旧版本兼容。
+
+### 12. 数据主权、可信度与恢复
+
+- [ ] T-2726 建立数据主权可视化说明，告诉用户哪些数据写在文档、哪些只作派生索引。
+- [ ] T-2727 为所有自动动作显示将修改的字段、文档和数量。
+- [ ] T-2728 设计用户手填字段保护的可见证据和异常报告。
+- [ ] T-2729 设计属性、索引、缓存和快照的修复顺序。
+- [ ] T-2730 设计任意自动化动作的预览、确认、执行、结果和撤销五阶段。
+- [ ] T-2731 设计大批量写入的断点、回滚和人工介入。
+- [ ] T-2732 设计索引重建只读期间的用户提示和基础访问。
+- [ ] T-2733 设计数据损坏检测的轻量、深度和手动模式。
+- [ ] T-2734 设计恢复报告，展示恢复成功、跳过、冲突和未处理。
+- [ ] T-2735 设计数据修复日志的本地保存、导出和清理。
+- [ ] T-2736 设计文档被外部编辑后的冲突提示和人工选择。
+- [ ] T-2737 设计快照、导出和恢复的版本兼容说明。
+- [ ] T-2738 设计数据清理的范围选择、影响预览和二次确认。
+- [ ] T-2739 设计误删恢复的时间窗口和恢复后状态。
+- [ ] T-2740 设计卸载、停用、重装后数据仍可访问的验证。
+
+### 13. 性能、可靠性与工程底座
+
+- [ ] T-2741 建立启动、首屏、搜索、筛选、列表滚动、阅读切换和批量操作性能指标。
+- [ ] T-2742 建立 100、1,000、10,000、50,000 条目基准数据。
+- [ ] T-2743 建立短文、长文、超长文、复杂块和异常 HTML 样本。
+- [ ] T-2744 建立 CPU、内存、磁盘、网络和电量约束下的性能目标。
+- [ ] T-2745 建立 Protyle、事件监听器、定时器、订阅和 DOM 的泄漏检查。
+- [ ] T-2746 建立任务取消、组件销毁和工作区切换的资源回收检查。
+- [ ] T-2747 建立索引增量、全量、后台和前台重建的性能比较。
+- [ ] T-2748 建立缓存命中、失效、重建和容量控制指标。
+- [ ] T-2749 建立外部请求超时、取消、重试、限流和网络恢复策略。
+- [ ] T-2750 建立崩溃、重载、断电、系统休眠和移动切后台恢复演练。
+- [ ] T-2751 建立错误对象、错误码、用户文案和开发诊断的映射。
+- [ ] T-2752 建立不联网、弱网、代理、证书错误和 DNS 失败场景。
+- [ ] T-2753 建立跨思源版本、主题和前端的回归矩阵。
+- [ ] T-2754 建立隔离内核、服务、UI 和真机测试的边界。
+- [ ] T-2755 建立失败路径优先的测试策略，而不是只增加正常路径测试。
+- [ ] T-2756 建立属性基于随机值、模糊输入和异常顺序的测试。
+- [ ] T-2757 建立性能回归阈值与报告模板。
+- [ ] T-2758 建立高频修改文件的冲突拆分和模块所有权。
+- [ ] T-2759 建立临时产物、未跟踪文件、敏感文件和受保护文件的提交守门。
+- [ ] T-2760 建立每项实现的 Definition of Done 和验收证据链接。
+
+### 14. 用户支持、生态与生命周期
+
+- [ ] T-2761 按用户任务组织帮助中心，而不是按源代码模块组织。
+- [ ] T-2762 建立新用户、迁移用户、高级用户和排障用户四层帮助内容。
+- [ ] T-2763 设计首次成功教程、重新查看教程和跳过后的恢复入口。
+- [ ] T-2764 设计常见问题：候选误判、正文缺失、索引滞后、属性保护和 AI 失败。
+- [ ] T-2765 设计诊断包导出，默认脱敏正文、密钥、URL 参数和个人标签。
+- [ ] T-2766 设计离线反馈、复制反馈和用户主动上传的边界。
+- [ ] T-2767 设计插件更新后的新功能、行为变化、迁移和风险说明。
+- [ ] T-2768 设计实验功能退出、替代路径和数据清理。
+- [ ] T-2769 研究稳定的导入器、阅读器、富化器和输出器扩展接口。
+- [ ] T-2770 设计第三方扩展的权限、能力声明、版本和错误边界。
+- [ ] T-2771 设计第三方扩展不得绕过 clip-store 写入属性的治理。
+- [ ] T-2772 设计命令面板和事件接口的长期兼容。
+- [ ] T-2773 设计功能弃用、数据保留、迁移和最终移除流程。
+- [ ] T-2774 建立用户请求去重、价值评估和纳入产品路线的规则。
+- [ ] T-2775 建立发布后首周、首月和季度的质量回顾。
+- [ ] T-2776 建立精品标准持续复审和产品反目标复审。
+
+### 15. 全局收束与优先级
+
+- [ ] T-2777 将 T-2506–T-2776 映射到产品使命、用户旅程、对象模型、页面、服务和验收。
+- [ ] T-2778 对全部待办做重复项合并、依赖关系和冲突风险分析。
+- [ ] T-2779 将所有待办拆成可在独立分支完成的最小交付单元。
+- [ ] T-2780 为每个待办补充 P0/P1/P2/P3、用户价值、数据风险、实现成本和验证成本。
+- [ ] T-2781 建立依赖图，区分契约先行、设计先行、Spike 先行和可并行任务。
+- [ ] T-2782 建立第一阶段“核心闭环精品化”任务集合。
+- [ ] T-2783 建立第二阶段“阅读与知识回流增强”任务集合。
+- [ ] T-2784 建立第三阶段“AI 理解层增强”任务集合。
+- [ ] T-2785 建立第四阶段“生态、扩展和远期探索”任务集合。
+- [ ] T-2786 为每一阶段定义进入条件、完成条件、退出条件和不做范围。
+- [ ] T-2787 建立功能合并前的产品评审清单，检查定位、流程、视觉、数据和失败路径。
+- [ ] T-2788 建立功能合并后的真实数据验收清单，检查迁移、性能、移动端和恢复。
+- [ ] T-2789 进行一次从首页到导出恢复的全链路桌面端评审。
+- [ ] T-2790 进行一次从移动分享到账户回顾的全链路移动端评审。
+- [ ] T-2791 进行一次从剪藏到 AI 理解再到知识回流的全链路评审。
+- [ ] T-2792 进行一次从故障发生到诊断、恢复和反馈的全链路评审。
+- [ ] T-2793 形成精品插件的最终验收矩阵，覆盖广度、深度、颗粒度、美观度、可靠性和可持续性。
+- [ ] T-2794 对全部任务做一次反向审查：是否仍然服务于小驴拾遗的核心定位。
+
+## 用户顺畅度、舒适度与低压力体验待办（T-2795 起）
+
+### 1. 用户状态与体验目标
+
+- [ ] T-2795 建立用户体验状态模型：第一次使用、熟悉使用、忙碌使用、集中整理、深度阅读、故障恢复。
+- [ ] T-2796 为每种用户状态定义舒适度目标：少记忆、少等待、少确认、少跳转、可恢复。
+- [ ] T-2797 建立用户顺畅度指标：完成率、放弃率、回退次数、等待感、误触率和恢复成功率。
+- [ ] T-2798 建立体验问题等级：阻塞、费解、烦扰、缓慢、不一致、视觉不适。
+- [ ] T-2799 为核心流程建立用户情绪曲线，识别焦虑、犹豫、等待和失控节点。
+- [ ] T-2800 设计“低压力默认值”，减少不必要的弹窗、红点、声音、动画和强提醒。
+- [ ] T-2801 设计“用户始终知道发生了什么”的状态反馈原则。
+- [ ] T-2802 设计“用户始终知道下一步是什么”的行动提示原则。
+- [ ] T-2803 设计“用户始终能回到刚才位置”的上下文恢复原则。
+- [ ] T-2804 设计“用户始终能撤销高风险动作”的恢复原则。
+- [ ] T-2805 为每个功能定义舒适使用时长和连续使用疲劳点。
+- [ ] T-2806 研究如何减少信息过载、选项过多和决策疲劳。
+- [ ] T-2807 建立高级能力渐进展示规则，默认只显示当前任务需要的选项。
+- [ ] T-2808 为高级用户保留快捷路径，避免简化设计拖慢熟练用户。
+- [ ] T-2809 建立用户体验走查模板，按理解、操作、等待、反馈、恢复和退出六步检查。
+
+### 2. 首次使用与首次成功
+
+- [ ] T-2810 设计首次打开后的最短理解路径，让用户立即知道插件处理什么问题。
+- [ ] T-2811 设计无数据、少量数据和大量数据三种首次启动体验。
+- [ ] T-2812 设计首次扫描前的预计耗时、影响范围和可跳过说明。
+- [ ] T-2813 设计首次扫描中的进度可信度，避免进度条停滞或突然跳跃。
+- [ ] T-2814 设计首次扫描发现异常时的平静提示和继续入口。
+- [ ] T-2815 设计首次候选列表的解释性排序，让用户知道先处理什么。
+- [ ] T-2816 设计首次确认动作的低风险试运行，让用户先理解结果再批量处理。
+- [ ] T-2817 设计首次成功后的轻量庆祝，不打断用户继续操作。
+- [ ] T-2818 设计首次阅读的推荐文章选择，避免新用户面对空白或过大列表。
+- [ ] T-2819 设计首次摘录、标记完成和回到列表的完整闭环。
+- [ ] T-2820 设计引导跳过、暂停、稍后继续和重新查看。
+- [ ] T-2821 设计熟悉思源用户与完全不了解插件用户的不同引导层级。
+- [ ] T-2822 设计引导中每一步的退出后果和数据影响说明。
+- [ ] T-2823 检查首次体验是否出现内部术语、未知缩写或需要阅读文档才能继续的节点。
+- [ ] T-2824 记录首次成功路径的点击数、等待时间和用户疑问。
+
+### 3. 日常打开与回到工作状态
+
+- [ ] T-2825 设计用户每天打开插件时的首页优先级，优先展示最值得处理的少量内容。
+- [ ] T-2826 设计继续上次阅读、继续上次整理和查看新收录三种恢复入口。
+- [ ] T-2827 设计首页对未完成任务、失败任务和新内容的视觉区分。
+- [ ] T-2828 设计首页不因后台索引或 AI 任务延迟而阻塞核心操作。
+- [ ] T-2829 设计首页内容稳定性，避免每次打开都大幅重新排序。
+- [ ] T-2830 设计用户手动置顶、稍后处理和隐藏内容的尊重规则。
+- [ ] T-2831 设计首页卡片的折叠、关闭、恢复和个性化顺序。
+- [ ] T-2832 设计用户快速扫一眼即可判断今天是否有必要处理插件。
+- [ ] T-2833 设计首页对长期堆积内容的温和处理建议，不制造负债感。
+- [ ] T-2834 设计重新打开后保留上次筛选、滚动位置和选中项。
+- [ ] T-2835 设计从首页快速进入命令、搜索和收录入口。
+- [ ] T-2836 设计后台完成任务的低打扰提示，只在真正需要用户决策时提醒。
+- [ ] T-2837 设计用户离开首页后返回时不丢失上下文。
+
+### 4. 快速收录与即时记录
+
+- [ ] T-2838 设计快速收录入口的最少输入字段和智能默认值。
+- [ ] T-2839 设计粘贴 URL 后的标题、来源和正文加载反馈。
+- [ ] T-2840 设计粘贴文本、Markdown、HTML、文件和图片时的差异化提示。
+- [ ] T-2841 设计收录过程中用户继续输入下一条内容的并行体验。
+- [ ] T-2842 设计收录成功后的下一步选择：立即阅读、稍后处理、继续收录。
+- [ ] T-2843 设计收录失败时保留原始输入、失败原因和一键重试。
+- [ ] T-2844 设计收录正文过长、加载慢和来源不可访问时的低压力降级。
+- [ ] T-2845 设计重复收录时不打断用户的温和提示和快速选择。
+- [ ] T-2846 设计移动分享场景下无需多次确认即可完成收录。
+- [ ] T-2847 设计剪贴板内容来源不明时的预览和安全提示。
+- [ ] T-2848 设计收录中的取消、后台继续和回到任务队列。
+- [ ] T-2849 设计收录完成后自动聚焦到真正有价值的下一动作。
+- [ ] T-2850 评估收录入口是否应支持最近使用的标签、来源和状态快捷选择。
+- [ ] T-2851 设计高频收录用户的批量输入与连续处理模式。
+- [ ] T-2852 设计收录过程中网络、权限和思源忙碌时的清晰反馈。
+
+### 5. 候选处理与批量整理
+
+- [ ] T-2853 设计候选列表一眼可懂的证据、风险、建议动作和来源信息。
+- [ ] T-2854 设计候选卡片的主要动作不超过三个，减少选择压力。
+- [ ] T-2855 设计用户犹豫时的暂存、稍后决定和不影响数据的关闭。
+- [ ] T-2856 设计候选预览加载时保留卡片上下文和批量选择。
+- [ ] T-2857 设计确认、排除、补 URL、打开原文和稍后处理的动作层级。
+- [ ] T-2858 设计批量处理前明确显示会处理多少条、哪些字段和哪些文档。
+- [ ] T-2859 设计批量处理中用户可继续浏览但不会误触重复执行。
+- [ ] T-2860 设计批量处理中断后的继续位置和已处理统计。
+- [ ] T-2861 设计批量部分失败时只让用户处理失败项。
+- [ ] T-2862 设计批量完成后的总结只展示有行动价值的信息。
+- [ ] T-2863 设计候选误判的快速纠正，并避免要求用户理解识别算法。
+- [ ] T-2864 设计候选长期未处理的温和提醒和关闭。
+- [ ] T-2865 设计高数量候选的分批处理、时间预算和暂时隐藏。
+- [ ] T-2866 设计用户按来源、笔记本、日期和证据分组后快速处理。
+- [ ] T-2867 设计批量操作的撤销范围、撤销进度和撤销失败。
+
+### 6. 图书馆浏览与发现
+
+- [ ] T-2868 设计列表首屏的信息密度，让用户无需打开详情即可做初步判断。
+- [ ] T-2869 设计标题、来源、状态、优先级、阅读进度和摘录数的优先级。
+- [ ] T-2870 设计卡片、列表、表格和看板切换时不丢筛选和滚动。
+- [ ] T-2871 设计不同视图中相同动作的位置、名称和反馈一致。
+- [ ] T-2872 设计长标题、长标签和多来源信息的舒适截断。
+- [ ] T-2873 设计没有封面、图标加载失败和正文缺失时的稳定卡片。
+- [ ] T-2874 设计列表加载、部分加载、错误和无结果的低焦虑状态。
+- [ ] T-2875 设计用户浏览时的预取，避免点击后长时间空白。
+- [ ] T-2876 设计大库滚动和筛选的连续性，避免位置跳回顶部。
+- [ ] T-2877 设计条目更新后保留当前焦点和选择。
+- [ ] T-2878 设计快速标记、评分、优先级、归档和稍后处理动作。
+- [ ] T-2879 设计从列表打开阅读器后返回的原位恢复。
+- [ ] T-2880 设计列表中的危险操作隐藏在二级入口并提供撤销。
+- [ ] T-2881 设计用户第一次使用筛选器时的示例、清除和恢复默认。
+- [ ] T-2882 设计复杂查询的可视化摘要，让用户不必记忆语法。
+- [ ] T-2883 设计保存视图的进入、编辑和删除不打断浏览。
+- [ ] T-2884 设计空库与空筛选的差异文案和下一步动作。
+- [ ] T-2885 设计无网络或索引未完成时仍可浏览已有数据。
+
+### 7. 搜索、筛选与找到目标
+
+- [ ] T-2886 设计搜索框获得焦点、输入、等待和结果出现的连贯反馈。
+- [ ] T-2887 设计搜索建议、最近搜索和快捷过滤的出现时机。
+- [ ] T-2888 设计搜索结果匹配字段提示，避免用户不知道为什么命中。
+- [ ] T-2889 设计搜索无结果时自动建议放宽条件、清除筛选或检查索引。
+- [ ] T-2890 设计搜索结果的键盘上下选择、回车打开和 Esc 返回。
+- [ ] T-2891 设计全文搜索与当前页面内查找的明确区别。
+- [ ] T-2892 设计中文分词、英文、数字、符号、URL 和 emoji 搜索体验。
+- [ ] T-2893 设计搜索大库下的渐进结果和取消旧查询。
+- [ ] T-2894 设计筛选器打开、应用、清除和撤销的快速路径。
+- [ ] T-2895 设计筛选条件冲突时的可读解释。
+- [ ] T-2896 设计筛选条件过多时的摘要、折叠和编辑入口。
+- [ ] T-2897 设计保存视图的“当前结果是否已变化”提示。
+- [ ] T-2898 设计用户从一条结果继续查找同作者、同来源、同标签和相关内容。
+- [ ] T-2899 设计搜索结果中批量选择与单项打开不冲突。
+- [ ] T-2900 设计搜索历史隐私、清除和跨设备边界。
+
+### 8. 阅读流程与专注舒适度
+
+- [ ] T-2901 设计从列表到阅读器的加载过渡，避免空白、跳动和重复标题。
+- [ ] T-2902 设计阅读器首屏只呈现当前阅读所需的信息。
+- [ ] T-2903 设计正文宽度、字号、行距、段距和主题的舒适默认值。
+- [ ] T-2904 设计用户调整阅读偏好时的即时预览和恢复默认。
+- [ ] T-2905 设计阅读进度、上次位置、最远位置和完成标记的直观解释。
+- [ ] T-2906 设计长文目录、章节导航和当前章节高亮。
+- [ ] T-2907 设计阅读器滚动、分页、触控滑动和滚动条的统一体验。
+- [ ] T-2908 设计阅读器内查找的结果计数、上下跳转和关闭恢复。
+- [ ] T-2909 设计图片、表格、代码、公式和嵌入内容的阅读舒适度。
+- [ ] T-2910 设计网页正文与思源文档正文不同载体的视觉一致性。
+- [ ] T-2911 设计内容加载慢时先显示结构和可用部分。
+- [ ] T-2912 设计正文异常、空正文、失效链接和图片失败的替代内容。
+- [ ] T-2913 设计专注模式中动作的可发现性和退出方式。
+- [ ] T-2914 设计伴生栏折叠、固定和自动隐藏。
+- [ ] T-2915 设计阅读中标记完成、稍后处理、归档和下一篇的舒适操作。
+- [ ] T-2916 设计中断阅读后的恢复入口和位置可信度。
+- [ ] T-2917 设计用户关闭阅读器时保存上下文、草稿和未完成动作。
+- [ ] T-2918 设计移动端阅读器的安全区域、手势、软键盘和系统返回。
+- [ ] T-2919 设计阅读器低性能模式，减少动画、预览和非必要计算。
+- [ ] T-2920 建立阅读疲劳、长时间滚动和连续阅读的舒适度评测。
+
+### 9. 选区、摘录与高亮
+
+- [ ] T-2921 设计选区出现操作菜单的时机、位置和不遮挡正文策略。
+- [ ] T-2922 设计复制、摘录、引用、制卡和 AI 操作的动作排序。
+- [ ] T-2923 设计鼠标、触控和键盘选区的差异化交互。
+- [ ] T-2924 设计跨段落、跨块、包含代码和包含图片的选区行为。
+- [ ] T-2925 设计选区过短、过长、空白和不可定位时的提示。
+- [ ] T-2926 设计连续高亮模式的进入、保持颜色和退出。
+- [ ] T-2927 设计高亮颜色、标签和备注的快速输入。
+- [ ] T-2928 设计摘录成功后的轻反馈，不遮挡下一次阅读。
+- [ ] T-2929 设计摘录失败时保留复制结果和重试入口。
+- [ ] T-2930 设计摘录卡片中的上下文、来源、位置和回链。
+- [ ] T-2931 设计从摘录返回原文的定位动画和失败反馈。
+- [ ] T-2932 设计批量摘录、批量标签和批量导出时的低压力流程。
+- [ ] T-2933 设计摘录重复、相邻和相似时的提示策略。
+- [ ] T-2934 设计摘录编辑、删除、恢复和原文变化后的关系说明。
+- [ ] T-2935 设计高亮墙的默认排序和用户可选排序。
+- [ ] T-2936 设计摘录库空状态、无结果和索引延迟状态。
+- [ ] T-2937 评估高亮颜色在深色、高对比度和色觉差异下的可辨识性。
+- [ ] T-2938 设计选区操作失败时不打断阅读的降级。
+- [ ] T-2939 设计摘录生成笔记、闪卡和引用块前的预览。
+
+### 10. AI 使用舒适度
+
+- [ ] T-2940 设计 AI 功能入口只在当前任务有帮助时出现。
+- [ ] T-2941 设计用户第一次使用 AI 前的轻量说明，不要求阅读长文档。
+- [ ] T-2942 设计 AI 输入范围、发送对象和保存位置的即时可见提示。
+- [ ] T-2943 设计 AI 调用前的等待预期、取消和后台继续。
+- [ ] T-2944 设计流式输出的稳定布局，避免文字跳动和按钮位置变化。
+- [ ] T-2945 设计 AI 输出卡片的复制、编辑、采纳、重试和关闭动作。
+- [ ] T-2946 设计 AI 结果不可信、缺少证据和可能错误的低打扰提示。
+- [ ] T-2947 设计 AI 结果中原文依据的快速查看。
+- [ ] T-2948 设计 AI 结果过长时的摘要、折叠和局部展开。
+- [ ] T-2949 设计 AI 任务失败时给出可行动的下一步，而不是泛化错误。
+- [ ] T-2950 设计 AI 超时、限额、网络断开和模型不可用时的平静降级。
+- [ ] T-2951 设计 AI 批量任务的预计耗时、数量、暂停和取消。
+- [ ] T-2952 设计 AI 批量部分成功时只查看失败项。
+- [ ] T-2953 设计 AI 结果写入文档前的差异预览和撤销。
+- [ ] T-2954 设计 AI 标签、摘要和属性建议不覆盖用户手填字段的提示。
+- [ ] T-2955 设计 AI 结果缓存对用户透明但可清理。
+- [ ] T-2956 设计 AI 全部关闭后的界面不留失效入口。
+- [ ] T-2957 设计 AI 预算、使用量和隐私状态的可理解展示。
+- [ ] T-2958 设计用户纠错、采纳和拒绝 AI 结果的轻量反馈。
+- [ ] T-2959 评估 AI 功能是否增加理解成本，并为每个功能设置退出标准。
+
+### 11. 状态、优先级、评分与回顾
+
+- [ ] T-2960 设计状态动作的统一位置、颜色、文案和撤销。
+- [ ] T-2961 设计用户不理解状态差异时的就地解释。
+- [ ] T-2962 设计“稍后处理”“未读”“阅读中”“已读”“归档”的舒适信息架构。
+- [ ] T-2963 设计状态变更后的列表位置、排序和下一步反馈。
+- [ ] T-2964 设计优先级和评分不制造压力的视觉表达。
+- [ ] T-2965 设计评分空值、零分、未评和不适用的区别。
+- [ ] T-2966 设计批量状态和评分操作的预览、执行和撤销。
+- [ ] T-2967 设计恢复归档、重新阅读和取消完成的低风险流程。
+- [ ] T-2968 设计今日拾遗的数量、排序和跳过，让用户不会产生清空任务的压力。
+- [ ] T-2969 设计回顾页的轻量总结、来源回链和具体下一步。
+- [ ] T-2970 设计长期未读内容的温和处理，而不是催促或惩罚。
+- [ ] T-2971 设计提醒免打扰、暂停、关闭和恢复。
+- [ ] T-2972 设计用户临时忙碌时的“稍后再说”路径。
+- [ ] T-2973 设计完成后继续处理、返回列表和退出三种选项。
+- [ ] T-2974 设计统计页不让用户被单一数字评价。
+- [ ] T-2975 设计回顾中的低数据、异常数据和索引未完成提示。
+
+### 12. 设置、错误与恢复体验
+
+- [ ] T-2976 设计设置页的任务导向分组和当前状态摘要。
+- [ ] T-2977 设计设置修改即时生效、重载生效和下次任务生效的明确反馈。
+- [ ] T-2978 设计复杂设置的推荐默认值、示例和恢复默认。
+- [ ] T-2979 设计功能关闭后的影响预览。
+- [ ] T-2980 设计错误提示包含发生了什么、影响什么和下一步怎么做。
+- [ ] T-2981 设计错误提示的复制诊断、重试、忽略和查看详情。
+- [ ] T-2982 设计错误不遮挡主要内容，优先采用就地反馈。
+- [ ] T-2983 设计同类错误合并，避免连续弹出相同提示。
+- [ ] T-2984 设计严重错误升级为全局提示的条件。
+- [ ] T-2985 设计网络错误、权限错误、数据错误、配置错误和外部服务错误的区别。
+- [ ] T-2986 设计恢复流程显示已完成、跳过、冲突和仍需手动处理。
+- [ ] T-2987 设计用户关闭错误后仍能从任务中心找回。
+- [ ] T-2988 设计恢复失败后的人工修复指导和安全出口。
+- [ ] T-2989 设计无网络时的可用功能提示，不让用户误以为插件完全不可用。
+- [ ] T-2990 设计磁盘空间、权限和工作区不可用时的用户行动路径。
+- [ ] T-2991 设计插件重载后恢复最后页面、筛选和未完成任务。
+- [ ] T-2992 设计数据修复前的影响预览和修复后的可验证结果。
+- [ ] T-2993 建立错误体验人工评审，检查语气是否平静、具体和可行动。
+
+### 13. 移动、桌面与特殊使用场景
+
+- [ ] T-2994 设计用户站立、单手、碎片时间使用时的移动端最短路径。
+- [ ] T-2995 设计移动端快速收录无需深层导航和长表单。
+- [ ] T-2996 设计移动端阅读的字号、行距、滚动和底部动作。
+- [ ] T-2997 设计移动端弱网、切后台、系统回收和恢复。
+- [ ] T-2998 设计移动分享返回插件后的结果确认。
+- [ ] T-2999 设计桌面端键盘高频整理和批量操作。
+- [ ] T-3000 设计宽屏多栏阅读、列表和预览的注意力分配。
+- [ ] T-3001 设计窄 Dock 中不拥挤、不横向滚动和不隐藏主要动作。
+- [ ] T-3002 设计浮窗移动、缩放、关闭和重新打开后的尺寸记忆。
+- [ ] T-3003 设计多显示器和高 DPI 下的弹窗位置。
+- [ ] T-3004 设计低性能电脑、低电量和系统忙碌时的降级。
+- [ ] T-3005 设计离线旅行、飞机模式和内网环境下的核心阅读流程。
+- [ ] T-3006 设计夜间阅读、暗光、高对比度和减少动效模式。
+- [ ] T-3007 设计长时间阅读的休息提示是否需要、如何关闭和避免打扰。
+- [ ] T-3008 设计公共场景下隐藏敏感标题、来源和 AI 结果的可选模式。
+- [ ] T-3009 设计触控笔、外接键盘和屏幕阅读器的兼容路径。
+- [ ] T-3010 建立跨设备同一用户旅程的连续性验收。
+
+### 14. 审美、节奏与情绪舒适度
+
+- [ ] T-3011 建立启动、加载、完成、失败、恢复和退出的统一动效节奏。
+- [ ] T-3012 设计成功反馈不过度庆祝、失败反馈不过度惊吓的语气和视觉。
+- [ ] T-3013 设计空状态既有温度又能明确下一步，不使用无意义插画。
+- [ ] T-3014 设计页面留白、正文密度和信息分组的舒适比例。
+- [ ] T-3015 设计卡片、边框、阴影和分隔线的克制使用。
+- [ ] T-3016 设计视觉层级避免所有元素同时争夺注意力。
+- [ ] T-3017 设计颜色表达状态但不制造紧急感和压力。
+- [ ] T-3018 设计长期使用时不疲劳的背景、文字、对比度和动画。
+- [ ] T-3019 设计复杂功能逐步展开，保持初始界面安静。
+- [ ] T-3020 设计所有提示可被理解、关闭和稍后查看。
+- [ ] T-3021 设计用户完成任务后的自然退出点。
+- [ ] T-3022 设计从失败回到成功路径的视觉连续性。
+- [ ] T-3023 设计“没有更多内容”“今天完成”“暂时没有任务”的舒适文案。
+- [ ] T-3024 设计不使用责备、催促、夸张奖励和制造焦虑的文案。
+- [ ] T-3025 进行连续使用一小时、一天和一周的疲劳感评审。
+
+### 15. 用户体验验收与闭环
+
+- [ ] T-3026 为首次使用、每日使用、集中整理、深度阅读、移动收录和故障恢复建立用户脚本。
+- [ ] T-3027 为每个脚本记录目标、前置数据、用户动作、等待、反馈和恢复点。
+- [ ] T-3028 记录每个核心流程的点击数、页面跳转、错误数、回退数和完成时间。
+- [ ] T-3029 建立舒适度评分表：理解、控制感、等待感、信息负担、视觉舒适和恢复信心。
+- [ ] T-3030 建立新用户、熟练用户、低视力用户、移动用户和大库用户的走查样本。
+- [ ] T-3031 建立用户体验问题的截图、录屏、复现数据和修复证据。
+- [ ] T-3032 设计每个功能的“最短路径”和“安全路径”，分别服务熟练与谨慎用户。
+- [ ] T-3033 设计每个功能的“失败路径”和“退出路径”，保证用户不会卡死。
+- [ ] T-3034 设计每个功能的“撤销路径”和“恢复路径”。
+- [ ] T-3035 设计每个功能的“无网络路径”“低性能路径”和“移动路径”。
+- [ ] T-3036 设计每个功能的“关闭后仍可用”验证。
+- [ ] T-3037 建立体验回归测试，防止修复一个流程破坏另一个流程。
+- [ ] T-3038 建立每轮合并前的体验审查，不只运行类型检查和单元测试。
+- [ ] T-3039 建立真实作者使用一天、一周和一个月后的反馈记录。
+- [ ] T-3040 对 T-2795–T-3039 做一次用户视角去重、依赖和优先级整理。
+
+## UI v2 原型重构与逐页落地（T-3041 起）
+
+依据 `design/prototype-v2.html` 与 `docs/UI-STANDARD.md §9`，以下任务用于分支并行开发。每项完成后都要附三种尺寸截图、键盘走查和对应状态说明；不得修改版本号、CHANGELOG、README 徽章、PROGRESS、ROADMAP、HANDOFF。
+
+### A. 原型治理与设计基线
+
+- [ ] T-3041 建立 UI v2 页面到现有 Svelte 组件的映射表
+- [ ] T-3042 建立页面职责、入口、离开后上下文保留矩阵
+- [ ] T-3043 将 prototype-v2 的通用布局类映射为正式 `glean-*` 类名
+- [ ] T-3044 抽取 v2 色彩、间距、圆角、阴影、字体 token
+- [ ] T-3045 为每个页面补默认、空、加载、无结果、错误、成功截图
+- [ ] T-3046 建立 390×844、768×1024、1280×800 截图命名和归档规则
+- [ ] T-3047 建立 UI 变更评审清单与原型版本记录
+- [ ] T-3048 将原型中的示例数据替换为可注入 fixture
+- [ ] T-3049 为所有原型按钮补充动作语义和数据-testid 规划
+- [ ] T-3050 建立 UI 状态词典，统一加载、失败、重试、撤销文案
+- [ ] T-3051 建立导航入口与返回路径的可测试契约
+- [ ] T-3052 建立视觉回归截图基线和差异阈值
+- [ ] T-3053 设计深色、高对比度和 reduced-motion 变体
+- [ ] T-3054 设计空数据、超长标题、长标签和异常字符 fixture
+- [ ] T-3055 建立组件状态矩阵到测试用例的映射
+
+### B. 全局壳层、导航和反馈
+
+- [ ] T-3056 重构插件顶部品牌栏，展示当前页面、同步状态和全局快捷入口
+- [ ] T-3057 重构桌面左侧导航，支持折叠、当前项、计数和 AI 分组
+- [ ] T-3058 实现 600–899px 可收起导航和上下文返回
+- [ ] T-3059 实现 <600px 底部导航与抽屉式筛选
+- [ ] T-3060 统一页面标题、副标题、计数和主动作布局
+- [ ] T-3061 统一页面级任务条，支持后台运行、暂停、重试、完成和撤销
+- [ ] T-3062 统一内联校验、页面反馈和全局反馈三层样式
+- [ ] T-3063 实现命令面板入口与键盘快捷键提示
+- [ ] T-3064 为所有弹层建立焦点陷阱、Esc 关闭和返回原焦点
+- [ ] T-3065 统一更多菜单的定位、边界检测和移动端转抽屉
+- [ ] T-3066 统一危险动作确认、影响范围预览和撤销反馈
+- [ ] T-3067 检查所有导航计数的来源、刷新时机和空值显示
+- [ ] T-3068 为后台任务增加不抢焦点的完成提示
+- [ ] T-3069 为离线和思源内核不可用增加全局连接状态
+- [ ] T-3070 为页面恢复保存搜索词、筛选、滚动和草稿上下文
+
+### C. 首页与今日工作台
+
+- [ ] T-3071 将首页拆为继续阅读、待确认候选、最近收录、今日拾遗四个入口
+- [ ] T-3072 实现“优先继续”卡片及阅读位置恢复
+- [ ] T-3073 实现“为什么出现”理由行和可解释推荐
+- [ ] T-3074 实现阅读中、后台任务和待处理三类摘要卡
+- [ ] T-3075 支持首页卡片稍后处理、完成和移除
+- [ ] T-3076 设计首页无数据首次使用空态
+- [ ] T-3077 设计首页同步中、部分同步和同步失败态
+- [ ] T-3078 设计首页长标题、无来源、正文缺失的降级布局
+- [ ] T-3079 实现快速收录动作的 URL、剪贴板和拖拽入口
+- [ ] T-3080 为快速收录增加重复文档提示和跳转原文
+- [ ] T-3081 让首页快捷入口保持与导航和命令面板一致
+- [ ] T-3082 验证首页从 Dock、Tab、移动端进入后的返回路径
+
+### D. 图书馆、搜索和保存视图
+
+- [ ] T-3083 将图书馆筛选区重构为状态、载体、来源、时间和排序分组
+- [ ] T-3084 实现搜索输入防抖、清空、历史和无结果解释
+- [ ] T-3085 实现表格与卡片视图切换并保留当前筛选
+- [ ] T-3086 实现行级状态、正文诊断、阅读进度和摘录数量展示
+- [ ] T-3087 实现批量选择、批量状态变更和批量撤销
+- [ ] T-3088 实现保存视图命名、条件摘要、默认视图和删除
+- [ ] T-3089 为保存视图提供重复名称与条件冲突提示
+- [ ] T-3090 实现窄屏表格转卡片或局部横向滚动
+- [ ] T-3091 处理超长标题、重复来源、缺失 URL 和无正文行
+- [ ] T-3092 实现分页、虚拟列表或渐进加载的占位态
+- [ ] T-3093 设计图书馆初次为空、筛选无结果和索引过期空态
+- [ ] T-3094 实现搜索失败时保留输入并支持重试
+- [ ] T-3095 将筛选条件序列化为可恢复的本地视图状态
+- [ ] T-3096 为图书馆行菜单补复制链接、打开原文、编辑属性和归档
+- [ ] T-3097 验证列表键盘导航、行选中和批量操作的读屏名称
+
+### E. 候选确认与导入
+
+- [ ] T-3098 重构候选卡片的证据层级、命中项和缺失项展示
+- [ ] T-3099 实现证据展开、折叠和跳转来源位置
+- [ ] T-3100 实现补 URL、作为本地文档、稍后决定和排除误报动作
+- [ ] T-3101 实现批量确认前的影响范围预览
+- [ ] T-3102 实现批量确认的逐条成功、跳过和失败结果
+- [ ] T-3103 实现候选重复匹配与合并建议
+- [ ] T-3104 实现导入器四统计卡与预览表
+- [ ] T-3105 实现状态映射预览、冲突解决和取消导入
+- [ ] T-3106 实现导入进度、暂停、继续、失败重试和撤销
+- [ ] T-3107 设计导入空文件、格式错误和权限不足空态
+- [ ] T-3108 设计候选证据不足时的安全降级路径
+- [ ] T-3109 为候选确认增加移动端单卡决策流
+- [ ] T-3110 验证批量选择在键盘、触控和读屏下的一致行为
+- [ ] T-3111 检查候选确认不会提前写入用户手填属性
+
+### F. 阅读器与伴生栏
+
+- [ ] T-3112 重构阅读器头部标题、来源、载体、状态和进度层级
+- [◐] T-3113 正文优先单栏阅读代码由 T-3233 承接，真实宿主 resize 待 B-0002。
+- [◐] T-3114 隐藏伴生栏/恢复展示偏好代码由 T-3233 承接，真实重载待 B-0002。
+- [ ] T-3115 实现阅读位置、章节和预计剩余时间展示
+- [ ] T-3116 实现开始阅读、稍后读、标记已读和下一篇动作
+- [ ] T-3117 验证关闭阅读器后位置、状态和草稿恢复
+- [ ] T-3118 实现正文缺失诊断、重新剪藏和原文降级
+- [ ] T-3119 实现正文加载骨架，保留标题和来源上下文
+- [ ] T-3120 实现正文读取失败、超时、离线和权限错误提示
+- [ ] T-3121 实现选区浮动操作并限定在正文宿主内
+- [ ] T-3122 实现无选区时复制可用、摘录动作禁用的降级
+- [ ] T-3123 实现伴生栏状态动作复用 clip-store
+- [ ] T-3124 实现伴生栏优先级和评分控件的保存保护
+- [ ] T-3125 实现阅读器窄屏抽屉式伴生栏
+- [ ] T-3126 验证阅读器不因后台任务完成而抢焦点
+- [ ] T-3127 验证阅读器长文、窄屏、深色和 reduced-motion 表现
+
+### G. 摘录、备注与知识回流
+
+- [ ] T-3128 重构摘录列表的来源、章节、时间和状态信息层级
+- [ ] T-3129 实现摘录搜索、标签筛选和来源筛选
+- [ ] T-3130 实现加备注草稿、取消、保存和恢复
+- [ ] T-3131 实现制卡预览、字段确认和失败重试
+- [ ] T-3132 实现插入引用块前的目标文档和位置预览
+- [ ] T-3133 实现回到原文、回到阅读位置和来源失效提示
+- [ ] T-3134 实现摘录批量选择、导出和可撤销反馈
+- [ ] T-3135 设计摘录为空、搜索无结果和来源丢失空态
+- [ ] T-3136 检查摘录回流不覆盖用户手填字段
+- [ ] T-3137 实现移动端摘录操作的底部操作栏
+- [ ] T-3138 验证摘录引用块与原文证据的可回溯性
+
+### H. AI 理解层
+
+- [ ] T-3139 重构 AI 功能卡为总结全文、解释选区、找相关旧文三个显式动作
+- [ ] T-3140 实现 AI 总开关与逐功能开关的设置联动
+- [ ] T-3141 AI 关闭时显示说明性占位并隐藏动作按钮
+- [ ] T-3142 为每个 AI 结果显示动作、通道、生成时间和依据位置
+- [ ] T-3143 实现 AI 结果查看原文位置和证据高亮
+- [ ] T-3144 实现 AI 结果编辑、保存为 AI 摘要和丢弃
+- [ ] T-3145 实现 AI 超时、额度不足、通道不可用和网络错误态
+- [ ] T-3146 实现 AI 通道切换前的密钥来源和隐私说明
+- [ ] T-3147 实现批量 AI 任务影响范围预览、队列、暂停和撤销
+- [ ] T-3148 检查 AI 结果不得覆盖 URL/status/priority/rating 等用户属性
+- [ ] T-3149 检查 AI 结果不得未经确认写入正文
+- [ ] T-3150 实现 AI 结果复制、引用和导出
+- [ ] T-3151 为 AI 结果增加版本、重生成和差异比较
+- [ ] T-3152 设计 AI 空态、未配置、关闭、失败和部分成功样式
+- [ ] T-3153 验证 AI 结果在阅读伴生栏、主页面和移动端的一致性
+- [ ] T-3154 为 AI 操作补充用量、耗时和可选匿名诊断信息
+
+### I. 统计与回顾
+
+- [ ] T-3155 重构统计页周期选择、指标卡和解释文案
+- [ ] T-3156 实现完成阅读、摘录、待处理三类核心指标
+- [ ] T-3157 实现主题回顾与回到摘录列表
+- [ ] T-3158 实现统计无数据、数据不足和索引过期提示
+- [ ] T-3159 实现图表加载、部分数据、失败和导出状态
+- [ ] T-3160 为统计指标增加口径说明和数据来源入口
+- [ ] T-3161 验证统计不把候选误计入读库
+- [ ] T-3162 实现移动端统计卡片和可读表格降级
+- [ ] T-3163 检查高对比度和读屏下图表等价信息
+
+### J. 设置、维护与首启
+
+- [ ] T-3164 重构设置分组为工作区、阅读、AI、维护和危险区
+- [x] T-3165 实现设置未保存草稿、取消、保存和恢复默认（2026-10-02；D-0032；设置单测 13/13，完整 `pnpm test` 357/357，`pnpm check` 0 错误/0 告警，`pnpm build` 通过）
+- [ ] T-3166 实现工作区笔记本选择、连接检查和空配置引导
+- [ ] T-3167 实现阅读页签开关、默认模式和移动端限制提示
+- [ ] T-3168 实现 AI 通道选择、开关、额度和隐私说明
+- [ ] T-3169 实现索引状态、最近对账、导出诊断和重建索引
+- [ ] T-3170 实现清理派生缓存的影响预览和二次确认
+- [ ] T-3171 设计维护操作的进度、失败、部分成功和撤销
+- [x] T-3172 实现首启扫描预览，区分候选与已确认读库（2026-10-02；D-0033；四类计数/示例、普通笔记排除与无属性写入回归已覆盖；完整 `pnpm test` 358/358）
+- [x] T-3173 实现首启笔记本选择、状态映射和导入确认（2026-10-02；D-0034；目标笔记本校验、状态汇总、确认后导入与入口分流已覆盖；完整 `pnpm test` 359/359）
+- [x] T-3174 实现首启中断后的继续、退出和重新扫描（2026-10-02；D-0035；进度仅存 UI 偏好、关闭可恢复、扫描预览重算与显式跳过清理已覆盖；完整 `pnpm test` 363/363）
+- [x] T-3175 实现首次使用后的引导收束，不重复打扰（2026-10-02；D-0036；完成/跳过自动隐藏新手提示，设置页支持显式隐藏并持久化，偏好规范化回归已覆盖）
+- [x] T-3176 验证设置和首启流程的键盘、读屏和移动端路径（2026-10-02；D-0037；首启/设置标题、选中态、分组名称、扫描/保存状态和窄屏操作区已补齐；新增静态可访问性回归；`pnpm test`、`pnpm check`、`pnpm build`、`git diff --check` 通过；真机读屏、焦点行为和触控验收仍并入 B-0002）
+
+### K. 移动端与触控舒适度
+
+- [x] T-3178 实现移动端顶部标题、返回、更多和任务状态（2026-10-02；D-0039；顶部复用现有视图与 facade，返回回到 `resurface`，更多包含刷新/工作台/整理/导入/设置，状态映射真实对账分支；双语静态回归与 `pnpm test` 372/372、`pnpm check`、`pnpm build`、`git diff --check` 通过；真机验收仍并入 B-0002）
+- [x] T-3177 实现移动端底部导航：首页、图书馆、摘录、设置（2026-10-02；D-0038；移动端按 `facade.isMobile` 显示四项底栏，设置复用现有弹窗，静态回归与 `pnpm test` 370/370、`pnpm check`、`pnpm build` 已通过；真机触控与视觉验收仍并入 B-0002）
+- [x] T-3179 实现移动端筛选抽屉、应用、清空和结果计数（2026-10-03；D-0040；移动端筛选使用独立草稿，应用后才提交站点/标签/AI 标签/来源/时间来源/内容类型及排序，清空只清空草稿，抽屉外显示已应用结果计数；不新增文章属性、saveData 字段或端点；静态回归与 `pnpm test` 374/374、`pnpm check`、`pnpm build`、`git diff --check` 通过；真机验收仍并入 B-0002）
+- [x] T-3180 实现卡片滑动操作的可发现性和撤销（2026-10-03；D-0041；移动端今日拾遗卡支持向右滑动改天、向左滑动归档，保留显式按钮并显示手势提示；动作完成后提供会话内撤销，服务层用动作前后状态令牌校验文章未被外部改动后才恢复；静态回归与 `pnpm test` 376/376、`pnpm check`、`pnpm build`、`git diff --check` 通过；真机验收仍并入 B-0002）
+- [x] T-3181 验证键盘弹出时输入框、按钮和底部导航不遮挡（2026-10-03；D-0042；新增纯视口计算与共享 `visualViewport` CSS 变量适配器，移动 Dock 底栏、列表滚动、筛选抽屉及设置/导入/首启弹窗统一避让键盘；不新增文章属性、saveData 字段或端点；完整 `pnpm test` 378/378、`pnpm check`、`pnpm build`、`git diff --check` 通过；真机键盘动画与输入焦点验收仍并入 B-0002）
+- [x] T-3182 验证安全区、横屏、窄屏和大字体布局（2026-10-03；D-0043；移动 Dock、滚动区、底栏、筛选抽屉和移动弹窗统一读取安全区，横屏、420px 窄屏、长文本换行与弹层滚动静态契约已覆盖；定向测试 12/12，完整验证见 `docs/PROGRESS.md`；真机验收仍并入 B-0002）
+- [x] T-3183 验证所有触控目标不小于 44×44px（2026-10-03；按钮、筛选、评分、候选、设置开关、搜索和弹窗控件统一补齐 44px 命中区；定向测试 18/18、`pnpm check` 通过；真机尺寸和误触验收仍并入 B-0002）
+- [x] T-3184 移除仅 hover 可见的移动端动作（2026-10-03；移动端候选卡操作区和批量选择框强制可见，选择框补齐 44px 命中区；静态回归已补，真机可发现性和误触验收仍并入 B-0002）
+- [x] T-3185 验证移动端网络断开后的离线提示和重试（2026-10-03；主面板监听 online/offline，保留缓存并提供重试，写入失败显示连接恢复提示；静态/i18n/类型回归通过，真机断网与宿主内核不可用仍待 B-0002）
+- [ ] T-3186 记录真机挂载、页签、同步和快捷键验收阻塞项
+
+### L. 无障碍、错误恢复与视觉回归
+
+- [x] T-3187 为所有图标按钮补充 aria-label 和状态描述（已并入 T-3204，代码/静态回归完成；运行时读屏待 B-0002）
+- [x] T-3188 检查 Tab 顺序与视觉顺序一致（已并入 T-3204，按 DOM 视觉顺序和宿主弹窗顺序核对；真机待 B-0002）
+- [x] T-3189 检查弹层焦点陷阱、Esc 关闭和焦点回归（已并入 T-3204，代码/静态回归完成；运行时待 B-0002）
+- [x] T-3190 检查异步状态的 aria-live 范围和频率（已并入 T-3204，状态区收窄并补进度播报；运行时读屏待 B-0002）
+- [x] T-3191 检查颜色、图标、文字三重状态表达（已并入 T-3215；状态徽章增加符号，保留颜色和文字；代码/静态回归完成，真实主题走查待 B-0002）
+- [x] T-3192 支持 reduced-motion、高对比度和键盘-only 模式（已并入 T-3215；代码/静态回归完成，真实系统偏好走查待 B-0002）
+- [x] T-3193 为网络、内核、权限、正文、AI、导入分别设计恢复路径（已并入 T-3216，恢复矩阵、导入失败项重试和笔记本重载落地；真实故障注入待对应 blocker）
+- [◐] T-3194 验证失败后输入、选中项、滚动和草稿不丢失（代码保留和刷新队列回归已并入 T-3216/T-3218；真实 DOM、焦点、滚动与草稿验收待 B-0002）
+- [ ] T-3195 建立桌面、窄屏、移动端自动截图任务
+- [ ] T-3196 建立原型截图与实现截图的差异审阅流程
+- [ ] T-3197 将 UI 状态矩阵加入回归验收清单
+- [ ] T-3198 运行全量 UI 走查并记录未覆盖组件
+- [ ] T-3199 完成 UI v2 第一轮逐页 port 验收
+- [ ] T-3200 完成 UI v2 第二轮交互舒适度优化
+- [x] T-3201 完成 220 项键盘、朗读、URL、载体、状态、设置、正文和读库投影契约样本（2026-10-02；`docs/AGENT-200-BATCH.md`；`pnpm test` 354/354，`pnpm check` 0 errors/0 warnings）
+## T-3304（2026-10-08）主线同步分支合入开发支线
+
+- [◐] 将 `origin/codex/main-sync-20261008` 合入 `dev/thispc-1002`，完成类型、测试、构建、发布检查并普通推送；保留同步分支，不触碰 `main`/tag/Release/集市。
+- [x] 冲突裁决：阅读断点继续以 `custom-clip-reading-position` JSON 为唯一新写入事实源；同步侧旧键仅兼容读取。
+
+- [x] T-3546（2026-11-09，未发布）：修复阅读器摘录交接假成功/双写；配对闪卡回执与稳定请求身份，失败保留原选区；修复compact移动28px覆盖44px。自动回归及夹具证据见配套整改记录；真实宿主待验。
+- [x] T-3547（2026-11-09二轮，未发布）：收藏请求以docId/generation隔离晚回执；导入预览status翻译；唯一当前状态索引。原版负向→修后回归及Chrome证据见配套二轮整改记录；真实宿主另验。
