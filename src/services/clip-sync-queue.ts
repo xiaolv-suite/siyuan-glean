@@ -13,6 +13,8 @@ export interface PendingClipItem {
     url?: string;
     isUrl: boolean;
     createdAt: string;
+    createdDocId?: string;
+    retryCount?: number;
 }
 
 const STORAGE_KEY = "glean_pending_clip_queue";
@@ -53,6 +55,16 @@ export function enqueuePendingClip(clip: Omit<PendingClipItem, "id" | "createdAt
     return item;
 }
 
+/** 更新暂存条目属性（记录已创建文档 ID 或重试次数） */
+export function updatePendingClip(id: string, patch: Partial<PendingClipItem>): void {
+    const current = getPendingClips();
+    const idx = current.findIndex((i) => i.id === id);
+    if (idx !== -1 && current[idx]) {
+        current[idx] = { ...current[idx], ...patch };
+        savePendingClips(current);
+    }
+}
+
 /** 移除已同步项 */
 export function removePendingClip(id: string): void {
     const current = getPendingClips();
@@ -79,8 +91,17 @@ export async function flushPendingClips(facade: GleanFacade): Promise<number> {
 
         for (const item of items) {
             try {
-                const rootPrefix = resolveGleanRootPrefix(facade.settings, notebooks, item.notebookId);
-                const docId = await createDocWithMd(item.notebookId, `${rootPrefix}/剪藏/${item.title}`, item.md);
+                // 幂等复用：若上次重试已经创建了文档，则直接复用已建文档 ID，严禁重复建同名文档
+                let docId = item.createdDocId;
+                if (!docId) {
+                    const rootPrefix = resolveGleanRootPrefix(facade.settings, notebooks, item.notebookId);
+                    const safeTitle = (item.title || "未命名剪藏").replace(/[/\\:<>|?*"~\p{Cc}\p{Cf}\r\n]+/gu, " ").trim().slice(0, 80) || "未命名剪藏";
+                    docId = await createDocWithMd(item.notebookId, `${rootPrefix}/剪藏/${safeTitle}`, item.md);
+                    if (docId) {
+                        item.createdDocId = docId;
+                        updatePendingClip(item.id, { createdDocId: docId });
+                    }
+                }
                 if (docId) {
                     const captured = await captureDocument(facade.pluginInstance, docId, {
                         src: "manual",
@@ -121,7 +142,14 @@ export async function flushPendingClips(facade: GleanFacade): Promise<number> {
                     });
                 }
             } catch (err) {
-                // 单篇失败保留在队列中等待下次重试
+                // 单篇失败累加重试计数；超过 3 次安全移除防阻塞离线队列，并友好提醒
+                const nextRetries = (item.retryCount || 0) + 1;
+                if (nextRetries >= 3) {
+                    removePendingClip(item.id);
+                    showNotice(`离线剪藏《${item.title}》重试多次失败，已从队列移除，请检查网络或思源内核日志`, 6000, "error");
+                } else {
+                    updatePendingClip(item.id, { retryCount: nextRetries });
+                }
                 console.debug("[glean] 离线剪藏重试跳过:", item.title, err);
                 break;
             }

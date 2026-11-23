@@ -11,7 +11,7 @@
     display: flex;
     flex-direction: column;
     gap: var(--glean-space-4);
-    color: var(--b3-theme-on-background);
+    color: var(--glean-ink);
     scrollbar-gutter: stable;
     overscroll-behavior: contain;
 }
@@ -41,8 +41,8 @@
     padding: var(--glean-space-1-5) var(--glean-space-3);
     border: 1px solid var(--glean-border-soft);
     border-radius: var(--glean-radius-pill);
-    background: var(--b3-theme-background);
-    color: var(--b3-theme-on-background);
+    background: var(--glean-app-background);
+    color: var(--glean-ink);
     transition: transform var(--glean-duration-fast) ease, background var(--glean-duration-fast) ease, border-color var(--glean-duration-fast) ease, box-shadow var(--glean-duration-fast) ease, color var(--glean-duration-fast) ease, opacity var(--glean-duration-fast) ease;
 
     &:focus-visible {
@@ -55,17 +55,17 @@
 .glean-stats__hint {
     font-size: var(--glean-text-sm);
     line-height: var(--glean-leading-relaxed);
-    color: var(--b3-theme-on-surface);
+    color: var(--glean-ink-2);
     overflow-wrap: anywhere;
 }
 
 .glean-stats__warning {
     margin: var(--glean-space-0);
     padding: var(--glean-space-2) var(--glean-space-3);
-    border: 1px solid color-mix(in srgb, var(--b3-theme-error) 24%, var(--glean-border-soft));
+    border: 1px solid color-mix(in srgb, var(--glean-danger) 24%, var(--glean-border-soft));
     border-radius: var(--glean-radius-sm);
     background: var(--glean-error-surface);
-    color: var(--b3-theme-error);
+    color: var(--glean-danger);
 }
 
 .glean-stats__metrics {
@@ -78,7 +78,7 @@
     padding: var(--glean-space-2-5);
     border: 1px solid var(--glean-border-soft);
     border-radius: var(--glean-radius-md);
-    background: color-mix(in srgb, var(--b3-theme-surface) 84%, transparent);
+    background: color-mix(in srgb, var(--glean-card-surface) 84%, transparent);
 }
 
 .glean-stats__heatmap-scroll {
@@ -99,7 +99,7 @@
     border: none;
     border-radius: 3px;
     cursor: pointer;
-    background: color-mix(in srgb, var(--b3-theme-surface) 75%, var(--glean-app-background));
+    background: color-mix(in srgb, var(--glean-card-surface) 75%, var(--glean-app-background));
     transition: transform var(--glean-duration-micro) ease, outline var(--glean-duration-micro) ease;
     position: relative;
 
@@ -173,7 +173,7 @@
 .glean-stats th,
 .glean-stats td {
     padding: var(--glean-space-1-5);
-    border-bottom: 1px solid var(--b3-border-color);
+    border-bottom: 1px solid var(--glean-line);
 }
 
 .glean-stats table th:first-child,
@@ -226,14 +226,14 @@
     padding: var(--glean-space-3) var(--glean-space-4);
     border: 1px dashed var(--glean-border-soft);
     border-radius: var(--glean-radius-md);
-    color: var(--b3-theme-on-surface);
+    color: var(--glean-ink-2);
     list-style: none;
 }
 
 .glean-stats__completed span {
     margin-left: auto;
     font-size: var(--glean-text-sm);
-    color: var(--b3-theme-on-surface);
+    color: var(--glean-ink-2);
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
 }
@@ -241,7 +241,7 @@
 .glean-stats__link {
     border: 0;
     background: transparent;
-    color: var(--b3-theme-primary);
+    color: var(--glean-color-action);
     font: inherit;
     text-align: left;
     text-decoration: underline;
@@ -270,7 +270,7 @@
     gap: var(--glean-space-3);
     min-width: 0;
     padding: var(--glean-space-4);
-    border: 1px solid color-mix(in srgb, var(--b3-border-color) 40%, transparent);
+    border: 1px solid color-mix(in srgb, var(--glean-line) 40%, transparent);
     border-radius: var(--glean-radius-xl);
     background: var(--glean-card-surface);
     box-shadow: var(--glean-shadow-card);
@@ -345,7 +345,7 @@
     padding: var(--glean-space-3) var(--glean-space-4) var(--glean-space-2);
     border: none;
     border-radius: var(--glean-radius-lg);
-    background: color-mix(in srgb, var(--glean-app-background) 70%, var(--b3-theme-surface));
+    background: color-mix(in srgb, var(--glean-app-background) 70%, var(--glean-card-surface));
 }
 
 .glean-stats__trend-bar {
@@ -396,14 +396,14 @@
 
 .glean-stats__trend-bar--empty {
     opacity: .25;
-    background: color-mix(in srgb, var(--b3-theme-on-surface) 12%, transparent);
+    background: color-mix(in srgb, var(--glean-ink-2) 12%, transparent);
 }
 
 .glean-stats__trend-meta {
     display: flex;
     justify-content: space-between;
     padding: var(--glean-space-0) var(--glean-space-1);
-    color: var(--b3-theme-on-surface);
+    color: var(--glean-ink-2);
     font-size: var(--glean-text-xs);
     font-variant-numeric: tabular-nums;
     opacity: .68;
@@ -412,7 +412,7 @@
 .glean-stats__completed-detail {
     border: none;
     border-radius: var(--glean-radius-lg);
-    background: color-mix(in srgb, var(--glean-app-background) 65%, var(--b3-theme-surface));
+    background: color-mix(in srgb, var(--glean-app-background) 65%, var(--glean-card-surface));
 }
 
 .glean-stats__completed-detail > summary {
@@ -420,7 +420,7 @@
     align-items: center;
     min-height: 40px;
     padding: var(--glean-space-0) var(--glean-space-3);
-    color: var(--b3-theme-on-surface);
+    color: var(--glean-ink-2);
     cursor: pointer;
     font-size: var(--glean-text-xs);
     font-weight: var(--glean-weight-650);
@@ -456,7 +456,7 @@
     align-items: center;
     min-height: 40px;
     padding: var(--glean-space-0) var(--glean-space-3);
-    color: var(--b3-theme-on-surface);
+    color: var(--glean-ink-2);
     cursor: pointer;
     font-size: var(--glean-text-xs);
     font-weight: var(--glean-weight-650);
@@ -502,7 +502,7 @@
     justify-content: flex-end;
     gap: var(--glean-space-1);
     margin-top: var(--glean-space-2);
-    color: var(--b3-theme-on-surface);
+    color: var(--glean-ink-2);
     font-size: var(--glean-text-xs);
     font-variant-numeric: tabular-nums;
 }
@@ -516,9 +516,9 @@
     display: block;
     width: 12px;
     height: 12px;
-    border: 1px solid color-mix(in srgb, var(--b3-border-color) 70%, transparent);
+    border: 1px solid color-mix(in srgb, var(--glean-line) 70%, transparent);
     border-radius: var(--glean-radius-3);
-    background: var(--b3-theme-primary);
+    background: var(--glean-color-action);
 }
 
 .glean-stats__legend-swatch--0 { opacity: 0.2; }
@@ -527,7 +527,7 @@
 .glean-stats__legend-swatch--3 { opacity: 0.95; }
 
 .glean-stats__activity .glean-stats__day {
-    border-color: color-mix(in srgb, var(--b3-border-color) 70%, transparent);
+    border-color: color-mix(in srgb, var(--glean-line) 70%, transparent);
     border-radius: var(--glean-radius-4);
     transition: transform var(--glean-duration-micro) var(--glean-ease-out), filter var(--glean-duration-micro) ease;
 }
@@ -543,12 +543,12 @@
 }
 
 .glean-stats__days summary {
-    color: var(--b3-theme-on-surface);
+    color: var(--glean-ink-2);
     font-size: var(--glean-text-sm);
 }
 
 .glean-stats__days[open] summary {
-    color: var(--b3-theme-primary);
+    color: var(--glean-color-action);
 }
 
 .glean-stats__breakdown {
@@ -564,7 +564,7 @@
 
 .glean-stats__distribution h3 {
     margin: var(--glean-space-0) var(--glean-space-0) var(--glean-space-3);
-    color: var(--b3-theme-on-background);
+    color: var(--glean-ink);
     font-size: var(--glean-text-md);
     line-height: var(--glean-leading-normal);
 }
@@ -640,7 +640,7 @@
         border: none;
         border-radius: 50%;
         background: transparent;
-        color: var(--b3-theme-on-surface);
+        color: var(--glean-ink-2);
         opacity: 0.6;
         cursor: pointer;
         padding: 0;
@@ -651,7 +651,7 @@
         &:hover {
             opacity: 1;
             color: var(--glean-color-action);
-            background: color-mix(in srgb, var(--b3-theme-on-surface) 8%, transparent);
+            background: color-mix(in srgb, var(--glean-ink-2) 8%, transparent);
         }
 
         &:focus-visible {

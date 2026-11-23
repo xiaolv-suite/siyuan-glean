@@ -8,7 +8,7 @@
 .glean-tile {
     border-radius: var(--glean-radius-lg, 16px);
     padding: var(--glean-space-3-25) var(--glean-space-3-5);
-    background: var(--glean-card-surface, var(--b3-theme-surface));
+    background: var(--glean-card-surface, var(--glean-card-surface));
     border: 1px solid var(--glean-border-soft);
     box-shadow: var(--glean-shadow-card);
     position: relative;
@@ -27,7 +27,7 @@
 
     .glean-tile__k {
         font-size: var(--glean-text-caption-plus);
-        color: var(--b3-theme-on-surface);
+        color: var(--glean-ink-2);
         display: flex;
         align-items: center;
         gap: var(--glean-space-1-25);
@@ -40,12 +40,12 @@
         margin-top: var(--glean-space-1);
         letter-spacing: -0.02em;
         font-variant-numeric: tabular-nums;
-        color: var(--b3-theme-on-background);
+        color: var(--glean-ink);
     }
 
     .glean-tile__u {
         font-size: var(--glean-text-caption);
-        color: var(--b3-theme-on-surface);
+        color: var(--glean-ink-2);
         font-weight: var(--glean-weight-medium);
         margin-left: var(--glean-space-micro);
     }
@@ -60,7 +60,7 @@
         i {
             flex: 1;
             border-radius: var(--glean-radius-2) var(--glean-radius-2) var(--glean-radius-none) var(--glean-radius-none);
-            background: color-mix(in srgb, var(--b3-theme-on-surface) 14%, transparent);
+            background: color-mix(in srgb, var(--glean-ink-2) 14%, transparent);
 
             &.glean-tile__spark--hot {
                 background: var(--glean-color-data);
@@ -73,7 +73,7 @@
 .glean-sect {
     font-size: var(--glean-text-caption-plus);
     font-weight: var(--glean-weight-bold);
-    color: var(--b3-theme-on-surface);
+    color: var(--glean-ink-2);
     letter-spacing: var(--glean-tracking-0-6);
     margin-top: var(--glean-space-1);
     text-transform: uppercase;
@@ -82,7 +82,7 @@
 .glean-block {
     border-radius: var(--glean-radius-lg, 16px);
     padding: var(--glean-space-3) var(--glean-space-3-5);
-    background: var(--glean-card-surface, var(--b3-theme-surface));
+    background: var(--glean-card-surface, var(--glean-card-surface));
     border: 1px solid var(--glean-border-soft);
     box-shadow: var(--glean-shadow-card);
 }
@@ -99,7 +99,7 @@
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        color: var(--b3-theme-on-surface);
+        color: var(--glean-ink-2);
         flex-shrink: 0;
     }
 
@@ -107,7 +107,7 @@
         flex: 1;
         height: 6px;
         border-radius: var(--glean-radius-3);
-        background: color-mix(in srgb, var(--b3-theme-on-surface) 14%, transparent);
+        background: color-mix(in srgb, var(--glean-ink-2) 14%, transparent);
         overflow: hidden;
 
         i {
@@ -137,14 +137,14 @@
     font-size: var(--glean-text-xs);
     padding: var(--glean-space-1) var(--glean-space-2-5);
     border-radius: var(--glean-radius-pill);
-    background: var(--b3-theme-background-light);
+    background: var(--glean-app-background);
     border: 1px solid var(--glean-border-soft);
     transition: transform var(--glean-duration-fast) ease, background var(--glean-duration-fast) ease, border-color var(--glean-duration-fast) ease, box-shadow var(--glean-duration-fast) ease, color var(--glean-duration-fast) ease, opacity var(--glean-duration-fast) ease;
 
     &:hover {
         border-color: var(--glean-color-action);
         color: var(--glean-color-action);
-        background: color-mix(in srgb, var(--glean-color-action) 8%, var(--b3-theme-surface));
+        background: color-mix(in srgb, var(--glean-color-action) 8%, var(--glean-card-surface));
     }
 
     &:focus-visible {
@@ -176,7 +176,7 @@
     border: none;
     font-size: var(--glean-text-sm-plus);
     font-weight: var(--glean-weight-semibold);
-    color: var(--b3-theme-on-primary);
+    color: var(--glean-on-action);
     padding: var(--glean-space-2-5);
     border-radius: var(--glean-radius-sm);
     background: var(--glean-grad);

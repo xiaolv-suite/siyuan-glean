@@ -71,6 +71,36 @@ export interface GleanIndex {
     candidates: Record<string, CandidateEntry>;
 }
 
+const knownClipDocIds = new Set<string>();
+
+/** 获取当前内存中已剪藏文档 ID 集合（只读快照） */
+export function getKnownClipDocIds(): ReadonlySet<string> {
+    return knownClipDocIds;
+}
+
+/** O(1) 快速判定文档 ID 是否属于已剪藏文章 */
+export function isKnownClipDocId(docId: string): boolean {
+    return knownClipDocIds.has(docId);
+}
+
+/** 全量同步已剪藏文档 ID 集合 */
+export function syncClipDocIds(ids: Iterable<string>): void {
+    knownClipDocIds.clear();
+    for (const id of ids) {
+        if (id) knownClipDocIds.add(id);
+    }
+}
+
+/** 增量登记剪藏文档 ID */
+export function addClipDocId(docId: string): void {
+    if (docId) knownClipDocIds.add(docId);
+}
+
+/** 移除剪藏文档 ID */
+export function removeClipDocId(docId: string): void {
+    if (docId) knownClipDocIds.delete(docId);
+}
+
 export function emptyIndex(): GleanIndex {
     return { version: INDEX_VERSION, updatedAt: "", clips: {}, candidates: {} };
 }
@@ -105,7 +135,7 @@ export function isIndexCorrupted(): boolean {
     return indexCorrupted;
 }
 
-export async function loadIndex(plugin: Plugin, options: { strict?: boolean } = {}): Promise<GleanIndex> {
+export async function loadIndex(plugin: Plugin, options: { strict?: boolean; shouldPublish?: () => boolean } = {}): Promise<GleanIndex> {
     try {
         const raw = await plugin.loadData(INDEX_FILE);
         if (!raw || typeof raw !== "object") return emptyIndex();
@@ -162,6 +192,12 @@ export async function loadIndex(plugin: Plugin, options: { strict?: boolean } = 
                 updated: typeof value.updated === "string" ? value.updated : "",
             };
         }
+        const canPublish = options.shouldPublish
+            ? options.shouldPublish()
+            : (plugin && "loaded" in plugin ? (plugin as { loaded?: boolean }).loaded !== false : true);
+        if (canPublish) {
+            syncClipDocIds(Object.keys(clips));
+        }
         return {
             version: INDEX_VERSION,
             updatedAt: typeof index.updatedAt === "string" ? index.updatedAt : "",
@@ -176,11 +212,17 @@ export async function loadIndex(plugin: Plugin, options: { strict?: boolean } = 
     }
 }
 
-export async function saveIndex(plugin: Plugin, index: GleanIndex, options: { repair?: boolean } = {}): Promise<GleanIndex> {
+export async function saveIndex(plugin: Plugin, index: GleanIndex, options: { repair?: boolean; shouldPublish?: () => boolean } = {}): Promise<GleanIndex> {
     if (indexCorrupted && !options.repair) {
         // 损坏未消除前拒绝增量落盘，避免空/局部索引覆盖原文件。
         console.warn("[glean] 索引处于损坏保护，本次变更仅保留在内存，等待完整对账/重建后恢复落盘");
         return index;
+    }
+    const canPublish = options.shouldPublish
+        ? options.shouldPublish()
+        : (plugin && "loaded" in plugin ? (plugin as { loaded?: boolean }).loaded !== false : true);
+    if (canPublish) {
+        syncClipDocIds(Object.keys(index.clips));
     }
     index.version = INDEX_VERSION;
     index.updatedAt = new Date().toISOString();
@@ -198,6 +240,7 @@ export function applyAttrsToIndex(
     const attrs = parseClipAttrs(ial);
     const isClip = Boolean(attrs.status);
     if (isClip) {
+        addClipDocId(doc.id);
         delete index.candidates[doc.id];
         index.clips[doc.id] = {
             id: doc.id,
@@ -230,6 +273,7 @@ export function applyAttrsToIndex(
             updated: doc.updated,
         };
     } else {
+        removeClipDocId(doc.id);
         delete index.clips[doc.id];
         if (!probe.eligible) {
             delete index.candidates[doc.id];
@@ -252,6 +296,7 @@ export function applyAttrsToIndex(
 }
 
 export function removeDocFromIndex(index: GleanIndex, docId: string): void {
+    removeClipDocId(docId);
     delete index.clips[docId];
     delete index.candidates[docId];
 }

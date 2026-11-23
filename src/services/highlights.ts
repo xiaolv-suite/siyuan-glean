@@ -1,6 +1,6 @@
 import type { App, Plugin } from "siyuan";
 import {
-    createDocWithMd, deleteBlock, findBlockIdByTextInDoc, getBlockAttrs, getHighlightBlocks, listCrossDocSiyuanComments,
+    createDocWithMd, deleteBlock, findBlockIdByTextInDoc, getBlockAttrs, getBlockKramdown, getHighlightBlocks, listCrossDocSiyuanComments,
     listHighlightBlocks, listHighlightDocuments, newNodeId, querySql, updateBlock, type BlockRow,
 } from "../api/client";
 import {
@@ -491,7 +491,8 @@ export async function createArticleHighlightsDoc(
     if (!box) return { ok: false, reason: "invalidBox" };
     const lastSlash = (hpath || "").lastIndexOf("/");
     const parent = lastSlash > 0 ? hpath.slice(0, lastSlash) : "";
-    const safeTitle = (group.title || "未命名").replace(/[\\/\u0000-\u001f]/g, " ").trim().slice(0, 100);
+    const safeTitle = (group.title || "未命名").replace(/[/\\:<>|?*"~\p{Cc}\p{Cf}\r\n]+/gu, " ").trim().slice(0, 80) || "未命名";
+    const safeLabel = (labels.title || "划线整理").replace(/[/\\:<>|?*"~\p{Cc}\p{Cf}\r\n]+/gu, " ").trim().slice(0, 30) || "划线整理";
 
     try {
         let docId = "";
@@ -505,7 +506,7 @@ export async function createArticleHighlightsDoc(
             }
         }
         if (!docId) {
-            targetHpath = `${parent}/[${labels.title}] ${safeTitle} ${newNodeId()}`;
+            targetHpath = `${parent}/[${safeLabel}] ${safeTitle} ${newNodeId()}`;
             const markdown = renderArticleHighlightsMarkdown(group, labels);
             docId = await createDocWithMd(box, targetHpath, markdown);
             if (!isHighlightId(docId)) return { ok: false, reason: "createFailed" };
@@ -541,13 +542,44 @@ export async function updateHighlightMemo(item: HighlightItem, nextMemoRaw: stri
             await writeAnnotationAttrs(targetId, { memo: nextMemo });
             return nextMemo;
         }
-        // 拾遗引述块：优先保持引述原文 + 更新或移除 💡 批注行，同时同步 memo 属性方便原生预览
+        // 拾遗引述块：优先保持引述原文（完整保留加粗/斜体/超链接/公式等 Markdown 语法）+ 更新或移除 💡 批注行，同时同步 memo 属性
         if (item.source?.type === "b") {
-            const quoteLines = item.text.split(/\r?\n/).map((line) => `> ${line}`).join("\n");
-            const nextMd = nextMemo ? `${quoteLines}\n>\n> 💡 ${nextMemo}` : quoteLines;
+            let quoteMarkdown = "";
+            try {
+                const kram = await getBlockKramdown(targetId);
+                if (kram) {
+                    const cleanKram = kram.replace(/\{:[^}]*\}\s*$/g, "").trim();
+                    const parts = cleanKram.split(/(?:\r?\n)+\s*💡\s*/);
+                    if (parts.length > 0 && parts[0]) {
+                        quoteMarkdown = parts[0].trim();
+                    }
+                }
+            } catch {
+                // 异常时回退到内存缓存的 markdown
+            }
+
+            if (!quoteMarkdown && item.markdown) {
+                const cleanItemMd = item.markdown.replace(/\{:[^}]*\}\s*$/g, "").trim();
+                const parts = cleanItemMd.split(/(?:\r?\n)+\s*💡\s*/);
+                if (parts.length > 0 && parts[0]) {
+                    quoteMarkdown = parts[0].trim();
+                }
+            }
+
+            if (!quoteMarkdown) {
+                const quoteLines = item.text.split(/\r?\n/).map((line) => `> ${line}`).join("\n");
+                quoteMarkdown = quoteLines;
+            }
+
+            if (!quoteMarkdown.startsWith(">")) {
+                quoteMarkdown = quoteMarkdown.split(/\r?\n/).map((line) => line.startsWith(">") ? line : `> ${line}`).join("\n");
+            }
+
+            const nextMd = nextMemo ? `${quoteMarkdown}\n>\n> 💡 ${nextMemo}` : quoteMarkdown;
             await updateBlock(targetId, nextMd, "markdown");
+            await writeAnnotationAttrs(targetId, { memo: nextMemo ? nextMemo : null });
         } else {
-            await writeAnnotationAttrs(targetId, { memo: nextMemo });
+            await writeAnnotationAttrs(targetId, { memo: nextMemo ? nextMemo : null });
         }
         void app;
         return nextMemo;
@@ -683,11 +715,13 @@ export async function deleteAnnotation(
 
     if (mode === "unmark" || item.source?.type !== "b") {
         await writeAnnotationAttrs(targetId, {
-            "custom-clip-highlight": "",
-            "custom-clip-hl-color": "",
-            "custom-clip-hl-tag": "",
-            "custom-clip-hl-replies": "",
-            ...(item.annotationKind === "native-memo" ? { memo: "" } : {}),
+            "custom-clip-highlight": null,
+            "custom-clip-hl-color": null,
+            "custom-clip-hl-tag": null,
+            "custom-clip-hl-replies": null,
+            "custom-lv-glean-highlight": null,
+            "custom-clip-unmarked": mode === "unmark" ? "true" : null,
+            ...(item.annotationKind === "native-memo" ? { memo: null } : {}),
         });
         return;
     }

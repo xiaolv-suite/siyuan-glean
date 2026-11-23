@@ -9,7 +9,6 @@
         "checkJs": true
     },
     "include": [
-        "vite.config.ts",
-        "scripts/siyuan_live_reload.ts"
+        "vite.config.ts"
     ]
 }

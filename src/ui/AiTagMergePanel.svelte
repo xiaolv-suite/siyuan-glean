@@ -160,25 +160,25 @@
 </section>
 
 <style>
-    .glean-ai-tag-merge { display: grid; gap: var(--glean-space-3); padding: var(--glean-space-4); min-width: 0; color: var(--b3-theme-on-background); }
+    .glean-ai-tag-merge { display: grid; gap: var(--glean-space-3); padding: var(--glean-space-4); min-width: 0; color: var(--glean-ink); }
     .glean-ai-tag-merge h3, .glean-ai-tag-merge p { margin: 0; overflow-wrap: anywhere; }
     .glean-ai-tag-merge h3 { font-size: var(--glean-text-lg); line-height: 1.35; }
-    .glean-ai-tag-merge p { color: var(--b3-theme-on-surface); font-size: var(--glean-text-sm); line-height: 1.55; }
+    .glean-ai-tag-merge p { color: var(--glean-ink-2); font-size: var(--glean-text-sm); line-height: 1.55; }
     .glean-ai-tag-merge__head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--glean-space-3); }
     .glean-ai-tag-merge__head p { margin-top: var(--glean-space-1); }
     .glean-ai-tag-merge__list { display: grid; gap: var(--glean-space-2); }
     .glean-ai-tag-merge__row { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(150px, 190px) auto; align-items: center; gap: var(--glean-space-2); padding: var(--glean-space-3); border: 1px solid var(--glean-border-soft); border-radius: var(--glean-radius-lg, 16px); background: var(--glean-status-surface); }
     .glean-ai-tag-merge__variants { display: flex; flex-wrap: wrap; gap: var(--glean-space-1); min-width: 0; }
-    .glean-ai-tag-merge__affected { color: var(--b3-theme-on-surface); font-size: var(--glean-text-xs); white-space: nowrap; font-variant-numeric: tabular-nums; }
-    .glean-ai-tag-merge__keep { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: var(--glean-space-2); min-width: 0; color: var(--b3-theme-on-surface); font-size: var(--glean-text-xs); }
+    .glean-ai-tag-merge__affected { color: var(--glean-ink-2); font-size: var(--glean-text-xs); white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .glean-ai-tag-merge__keep { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: var(--glean-space-2); min-width: 0; color: var(--glean-ink-2); font-size: var(--glean-text-xs); }
     .glean-ai-tag-merge__keep select { min-width: 0; max-width: 100%; border-radius: var(--glean-radius-pill); padding-inline: var(--glean-space-2-5); }
     .glean-ai-tag-merge .glean-btn { border-radius: var(--glean-radius-pill); }
     .glean-ai-tag-merge :is(button, .glean-btn, select):focus-visible { outline: 2px solid var(--glean-color-action); outline-offset: 2px; }
     .glean-ai-tag-merge__hint, .glean-ai-tag-merge__empty { padding: var(--glean-space-2) 0; }
     .glean-ai-tag-merge__status { color: var(--glean-st-done-text) !important; }
-    .glean-ai-tag-merge__status--error { color: var(--b3-theme-error) !important; }
-    .glean-ai-tag-merge__scan-error { display: flex; flex-wrap: wrap; align-items: center; gap: var(--glean-space-2); padding: var(--glean-space-2); border: 1px solid var(--b3-theme-error); border-radius: var(--glean-radius-md); }
-    .glean-ai-tag-merge__scan-error p { color: var(--b3-theme-error); }
+    .glean-ai-tag-merge__status--error { color: var(--glean-danger) !important; }
+    .glean-ai-tag-merge__scan-error { display: flex; flex-wrap: wrap; align-items: center; gap: var(--glean-space-2); padding: var(--glean-space-2); border: 1px solid var(--glean-danger); border-radius: var(--glean-radius-md); }
+    .glean-ai-tag-merge__scan-error p { color: var(--glean-danger); }
     @media (forced-colors: active) {
         .glean-ai-tag-merge__row { border: 1px solid CanvasText; }
         .glean-ai-tag-merge__scan-error { border: 1px solid Highlight; }

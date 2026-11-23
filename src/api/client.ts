@@ -288,6 +288,27 @@ async function kernelPostOnce<T>(route: string, body: Record<string, unknown> | 
             }
         });
     }
+    // 关键优化：在真机浏览器中严禁对 AI 类长请求调用 fetchSyncPost，杜绝全屏 Requesting... 阻塞遮罩
+    const isAi = (route.startsWith("/api/ai/") || route.includes("/ai/chat")) && typeof window !== "undefined";
+    if (isAi && typeof fetch === "function") {
+        const timeout = new Promise<never>((_, reject) => {
+            setTimeout(() => reject(decorateError(`${route} 请求超时（${Math.round(timeoutMs / 1000)}s 无响应）`, route, "timeout")), timeoutMs);
+        });
+        const aiFetch = fetch(route, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body ?? {}),
+            signal: options.signal,
+        }).then(async (res) => {
+            const text = await res.text();
+            let payload: any;
+            try { payload = JSON.parse(text); } catch { payload = { code: res.ok ? 0 : -1, msg: text, data: text }; }
+            if (payload && payload.code !== 0) throw responseError(route, payload);
+            return (payload.data !== undefined ? payload.data : payload) as T;
+        });
+        return await Promise.race([aiFetch, timeout]);
+    }
+
     if (typeof fetchSyncPost !== "function") throw decorateError("思源内核请求接口不可用", route, "protocol", { retryable: false });
     let timer: ReturnType<typeof setTimeout> | undefined;
     let abortListener: (() => void) | undefined;
@@ -652,7 +673,9 @@ export async function listHighlightBlocks(rootDocIds: readonly string[], afterId
     return highlightQuery<BlockRow>(
         `SELECT id, content, markdown, type, root_id, box, ial FROM blocks
          WHERE root_id IN (${roots}) AND type <> 'd'
-         AND (type = 'b' OR (instr(ial, '${marker}') > 0 AND trim(substr(${tail}, 1, instr(${tail}, '"') - 1)) <> '')
+         AND (instr(ial, 'custom-clip-unmarked="true"') = 0 AND instr(ial, 'custom-clip-unmarked=true') = 0)
+         AND (type = 'b' OR instr(ial, 'custom-lv-glean-highlight=') > 0
+              OR (instr(ial, '${marker}') > 0 AND trim(substr(${tail}, 1, instr(${tail}, '"') - 1)) <> '')
               OR instr(ial, 'custom-siyuan-comment="') > 0 OR instr(ial, 'custom-siyuan-comment=') > 0
               OR (instr(ial, 'memo="') > 0 AND instr(ial, 'custom-glean-slot=') = 0))
          ${afterId ? `AND id > '${afterId}'` : ""}
@@ -690,35 +713,41 @@ export async function listCrossDocSiyuanComments(rootDocIds: readonly string[]):
     if (validRoots.length === 0) return [];
     const rootSet = new Set(validRoots);
 
-    // 1. 扫描带有 custom-comment-refs 的源块（避免使用 root_id IN 干扰现有单测语句统计）
+    // 1. 扫描带有 custom-comment-refs 的源块（按指定文档分批精准检索，避免全库扫描超限遗漏）
     const commentIdToSourceRoot = new Map<string, string>();
-    let refRows: Array<{ id?: unknown; root_id?: unknown; ial?: unknown }> = [];
-    try {
-        refRows = await highlightQuery<{ id?: unknown; root_id?: unknown; ial?: unknown }>(
-            `SELECT id, root_id, ial FROM blocks WHERE instr(ial, 'custom-comment-refs=') > 0 AND type <> 'd' ORDER BY id ASC LIMIT 500`,
-        );
-    } catch {
-        refRows = [];
-    }
-    for (const row of refRows) {
-        if (typeof row.root_id !== "string" || !rootSet.has(row.root_id) || typeof row.ial !== "string") continue;
-        const m = /(?:^|[\s{])custom-comment-refs="([^"]*)"/.exec(row.ial);
-        if (!m?.[1]) continue;
-        for (const cid of m[1].split(",").map((s) => s.trim()).filter(Boolean)) {
-            if (/^\d{14}-[0-9a-z]{7}$/.test(cid) && !commentIdToSourceRoot.has(cid)) {
-                commentIdToSourceRoot.set(cid, row.root_id);
+    const batchSize = 100;
+    for (let offset = 0; offset < validRoots.length; offset += batchSize) {
+        const batch = validRoots.slice(offset, offset + batchSize);
+        const rootsClause = highlightSqlIds(batch);
+        if (!rootsClause) continue;
+        let refRows: Array<{ id?: unknown; root_id?: unknown; ial?: unknown }> = [];
+        try {
+            refRows = await highlightQuery<{ id?: unknown; root_id?: unknown; ial?: unknown }>(
+                `SELECT id, root_id, ial FROM blocks WHERE "root_id" IN (${rootsClause}) AND instr(ial, 'custom-comment-refs=') > 0 AND type <> 'd' ORDER BY id ASC LIMIT 1000`,
+            );
+        } catch {
+            refRows = [];
+        }
+        for (const row of refRows) {
+            if (typeof row.root_id !== "string" || !rootSet.has(row.root_id) || typeof row.ial !== "string") continue;
+            const m = /(?:^|[\s{])custom-comment-refs="([^"]*)"/.exec(row.ial);
+            if (!m?.[1]) continue;
+            for (const cid of m[1].split(",").map((s) => s.trim()).filter(Boolean)) {
+                if (/^\d{14}-[0-9a-z]{7}$/.test(cid) && !commentIdToSourceRoot.has(cid)) {
+                    commentIdToSourceRoot.set(cid, row.root_id);
+                }
             }
         }
     }
 
-    // 2. 扫描全库中跨文档放置的 custom-siyuan-comment 块（如日记、目标文档、子文档）
+    // 2. 扫描全库中跨文档放置的 custom-siyuan-comment 块（按时间倒序优先获取近期批注，容量放宽至 2000 条）
     let allWhaleRows: BlockRow[] = [];
     try {
         allWhaleRows = await highlightQuery<BlockRow>(
             `SELECT id, content, markdown, type, root_id, box, ial FROM blocks
              WHERE instr(ial, 'custom-siyuan-comment=') > 0
                AND instr(ial, 'custom-siyuan-comment-zone') = 0
-             ORDER BY id ASC LIMIT 500`,
+             ORDER BY id DESC LIMIT 2000`,
         );
     } catch {
         allWhaleRows = [];
@@ -957,6 +986,18 @@ export async function insertBlockAfter(previousBlockId: string, dom: string): Pr
     return (await insertBlockAfterIds(previousBlockId, dom))[0];
 }
 
+/** 在指定块之后插入同级 Markdown 块。 */
+export async function insertBlockMarkdownAfter(previousBlockId: string, markdown: string): Promise<string> {
+    const data = await kernelPost<unknown>('/api/block/insertBlock', {
+        dataType: 'markdown',
+        previousID: previousBlockId,
+        data: markdown,
+    });
+    const ids = extractInsertBlockIds(data);
+    if (ids.length === 0) throw new Error('insertBlock 未返回节点 ID');
+    return ids[0];
+}
+
 /** 向父块开头插入 DOM 块，返回事务中所有新节点 ID（按 DOM 操作顺序）。 */
 export async function prependBlockDomIds(parentBlockId: string, dom: string): Promise<string[]> {
     const data = await kernelPost<unknown>('/api/block/prependBlock', {
@@ -984,6 +1025,17 @@ export async function prependBlockMarkdown(parentBlockId: string, markdown: stri
     const ids = extractInsertBlockIds(data);
     if (ids.length === 0) throw new Error('prependBlock 未返回节点 ID');
     return ids[0];
+}
+
+/** 读取块的真实原始 Kramdown Markdown（包含原生格式标签，未脱敏）。 */
+export async function getBlockKramdown(id: string): Promise<string> {
+    if (!/^\d{14}-[0-9a-z]{7}$/.test(id)) return "";
+    const res = await kernelPost<{ kramdown?: string }>("/api/block/getBlockKramdown", { id }, {
+        requestKey: `block-kramdown:${id}`,
+        retryable: true,
+        retry: { attempts: 2, delayMs: 150, maxDelayMs: 400 },
+    }).catch(() => null);
+    return typeof res?.kramdown === "string" ? res.kramdown : "";
 }
 
 /** 更新指定块的内容与格式。 */

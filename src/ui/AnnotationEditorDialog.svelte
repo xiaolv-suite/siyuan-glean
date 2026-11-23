@@ -559,7 +559,7 @@
         display: grid;
         place-items: center;
         padding: var(--glean-space-4, 16px);
-        background: var(--b3-dialog-scrim, color-mix(in srgb, var(--b3-theme-surface, #0b1317) 48%, transparent));
+        background: var(--b3-dialog-scrim, color-mix(in srgb, var(--glean-card-surface, #0b1317) 48%, transparent));
         backdrop-filter: blur(6px);
         -webkit-backdrop-filter: blur(6px);
     }

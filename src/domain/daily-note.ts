@@ -41,6 +41,7 @@ export const DEFAULT_DAILY_NOTE_LABELS: DailyNoteLabels = {
 export function escapeDailyNoteText(text: string): string {
     return String(text ?? "")
         .replace(/[\r\n\u0000-\u001f]/g, " ")
+        .replace(/'/g, "’")
         .replace(/[\\`*_{}\[\]()#+.!<>|]/g, "\\$&")
         .trim();
 }

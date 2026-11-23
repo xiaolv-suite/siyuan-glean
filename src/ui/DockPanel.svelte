@@ -4,6 +4,9 @@ import { onMount, tick, untrack } from "svelte";
 import { openTab, Menu } from "siyuan";
 import { showMessage } from "../libs/notice";
 import { showDocTreeNativeMenu } from "../libs/lv-notice-kit";
+// DL2 阶段3：空态吉祥物（mascot 偏好门控，关闭回退麦穗线性图标）
+import { lvMascot } from "../libs/ui/mascots";
+import { resolveEffectiveMotion } from "../libs/lv-ui-prefs";
 import type { GleanFacade } from "../types";
 import { t } from "../libs/i18n";
 import { aiFailureKey } from "../libs/ai-feedback";
@@ -3686,7 +3689,7 @@ $effect(() => {
     {/if}
 
     {#if view === "library"}
-        {#if !facade.isMobile}
+        {#if !facade.isMobile && facade.settings.cloudInboxEnabled}
             <InboxSection {facade} onMutated={() => void reload()} />
         {/if}
         <AiBatchPanel {facade} bind:open={aiBatchOpen} docIds={aiBatchIds} />
@@ -4318,7 +4321,13 @@ $effect(() => {
                 <div class="glean-lib__main">
                     {#if rows.length === 0}
                         <div class="glean-empty" role="status">
-                            <div class="glean-empty__art"><svg aria-hidden="true"><use href="#iconGleanWheat" /></svg></div>
+                            <div class="glean-empty__art">
+                                {#if !hasFilters && resolveEffectiveMotion().mascot}
+                                    {@html lvMascot("carry", { class: "glean-empty__mascot" })}
+                                {:else}
+                                    <svg aria-hidden="true"><use href="#iconGleanWheat" /></svg>
+                                {/if}
+                            </div>
                             <div class="glean-empty__title">{t(i18n, hasFilters ? "library.noMatch" : "panel.empty")}</div>
                             <div class="glean-empty__hint">
                                 {facade.settings.anchorNotebooks.length === 0
@@ -4551,7 +4560,9 @@ $effect(() => {
                                 {/each}
                             </div>
                         {/if}
-                        <InboxSection {facade} onMutated={() => void reload()} />
+                        {#if facade.settings.cloudInboxEnabled}
+                            <InboxSection {facade} onMutated={() => void reload()} />
+                        {/if}
                         {@render libraryContextBanners()}
                     </div>
                 {/if}

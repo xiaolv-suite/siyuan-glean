@@ -190,12 +190,12 @@
         align-items: center;
         gap: 6px;
         padding: 4px 12px;
-        background: var(--glean-card-surface, var(--b3-theme-surface));
+        background: var(--glean-card-surface, var(--glean-card-surface));
         border: 1px solid var(--glean-border-soft);
         border-radius: var(--glean-radius-pill);
         box-shadow: var(--glean-shadow-float);
         font-size: 13px;
-        color: var(--b3-theme-on-surface);
+        color: var(--glean-ink-2);
         backdrop-filter: blur(12px);
     }
 
@@ -212,8 +212,8 @@
         font-size: 12px;
         border: 1px solid var(--glean-border-soft);
         border-radius: var(--glean-radius-pill);
-        background: var(--glean-inset-surface, var(--b3-theme-background));
-        color: var(--b3-theme-on-background);
+        background: var(--glean-inset-surface, var(--glean-app-background));
+        color: var(--glean-ink);
         outline: none;
         transition: border-color 0.15s ease;
     }
@@ -226,14 +226,14 @@
         min-width: 44px;
         text-align: center;
         font-size: 12px;
-        color: var(--b3-theme-on-surface);
+        color: var(--glean-ink-2);
         user-select: none;
         font-variant-numeric: tabular-nums;
         opacity: 0.8;
     }
 
     .glean-reader-search__count--empty {
-        color: var(--b3-theme-error, #e53e3e);
+        color: var(--glean-danger, #e53e3e);
         opacity: 1;
     }
 
@@ -250,11 +250,11 @@
         user-select: none;
         background: transparent;
         border: 1px solid transparent;
-        color: var(--b3-theme-on-surface);
+        color: var(--glean-ink-2);
     }
 
     .glean-reader-search__btn:hover:not(:disabled) {
-        background: color-mix(in srgb, var(--b3-theme-on-surface) 8%, transparent);
+        background: color-mix(in srgb, var(--glean-ink-2) 8%, transparent);
     }
 
     .glean-reader-search__btn:disabled {
@@ -263,7 +263,7 @@
     }
 
     .glean-reader-search__btn--active {
-        background: color-mix(in srgb, var(--glean-color-action) 14%, var(--b3-theme-surface));
+        background: color-mix(in srgb, var(--glean-color-action) 14%, var(--glean-card-surface));
         color: var(--glean-color-action);
         font-weight: 600;
         border-color: var(--glean-color-action);

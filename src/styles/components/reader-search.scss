@@ -42,7 +42,7 @@
         border: none;
         background: transparent;
         cursor: pointer;
-        color: var(--b3-theme-on-surface);
+        color: var(--glean-ink-2);
         opacity: 0.6;
         transition: opacity var(--glean-duration-fast) var(--glean-ease-enter), transform var(--glean-duration-fast) var(--glean-ease-enter);
 
@@ -56,13 +56,13 @@
         min-width: 48px;
         text-align: center;
         font-size: var(--glean-text-meta);
-        color: var(--b3-theme-on-surface);
+        color: var(--glean-ink-2);
         opacity: 0.8;
         user-select: none;
         font-variant-numeric: tabular-nums;
 
         &--empty {
-            color: var(--b3-theme-error, #e53935);
+            color: var(--glean-danger, #e53935);
             opacity: 1;
         }
     }
@@ -79,12 +79,12 @@
         border: none;
         background: transparent;
         cursor: pointer;
-        color: var(--b3-theme-on-surface);
+        color: var(--glean-ink-2);
         transition: background-color var(--glean-duration-fast) var(--glean-ease-enter), color var(--glean-duration-fast) var(--glean-ease-enter), transform var(--glean-duration-fast) var(--glean-ease-enter);
 
         &:hover {
-            background: color-mix(in srgb, var(--b3-theme-on-surface) 8%, transparent);
-            color: var(--b3-theme-on-background);
+            background: color-mix(in srgb, var(--glean-ink-2) 8%, transparent);
+            color: var(--glean-ink);
             transform: scale(1.05);
         }
 
@@ -95,7 +95,7 @@
         &--active {
             color: var(--glean-color-action);
             font-weight: var(--glean-weight-semibold);
-            background: color-mix(in srgb, var(--glean-color-action) 14%, var(--b3-theme-surface));
+            background: color-mix(in srgb, var(--glean-color-action) 14%, var(--glean-card-surface));
         }
 
         &--close {

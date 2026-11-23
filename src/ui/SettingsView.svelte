@@ -1,6 +1,8 @@
 <script lang="ts">
 /** 设置视图：分类导航与连续配置分组，保留草稿、保存回执及维护任务入口。 */
 import { onMount, tick } from "svelte";
+// DL2 阶段0：生态统一「外观与动效」偏好分组（庆祝/吉祥物/光效可关）
+import { createLvUiPrefsSection } from "../libs/lv-ui-prefs";
 import { getFrontend } from "siyuan";
 import { showMessage } from "../libs/notice";
 import { listNotebooks, type NotebookMeta } from "../api/client";
@@ -54,12 +56,20 @@ const SETTINGS_SECTIONS: Array<{ id: SettingsSectionId; labelKey: string; titleK
 let activeSection = $state<SettingsSectionId>("workspace");
 const activeSectionMeta = $derived(SETTINGS_SECTIONS.find((section) => section.id === activeSection) ?? SETTINGS_SECTIONS[0]);
 
+
+/** DL2 阶段0：挂载生态「外观与动效」偏好分组（svelte action：随工作区分组挂载/卸载） */
+function mountLvUiPrefsGroup(node: HTMLElement) {
+    node.appendChild(createLvUiPrefsSection());
+    return {};
+}
+
 let notebooks = $state<NotebookMeta[]>([]);
 let notebookLoading = $state(false);
 let notebookLoadError = $state(false);
 let notebookFilter = $state("");
 let anchorNotebooks = $state<string[]>([...DEFAULT_SETTINGS.anchorNotebooks]);
 let snapshotOnCapture = $state(DEFAULT_SETTINGS.snapshotOnCapture);
+let cloudInboxEnabled = $state(DEFAULT_SETTINGS.cloudInboxEnabled);
 let aiEnrichMode = $state<"off" | "manual" | "auto">(DEFAULT_SETTINGS.ai.enrichMode);
 let aiDailyCap = $state(DEFAULT_SETTINGS.ai.enrichDailyCap);
 let aiDedup = $state(DEFAULT_SETTINGS.ai.dedupOnEnrich);
@@ -351,6 +361,7 @@ function toggleNotebook(id: string) {
 function loadDraft(settings: GleanSettings) {
     anchorNotebooks = [...settings.anchorNotebooks];
     snapshotOnCapture = settings.snapshotOnCapture;
+    cloudInboxEnabled = settings.cloudInboxEnabled;
     aiEnrichMode = settings.ai.enrichMode;
     aiDailyCap = settings.ai.enrichDailyCap;
     aiDedup = settings.ai.dedupOnEnrich;
@@ -407,6 +418,7 @@ function buildDraftSettings(): GleanSettings {
         ...originalSettings,
         anchorNotebooks: [...anchorNotebooks],
         snapshotOnCapture,
+        cloudInboxEnabled,
         ai: {
             ...originalSettings.ai,
             enrichMode: aiEnrichMode,
@@ -494,7 +506,8 @@ function exportPortableSettings(): void {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `glean-settings-${new Date().toISOString().slice(0, 10)}.json`;
+    const exportDay = new Date();
+        a.download = `glean-settings-${exportDay.getFullYear()}-${String(exportDay.getMonth() + 1).padStart(2, "0")}-${String(exportDay.getDate()).padStart(2, "0")}.json`;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -625,7 +638,7 @@ async function toggleCheckin() {
         await loadCheckinItems();
         if (checkinLoadError) {
             checkinEnabled = false;
-            showMessage("未检测到小驴打卡插件或打卡项加载失败", 3000, "info");
+            showMessage(t(i18n, "msg.checkinLoadFailed"), 3000, "info");
         }
         return;
     }
@@ -849,7 +862,16 @@ async function doMountBoard() {
                 </div>
                 <button class="glean-sw" class:glean-sw--on={snapshotOnCapture} aria-label={t(i18n, "settings.snapshotOnCapture")} aria-pressed={snapshotOnCapture} onclick={() => { snapshotOnCapture = !snapshotOnCapture; }}></button>
             </div>
+            <div class="glean-set-row">
+                <div class="glean-set-row__lb">
+                    {t(i18n, "settings.cloudInboxEnabled")}
+                    <div class="glean-set-row__desc">{t(i18n, "settings.cloudInboxEnabledDesc")}</div>
+                </div>
+                <button class="glean-sw" class:glean-sw--on={cloudInboxEnabled} aria-label={t(i18n, "settings.cloudInboxEnabled")} aria-pressed={cloudInboxEnabled} onclick={() => { cloudInboxEnabled = !cloudInboxEnabled; }}></button>
+            </div>
         </div>
+        <!-- DL2 阶段0：生态统一外观与动效偏好分组 -->
+        <div class="glean-set-group" use:mountLvUiPrefsGroup></div>
     </div>
 
     {/if}
@@ -1355,14 +1377,14 @@ async function doMountBoard() {
         font-size: 18px;
         font-weight: 650;
         line-height: 1.3;
-        color: var(--b3-theme-on-background);
+        color: var(--glean-ink);
     }
 
     .glean-settings__brand-sub {
         margin-top: 4px;
         font-size: 12px;
         line-height: 1.65;
-        color: var(--b3-theme-on-surface);
+        color: var(--glean-ink-2);
     }
 
     .glean-settings__nav-list {
@@ -1384,7 +1406,7 @@ async function doMountBoard() {
         border: none;
         border-radius: var(--glean-radius-pill, 999px);
         background: none;
-        color: var(--b3-theme-on-background);
+        color: var(--glean-ink);
         font: inherit;
         font-size: 13.5px;
         line-height: 1.5;
@@ -1411,7 +1433,7 @@ async function doMountBoard() {
     }
 
     .glean-settings__tab--on {
-        background: color-mix(in srgb, var(--glean-color-action) 12%, var(--b3-theme-surface));
+        background: color-mix(in srgb, var(--glean-color-action) 12%, var(--glean-card-surface));
         color: var(--glean-color-action);
         font-weight: 650;
     }
@@ -1447,7 +1469,7 @@ async function doMountBoard() {
         padding: 0 8px;
         border-radius: var(--glean-radius-pill, 999px);
         background: var(--glean-inset-surface);
-        color: var(--b3-theme-on-surface);
+        color: var(--glean-ink-2);
         font-size: 11px;
         line-height: 20px;
     }
@@ -1482,8 +1504,8 @@ async function doMountBoard() {
         gap: var(--glean-space-3);
         padding: var(--glean-space-3) var(--glean-space-4);
         border-radius: var(--glean-radius-lg);
-        background: color-mix(in srgb, var(--b3-theme-primary) 8%, var(--b3-theme-surface));
-        border: 1px solid color-mix(in srgb, var(--b3-theme-primary) 28%, var(--glean-border-soft));
+        background: color-mix(in srgb, var(--glean-color-action) 8%, var(--glean-card-surface));
+        border: 1px solid color-mix(in srgb, var(--glean-color-action) 28%, var(--glean-border-soft));
         box-shadow: var(--glean-shadow-card);
     }
 
@@ -1495,8 +1517,8 @@ async function doMountBoard() {
         display: flex;
         align-items: center;
         justify-content: center;
-        background: color-mix(in srgb, var(--b3-theme-primary) 18%, transparent);
-        color: var(--b3-theme-primary);
+        background: color-mix(in srgb, var(--glean-color-action) 18%, transparent);
+        color: var(--glean-color-action);
         margin-top: 2px;
     }
 
@@ -1511,7 +1533,7 @@ async function doMountBoard() {
     .glean-settings__newbie-banner-text {
         font-size: 13px;
         line-height: 1.6;
-        color: var(--b3-theme-on-surface);
+        color: var(--glean-ink-2);
         overflow-wrap: anywhere;
     }
 
@@ -1534,13 +1556,13 @@ async function doMountBoard() {
         font-weight: 650;
         line-height: 1.3;
         overflow-wrap: anywhere;
-        color: var(--b3-theme-on-background);
+        color: var(--glean-ink);
     }
 
     .glean-settings__page-desc {
         font-size: 14px;
         line-height: 1.65;
-        color: var(--b3-theme-on-surface);
+        color: var(--glean-ink-2);
     }
 
     /* 锚点笔记本工具行：搜索 + 计数 + 清空 */
@@ -1563,8 +1585,8 @@ async function doMountBoard() {
         padding: 6px 12px;
         border: 1px solid var(--glean-border-soft);
         border-radius: var(--glean-radius-md);
-        background: var(--b3-theme-background);
-        color: var(--b3-theme-on-surface);
+        background: var(--glean-app-background);
+        color: var(--glean-ink-2);
     }
 
     .glean-nb-search:focus-within {
@@ -1577,7 +1599,7 @@ async function doMountBoard() {
         min-width: 0;
         border: none;
         background: none;
-        color: var(--b3-theme-on-background);
+        color: var(--glean-ink);
         font: inherit;
         font-size: 13px;
         outline: none;
@@ -1596,7 +1618,7 @@ async function doMountBoard() {
 
     .glean-nb-count {
         flex: 0 0 auto;
-        color: var(--b3-theme-on-surface);
+        color: var(--glean-ink-2);
         font-size: 12px;
         font-variant-numeric: tabular-nums;
         overflow-wrap: anywhere;
@@ -1641,14 +1663,14 @@ async function doMountBoard() {
         margin-top: 4px;
         font-size: 12px;
         line-height: 1.65;
-        color: var(--b3-theme-on-surface);
+        color: var(--glean-ink-2);
     }
 
     .glean-settings .glean-mini-input,
     .glean-settings .b3-select {
         min-height: 38px;
         border-radius: var(--glean-radius-pill);
-        background: var(--b3-theme-background);
+        background: var(--glean-app-background);
         border: 1px solid var(--glean-border-soft);
         padding-inline: var(--glean-space-3);
         font-size: 13px;
@@ -1698,9 +1720,9 @@ async function doMountBoard() {
     }
 
     .glean-settings .glean-nb.glean-nb--on {
-        border-color: color-mix(in srgb, var(--b3-theme-primary) 52%, var(--glean-border-soft));
+        border-color: color-mix(in srgb, var(--glean-color-action) 52%, var(--glean-border-soft));
         background: var(--glean-primary-soft);
-        color: var(--b3-theme-primary);
+        color: var(--glean-color-action);
     }
 
     /* 本组件作为尺寸容器：窄容器（移动端 / 窄 Dock）时导航降级为顶部横向 tab */
@@ -1717,7 +1739,7 @@ async function doMountBoard() {
         gap: var(--glean-space-2);
         min-width: 0;
         padding: var(--glean-space-2) 0;
-        color: var(--b3-theme-on-surface);
+        color: var(--glean-ink-2);
     }
 
     .glean-settings__close-confirm-actions {
@@ -1740,7 +1762,7 @@ async function doMountBoard() {
         align-items: center;
         gap: var(--glean-space-1);
         font-size: 11px;
-        color: var(--b3-theme-on-surface);
+        color: var(--glean-ink-2);
         opacity: 0.85;
         white-space: nowrap;
         overflow: hidden;

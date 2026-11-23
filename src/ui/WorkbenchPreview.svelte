@@ -725,8 +725,8 @@
         gap: var(--glean-space-2);
         padding: var(--glean-space-1-5) var(--glean-space-3);
         font-size: var(--glean-text-xs);
-        color: var(--b3-theme-on-surface);
-        background: color-mix(in srgb, var(--b3-theme-surface) 95%, transparent);
+        color: var(--glean-ink-2);
+        background: color-mix(in srgb, var(--glean-card-surface) 95%, transparent);
         border-bottom: 1px solid var(--glean-border-soft);
     }
     .glean-preview__toolbar {
@@ -751,7 +751,7 @@
         align-items: center;
         gap: 2px;
         flex-shrink: 0;
-        background: color-mix(in srgb, var(--b3-theme-surface) 60%, transparent);
+        background: color-mix(in srgb, var(--glean-card-surface) 60%, transparent);
         padding: 2px;
         border-radius: var(--glean-radius-pill);
         border: 1px solid var(--glean-border-soft);
@@ -771,8 +771,8 @@
         }
     }
     .glean-preview__status-group .glean-btn--active {
-        background: var(--glean-color-action, var(--b3-theme-primary));
-        color: var(--b3-theme-on-primary, #ffffff);
+        background: var(--glean-color-action, var(--glean-color-action));
+        color: var(--glean-on-action, #ffffff);
         font-weight: 600;
     }
     .glean-preview__source-link {
@@ -782,7 +782,7 @@
         padding: 2px 8px;
         border: none;
         border-radius: var(--glean-radius-pill);
-        background: color-mix(in srgb, var(--lv-brand) 10%, var(--b3-theme-surface));
+        background: color-mix(in srgb, var(--lv-brand) 10%, var(--glean-card-surface));
         color: var(--lv-brand);
         text-decoration: none;
         font: inherit;
@@ -791,17 +791,17 @@
         transition: transform var(--glean-duration-fast) ease, background var(--glean-duration-fast) ease, border-color var(--glean-duration-fast) ease, box-shadow var(--glean-duration-fast) ease, color var(--glean-duration-fast) ease, opacity var(--glean-duration-fast) ease;
 
         &:hover {
-            background: color-mix(in srgb, var(--lv-brand) 18%, var(--b3-theme-surface));
+            background: color-mix(in srgb, var(--lv-brand) 18%, var(--glean-card-surface));
             color: var(--lv-brand-hover);
         }
     }
     .glean-preview__source-link--weread {
-        background: color-mix(in srgb, var(--glean-color-wechat, #059669) 12%, var(--b3-theme-surface));
-        color: color-mix(in srgb, var(--glean-color-wechat, #059669) 72%, var(--b3-theme-on-background));
+        background: color-mix(in srgb, var(--glean-color-wechat, #059669) 12%, var(--glean-card-surface));
+        color: color-mix(in srgb, var(--glean-color-wechat, #059669) 72%, var(--glean-ink));
 
         &:hover {
-            background: color-mix(in srgb, var(--glean-color-wechat, #059669) 20%, var(--b3-theme-surface));
-            color: color-mix(in srgb, var(--glean-color-wechat, #059669) 82%, var(--b3-theme-on-background));
+            background: color-mix(in srgb, var(--glean-color-wechat, #059669) 20%, var(--glean-card-surface));
+            color: color-mix(in srgb, var(--glean-color-wechat, #059669) 82%, var(--glean-ink));
         }
     }
     .glean-preview__meta,

@@ -331,7 +331,8 @@ async function exportCompletedCsv(): Promise<void> {
         const a = document.createElement("a");
         a.href = url;
         const parsedRef = parseReviewDate(referenceDate);
-        const dateStr = (parsedRef || new Date()).toISOString().slice(0, 10);
+        const refDate = parsedRef || new Date();
+        const dateStr = `${refDate.getFullYear()}-${String(refDate.getMonth() + 1).padStart(2, "0")}-${String(refDate.getDate()).padStart(2, "0")}`;
         a.download = `glean-completed-${period}-${dateStr}.csv`;
         document.body.append(a);
         a.click();
@@ -572,7 +573,7 @@ function onWindowKeyDown(event: KeyboardEvent): void {
                 <div class="glean-stats__heatmap">
                     {#each Array.from({ length: heatmapPadding }, (_, index) => index) as padding (padding)}<span></span>{/each}
                     {#each stats.heatmap as day (day.date)}
-                        <span class="glean-stats__day" role="button" aria-pressed={selectedDayDate === day.date} aria-label={t(i18n, "review.heatmapDay", { date: day.date, n: day.count })} class:glean-stats__day--selected={selectedDayDate === day.date} tabindex="0" onclick={() => selectedDayDate = selectedDayDate === day.date ? "" : day.date} onkeydown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); selectedDayDate = selectedDayDate === day.date ? "" : day.date; } }} data-tooltip={`${day.date}: ${day.count}`} title={`${day.date}: ${day.count}`} style={`background:${day.count ? `color-mix(in srgb, var(--glean-color-data, var(--b3-theme-primary)) ${Math.round(25 + 75 * day.count / maxHeat)}%, var(--b3-theme-surface))` : "var(--b3-theme-surface)"}`}></span>
+                        <span class="glean-stats__day" role="button" aria-pressed={selectedDayDate === day.date} aria-label={t(i18n, "review.heatmapDay", { date: day.date, n: day.count })} class:glean-stats__day--selected={selectedDayDate === day.date} tabindex="0" onclick={() => selectedDayDate = selectedDayDate === day.date ? "" : day.date} onkeydown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); selectedDayDate = selectedDayDate === day.date ? "" : day.date; } }} data-tooltip={`${day.date}: ${day.count}`} title={`${day.date}: ${day.count}`} style={`background:${day.count ? `color-mix(in srgb, var(--glean-color-data, var(--glean-color-action)) ${Math.round(25 + 75 * day.count / maxHeat)}%, var(--glean-card-surface))` : "var(--glean-card-surface)"}`}></span>
                     {/each}
                 </div>
                 <div class="glean-stats__heatmap-legend" aria-hidden="true">
@@ -807,8 +808,8 @@ function onWindowKeyDown(event: KeyboardEvent): void {
 
     .glean-stats__load-state--error,
     .glean-stats__freshness--stale {
-        color: var(--b3-theme-error);
-        border-color: color-mix(in srgb, var(--b3-theme-error) 30%, var(--glean-border-soft));
+        color: var(--glean-danger);
+        border-color: color-mix(in srgb, var(--glean-danger) 30%, var(--glean-border-soft));
         background: var(--glean-error-surface);
     }
 
@@ -838,7 +839,7 @@ function onWindowKeyDown(event: KeyboardEvent): void {
         padding: 20px;
         border: 1px solid var(--glean-border-soft);
         border-radius: 16px;
-        background: var(--b3-theme-surface);
+        background: var(--glean-card-surface);
         box-shadow: none;
     }
 
@@ -854,7 +855,7 @@ function onWindowKeyDown(event: KeyboardEvent): void {
         min-height: 96px;
         padding: 14px 18px;
         border: none;
-        border-right: 1px solid color-mix(in srgb, var(--b3-border-color) 25%, transparent);
+        border-right: 1px solid color-mix(in srgb, var(--glean-line) 25%, transparent);
         border-radius: 0;
         background: transparent;
         box-shadow: none;
@@ -870,7 +871,7 @@ function onWindowKeyDown(event: KeyboardEvent): void {
 
     .glean-stats__metric > dd:not(.glean-stats__metric-hint) {
         margin: 8px 0 0;
-        color: var(--b3-theme-on-background);
+        color: var(--glean-ink);
         background: none;
         -webkit-text-fill-color: currentColor;
         font-size: 28px;
@@ -894,7 +895,7 @@ function onWindowKeyDown(event: KeyboardEvent): void {
     .glean-stats__analysis,
     .glean-stats__completed-detail {
         border-radius: 16px;
-        background: var(--b3-theme-surface);
+        background: var(--glean-card-surface);
         box-shadow: none;
     }
 
@@ -925,7 +926,7 @@ function onWindowKeyDown(event: KeyboardEvent): void {
     .glean-stats__overview .glean-stats__toolbar--filters label {
         flex: 0 1 160px;
         min-width: 0;
-        color: var(--b3-theme-on-surface);
+        color: var(--glean-ink-2);
         font-size: 12px;
         font-weight: 650;
         line-height: 1.35;
@@ -962,7 +963,7 @@ function onWindowKeyDown(event: KeyboardEvent): void {
 
     .glean-stats__scope {
         margin: calc(var(--glean-space-1) * -1) 0 0;
-        color: var(--b3-theme-on-surface);
+        color: var(--glean-ink-2);
         font-size: var(--glean-text-xs);
     }
 
@@ -970,13 +971,13 @@ function onWindowKeyDown(event: KeyboardEvent): void {
         display: inline-flex;
         align-items: center;
         min-height: 28px;
-        color: var(--b3-theme-on-surface);
+        color: var(--glean-ink-2);
         cursor: pointer;
     }
 
     .glean-stats__scope > summary:hover,
     .glean-stats__scope[open] > summary {
-        color: var(--b3-theme-primary);
+        color: var(--glean-color-action);
     }
 
     .glean-stats__scope > p {
@@ -987,16 +988,16 @@ function onWindowKeyDown(event: KeyboardEvent): void {
 
     .glean-stats__overview > .glean-stats__metrics {
         grid-template-columns: repeat(3, minmax(0, 1fr));
-        background: var(--b3-theme-surface);
+        background: var(--glean-card-surface);
         border-radius: var(--glean-radius-lg);
         padding: var(--glean-space-2) var(--glean-space-3);
-        border: 1px solid color-mix(in srgb, var(--b3-border-color) 20%, transparent);
+        border: 1px solid color-mix(in srgb, var(--glean-line) 20%, transparent);
     }
 
     .glean-stats__overview > .glean-stats__metrics > .glean-stats__metric {
         background: transparent;
         border: none;
-        border-right: 1px solid color-mix(in srgb, var(--b3-border-color) 25%, transparent);
+        border-right: 1px solid color-mix(in srgb, var(--glean-line) 25%, transparent);
     }
 
     .glean-stats__overview > .glean-stats__metrics > .glean-stats__metric:last-child {
@@ -1010,15 +1011,15 @@ function onWindowKeyDown(event: KeyboardEvent): void {
         padding: 0 var(--glean-space-3);
         border: 1px solid var(--glean-border-soft);
         border-radius: var(--glean-radius-sm);
-        background: var(--b3-theme-surface);
-        color: var(--b3-theme-on-surface);
+        background: var(--glean-card-surface);
+        color: var(--glean-ink-2);
         cursor: pointer;
         transition: color 160ms var(--glean-ease-out), border-color 160ms var(--glean-ease-out), background-color 160ms var(--glean-ease-out);
     }
 
     .glean-stats__supplement > summary:hover {
-        border-color: color-mix(in srgb, var(--b3-theme-primary) 28%, var(--glean-border-soft));
-        color: var(--b3-theme-primary);
+        border-color: color-mix(in srgb, var(--glean-color-action) 28%, var(--glean-border-soft));
+        color: var(--glean-color-action);
     }
 
     .glean-stats__supplement > summary::before,
@@ -1076,7 +1077,7 @@ function onWindowKeyDown(event: KeyboardEvent): void {
     .glean-stats__days summary:hover,
     .glean-stats__site-authors summary:hover {
         background: var(--glean-inset-surface);
-        color: var(--b3-theme-primary);
+        color: var(--glean-color-action);
     }
 
     .glean-stats__table-scroll {
@@ -1094,7 +1095,7 @@ function onWindowKeyDown(event: KeyboardEvent): void {
     }
 
     .glean-stats th {
-        color: var(--b3-theme-on-surface);
+        color: var(--glean-ink-2);
         font-size: var(--glean-text-xs);
         font-weight: 700;
     }
@@ -1110,7 +1111,7 @@ function onWindowKeyDown(event: KeyboardEvent): void {
         gap: var(--glean-space-2);
         width: fit-content;
         max-width: 100%;
-        color: var(--b3-theme-on-surface);
+        color: var(--glean-ink-2);
     }
 
     .glean-stats__status:not(:empty)::before {
@@ -1119,7 +1120,7 @@ function onWindowKeyDown(event: KeyboardEvent): void {
         height: 7px;
         flex: 0 0 auto;
         border-radius: 50%;
-        background: var(--b3-theme-primary);
+        background: var(--glean-color-action);
     }
 
     .glean-stats__completed li {

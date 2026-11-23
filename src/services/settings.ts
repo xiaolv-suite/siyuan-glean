@@ -48,6 +48,8 @@ export interface GleanSettings {
     staleDays: number;
     /** 迁移器每批写入条数（≤50） */
     migrateBatchSize: number;
+    /** 是否开启云端收集箱/剪藏同步探测（默认关闭；需思源会员权限） */
+    cloudInboxEnabled: boolean;
     /** 小驴协同（T-1505）：读完重浮文章时向打卡记录事件（写能力，用户显式开启） */
     integration: {
         checkinEnabled: boolean;
@@ -87,6 +89,7 @@ export const DEFAULT_SETTINGS: GleanSettings = {
     inboxQuota: 50,
     staleDays: 90,
     migrateBatchSize: DEFAULT_MIGRATE_BATCH_SIZE,
+    cloudInboxEnabled: false,
     integration: { checkinEnabled: false, checkinItemId: "", bridgeWriteEnabled: false, dailyNoteEnabled: false },
     reader: { openInTab: false, defaultMode: "read" },
 };
@@ -150,6 +153,7 @@ export function normalizeSettings(raw: unknown): GleanSettings {
         inboxQuota: clampInt(input.inboxQuota, 5, 1000, DEFAULT_SETTINGS.inboxQuota),
         staleDays: clampInt(input.staleDays, 7, 3650, DEFAULT_SETTINGS.staleDays),
         migrateBatchSize: clampInt(input.migrateBatchSize, 1, MAX_MIGRATE_BATCH_SIZE, DEFAULT_MIGRATE_BATCH_SIZE),
+        cloudInboxEnabled: typeof input.cloudInboxEnabled === "boolean" ? input.cloudInboxEnabled : false,
         // 写能力（events.record）：必须用户显式开启（打卡契约准入第 4 条）
         integration: {
             checkinEnabled: typeof integration.checkinEnabled === "boolean" ? integration.checkinEnabled : DEFAULT_SETTINGS.integration.checkinEnabled,
@@ -189,6 +193,7 @@ export function mergeSettingsDraft(current: GleanSettings, draft: GleanSettings)
         resurface: { ...saved.resurface, ...edited.resurface },
         inboxQuota: edited.inboxQuota,
         staleDays: edited.staleDays,
+        cloudInboxEnabled: edited.cloudInboxEnabled,
         integration: { ...saved.integration, ...edited.integration },
         reader: { ...saved.reader, ...edited.reader },
     });

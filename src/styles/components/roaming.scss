@@ -49,7 +49,7 @@
     font-size: 13px;
     font-weight: var(--glean-weight-semibold);
     color: var(--glean-color-data);
-    background: color-mix(in srgb, var(--glean-color-data) 12%, var(--b3-theme-surface));
+    background: color-mix(in srgb, var(--glean-color-data) 12%, var(--glean-card-surface));
     padding: 2px 8px;
     border-radius: var(--glean-radius-pill);
     font-variant-numeric: tabular-nums;
@@ -68,9 +68,9 @@
     height: 28px;
     padding: 0 10px;
     border-radius: var(--glean-radius-pill);
-    background: var(--b3-theme-background-light);
+    background: var(--glean-app-background);
     border: 1px solid var(--glean-border-soft);
-    color: var(--b3-theme-on-background);
+    color: var(--glean-ink);
     max-width: 140px;
     cursor: pointer;
 }
@@ -79,7 +79,7 @@
     display: flex;
     align-items: center;
     gap: var(--glean-space-1);
-    background: var(--glean-inset-surface, color-mix(in srgb, var(--b3-theme-on-surface) 5%, transparent));
+    background: var(--glean-inset-surface, color-mix(in srgb, var(--glean-ink-2) 5%, transparent));
     padding: 3px;
     border-radius: var(--glean-radius-pill);
     width: fit-content;
@@ -90,7 +90,7 @@
     background: transparent;
     font-size: var(--glean-text-xs);
     font-weight: 500;
-    color: var(--b3-theme-on-surface);
+    color: var(--glean-ink-2);
     opacity: 0.8;
     padding: 2px 10px;
     border-radius: var(--glean-radius-pill);
@@ -99,11 +99,11 @@
 
     &:hover {
         opacity: 1;
-        background: color-mix(in srgb, var(--b3-theme-on-surface) 8%, transparent);
+        background: color-mix(in srgb, var(--glean-ink-2) 8%, transparent);
     }
 
     &.glean-roaming-budget-btn--active {
-        background: color-mix(in srgb, var(--glean-color-action) 12%, var(--b3-theme-surface));
+        background: color-mix(in srgb, var(--glean-color-action) 12%, var(--glean-card-surface));
         color: var(--glean-color-action);
         font-weight: var(--glean-weight-semibold);
         opacity: 1;
@@ -118,7 +118,7 @@
 
 .glean-roaming-fav-filter-btn {
     border: 1px solid var(--glean-border-soft);
-    background: var(--b3-theme-background-light);
+    background: var(--glean-app-background);
     height: 28px;
     padding: 0 10px;
     border-radius: var(--glean-radius-pill);
@@ -128,7 +128,7 @@
     &.glean-roaming-budget-btn--active {
         border-color: var(--glean-color-action);
         color: var(--glean-color-action);
-        background: color-mix(in srgb, var(--glean-color-action) 10%, var(--b3-theme-surface));
+        background: color-mix(in srgb, var(--glean-color-action) 10%, var(--glean-card-surface));
     }
 }
 
@@ -154,7 +154,7 @@
     margin: 0;
     font-size: var(--glean-text-base);
     font-weight: var(--glean-weight-semibold);
-    color: var(--b3-theme-on-background);
+    color: var(--glean-ink);
     line-height: 1.45;
 }
 
@@ -186,7 +186,7 @@
 .glean-roaming-summary {
     margin: 0;
     font-size: var(--glean-text-sm);
-    color: var(--b3-theme-on-surface);
+    color: var(--glean-ink-2);
     opacity: 0.85;
     line-height: 1.5;
     display: -webkit-box;
@@ -206,8 +206,8 @@
     font-size: var(--glean-text-xs);
     padding: 1px 8px;
     border-radius: var(--glean-radius-pill);
-    background: var(--glean-badge-bg, color-mix(in srgb, var(--b3-theme-on-surface) 8%, transparent));
-    color: var(--b3-theme-on-surface);
+    background: var(--glean-badge-bg, color-mix(in srgb, var(--glean-ink-2) 8%, transparent));
+    color: var(--glean-ink-2);
     opacity: 0.85;
 }
 
@@ -236,7 +236,7 @@
     font-size: var(--glean-text-xs-plus);
     padding: var(--glean-space-1) var(--glean-space-2-5);
     border-radius: var(--glean-radius-pill);
-    color: var(--b3-theme-on-surface);
+    color: var(--glean-ink-2);
     opacity: 0.88;
     border: 1px solid var(--glean-border-soft);
     display: inline-flex;
@@ -246,7 +246,7 @@
 
     &:hover {
         opacity: 1;
-        background: color-mix(in srgb, var(--b3-theme-on-surface) 8%, transparent);
+        background: color-mix(in srgb, var(--glean-ink-2) 8%, transparent);
         border-color: color-mix(in srgb, var(--glean-color-action) 35%, var(--glean-border-soft));
     }
 }
@@ -265,7 +265,7 @@
 
 .glean-roaming-hint {
     font-size: var(--glean-text-xs);
-    color: var(--glean-text-muted, color-mix(in srgb, var(--b3-theme-on-surface) 60%, transparent));
+    color: var(--glean-text-muted, color-mix(in srgb, var(--glean-ink-2) 60%, transparent));
     text-align: center;
     padding-top: var(--glean-space-1);
 

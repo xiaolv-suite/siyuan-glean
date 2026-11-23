@@ -22,7 +22,7 @@
     pointer-events: auto;
     content-visibility: auto;
     contain-intrinsic-size: 1px 72px;
-    background: color-mix(in srgb, var(--glean-card-surface, var(--b3-theme-surface)) 92%, transparent);
+    background: color-mix(in srgb, var(--glean-card-surface, var(--glean-card-surface)) 92%, transparent);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     border: 1px solid var(--glean-border-soft);
@@ -38,7 +38,7 @@
     border-left: 3.5px solid var(--glean-color-action);
 
     &--color-yellow { border-left-color: var(--glean-st-inbox); }
-    &--color-red { border-left-color: var(--b3-theme-error); }
+    &--color-red { border-left-color: var(--glean-danger); }
     &--color-blue { border-left-color: var(--glean-st-later); }
     &--color-green { border-left-color: var(--glean-st-done); }
 
@@ -58,7 +58,7 @@
         align-items: center;
         justify-content: space-between;
         font-size: 11px;
-        color: var(--b3-theme-on-surface);
+        color: var(--glean-ink-2);
         opacity: 0.8;
     }
 
@@ -70,7 +70,7 @@
     &__text {
         font-size: 11.5px;
         line-height: 1.45;
-        color: var(--b3-theme-on-background);
+        color: var(--glean-ink);
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
@@ -81,7 +81,7 @@
         font-size: 11px;
         line-height: 1.4;
         color: var(--glean-color-action);
-        background: color-mix(in srgb, var(--glean-color-action) 8%, var(--b3-theme-surface));
+        background: color-mix(in srgb, var(--glean-color-action) 8%, var(--glean-card-surface));
         border-radius: var(--glean-radius-pill, 999px);
         padding: 2px 8px;
         display: -webkit-box;
@@ -95,7 +95,7 @@
         align-items: center;
         gap: 4px;
         padding-top: 4px;
-        border-top: 1px dashed var(--glean-border-soft, var(--b3-border-color));
+        border-top: 1px dashed var(--glean-border-soft, var(--glean-line));
         margin-top: 2px;
     }
 
@@ -110,14 +110,14 @@
         padding: 2px 6px;
         border-radius: var(--glean-radius-pill, 999px);
         font-size: 11px;
-        color: var(--b3-theme-on-surface);
+        color: var(--glean-ink-2);
         opacity: 0.75;
         cursor: pointer;
         line-height: 1;
 
         &:hover {
             opacity: 1;
-            background: color-mix(in srgb, var(--glean-color-action) 10%, var(--b3-theme-surface));
+            background: color-mix(in srgb, var(--glean-color-action) 10%, var(--glean-card-surface));
             color: var(--glean-color-action);
         }
 

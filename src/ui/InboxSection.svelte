@@ -66,6 +66,12 @@ function rememberRecovery(checkpoint: InboxRecovery | undefined) {
 }
 
 async function refresh() {
+    if (!facade.settings.cloudInboxEnabled) {
+        available = false;
+        checked = true;
+        items = [];
+        return;
+    }
     try {
         const status = await checkInbox();
         available = status.available;

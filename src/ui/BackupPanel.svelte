@@ -303,32 +303,32 @@
 </section>
 
 <style>
-    .glean-backup { padding: var(--glean-space-4); display: grid; gap: var(--glean-space-3); min-width: 0; color: var(--b3-theme-on-background); }
+    .glean-backup { padding: var(--glean-space-4); display: grid; gap: var(--glean-space-3); min-width: 0; color: var(--glean-ink); }
     .glean-backup h3, .glean-backup p { margin: 0; overflow-wrap: anywhere; }
     .glean-backup h3 { font-size: var(--glean-text-xl); line-height: 1.35; letter-spacing: -0.01em; }
-    .glean-backup p { font-size: var(--glean-text-sm); line-height: 1.6; color: var(--b3-theme-on-surface); }
+    .glean-backup p { font-size: var(--glean-text-sm); line-height: 1.6; color: var(--glean-ink-2); }
     .glean-backup__head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--glean-space-3); padding: var(--glean-space-3) var(--glean-space-4); border: 1px solid var(--glean-border-soft); border-radius: var(--glean-radius-lg, 16px); background: var(--glean-grad-soft); box-shadow: var(--glean-shadow-card); }
     .glean-backup__head p { margin-top: var(--glean-space-1); }
     .glean-backup__mode { flex: 0 0 auto; padding: 4px 10px; border: 1px solid color-mix(in srgb, var(--glean-color-action) 24%, var(--glean-border-soft)); border-radius: var(--glean-radius-pill); color: var(--glean-color-action); background: var(--glean-primary-soft); font: 600 var(--glean-text-xs)/1.2 var(--b3-font-family); letter-spacing: .05em; }
     .glean-backup__actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--glean-space-2); }
     .glean-backup__actions :global(button) { border-radius: var(--glean-radius-pill); padding: var(--glean-space-1-5) var(--glean-space-3-5); }
     .glean-backup__pagination { justify-content: space-between; padding-top: var(--glean-space-1); }
-    .glean-backup__pagination > span { min-width: 0; flex: 1 1 auto; text-align: center; color: var(--b3-theme-on-surface); font-size: var(--glean-text-xs); overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+    .glean-backup__pagination > span { min-width: 0; flex: 1 1 auto; text-align: center; color: var(--glean-ink-2); font-size: var(--glean-text-xs); overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
     .glean-backup__actions--primary { padding-bottom: var(--glean-space-1); }
     .glean-backup__actions--tools { padding: var(--glean-space-2) 0; border-block: 1px solid var(--glean-border-soft); }
     .glean-backup input[type="checkbox"] { accent-color: var(--glean-color-action); }
-    .glean-backup__file { display: grid; gap: var(--glean-space-1); min-width: 160px; padding: 7px 14px; border: 1px dashed var(--glean-border-soft); border-radius: var(--glean-radius-pill); color: var(--b3-theme-on-surface); font-size: var(--glean-text-sm); cursor: pointer; transition: background-color 160ms var(--glean-ease-out), border-color 160ms var(--glean-ease-out); }
+    .glean-backup__file { display: grid; gap: var(--glean-space-1); min-width: 160px; padding: 7px 14px; border: 1px dashed var(--glean-border-soft); border-radius: var(--glean-radius-pill); color: var(--glean-ink-2); font-size: var(--glean-text-sm); cursor: pointer; transition: background-color 160ms var(--glean-ease-out), border-color 160ms var(--glean-ease-out); }
     .glean-backup__file:hover { background: var(--glean-primary-soft); border-color: color-mix(in srgb, var(--glean-color-action) 45%, var(--glean-border-soft)); }
     .glean-backup__file:focus-within { outline: 2px solid var(--glean-color-action); outline-offset: 2px; }
     .glean-backup__file input { max-width: 100%; font-size: var(--glean-text-xs); }
     .glean-backup__filename { padding: 6px 10px; border-radius: var(--glean-radius-pill); background: var(--glean-inset-surface); font-family: var(--b3-font-family-code); font-size: var(--glean-text-xs) !important; }
-    .glean-backup__meta, .glean-backup__section-hint { color: var(--b3-theme-on-surface); font-size: var(--glean-text-xs) !important; font-variant-numeric: tabular-nums; }
+    .glean-backup__meta, .glean-backup__section-hint { color: var(--glean-ink-2); font-size: var(--glean-text-xs) !important; font-variant-numeric: tabular-nums; }
     .glean-backup__row { padding: var(--glean-space-2) var(--glean-space-3); border: 1px solid var(--glean-border-soft); border-radius: var(--glean-radius-lg, 16px); background: var(--glean-status-surface); box-shadow: var(--glean-shadow-card); transition: border-color 160ms var(--glean-ease-out), background-color 160ms var(--glean-ease-out), box-shadow 160ms var(--glean-ease-out); }
     .glean-backup__row[open] { border-color: color-mix(in srgb, var(--glean-color-action) 36%, var(--glean-border-soft)); background: var(--glean-section-surface); box-shadow: var(--glean-shadow-float); }
     .glean-backup summary { display: flex; align-items: center; gap: var(--glean-space-2); cursor: pointer; overflow-wrap: anywhere; padding: var(--glean-space-1) 0; font-size: var(--glean-text-md); font-weight: 600; list-style-position: outside; }
     .glean-backup summary::marker { color: var(--glean-color-action); }
     .glean-backup__row-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-    .glean-backup__row-state { flex: 0 0 auto; padding: 3px 8px; border: 1px solid var(--glean-border-soft); border-radius: var(--glean-radius-pill); color: var(--b3-theme-on-surface); background: var(--glean-inset-surface); font-size: var(--glean-text-xs); font-weight: 500; }
+    .glean-backup__row-state { flex: 0 0 auto; padding: 3px 8px; border: 1px solid var(--glean-border-soft); border-radius: var(--glean-radius-pill); color: var(--glean-ink-2); background: var(--glean-inset-surface); font-size: var(--glean-text-xs); font-weight: 500; }
     .glean-backup__row-state--ready { color: var(--glean-st-done-text); border-color: color-mix(in srgb, var(--glean-st-done) 28%, var(--glean-border-soft)); background: color-mix(in srgb, var(--glean-st-done) 9%, transparent); }
     .glean-backup__row-state--missing, .glean-backup__row-state--unsupported { color: var(--glean-st-inbox-text); background: color-mix(in srgb, var(--glean-st-inbox) 9%, transparent); }
     .glean-backup__row-meta { margin: var(--glean-space-2) 0 !important; font-family: var(--b3-font-family-code); font-size: var(--glean-text-xs) !important; }
@@ -338,7 +338,7 @@
     .glean-backup tr:last-child th, .glean-backup tr:last-child td { border-bottom: 0; }
     .glean-backup th { max-width: 180px; overflow-wrap: anywhere; font-size: var(--glean-text-sm); }
     .glean-backup pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 180px; overflow: auto; margin: 0; padding: var(--glean-space-2); border-radius: var(--glean-radius-sm); background: var(--glean-inset-surface); font-family: var(--b3-font-family-code); font-size: var(--glean-text-xs); line-height: 1.55; }
-    .glean-backup__check { display: flex; align-items: center; gap: var(--glean-space-2); color: var(--b3-theme-on-surface); font-size: var(--glean-text-sm); }
+    .glean-backup__check { display: flex; align-items: center; gap: var(--glean-space-2); color: var(--glean-ink-2); font-size: var(--glean-text-sm); }
     .glean-backup__diff { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--glean-space-2); }
     .glean-backup__preferences { padding: var(--glean-space-2) var(--glean-space-3); border: 1px solid var(--glean-border-soft); border-radius: var(--glean-radius-lg, 16px); background: var(--glean-inset-surface); }
     .glean-backup__preferences summary { font-size: var(--glean-text-sm); }
@@ -346,7 +346,7 @@
     .glean-backup__status--busy { color: var(--glean-color-action) !important; }
     .glean-backup__status--success { color: var(--glean-st-done-text) !important; border-color: color-mix(in srgb, var(--glean-st-done) 25%, var(--glean-border-soft)); background: color-mix(in srgb, var(--glean-st-done) 8%, transparent); }
     .glean-backup__status--notice { color: var(--glean-st-later-text) !important; }
-    .glean-backup__status--error { color: var(--b3-theme-error) !important; border-color: color-mix(in srgb, var(--b3-theme-error) 28%, var(--glean-border-soft)); background: var(--glean-error-surface); }
+    .glean-backup__status--error { color: var(--glean-danger) !important; border-color: color-mix(in srgb, var(--glean-danger) 28%, var(--glean-border-soft)); background: var(--glean-error-surface); }
     .glean-backup__status-dot { width: 7px; height: 7px; flex: 0 0 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 4px color-mix(in srgb, currentColor 12%, transparent); animation: glean-backup-pulse 1.4s ease-in-out infinite; }
     .glean-backup :is(input, button, summary):focus-visible { outline: 2px solid var(--glean-color-action); outline-offset: 2px; }
     @keyframes glean-backup-pulse { 50% { opacity: .45; transform: scale(.82); } }

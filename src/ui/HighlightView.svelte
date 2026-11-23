@@ -1566,11 +1566,11 @@ function focusHighlightRow(id: string): void {
         line-height: 1.6;
     }
     .glean-highlights__related { display: grid; gap: var(--glean-space-2); min-width: 0; }
-    .glean-highlights__related-state { margin: 0; color: var(--b3-theme-on-surface); font-size: var(--glean-text-sm); overflow-wrap: anywhere; }
-    .glean-highlights__related-empty { display: flex; align-items: center; gap: var(--glean-space-2); color: var(--b3-theme-on-surface); font-size: var(--glean-text-sm); }
+    .glean-highlights__related-state { margin: 0; color: var(--glean-ink-2); font-size: var(--glean-text-sm); overflow-wrap: anywhere; }
+    .glean-highlights__related-empty { display: flex; align-items: center; gap: var(--glean-space-2); color: var(--glean-ink-2); font-size: var(--glean-text-sm); }
     .glean-highlights__related-empty .glean-empty__art { flex: 0 0 32px; width: 32px; height: 32px; }
-    .glean-highlights__related-error { display: flex; flex-wrap: wrap; align-items: center; gap: var(--glean-space-2); padding: var(--glean-space-2); border: 1px solid var(--b3-theme-error); border-radius: var(--glean-radius-md); }
-    .glean-highlights__related-error p { flex: 1 1 220px; margin: 0; color: var(--b3-theme-error); font-size: var(--glean-text-sm); overflow-wrap: anywhere; }
+    .glean-highlights__related-error { display: flex; flex-wrap: wrap; align-items: center; gap: var(--glean-space-2); padding: var(--glean-space-2); border: 1px solid var(--glean-danger); border-radius: var(--glean-radius-md); }
+    .glean-highlights__related-error p { flex: 1 1 220px; margin: 0; color: var(--glean-danger); font-size: var(--glean-text-sm); overflow-wrap: anywhere; }
 
     .glean-highlights__head {
         gap: 16px;
@@ -1613,7 +1613,7 @@ function focusHighlightRow(id: string): void {
     }
 
     .glean-highlights__tools--scope button[aria-pressed="true"] {
-        background: var(--b3-theme-surface);
+        background: var(--glean-card-surface);
         color: var(--glean-accent-b);
         box-shadow: none;
     }
@@ -1622,7 +1622,7 @@ function focusHighlightRow(id: string): void {
         gap: 12px;
         padding: 16px;
         border-radius: 16px;
-        background: var(--b3-theme-surface);
+        background: var(--glean-card-surface);
         box-shadow: none;
         align-items: end;
     }
@@ -1678,7 +1678,7 @@ function focusHighlightRow(id: string): void {
         padding: 20px;
         border: 1px solid var(--glean-border-soft);
         border-radius: 16px;
-        background: var(--b3-theme-surface);
+        background: var(--glean-card-surface);
         box-shadow: none;
     }
 
@@ -1855,7 +1855,7 @@ function focusHighlightRow(id: string): void {
     .glean-highlights__article-group {
         border: 1px solid var(--glean-border-soft);
         border-radius: var(--glean-radius-lg);
-        background: var(--b3-theme-surface);
+        background: var(--glean-card-surface);
         padding: var(--glean-space-3) var(--glean-space-4);
         box-shadow: var(--glean-shadow-card);
     }
@@ -1891,7 +1891,7 @@ function focusHighlightRow(id: string): void {
     }
 
     .glean-highlights__article-site {
-        color: var(--b3-theme-on-surface);
+        color: var(--glean-ink-2);
         font-size: var(--glean-text-xs);
         font-weight: 400;
     }

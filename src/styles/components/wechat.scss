@@ -21,7 +21,7 @@
     flex-direction: column;
     gap: var(--glean-space-1);
     padding: var(--glean-space-2) var(--glean-space-2-5);
-    background: color-mix(in srgb, var(--glean-color-wechat) 8%, var(--b3-theme-surface));
+    background: color-mix(in srgb, var(--glean-color-wechat) 8%, var(--glean-card-surface));
     border: 1px solid color-mix(in srgb, var(--glean-color-wechat) 24%, var(--glean-border-soft));
     border-radius: var(--glean-radius-lg, 16px);
     margin-bottom: var(--glean-space-1);
@@ -72,7 +72,7 @@
 .glean-wechat-publisher__name {
     font-size: var(--glean-text-sm);
     font-weight: var(--glean-weight-bold);
-    color: var(--b3-theme-on-surface);
+    color: var(--glean-ink-2);
 }
 
 .glean-wechat-publisher__rescan-btn {
@@ -80,7 +80,7 @@
     height: 20px;
     padding: 0;
     opacity: 0.7;
-    color: var(--b3-theme-on-surface);
+    color: var(--glean-ink-2);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -89,7 +89,7 @@
 
     &:hover {
         opacity: 1;
-        color: var(--b3-theme-primary);
+        color: var(--glean-color-action);
     }
 }
 
@@ -121,7 +121,7 @@
         left: 0;
         z-index: 10;
         margin-bottom: 4px;
-        background: var(--b3-theme-surface);
+        background: var(--glean-card-surface);
         border: 1px solid var(--glean-border-soft);
         border-radius: var(--glean-radius-md, 8px);
         box-shadow: var(--glean-shadow-float);
@@ -150,7 +150,7 @@
 
 .glean-wechat-publisher__series-title {
     font-size: 11px;
-    color: var(--b3-theme-on-surface);
+    color: var(--glean-ink-2);
     opacity: 0.75;
 }
 
@@ -169,16 +169,16 @@
     font-size: 11px;
     line-height: var(--glean-leading-compact);
     border-radius: var(--glean-radius-pill);
-    color: var(--b3-theme-on-surface);
-    background: color-mix(in srgb, var(--glean-color-wechat) 6%, var(--b3-theme-surface));
+    color: var(--glean-ink-2);
+    background: color-mix(in srgb, var(--glean-color-wechat) 6%, var(--glean-card-surface));
     border: 1px solid color-mix(in srgb, var(--glean-color-wechat) 22%, var(--glean-border-soft));
     cursor: pointer;
     transition: transform var(--glean-duration-fast) ease, background var(--glean-duration-fast) ease, border-color var(--glean-duration-fast) ease, box-shadow var(--glean-duration-fast) ease, color var(--glean-duration-fast) ease, opacity var(--glean-duration-fast) ease;
 
     &:hover {
-        background: color-mix(in srgb, var(--glean-color-wechat) 14%, var(--b3-theme-surface));
+        background: color-mix(in srgb, var(--glean-color-wechat) 14%, var(--glean-card-surface));
         border-color: var(--glean-color-wechat);
-        color: var(--b3-theme-on-background);
+        color: var(--glean-ink);
     }
 
     &:focus-visible {
@@ -188,13 +188,13 @@
 }
 
 .glean-mini-tag--series {
-    background: color-mix(in srgb, var(--glean-color-wechat) 12%, var(--b3-theme-surface));
-    color: color-mix(in srgb, var(--glean-color-wechat) 85%, var(--b3-theme-on-background));
+    background: color-mix(in srgb, var(--glean-color-wechat) 12%, var(--glean-card-surface));
+    color: color-mix(in srgb, var(--glean-color-wechat) 85%, var(--glean-ink));
     border-color: color-mix(in srgb, var(--glean-color-wechat) 30%, transparent);
     font-weight: 600;
 
     &:hover {
-        background: color-mix(in srgb, var(--glean-color-wechat) 20%, var(--b3-theme-surface));
+        background: color-mix(in srgb, var(--glean-color-wechat) 20%, var(--glean-card-surface));
         border-color: var(--glean-color-wechat);
     }
 }
@@ -227,7 +227,7 @@
     &__title {
         font-size: var(--glean-text-base);
         font-weight: 650;
-        color: var(--b3-theme-on-background);
+        color: var(--glean-ink);
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -235,7 +235,7 @@
 
     &__desc {
         font-size: var(--glean-text-xs);
-        color: var(--b3-theme-on-surface);
+        color: var(--glean-ink-2);
         line-height: 1.5;
         margin: 0;
         opacity: 0.85;
@@ -254,15 +254,15 @@
     gap: var(--glean-space-3);
     padding: var(--glean-space-2-5) var(--glean-space-3);
     border-radius: var(--glean-radius-lg, 16px);
-    background: var(--glean-section-surface, var(--b3-theme-surface));
+    background: var(--glean-section-surface, var(--glean-card-surface));
     border: 1px solid var(--glean-border-soft);
 
     &__badge {
         width: 24px;
         height: 24px;
         border-radius: 50%;
-        background: color-mix(in srgb, var(--glean-color-wechat, #059669) 16%, var(--b3-theme-surface));
-        color: color-mix(in srgb, var(--glean-color-wechat, #059669) 72%, var(--b3-theme-on-background));
+        background: color-mix(in srgb, var(--glean-color-wechat, #059669) 16%, var(--glean-card-surface));
+        color: color-mix(in srgb, var(--glean-color-wechat, #059669) 72%, var(--glean-ink));
         font-weight: 700;
         font-size: 12px;
         display: inline-flex;
@@ -283,12 +283,12 @@
     &__title {
         font-size: var(--glean-text-sm);
         font-weight: 600;
-        color: var(--b3-theme-on-background);
+        color: var(--glean-ink);
     }
 
     &__desc {
         font-size: var(--glean-text-xs);
-        color: var(--b3-theme-on-surface);
+        color: var(--glean-ink-2);
         line-height: 1.45;
         opacity: 0.85;
     }
@@ -305,7 +305,7 @@
     margin-top: 4px;
     padding: 4px 10px;
     border-radius: var(--glean-radius-pill);
-    background: var(--glean-inset-surface, var(--b3-theme-surface));
+    background: var(--glean-inset-surface, var(--glean-card-surface));
     border: 1px solid var(--glean-border-soft);
 
     button {
@@ -324,7 +324,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    color: var(--b3-theme-on-surface);
+    color: var(--glean-ink-2);
     opacity: 0.8;
 }
 
@@ -349,7 +349,7 @@
     gap: var(--glean-space-3);
     padding: var(--glean-space-2-5) var(--glean-space-3);
     border-radius: var(--glean-radius-lg, 16px);
-    background: color-mix(in srgb, var(--glean-color-action) 8%, var(--b3-theme-surface));
+    background: color-mix(in srgb, var(--glean-color-action) 8%, var(--glean-card-surface));
     border: 1px solid color-mix(in srgb, var(--glean-color-action) 24%, var(--glean-border-soft));
 
     &__head {
@@ -384,13 +384,13 @@
 
         strong {
             font-size: var(--glean-text-xs-plus);
-            color: var(--b3-theme-on-background);
+            color: var(--glean-ink);
         }
 
         p {
             margin: 0;
             font-size: 11px;
-            color: var(--b3-theme-on-surface);
+            color: var(--glean-ink-2);
             line-height: 1.4;
             opacity: 0.85;
         }
@@ -403,7 +403,7 @@
     color: var(--glean-color-action);
 
     &:hover {
-        background: color-mix(in srgb, var(--glean-color-action) 14%, var(--b3-theme-surface));
+        background: color-mix(in srgb, var(--glean-color-action) 14%, var(--glean-card-surface));
     }
 
     &:focus-visible {

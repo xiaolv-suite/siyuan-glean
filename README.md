@@ -8,7 +8,7 @@
 
 100% 数据主权 · 结构化阅读生命周期 · 视线同焦注记 · 划词金句海报 · 学术文献著录
 
-**当前版本：v1.4.10** ｜ [English Documentation](README.en-US.md) ｜ [更新日志](CHANGELOG.md)
+**当前版本：v1.4.11** ｜ [English Documentation](README.en-US.md) ｜ [更新日志](CHANGELOG.md)
 
 [![Quality gates](https://github.com/xiaolv-suite/siyuan-glean/actions/workflows/ci.yml/badge.svg)](https://github.com/xiaolv-suite/siyuan-glean/actions/workflows/ci.yml)
 [![思源笔记](https://img.shields.io/badge/思源笔记-%3E%3D%203.8.4-brightgreen.svg)](https://b3log.org/siyuan)
@@ -25,7 +25,7 @@
 
 ---
 
-## 🚀 本次更新要点（v1.4.10）
+## 🚀 本次更新要点（v1.4.11）
 
 > **累积迭代汇总**：本次发布包含自上次 GitHub 发版以来的全部核心新特性与稳定性升级：
 - **移动端沉浸阅读空间重构**：紧凑收敛移动端工具栏占地，消除多余层级干扰，为手机端文章正文留出充裕的沉浸阅读视野；

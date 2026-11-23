@@ -29,7 +29,7 @@
     padding: var(--glean-space-4, 16px);
     box-sizing: border-box;
     gap: var(--glean-space-3, 12px);
-    color: var(--b3-theme-on-background);
+    color: var(--glean-ink);
 }
 
 .glean-slicing-head {
@@ -39,7 +39,7 @@
     justify-content: space-between;
     gap: var(--glean-space-3, 12px);
     padding-bottom: var(--glean-space-3, 12px);
-    border-bottom: 1px solid var(--glean-border-soft, var(--b3-border-color));
+    border-bottom: 1px solid var(--glean-border-soft, var(--glean-line));
 }
 
 .glean-slicing-durations {
@@ -50,15 +50,15 @@
 
 .glean-slicing-label {
     font-size: var(--glean-text-sm, 13px);
-    color: var(--b3-theme-on-surface);
+    color: var(--glean-ink-2);
 }
 
 .glean-slicing-pills {
     display: inline-flex;
-    background: var(--glean-inset-surface, var(--b3-theme-surface));
+    background: var(--glean-inset-surface, var(--glean-card-surface));
     border-radius: var(--glean-radius-pill);
     padding: 2px;
-    border: 1px solid var(--glean-border-soft, var(--b3-border-color));
+    border: 1px solid var(--glean-border-soft, var(--glean-line));
 }
 
 .glean-slicing-pill {
@@ -67,7 +67,7 @@
     padding: 3px 12px;
     font-size: var(--glean-text-xs, 12px);
     border-radius: var(--glean-radius-pill);
-    color: var(--b3-theme-on-surface);
+    color: var(--glean-ink-2);
     cursor: pointer;
     font-variant-numeric: tabular-nums;
     transition: transform 140ms ease, background 140ms ease, border-color 140ms ease, box-shadow 140ms ease, color 140ms ease, opacity 140ms ease;
@@ -80,7 +80,7 @@
 
 .glean-slicing-pill--active {
     background: var(--glean-color-action);
-    color: var(--b3-theme-on-primary);
+    color: var(--glean-on-action);
     font-weight: 600;
 
     @media (forced-colors: active) {
@@ -91,18 +91,18 @@
 
 .glean-slicing-summary {
     font-size: var(--glean-text-xs, 12px);
-    color: var(--b3-theme-on-surface);
+    color: var(--glean-ink-2);
     opacity: 0.88;
     font-variant-numeric: tabular-nums;
 }
 
 .glean-slicing-hint-empty {
     font-size: var(--glean-text-xs, 12px);
-    color: var(--b3-theme-on-surface);
-    background: var(--glean-section-surface, var(--b3-theme-surface));
+    color: var(--glean-ink-2);
+    background: var(--glean-section-surface, var(--glean-card-surface));
     padding: var(--glean-space-2, 8px) var(--glean-space-3, 12px);
     border-radius: var(--glean-radius-md, 8px);
-    border: 1px dashed var(--glean-border-soft, var(--b3-border-color));
+    border: 1px dashed var(--glean-border-soft, var(--glean-line));
     display: flex;
     align-items: center;
     gap: var(--glean-space-1-5, 6px);
@@ -117,7 +117,7 @@
 }
 
 .glean-slicing-card {
-    background: var(--glean-card-surface, var(--b3-theme-surface));
+    background: var(--glean-card-surface, var(--glean-card-surface));
     border: 1px solid var(--glean-border-soft);
     border-radius: var(--glean-radius-lg, 16px);
     padding: var(--glean-space-3-5, 14px);
@@ -174,7 +174,7 @@
 
 .glean-slicing-card__time {
     font-size: var(--glean-text-xs, 12px);
-    color: var(--b3-theme-on-surface);
+    color: var(--glean-ink-2);
     opacity: 0.88;
     font-variant-numeric: tabular-nums;
 }
@@ -187,11 +187,11 @@
 
 .glean-slicing-card__sec-chip {
     font-size: 11px;
-    background: var(--glean-inset-surface, var(--b3-theme-surface));
+    background: var(--glean-inset-surface, var(--glean-card-surface));
     border: 1px solid var(--glean-border-soft);
     padding: 1px 8px;
     border-radius: var(--glean-radius-pill);
-    color: var(--b3-theme-on-surface);
+    color: var(--glean-ink-2);
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -250,7 +250,7 @@
     height: 20px;
     line-height: 20px;
     border-radius: var(--glean-radius-pill);
-    background: color-mix(in srgb, var(--glean-color-action) 12%, var(--b3-theme-surface));
+    background: color-mix(in srgb, var(--glean-color-action) 12%, var(--glean-card-surface));
     color: var(--glean-color-action);
     border: 1px solid color-mix(in srgb, var(--glean-color-action) 28%, transparent);
 }
@@ -268,7 +268,7 @@
     padding: 0 1px;
     font-size: 13px;
     line-height: 1;
-    color: var(--b3-theme-on-surface);
+    color: var(--glean-ink-2);
     opacity: 0.45;
     cursor: pointer;
     display: inline-flex;

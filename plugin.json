@@ -2,7 +2,7 @@
   "name": "siyuan-glean",
   "author": "xiaolv-suite",
   "url": "https://github.com/xiaolv-suite/siyuan-glean",
-  "version": "1.4.10",
+  "version": "1.4.11",
   "minAppVersion": "3.8.4",
   "settingsWindow": true,
   "disabledInPublish": false,

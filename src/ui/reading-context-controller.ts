@@ -43,11 +43,21 @@ export function installReadingContext(facade: GleanFacade): () => void {
         const docId = protyle.block?.rootID ?? "";
         const previous = mounted.get(element);
         if (previous?.docId === docId && previous.target.isConnected) {
+            // 若外部同步或移除操作导致该文档不再属于剪藏集合，立即卸载旧阅读上下文
+            if (typeof facade.hasClipDocId === "function" && !facade.hasClipDocId(docId)) {
+                detach(element);
+                return;
+            }
             // 正文分段加载不改变根属性；重复刷新会令上下文栏与骨架屏反复交替。
             return;
         }
         detach(element);
         if (!docId) return;
+
+        // 内存 Set 快路径过滤：普通非拾遗笔记 O(1) 跳过冗余挂载与属性探测
+        if (typeof facade.hasClipDocId === "function" && !facade.hasClipDocId(docId)) {
+            return;
+        }
 
         element.classList?.add?.("glean-protyle--reader-context");
         const target = document.createElement("div");
@@ -92,9 +102,22 @@ export function installReadingContext(facade: GleanFacade): () => void {
     bus.on("loaded-protyle-dynamic", onLoaded);
     bus.on("switch-protyle", onSwitched);
     bus.on("destroy-protyle", onDestroyed);
+
+    const onDataChanged = () => {
+        for (const editor of getAllEditor()) {
+            if (editor?.protyle) attach(editor.protyle);
+        }
+    };
+    if (typeof document !== "undefined" && typeof document.addEventListener === "function") {
+        document.addEventListener("glean:data-changed", onDataChanged);
+    }
+
     for (const editor of getAllEditor()) attach(editor.protyle);
 
     return () => {
+        if (typeof document !== "undefined" && typeof document.removeEventListener === "function") {
+            document.removeEventListener("glean:data-changed", onDataChanged);
+        }
         bus.off("loaded-protyle-static", onLoaded);
         bus.off("loaded-protyle-dynamic", onLoaded);
         bus.off("switch-protyle", onSwitched);

@@ -32,7 +32,7 @@ import { migrateShorthand } from "./services/inbox-service";
 import { getShorthand } from "./api/inbox";
 import { isKernelRequestError, kernelErrorKind } from "./api/client";
 import { DEFAULT_SETTINGS, loadSettings, saveSettings, mergeSettingsDraft, normalizeSettings, type GleanSettings } from "./services/settings";
-import type { GleanIndex } from "./services/index-store";
+import { addClipDocId, isKnownClipDocId, removeClipDocId, syncClipDocIds, type GleanIndex } from "./services/index-store";
 import { installBridge } from "./services/bridge";
 import pluginManifest from "../plugin.json";
 import type { GleanFacade } from "./types";
@@ -44,6 +44,18 @@ import { showMessage, lvNotify, lvTicker, lvActivity, lvBackup, lvLaunchpad, lvO
 const DOCK_TYPE = "glean-dock";
 const TAB_TYPE = "glean-library";
 const READER_TAB_TYPE = "glean-reader";
+
+function safePerfMark(name: string): void {
+    if (typeof performance !== "undefined" && typeof performance.mark === "function") {
+        try { performance.mark(name); } catch { /* ignore */ }
+    }
+}
+
+function safePerfMeasure(name: string, startMark: string, endMark: string): void {
+    if (typeof performance !== "undefined" && typeof performance.measure === "function") {
+        try { performance.measure(name, startMark, endMark); } catch { /* ignore */ }
+    }
+}
 
 export default class LvGleanPlugin extends Plugin implements GleanFacade {
     /** 基类构造器已注入 i18n；declare 只收窄类型，不生成会覆盖基类赋值的运行时字段 */
@@ -91,6 +103,10 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
     private unreadCount = 0;
     private tickerUnsubscribe?: () => void;
     private unregisterRaikiri?: () => void;
+    readonly knownClipDocIds = new Set<string>();
+    private deferredBackupTimer: number | null = null;
+    private deferredBackupIdleId: number | null = null;
+    private deferredBackupPromise: Promise<{ ok: boolean; skipped?: boolean; filename?: string } | void> | null = null;
     private readonly openWorkbenchPopupSingleton = createDialogSingleton(
         (initialPreviewId: string | undefined, onClose: () => void) => svelteDialog({
             title: t(this.i18n, "workbench.popupTitle"),
@@ -125,6 +141,7 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
     }
 
     async onload() {
+        safePerfMark("lv:siyuan-glean:onload:start");
         this.loaded = true;
         const frontend = getFrontend();
         this.isMobile = frontend === "mobile" || frontend === "browser-mobile";
@@ -273,6 +290,19 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
 
         // 设置只在此处加载一次；面板/弹窗都读这个缓存
         this.settings = await loadSettings(this);
+        if (!this.loaded) return;
+
+        // 预热剪藏文档 ID 内存 Set（用于阅读上下文 O(1) 快路径过滤）与未读角标缓存
+        try {
+            const { loadIndex } = await import("./services/index-store");
+            const index = await loadIndex(this, { shouldPublish: () => this.loaded });
+            if (!this.loaded) return;
+            this.syncKnownClipDocIds(Object.keys(index.clips));
+            this.unreadCount = Object.values(index.clips)
+                .filter((c) => (c.status === "inbox" || c.status === "later" || c.status === "reading") && !c.internal).length;
+        } catch {
+            // 静默降级
+        }
         if (!this.loaded) return;
 
         const plugin = this;
@@ -497,9 +527,13 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
                 }));
             })
             : undefined;
+
+        safePerfMark("lv:siyuan-glean:onload:end");
+        safePerfMeasure("lv:siyuan-glean:onload", "lv:siyuan-glean:onload:start", "lv:siyuan-glean:onload:end");
     }
 
     onLayoutReady() {
+        safePerfMark("lv:siyuan-glean:onLayoutReady:start");
         void (async () => {
             try {
                 const prefs = await loadUiPrefs(this);
@@ -513,19 +547,15 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
             } catch { /* soft */ }
         })();
 
-        // BL-43: 每日自动本地轮转备份（7 份快照）
-        void import("./services/backup-service").then(({ runDailyAutoBackup }) => {
-            return runDailyAutoBackup(this, this.settings);
-        }).catch(() => undefined);
+        // BL-43: 每日自动本地轮转备份（7 份快照）— 移出启动热路径，两级延迟调度（60s 最小静默 + requestIdleCallback）
+        this.scheduleDeferredBackup(60000);
 
         // Epoch 7 Phase 2: 接入全生态统一主时钟跨日监听，零点自动刷新今日池与每日备份
         if (typeof lvTicker?.onDateCross === "function") {
             this.tickerUnsubscribe = lvTicker.onDateCross("siyuan-glean", (_todayKey) => {
                 if (!this.loaded) return;
                 this.notifyDataChanged();
-                void import("./services/backup-service").then(({ runDailyAutoBackup }) => {
-                    return runDailyAutoBackup(this, this.settings);
-                }).catch(() => undefined);
+                this.scheduleDeferredBackup(60000);
             });
         }
 
@@ -544,18 +574,22 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
             }
         }).catch(() => undefined);
 
-        if (this.isMobile) return;
-        if (this.topBarElement) return;
-        this.topBarElement = this.addTopBar({
-            icon: "iconGleanWheat",
-            title: t(this.i18n, "pluginName"),
-            position: "right",
-            callback: () => this.openPanel(),
-            // 官方 contextMenu 通道（BL-27）：右键快捷菜单并入思源原生顶栏条目菜单，
-            // 不再自建 contextmenu 监听拦截原生菜单（3.8.x 的固定/隐藏条目管理得以保留）
-            contextMenu: (menu) => this.appendTopBarContextMenuItems(menu),
-        });
+        if (!this.isMobile && !this.topBarElement) {
+            this.topBarElement = this.addTopBar({
+                icon: "iconGleanWheat",
+                title: t(this.i18n, "pluginName"),
+                position: "right",
+                callback: () => this.openPanel(),
+                // 官方 contextMenu 通道（BL-27）：右键快捷菜单并入思源原生顶栏条目菜单，
+                // 不再自建 contextmenu 监听拦截原生菜单（3.8.x 的固定/隐藏条目管理得以保留）
+                contextMenu: (menu) => this.appendTopBarContextMenuItems(menu),
+            });
+        }
         this.registerLaunchpad();
+
+        safePerfMark("lv:siyuan-glean:onLayoutReady:end");
+        safePerfMeasure("lv:siyuan-glean:onLayoutReady", "lv:siyuan-glean:onLayoutReady:start", "lv:siyuan-glean:onLayoutReady:end");
+        safePerfMeasure("lv:siyuan-glean:startup:total", "lv:siyuan-glean:onload:start", "lv:siyuan-glean:onLayoutReady:end");
     }
 
     /**
@@ -566,6 +600,9 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
         if (!this.loaded || reason === "overwrite") return;
         try {
             this.settings = await loadSettings(this);
+            if (!this.loaded) return;
+            await this.refreshUnreadCount();
+            if (!this.loaded) return;
             this.notifyDataChanged();
         } catch (error) {
             console.warn("[glean] onDataChanged 刷新失败:", error);
@@ -573,6 +610,9 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
     }
 
     async onunload() {
+        this.loaded = false;
+        this.cancelDeferredBackupSchedule();
+        this.knownClipDocIds.clear();
         this.disposeSyncQueue?.();
         this.disposeSyncQueue = undefined;
         this.mobileEntryCleaner?.();
@@ -587,7 +627,6 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
         this.tickerUnsubscribe = undefined;
         this.noticeHubCleaner?.();
         this.noticeHubCleaner = undefined;
-        this.loaded = false;
         this.readerOpenRequest += 1;
         this.libraryOpenRequest += 1;
         this.pendingLibraryDocIds.clear();
@@ -618,6 +657,103 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
         this.disposeReadingContext = null;
         this.topBarElement = undefined;
         // dock/tab 的 Svelte 实例由 addDock/addTab 的 destroy 回调负责卸载
+    }
+
+    /** 判定文档是否为已知剪藏文章（内存 Set O(1) 快路径） */
+    hasClipDocId(docId: string): boolean {
+        return this.knownClipDocIds.has(docId) || isKnownClipDocId(docId);
+    }
+
+    /** 全量同步内存剪藏 ID 集合 */
+    syncKnownClipDocIds(ids: Iterable<string>): void {
+        this.knownClipDocIds.clear();
+        for (const id of ids) {
+            if (id) this.knownClipDocIds.add(id);
+        }
+        syncClipDocIds(ids);
+    }
+
+    /** 增量登记剪藏文档 ID */
+    addKnownClipDocId(docId: string): void {
+        if (!docId) return;
+        this.knownClipDocIds.add(docId);
+        addClipDocId(docId);
+    }
+
+    /** 移除剪藏文档 ID */
+    removeKnownClipDocId(docId: string): void {
+        if (!docId) return;
+        this.knownClipDocIds.delete(docId);
+        removeClipDocId(docId);
+    }
+
+    /** 取消未到期的延迟备份定时器与 idle 回调 */
+    cancelDeferredBackupSchedule(): void {
+        const windowObj = typeof window !== "undefined" ? window : (globalThis as unknown as Window);
+        if (this.deferredBackupTimer !== null) {
+            windowObj.clearTimeout(this.deferredBackupTimer);
+            this.deferredBackupTimer = null;
+        }
+        if (this.deferredBackupIdleId !== null) {
+            if (typeof windowObj.cancelIdleCallback === "function") {
+                windowObj.cancelIdleCallback(this.deferredBackupIdleId);
+            }
+            this.deferredBackupIdleId = null;
+        }
+    }
+
+    /**
+     * 两级延迟调度每日轮转备份：
+     * 1. 先通过硬性 setTimeout 静默期（默认 60s）杜绝与启动期首屏与文档恢复竞争 I/O；
+     * 2. 定时器到期后转入 requestIdleCallback 空闲帧调度执行。
+     */
+    scheduleDeferredBackup(delayMs = 60000): void {
+        this.cancelDeferredBackupSchedule();
+        if (!this.loaded) return;
+        const windowObj = typeof window !== "undefined" ? window : (globalThis as unknown as Window);
+        this.deferredBackupTimer = windowObj.setTimeout(() => {
+            this.deferredBackupTimer = null;
+            if (!this.loaded) return;
+            if (typeof windowObj.requestIdleCallback === "function") {
+                this.deferredBackupIdleId = windowObj.requestIdleCallback(() => {
+                    this.deferredBackupIdleId = null;
+                    if (!this.loaded) return;
+                    void this.triggerDailyAutoBackup({ internalSchedule: true });
+                });
+            } else {
+                void this.triggerDailyAutoBackup({ internalSchedule: true });
+            }
+        }, delayMs) as unknown as number;
+    }
+
+    /**
+     * 触发每日自动本地轮转备份（带 in-flight Promise 单飞守卫）
+     * 外部并发触发与内部调度一律复用同一 Promise，彻底杜绝交叉并发写盘。
+     */
+    triggerDailyAutoBackup(options?: { internalSchedule?: boolean }): Promise<{ ok: boolean; skipped?: boolean; filename?: string } | void> {
+        if (!this.loaded) return Promise.resolve();
+        // 所有入口（外部并发调用与内部定时/空闲调度）一律先复用 in-flight Promise 单飞守卫，彻底杜绝交叉并发
+        if (this.deferredBackupPromise) {
+            return this.deferredBackupPromise;
+        }
+        // 如果外部主动触发，先取消尚未到期的延迟调度定时器与 idle 任务
+        if (!options?.internalSchedule) {
+            this.cancelDeferredBackupSchedule();
+        }
+
+        const task = (async () => {
+            try {
+                const { runDailyAutoBackup } = await import("./services/backup-service");
+                return await runDailyAutoBackup(this, this.settings);
+            } catch (err) {
+                console.warn("[glean] 每日自动本地轮转备份执行异常:", err);
+            } finally {
+                this.deferredBackupPromise = null;
+            }
+        })();
+
+        this.deferredBackupPromise = task;
+        return task;
     }
 
     /* ---------- GleanFacade ---------- */
@@ -736,7 +872,9 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
     private async refreshUnreadCount(): Promise<void> {
         try {
             const { loadIndex } = await import("./services/index-store");
-            const index = await loadIndex(this);
+            const index = await loadIndex(this, { shouldPublish: () => this.loaded });
+            if (!this.loaded) return;
+            this.syncKnownClipDocIds(Object.keys(index.clips));
             const unread = Object.values(index.clips)
                 .filter((c) => (c.status === "inbox" || c.status === "later" || c.status === "reading") && !c.internal);
             const count = unread.length;
@@ -841,7 +979,7 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
             );
             const targetNotebook = this.settings.anchorNotebooks[0] || hubNb?.id || openNbs[0]?.id;
             if (!targetNotebook) {
-                showNotice("未配置读库笔记本锚点，请在设置中选择读库笔记本", 4000, "warn");
+                showNotice(t(this.i18n, "capture.noAnchorNotebook"), 4000, "warn");
                 return;
             }
 
@@ -937,25 +1075,25 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
             }
 
             if (!url) {
-                showNotice("未检测到有效网页链接（请先复制网页 URL 或打开带来源链接的文章）", 4000, "warn");
+                showNotice(t(this.i18n, "capture.noValidUrl"), 4000, "warn");
                 return;
             }
 
-            showNotice(`正在抓取网页全文并收录至思源: ${url.slice(0, 36)}...`, 3000, "info");
+            showNotice(t(this.i18n, "capture.webCapturing", {url: url.slice(0, 36)}), 3000, "info");
             const { listNotebooks, createDocWithMd } = await import("./api/client");
             const { resolveDefaultAnchorNotebook, resolveGleanRootPrefix } = await import("./services/settings");
             const notebooks = await listNotebooks().catch(() => []);
             const targetNotebook = resolveDefaultAnchorNotebook(notebooks, this.settings.anchorNotebooks);
             if (!targetNotebook) {
-                showNotice("未配置读库笔记本锚点，请在设置中选择读库笔记本", 4000, "warn");
+                showNotice(t(this.i18n, "capture.noAnchorNotebook"), 4000, "warn");
                 return;
             }
 
             const { captureDocument } = await import("./services/clip-store");
             const now = new Date();
             const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}-${String(now.getHours()).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}`;
-            const title = `网页收录 ${dateStr}`;
-            const md = `[来源网页](${url})\n\n> 正在等待后台网页正文抓取与快照归档...\n\n- 目标链接: ${url}`;
+            const title = t(this.i18n, "capture.webClipTitle", {date: dateStr});
+            const md = `[${t(this.i18n, "capture.webClipSourceLabel")}](${url})\n\n> ${t(this.i18n, "capture.webClipLinkOnlyNote")}\n\n- ${t(this.i18n, "capture.webClipTargetLabel", {url})}`;
 
             try {
                 const rootPrefix = resolveGleanRootPrefix(this.settings, notebooks, targetNotebook);
@@ -1668,12 +1806,12 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
                     source: "小驴拾遗",
                     category: "clip-conflict",
                     title: t(this.i18n, "inbox.duplicate"),
-                    message: confTitle ? `已存在相同来源文章：《${confTitle}》` : "读库中已收录过同 URL 的文章",
+                    message: confTitle ? t(this.i18n, "inbox.duplicateSameSource", {title: confTitle}) : t(this.i18n, "inbox.duplicateSameUrl"),
                     level: "warn",
                     duration: 6000,
                     actions: [
                         {
-                            label: "查看已有文档",
+                            label: t(this.i18n, "inbox.viewExistingDoc"),
                             primary: true,
                             onClick: () => this.openReadingDocument(result.conflict!.id),
                             dismissAfterClick: true,
@@ -1686,7 +1824,7 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
                 lvActivity.record({
                     source: "拾遗",
                     category: "clip",
-                    title: `剪藏《${docTitle}》`,
+                    title: t(this.i18n, "capture.activityClipTitle", {title: docTitle}),
                     linkBlockId: docId,
                 });
                 notifyClipSuccess({
@@ -1745,12 +1883,12 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
                             source: "小驴拾遗",
                             category: "clip-conflict",
                             title: t(this.i18n, "inbox.duplicate"),
-                            message: confTitle ? `已存在相同来源文章：《${confTitle}》` : "读库中已收录过同 URL 的文章",
+                            message: confTitle ? t(this.i18n, "inbox.duplicateSameSource", {title: confTitle}) : t(this.i18n, "inbox.duplicateSameUrl"),
                             level: "warn",
                             duration: 6000,
                             actions: [
                                 {
-                                    label: "查看已有文档",
+                                    label: t(this.i18n, "inbox.viewExistingDoc"),
                                     primary: true,
                                     onClick: () => this.openReadingDocument(result.conflict!.id),
                                     dismissAfterClick: true,
@@ -1763,7 +1901,7 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade {
                         lvActivity.record({
                             source: "拾遗",
                             category: "clip",
-                            title: `剪藏《${docTitle}》`,
+                            title: t(this.i18n, "capture.activityClipTitle", {title: docTitle}),
                             linkBlockId: rootId,
                         });
                         notifyClipSuccess({

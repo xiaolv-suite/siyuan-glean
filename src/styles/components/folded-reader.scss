@@ -9,7 +9,7 @@
     padding: var(--glean-space-3);
     gap: var(--glean-space-2-5);
     box-sizing: border-box;
-    color: var(--b3-theme-on-background);
+    color: var(--glean-ink);
 }
 
 .glean-fold-reader__head {
@@ -30,7 +30,7 @@
 
 .glean-fold-reader__levels {
     display: inline-flex;
-    background: var(--glean-inset-surface, var(--b3-theme-surface));
+    background: var(--glean-inset-surface, var(--glean-card-surface));
     border-radius: var(--glean-radius-pill);
     padding: var(--glean-space-0-5);
     border: 1px solid var(--glean-border-soft);
@@ -46,13 +46,13 @@
     padding: var(--glean-space-0-75) var(--glean-space-2-5);
     border-radius: var(--glean-radius-pill);
     font-size: var(--glean-text-xs, 12px);
-    color: var(--b3-theme-on-surface);
+    color: var(--glean-ink-2);
     cursor: pointer;
     font-variant-numeric: tabular-nums;
     transition: transform var(--glean-duration-fast) var(--glean-ease-out), background var(--glean-duration-fast) var(--glean-ease-out), border-color var(--glean-duration-fast) var(--glean-ease-out), box-shadow var(--glean-duration-fast) var(--glean-ease-out), color var(--glean-duration-fast) var(--glean-ease-out), opacity var(--glean-duration-fast) var(--glean-ease-out);
 
     &:hover {
-        background: color-mix(in srgb, var(--b3-theme-on-surface) 6%, transparent);
+        background: color-mix(in srgb, var(--glean-ink-2) 6%, transparent);
     }
 
     &:focus-visible {
@@ -63,7 +63,7 @@
 
 .glean-fold-reader__pill--active {
     background: var(--glean-color-action);
-    color: var(--b3-theme-on-primary);
+    color: var(--glean-on-action);
     font-weight: var(--glean-weight-semibold);
 
     @media (forced-colors: active) {
@@ -83,7 +83,7 @@
     align-items: center;
     justify-content: space-between;
     font-size: var(--glean-text-caption);
-    color: var(--b3-theme-on-surface);
+    color: var(--glean-ink-2);
     opacity: 0.88;
     gap: var(--glean-space-2);
     flex-wrap: wrap;
@@ -97,7 +97,7 @@
     font-weight: var(--glean-weight-semibold);
     padding: var(--glean-space-micro) var(--glean-space-2);
     border-radius: var(--glean-radius-pill);
-    background: color-mix(in srgb, var(--glean-color-data) 12%, var(--b3-theme-surface));
+    background: color-mix(in srgb, var(--glean-color-data) 12%, var(--glean-card-surface));
     color: var(--glean-st-done-text);
     border: 1px solid color-mix(in srgb, var(--glean-color-data) 30%, transparent);
 
@@ -117,7 +117,7 @@
 }
 
 .glean-fold-card {
-    background: var(--glean-card-surface, var(--b3-theme-surface));
+    background: var(--glean-card-surface, var(--glean-card-surface));
     border: 1px solid var(--glean-border-soft);
     border-radius: var(--glean-radius-lg, 16px);
     padding: var(--glean-space-3) var(--glean-space-3-5);
@@ -147,7 +147,7 @@
 
 .glean-fold-card--expanded {
     border-color: color-mix(in srgb, var(--glean-color-action) 45%, transparent);
-    background: color-mix(in srgb, var(--glean-color-action) 2%, var(--glean-card-surface, var(--b3-theme-surface)));
+    background: color-mix(in srgb, var(--glean-color-action) 2%, var(--glean-card-surface, var(--glean-card-surface)));
 }
 
 .glean-fold-card__head {
@@ -180,8 +180,8 @@
 .glean-fold-card__concept {
     font-size: var(--glean-text-caption);
     font-weight: var(--glean-weight-semibold);
-    color: var(--b3-theme-on-surface);
-    background: color-mix(in srgb, var(--glean-color-action) 10%, var(--b3-theme-surface));
+    color: var(--glean-ink-2);
+    background: color-mix(in srgb, var(--glean-color-action) 10%, var(--glean-card-surface));
     padding: var(--glean-space-micro) var(--glean-space-2);
     border-radius: var(--glean-radius-pill);
     border: 1px solid color-mix(in srgb, var(--glean-color-action) 25%, transparent);
@@ -207,7 +207,7 @@
     background: transparent;
     padding: var(--glean-space-0-5) var(--glean-space-1-5);
     border-radius: var(--glean-radius-pill);
-    color: var(--b3-theme-on-surface);
+    color: var(--glean-ink-2);
     opacity: 0.6;
     cursor: pointer;
     font-size: var(--glean-text-caption);
@@ -237,7 +237,7 @@
 .glean-fold-card__text-full {
     font-size: var(--glean-text-base);
     line-height: var(--glean-leading-body);
-    color: var(--b3-theme-on-surface);
+    color: var(--glean-ink-2);
     word-break: break-word;
     margin: var(--glean-space-0);
     white-space: pre-wrap;
@@ -248,7 +248,7 @@
         overscroll-behavior-x: contain;
         padding: var(--glean-space-2);
         border-radius: var(--glean-radius-md, 8px);
-        background: var(--b3-theme-background-light, #f6f7f9);
+        background: var(--glean-app-background, #f6f7f9);
         white-space: pre;
         word-break: normal;
     }
@@ -258,7 +258,7 @@
     font-size: var(--glean-text-sm);
     line-height: var(--glean-leading-normal);
     font-weight: var(--glean-weight-medium);
-    color: var(--b3-theme-on-surface);
+    color: var(--glean-ink-2);
     border-left: 3px solid var(--glean-color-action);
     padding: var(--glean-space-1-5) var(--glean-space-3);
     background: color-mix(in srgb, var(--glean-color-action) 5%, transparent);
@@ -274,13 +274,13 @@
     gap: var(--glean-space-1);
     font-size: var(--glean-text-sm);
     line-height: var(--glean-leading-normal);
-    color: var(--b3-theme-on-surface);
+    color: var(--glean-ink-2);
 }
 
 .glean-fold-card__gist {
     font-size: var(--glean-text-sm);
     line-height: var(--glean-leading-normal);
-    color: var(--b3-theme-on-surface);
+    color: var(--glean-ink-2);
     opacity: 0.92;
 }
 
@@ -321,7 +321,7 @@
     align-items: center;
     gap: var(--glean-space-2);
     font-size: var(--glean-text-sm);
-    color: var(--b3-theme-on-surface);
+    color: var(--glean-ink-2);
 }
 
 .glean-fold-reader__empty,
@@ -333,7 +333,7 @@
     padding: var(--glean-space-5, 24px);
     text-align: center;
     gap: var(--glean-space-2);
-    color: var(--b3-theme-on-surface);
+    color: var(--glean-ink-2);
     opacity: 0.7;
     font-size: var(--glean-text-sm, 13px);
 }

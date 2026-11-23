@@ -719,8 +719,8 @@ $effect(() => {
         padding: 16px;
         border: 1px solid var(--glean-border-soft);
         border-radius: 6px;
-        background: var(--b3-theme-surface);
-        color: var(--b3-theme-on-surface);
+        background: var(--glean-card-surface);
+        color: var(--glean-ink-2);
     }
 
     .glean-confirm h3,
@@ -736,9 +736,9 @@ $effect(() => {
     }
 
     .glean-btn--danger {
-        border: 1px solid color-mix(in srgb, var(--b3-theme-error) 62%, var(--glean-border-soft));
-        background: var(--b3-theme-error);
-        color: var(--b3-theme-on-error, #fff);
+        border: 1px solid color-mix(in srgb, var(--glean-danger) 62%, var(--glean-border-soft));
+        background: var(--glean-danger);
+        color: var(--glean-on-danger, #fff);
     }
 
     .glean-btn--danger:hover:not(:disabled) {

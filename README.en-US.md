@@ -184,7 +184,7 @@ In just 3 minutes, transform scattered clippings into structured knowledge asset
 
 ## 📝 Recent Updates
 
-**v1.4.10 (2026-11-17 · Cumulative Updates)**:
+**v1.4.11 (2026-11-23 · Cumulative Updates)**:
 Full version history: [CHANGELOG.md](CHANGELOG.md)
 
 - **Mobile Immersion Space Compaction**: Compacted mobile toolbar height, eliminating clutter and maximizing viewport real estate for focused article reading;

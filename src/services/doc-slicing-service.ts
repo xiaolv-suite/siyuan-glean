@@ -50,9 +50,10 @@ export async function createSliceSubDocuments(
         const errors: string[] = [];
 
         for (const slice of plan.slices) {
-            // 清理标题中的特殊字符避免路径冲突
-            const safeSliceTitle = slice.title.replace(/[\\/\u0000-\u001f]/g, " ").trim().slice(0, 100);
-            const targetPath = `${parentHpath}/${safeSliceTitle}`;
+            // 清理标题中的特殊字符避免路径冲突（严格清除 Windows 9 大非法字符与双斜杠）
+            const safeSliceTitle = slice.title.replace(/[/\\:<>|?*"~\p{Cc}\p{Cf}\r\n]+/gu, " ").trim().slice(0, 80) || "切片章节";
+            const parentPrefix = parentHpath === "/" ? "" : parentHpath.replace(/\/+$/, "");
+            const targetPath = `${parentPrefix}/${safeSliceTitle}`;
             const markdown = formatSliceMarkdown(slice, context.title, context.id, context.url);
 
             try {
@@ -116,8 +117,9 @@ export async function createOutlineMindmapDocument(
             return { ok: false, error: "无法获取原文档所在的笔记本或存储路径" };
         }
 
-        const title = (context.title || "未命名长文").replace(/[\\/\u0000-\u001f]/g, " ").trim().slice(0, 80);
-        const targetPath = `${parentHpath}/《${title}》· 思维导图`;
+        const title = (context.title || "未命名长文").replace(/[/\\:<>|?*"~\p{Cc}\p{Cf}\r\n]+/gu, " ").trim().slice(0, 80) || "长文";
+        const parentPrefix = parentHpath === "/" ? "" : parentHpath.replace(/\/+$/, "");
+        const targetPath = `${parentPrefix}/《${title}》· 思维导图`;
         const markdown = buildOutlineMindmapMarkdown(context.title, context.id, outline);
 
         try {

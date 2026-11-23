@@ -310,22 +310,22 @@ async function doExport(): Promise<void> {
         min-height: 28px;
         padding: 3px 10px;
         border-radius: var(--glean-radius-pill, 9999px);
-        border: 1px solid var(--b3-border-color, var(--glean-border-soft));
-        background: var(--b3-theme-surface);
-        color: var(--glean-ink-2, var(--b3-theme-on-surface));
+        border: 1px solid var(--glean-line, var(--glean-border-soft));
+        background: var(--glean-card-surface);
+        color: var(--glean-ink-2, var(--glean-ink-2));
         font-size: var(--glean-text-xs, 12px);
         cursor: pointer;
         touch-action: manipulation;
         transition: all 0.15s ease;
     }
     .glean-quotes__facet:hover {
-        border-color: var(--b3-theme-primary);
-        color: var(--b3-theme-primary);
+        border-color: var(--glean-color-action);
+        color: var(--glean-color-action);
     }
     .glean-quotes__facet--on {
-        background: color-mix(in srgb, var(--b3-theme-primary) 12%, var(--b3-theme-surface));
-        border-color: var(--b3-theme-primary);
-        color: var(--b3-theme-primary);
+        background: color-mix(in srgb, var(--glean-color-action) 12%, var(--glean-card-surface));
+        border-color: var(--glean-color-action);
+        color: var(--glean-color-action);
         font-weight: 600;
     }
     .glean-quotes__chips {
@@ -342,9 +342,9 @@ async function doExport(): Promise<void> {
         min-height: 28px;
         padding: 2px 10px;
         border-radius: var(--glean-radius-pill, 9999px);
-        border: 1px solid var(--b3-theme-primary);
-        background: color-mix(in srgb, var(--b3-theme-primary) 12%, var(--b3-theme-surface));
-        color: var(--b3-theme-primary);
+        border: 1px solid var(--glean-color-action);
+        background: color-mix(in srgb, var(--glean-color-action) 12%, var(--glean-card-surface));
+        color: var(--glean-color-action);
         font-size: var(--glean-text-xs, 12px);
         cursor: pointer;
         touch-action: manipulation;

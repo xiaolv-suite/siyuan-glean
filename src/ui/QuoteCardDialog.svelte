@@ -151,7 +151,19 @@
 
         ctx.fillStyle = "rgba(0,0,0,0.06)";
         ctx.beginPath();
-        ctx.roundRect(badgeX, badgeY, badgeMetrics.width + 24, 22, 11);
+        const badgeW = badgeMetrics.width + 24;
+        const badgeH = 22;
+        const badgeR = 11;
+        if (typeof (ctx as any).roundRect === "function") {
+            (ctx as any).roundRect(badgeX, badgeY, badgeW, badgeH, badgeR);
+        } else {
+            ctx.moveTo(badgeX + badgeR, badgeY);
+            ctx.arcTo(badgeX + badgeW, badgeY, badgeX + badgeW, badgeY + badgeH, badgeR);
+            ctx.arcTo(badgeX + badgeW, badgeY + badgeH, badgeX, badgeY + badgeH, badgeR);
+            ctx.arcTo(badgeX, badgeY + badgeH, badgeX, badgeY, badgeR);
+            ctx.arcTo(badgeX, badgeY, badgeX + badgeW, badgeY, badgeR);
+            ctx.closePath();
+        }
         ctx.fill();
 
         ctx.fillStyle = colorBadgeHex(source.color);
@@ -708,7 +720,7 @@
     .glean-quote-card-font-group {
         display: inline-flex;
         border-radius: var(--glean-radius-pill);
-        background: color-mix(in srgb, var(--b3-theme-surface) 90%, transparent);
+        background: color-mix(in srgb, var(--glean-card-surface) 90%, transparent);
         border: 1px solid var(--glean-border-soft);
         padding: 2px;
         gap: 2px;
@@ -723,7 +735,7 @@
         border-radius: var(--glean-radius-pill);
         border: 1px solid transparent;
         background: transparent;
-        color: var(--b3-theme-on-surface);
+        color: var(--glean-ink-2);
         font-size: var(--glean-text-xs);
         cursor: pointer;
         touch-action: manipulation;
@@ -737,7 +749,7 @@
     }
 
     .glean-quote-card-font-btn:hover {
-        background: color-mix(in srgb, var(--b3-theme-on-surface) 6%, transparent);
+        background: color-mix(in srgb, var(--glean-ink-2) 6%, transparent);
     }
 
     .glean-quote-card-font-btn:focus-visible {
@@ -746,7 +758,7 @@
     }
 
     .glean-quote-card-font-btn--active {
-        background: color-mix(in srgb, var(--glean-color-action) 12%, var(--b3-theme-surface));
+        background: color-mix(in srgb, var(--glean-color-action) 12%, var(--glean-card-surface));
         color: var(--glean-color-action);
         font-weight: var(--glean-weight-semibold);
         border-color: color-mix(in srgb, var(--glean-color-action) 28%, transparent);
@@ -758,7 +770,7 @@
         gap: var(--glean-space-2);
         padding: var(--glean-space-1);
         border-radius: var(--glean-radius-pill);
-        background: color-mix(in srgb, var(--b3-theme-surface) 90%, transparent);
+        background: color-mix(in srgb, var(--glean-card-surface) 90%, transparent);
         border: 1px solid var(--glean-border-soft);
         flex-wrap: wrap;
     }
@@ -772,7 +784,7 @@
         border-radius: var(--glean-radius-pill);
         border: 1px solid transparent;
         background: transparent;
-        color: var(--b3-theme-on-surface);
+        color: var(--glean-ink-2);
         font-size: var(--glean-text-xs-plus);
         cursor: pointer;
         touch-action: manipulation;
@@ -786,7 +798,7 @@
     }
 
     .glean-quote-card-theme-btn:hover {
-        background: color-mix(in srgb, var(--b3-theme-on-surface) 6%, transparent);
+        background: color-mix(in srgb, var(--glean-ink-2) 6%, transparent);
     }
 
     .glean-quote-card-theme-btn:focus-visible {
@@ -795,7 +807,7 @@
     }
 
     .glean-quote-card-theme-btn--active {
-        background: color-mix(in srgb, var(--glean-color-action) 12%, var(--b3-theme-surface));
+        background: color-mix(in srgb, var(--glean-color-action) 12%, var(--glean-card-surface));
         color: var(--glean-color-action);
         font-weight: var(--glean-weight-semibold);
         border-color: var(--glean-color-action);
@@ -827,7 +839,7 @@
         width: 14px;
         height: 14px;
         border-radius: 50%;
-        border: 1px solid var(--b3-border-color, rgba(125, 125, 125, 0.25));
+        border: 1px solid var(--glean-line, rgba(125, 125, 125, 0.25));
     }
 
     .glean-quote-card-theme-preview--teal { background: #064E3B; }
@@ -843,7 +855,7 @@
         justify-content: center;
         overflow-y: auto;
         padding: var(--glean-space-3);
-        background: color-mix(in srgb, var(--glean-app-background) 75%, var(--b3-theme-surface));
+        background: color-mix(in srgb, var(--glean-app-background) 75%, var(--glean-card-surface));
         border-radius: var(--glean-radius-lg, 16px);
         border: 1px solid var(--glean-border-soft);
     }

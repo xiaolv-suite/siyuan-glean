@@ -101,6 +101,10 @@
     --glean-line: rgba(15, 23, 42, 0.1);
     --glean-danger: #c2403a;
     --glean-ok: #2d9865;
+    /* DL2 阶段2 补齐：b3 codemod 映射目标 token（与雷切同口径的语义补位） */
+    --glean-warning: #b45309;
+    --glean-surface-muted: color-mix(in srgb, var(--glean-ink) 6%, var(--glean-card-surface));
+    --glean-color-action-faint: color-mix(in srgb, var(--glean-color-action) 6%, transparent);
     --glean-on-action: #ffffff;
     --glean-on-danger: #ffffff;
 
@@ -202,6 +206,10 @@
     --glean-space-28: 112px;
     --glean-space-neg-4-5: -18px;
     --glean-text-xs: 11px;
+    --glean-text-base: 14px;
+    --glean-leading-body: 1.65;
+    --glean-weight-600: 600;
+    --glean-space-0-75: 3px;
     --glean-text-sm: 12px;
     --glean-text-md: 13px;
     --glean-text-lg: 15px;
@@ -459,6 +467,9 @@ body.b3-theme-dark,
     --glean-ok: #34d399;
     --glean-on-action: #06231f;
     --glean-on-danger: #2b0a08;
+    --glean-warning: #f0b45c;
+    --glean-surface-muted: color-mix(in srgb, var(--glean-ink) 8%, var(--glean-card-surface));
+    --glean-color-action-faint: color-mix(in srgb, var(--glean-color-action) 8%, transparent);
 
     --lv-brand: #14B8A6;
     --lv-brand-hover: #2DD4BF;
@@ -508,7 +519,7 @@ body.b3-theme-dark,
         height: 22px;
         border-radius: var(--glean-radius-sm);
         background: var(--glean-grad);
-        color: var(--b3-theme-on-primary);
+        color: var(--glean-on-action);
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -548,7 +559,7 @@ body.b3-theme-dark,
 :where([data-theme-mode="dark"], body.body--dark, body.b3-theme-dark) .glean-btn:hover:not(:disabled):not(.glean-btn--pri) {
     /* filter: brightness() 会把暗色控件继续压黑；使用宿主的下一层表面保留悬停边界。 */
     filter: none;
-    background: var(--b3-theme-surface-lighter, var(--b3-theme-background-light));
+    background: var(--glean-surface-muted, var(--glean-app-background));
 }
 
 :where([data-theme-mode="dark"], body.body--dark, body.b3-theme-dark) .glean-st-badge,
@@ -626,7 +637,7 @@ body.b3-theme-dark,
     background: var(--glean-grad);
     display: grid;
     place-items: center;
-    color: var(--b3-theme-on-primary);
+    color: var(--glean-on-action);
     flex-shrink: 0;
     box-shadow: var(--glean-shadow-accent);
 
@@ -743,11 +754,11 @@ body.b3-theme-dark,
 
 .glean-head-action--primary {
     background: var(--glean-grad) !important;
-    color: var(--b3-theme-on-primary, #ffffff) !important;
+    color: var(--glean-on-action, #ffffff) !important;
 
     &:hover {
         background: var(--glean-grad) !important;
-        color: var(--b3-theme-on-primary, #ffffff) !important;
+        color: var(--glean-on-action, #ffffff) !important;
         filter: brightness(1.08);
     }
 
@@ -775,9 +786,9 @@ body.b3-theme-dark,
         align-items: center;
         justify-content: center;
         gap: var(--glean-space-1-5);
-        border: 1px solid var(--b3-border-color);
+        border: 1px solid var(--glean-line);
         border-radius: var(--glean-radius-sm);
-        background: var(--b3-theme-surface);
+        background: var(--glean-card-surface);
         color: var(--glean-ink-2);
         white-space: nowrap;
         transition: transform var(--glean-duration-fast) ease, background var(--glean-duration-fast) ease, border-color var(--glean-duration-fast) ease, box-shadow var(--glean-duration-fast) ease, color var(--glean-duration-fast) ease, opacity var(--glean-duration-fast) ease;
@@ -792,7 +803,7 @@ body.b3-theme-dark,
     .glean-head-action--primary {
         border-color: color-mix(in srgb, var(--lv-brand-hover) 60%, transparent);
         background: var(--glean-grad);
-        color: var(--b3-theme-on-primary);
+        color: var(--glean-on-action);
         box-shadow: 0 2px 8px -1px color-mix(in srgb, var(--lv-brand) 32%, transparent);
 
         &:hover {
@@ -841,7 +852,7 @@ body.b3-theme-dark,
     transition: background var(--glean-duration-base), transform var(--glean-duration-base) var(--glean-ease-spring);
 
     &:hover {
-        background: var(--b3-theme-background-light);
+        background: var(--glean-app-background);
     }
 
     &:active {
@@ -881,7 +892,7 @@ body.b3-theme-dark,
     place-items: center;
     border-radius: var(--glean-radius-9);
     background: var(--glean-grad);
-    color: var(--b3-theme-on-primary);
+    color: var(--glean-on-action);
     box-shadow: var(--glean-shadow-accent);
 }
 
@@ -971,7 +982,7 @@ body.b3-theme-dark,
     padding: var(--glean-space-2) var(--glean-space-2-5);
     border: 1px solid var(--glean-line);
     border-radius: var(--glean-radius-10);
-    background: var(--b3-theme-background-light);
+    background: var(--glean-app-background);
     color: var(--glean-ink-2);
     font-size: var(--glean-text-xs);
 
@@ -1036,7 +1047,7 @@ body.b3-theme-dark,
 
     &:hover,
     &:focus-visible {
-        background: var(--b3-theme-background-light);
+        background: var(--glean-app-background);
         outline: none;
         box-shadow: inset 0 0 0 1px var(--glean-border-soft);
     }
@@ -1082,7 +1093,7 @@ body.b3-theme-dark,
     gap: var(--glean-space-micro);
     padding: var(--glean-space-tight);
     border-radius: var(--glean-radius-pill);
-    background: var(--b3-theme-background-light);
+    background: var(--glean-app-background);
 }
 
 .glean-views__btn {
@@ -1297,7 +1308,7 @@ body.b3-theme-dark,
         min-width: 24px;
         padding: var(--glean-space-0);
 
-        &:hover { background: var(--b3-theme-surface-lighter); color: var(--glean-ink); }
+        &:hover { background: var(--glean-surface-muted); color: var(--glean-ink); }
         &:focus-visible { outline: 2px solid var(--glean-color-action); outline-offset: 2px; }
     }
 }
@@ -1328,7 +1339,7 @@ body.b3-theme-dark,
     padding: var(--glean-space-1-25) var(--glean-space-3);
     border-radius: var(--glean-radius-pill);
     border: 1px solid transparent;
-    background: var(--b3-theme-background-light);
+    background: var(--glean-app-background);
     color: var(--glean-ink-2);
     font-size: var(--glean-text-sm);
     cursor: pointer;
@@ -1477,7 +1488,7 @@ body.b3-theme-dark,
     border: none;
     font-size: var(--glean-text-xs);
     font-weight: var(--glean-weight-semibold);
-    color: var(--b3-theme-on-primary);
+    color: var(--glean-on-action);
     padding: var(--glean-space-1-25) var(--glean-space-3);
     border-radius: var(--glean-radius-pill);
     background: var(--glean-grad);
@@ -2081,8 +2092,8 @@ mark.glean-search-highlight {
     &--current,
     &[data-glean-search-current="true"] {
         background-color: var(--glean-color-action);
-        color: var(--b3-theme-on-primary);
-        outline: 2px solid var(--b3-theme-primary-light, var(--glean-color-action));
+        color: var(--glean-on-action);
+        outline: 2px solid var(--glean-color-action-soft, var(--glean-color-action));
         outline-offset: 1px;
     }
 }
@@ -2472,7 +2483,7 @@ mark.glean-search-highlight {
 
 .glean-reader__outline-item--active .glean-reader__outline-tag {
     background: var(--glean-color-action);
-    color: var(--b3-theme-on-primary);
+    color: var(--glean-on-action);
     opacity: 1;
 }
 
@@ -2536,7 +2547,7 @@ mark.glean-search-highlight {
 
     &:hover {
         background: var(--glean-color-action);
-        color: var(--b3-theme-on-primary);
+        color: var(--glean-on-action);
         transform: translateY(-2px);
     }
 
@@ -3051,7 +3062,7 @@ mark.glean-search-highlight {
 .glean-surf-step--done .glean-surf-step__circle {
     background: var(--glean-color-data);
     border-color: var(--glean-color-data);
-    color: var(--b3-theme-on-primary);
+    color: var(--glean-on-action);
     font-weight: bold;
 }
 
@@ -4182,7 +4193,7 @@ mark.glean-search-highlight {
     outline: none;
 }
 .glean-reader__recent-item--current {
-    border-color: var(--b3-theme-primary-light);
+    border-color: var(--glean-color-action-soft);
     background: var(--glean-card-surface);
     font-weight: var(--glean-weight-semibold);
 }
@@ -4808,7 +4819,7 @@ mark.glean-search-highlight {
     font-size: var(--glean-text-caption);
     color: var(--glean-ink-2);
     padding-top: var(--glean-space-1);
-    border-top: 1px dashed var(--b3-theme-surface-lighter);
+    border-top: 1px dashed var(--glean-surface-muted);
 }
 
 .glean-surf-continue__more-label {
@@ -4892,7 +4903,7 @@ mark.glean-search-highlight {
     transition: transform var(--glean-duration-press), background var(--glean-duration-press), border-color var(--glean-duration-press), box-shadow var(--glean-duration-press), color var(--glean-duration-press), opacity var(--glean-duration-press);
 
     &:hover {
-        color: var(--b3-theme-on-primary);
+        color: var(--glean-on-action);
         background: var(--glean-grad);
         border-color: transparent;
     }
@@ -4949,7 +4960,7 @@ mark.glean-search-highlight {
     &--primary {
         border-color: transparent;
         background: var(--glean-grad);
-        color: var(--b3-theme-on-primary);
+        color: var(--glean-on-action);
     }
 
     &--restore {
@@ -5050,7 +5061,7 @@ mark.glean-search-highlight {
 
     &:hover {
         background: var(--glean-grad);
-        color: var(--b3-theme-on-primary);
+        color: var(--glean-on-action);
     }
 }
 
@@ -5100,6 +5111,16 @@ mark.glean-search-highlight {
     text-align: center;
     padding: 52px var(--glean-space-6);
     color: var(--glean-ink);
+}
+
+/* DL2 阶段3：空态吉祥物（受 mascot 偏好门控，关闭回退麦穗线性图标） */
+.glean-empty__mascot {
+    color: var(--glean-color-action);
+}
+
+.glean-empty__mascot svg {
+    width: 76px;
+    height: 67px;
 }
 
 .glean-empty__art {
@@ -5332,7 +5353,7 @@ mark.glean-search-highlight {
 
     &.glean-bb--pri {
         background: var(--glean-grad);
-        color: var(--b3-theme-on-primary);
+        color: var(--glean-on-action);
         font-weight: var(--glean-weight-semibold);
     }
 
@@ -5367,10 +5388,10 @@ mark.glean-search-highlight {
     }
 
     &.glean-bb--csv {
-        border: 1px solid color-mix(in srgb, var(--b3-theme-success) 30%, transparent);
-        background: color-mix(in srgb, var(--b3-theme-success) 10%, transparent);
+        border: 1px solid color-mix(in srgb, var(--glean-ok) 30%, transparent);
+        background: color-mix(in srgb, var(--glean-ok) 10%, transparent);
         &:hover:not(:disabled) {
-            background: color-mix(in srgb, var(--b3-theme-success) 18%, transparent);
+            background: color-mix(in srgb, var(--glean-ok) 18%, transparent);
         }
     }
 }
@@ -5742,7 +5763,7 @@ mark.glean-search-highlight {
             span {
                 padding: var(--glean-space-0-25) var(--glean-space-1-25);
                 border-radius: var(--glean-radius-pill);
-                background: var(--b3-theme-background-light);
+                background: var(--glean-app-background);
             }
         }
 
@@ -5833,7 +5854,7 @@ mark.glean-search-highlight {
     cursor: pointer;
     white-space: nowrap;
     flex-shrink: 0;
-    background: var(--b3-theme-background-light);
+    background: var(--glean-app-background);
     color: var(--glean-ink);
     transition: transform var(--glean-duration-fast) var(--glean-ease-out), box-shadow var(--glean-duration-fast) var(--glean-ease-out), background-color var(--glean-duration-fast) var(--glean-ease-out), border-color var(--glean-duration-fast) var(--glean-ease-out), color var(--glean-duration-fast) var(--glean-ease-out), opacity var(--glean-duration-fast) ease;
 
@@ -5853,7 +5874,7 @@ mark.glean-search-highlight {
 
     &.glean-btn--pri {
         background: var(--glean-grad);
-        color: var(--b3-theme-on-primary);
+        color: var(--glean-on-action);
         box-shadow: var(--glean-shadow-accent);
     }
 
@@ -6023,7 +6044,7 @@ mark.glean-search-highlight {
     font-size: var(--glean-text-xs);
     padding: var(--glean-space-1) var(--glean-space-2-75);
     border-radius: var(--glean-radius-pill);
-    background: var(--b3-theme-background-light);
+    background: var(--glean-app-background);
     border: 1px solid var(--glean-border-soft);
     cursor: pointer;
     transition: transform var(--glean-duration-base), background var(--glean-duration-base), border-color var(--glean-duration-base), box-shadow var(--glean-duration-base), color var(--glean-duration-base), opacity var(--glean-duration-base);
@@ -6053,7 +6074,7 @@ mark.glean-search-highlight {
     padding: var(--glean-space-1-25) var(--glean-space-2);
     border-radius: var(--glean-radius-9);
     border: 1px solid var(--glean-line);
-    background: var(--b3-theme-background-light);
+    background: var(--glean-app-background);
     color: var(--glean-ink);
     outline: none;
     width: 70px;
@@ -6394,7 +6415,7 @@ mark.glean-search-highlight {
     min-height: 44px;
     border: 1px solid var(--glean-border-soft);
     border-radius: var(--glean-radius-pill);
-    background: var(--b3-theme-background-light);
+    background: var(--glean-app-background);
     color: var(--glean-ink);
     font-size: var(--glean-text-xl-plus);
     cursor: pointer;
@@ -6482,7 +6503,7 @@ mark.glean-search-highlight {
     gap: var(--glean-space-micro);
     padding: var(--glean-space-tight);
     border-radius: var(--glean-radius-pill);
-    background: var(--b3-theme-background-light);
+    background: var(--glean-app-background);
 }
 
 .glean-seg__btn {
@@ -7634,7 +7655,7 @@ mark.glean-search-highlight {
 .glean-surf-undo__button {
     padding: var(--glean-space-0) var(--glean-space-2-5);
     background: var(--glean-color-action);
-    color: var(--b3-theme-on-primary);
+    color: var(--glean-on-action);
     font-size: var(--glean-text-xs);
     font-weight: var(--glean-weight-bold);
 }
@@ -7666,7 +7687,7 @@ mark.glean-search-highlight {
     gap: var(--glean-space-1);
     padding: var(--glean-space-0) var(--glean-space-4-5);
     pointer-events: none;
-    background: var(--b3-theme-background-light);
+    background: var(--glean-app-background);
     font-size: var(--glean-text-xs);
     font-weight: var(--glean-weight-bold);
 }
@@ -7805,7 +7826,7 @@ mark.glean-search-highlight {
     transition: transform var(--glean-duration-press) var(--glean-ease-out), background-color var(--glean-duration-press) var(--glean-ease-out), border-color var(--glean-duration-press) var(--glean-ease-out), box-shadow var(--glean-duration-press) var(--glean-ease-out), opacity var(--glean-duration-press) ease;
 
     &:hover:not([aria-disabled="true"]) {
-        background: var(--b3-theme-background-light);
+        background: var(--glean-app-background);
         border-color: color-mix(in srgb, var(--glean-color-action) 28%, var(--glean-border-soft));
     }
 
@@ -7823,7 +7844,7 @@ mark.glean-search-highlight {
 
     &.glean-surf-act--pri {
         background: var(--glean-grad);
-        color: var(--b3-theme-on-primary);
+        color: var(--glean-on-action);
         box-shadow: var(--glean-shadow-accent);
     }
 
@@ -7996,7 +8017,7 @@ mark.glean-search-highlight {
 
     .glean-cap-btn--pri {
         background: var(--glean-color-wechat);
-        color: var(--b3-theme-on-primary);
+        color: var(--glean-on-action);
         border-color: var(--glean-color-wechat);
         &:hover { filter: brightness(1.08); }
     }
@@ -8797,7 +8818,7 @@ mark.glean-search-highlight {
 .glean-tab-root :where(button, a, input, select, textarea, [tabindex]):focus-visible,
 .glean-dialog-root :where(button, a, input, select, textarea, [tabindex]):focus-visible,
 :focus-visible {
-    outline: 2px solid var(--b3-theme-primary);
+    outline: 2px solid var(--glean-color-action);
     outline-offset: 2px;
 }
 
@@ -8822,8 +8843,8 @@ mark.glean-search-highlight {
     .glean-panel,
     .glean-tab-root,
     .glean-dialog-root {
-        --glean-border-soft: var(--b3-theme-on-background);
-        --glean-glass-border: var(--b3-theme-on-background);
+        --glean-border-soft: var(--glean-ink);
+        --glean-glass-border: var(--glean-ink);
     }
 
     .glean-st-badge,
@@ -8837,7 +8858,7 @@ mark.glean-search-highlight {
     .b3-button,
     .b3-text-field,
     .b3-select {
-        border: 1px solid var(--b3-theme-on-background);
+        border: 1px solid var(--glean-ink);
     }
 
     .glean-tabs__item.is-active,
@@ -8857,7 +8878,7 @@ mark.glean-search-highlight {
     .b3-dialog:has(.b3-dialog__action),
     .b3-dialog {
         .b3-dialog__container {
-            border: 2px solid var(--b3-theme-on-background);
+            border: 2px solid var(--glean-ink);
             box-shadow: none;
         }
         .b3-dialog__header {
@@ -8926,7 +8947,7 @@ mark.glean-search-highlight {
         flex-shrink: 0;
     }
 }
-.glean-onb-progress__item--current .glean-onb-progress__dot { border-color: transparent; background: var(--glean-grad); color: var(--b3-theme-on-primary); box-shadow: var(--glean-shadow-accent); font-weight: 700; }
+.glean-onb-progress__item--current .glean-onb-progress__dot { border-color: transparent; background: var(--glean-grad); color: var(--glean-on-action); box-shadow: var(--glean-shadow-accent); font-weight: 700; }
 .glean-onb-progress__item--done .glean-onb-progress__dot { border-color: color-mix(in srgb, var(--glean-st-done) 34%, var(--glean-border-soft)); color: var(--glean-st-done); background: color-mix(in srgb, var(--glean-st-done) 10%, var(--glean-inset-surface)); }
 .glean-onb-progress__line { flex: 1; height: 1px; min-width: 18px; margin-inline: 6px; background: var(--glean-border-soft); }
 .glean-onb-progress__line--done { background: var(--glean-st-done); }
@@ -9917,7 +9938,7 @@ mark.glean-search-highlight {
 :where([data-theme-mode="dark"], body.body--dark, body.b3-theme-dark) .glean-tab-root .glean-btn:not(.glean-btn--pri):not(.glean-btn--ghost):hover:not(:disabled),
 :where([data-theme-mode="dark"], body.body--dark, body.b3-theme-dark) .glean-dialog-root .glean-btn:not(.glean-btn--pri):not(.glean-btn--ghost):hover:not(:disabled) {
     border-color: color-mix(in srgb, var(--glean-color-action) 28%, var(--glean-border-soft));
-    background: var(--b3-theme-surface-lighter, var(--b3-theme-background-light));
+    background: var(--glean-surface-muted, var(--glean-app-background));
 }
 
 @media (max-width: 560px) {
@@ -10158,7 +10179,7 @@ mark.glean-search-highlight {
 .glean-views {
     gap: var(--glean-space-micro);
     padding: var(--glean-space-tight);
-    background: var(--b3-theme-background-light);
+    background: var(--glean-app-background);
     border: 1px solid var(--glean-border-soft);
 }
 
@@ -10451,7 +10472,7 @@ mark.glean-search-highlight {
 .glean-icon--bookmark { color: var(--glean-color-action); }
 .glean-icon--bolt { color: #EAB308; }
 .glean-icon--star { color: #F59E0B; }
-.glean-icon--clock { color: var(--b3-theme-on-surface); }
+.glean-icon--clock { color: var(--glean-ink-2); }
 
 .glean-meta-icon {
     display: inline-flex;
@@ -10555,7 +10576,7 @@ mark.glean-search-highlight {
 .glean-distribution__item {
     border-color: var(--glean-border-soft) !important;
     border-radius: var(--glean-radius-md) !important;
-    background: color-mix(in srgb, var(--b3-theme-background-light) 72%, transparent);
+    background: color-mix(in srgb, var(--glean-app-background) 72%, transparent);
 }
 
 .glean-card:hover {
@@ -13284,7 +13305,7 @@ body.b3-theme-dark .glean-panel--mobile,
     margin: var(--glean-space-0) var(--glean-space-3) var(--glean-space-2);
     padding: var(--glean-space-1-5) var(--glean-space-3);
     background: var(--glean-card-surface);
-    border: 1px solid var(--b3-theme-surface-lighter);
+    border: 1px solid var(--glean-surface-muted);
     border-radius: var(--glean-radius-m);
     display: flex;
     align-items: center;
@@ -13305,7 +13326,7 @@ body.b3-theme-dark .glean-panel--mobile,
 .glean-surf-recent-captured {
     margin: var(--glean-space-3) var(--glean-space-3) var(--glean-space-2);
     padding-top: var(--glean-space-2);
-    border-top: 1px dashed var(--b3-theme-surface-lighter);
+    border-top: 1px dashed var(--glean-surface-muted);
     display: flex;
     flex-direction: column;
     gap: var(--glean-space-1-5);
@@ -13370,7 +13391,7 @@ body.b3-theme-dark .glean-panel--mobile,
     margin: var(--glean-space-3) 0 var(--glean-space-2);
     padding: var(--glean-space-2) var(--glean-space-3);
     background: var(--glean-card-surface);
-    border: 1px solid var(--b3-theme-surface-lighter);
+    border: 1px solid var(--glean-surface-muted);
     border-radius: var(--glean-radius-m);
     display: flex;
     flex-direction: column;
@@ -13490,7 +13511,7 @@ body.b3-theme-dark .glean-panel--mobile,
     padding: var(--glean-space-1-5) var(--glean-space-2);
     margin-bottom: var(--glean-space-2);
     background: var(--glean-card-surface);
-    border: 1px solid var(--b3-theme-surface-lighter);
+    border: 1px solid var(--glean-surface-muted);
     border-radius: var(--glean-radius-s);
     font-size: var(--glean-text-caption);
     color: var(--glean-ink-2);
@@ -13717,7 +13738,7 @@ body.b3-theme-dark .glean-panel--mobile,
     gap: 1px;
     font-size: var(--glean-text-xs);
     line-height: 1.4;
-    color: var(--b3-theme-on-surface);
+    color: var(--glean-ink-2);
 }
 
 .glean-annotation-reply__meta {
@@ -13744,7 +13765,7 @@ body.b3-theme-dark .glean-panel--mobile,
     border-radius: var(--glean-radius-pill);
     border: 1px solid var(--glean-border-soft);
     background: var(--glean-card-surface);
-    color: var(--b3-theme-on-surface);
+    color: var(--glean-ink-2);
     font-size: 11px;
     cursor: pointer;
 
@@ -14467,7 +14488,7 @@ body.b3-theme-dark .glean-panel--mobile,
     .glean-mobile-topbar {
         min-height: 44px;
         padding: var(--glean-space-0) var(--glean-space-1-5);
-        background: var(--b3-theme-background, #ffffff);
+        background: var(--glean-app-background, #ffffff);
         border: 1px solid rgba(15, 23, 42, 0.075);
         box-shadow: 0 2px 8px -2px rgba(15, 23, 42, 0.05);
     }
@@ -14548,7 +14569,7 @@ body.b3-theme-dark .glean-panel--mobile,
 
     .glean-card {
         padding: var(--glean-space-2) var(--glean-space-2-5);
-        background: var(--b3-theme-background, #ffffff);
+        background: var(--glean-app-background, #ffffff);
         border: 1px solid rgba(15, 23, 42, 0.075);
         box-shadow: 0 2px 6px -1px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(15, 23, 42, 0.02);
 
@@ -15112,8 +15133,8 @@ body:has(.b3-dialog--open, #lv-launchpad-sheet-mask, .lvct-dialog-mask, .sw__mob
         flex-direction: column !important;
         min-height: 0;
         border-radius: var(--glean-radius-dialog, 16px) !important;
-        background: var(--b3-theme-surface, var(--glean-card-surface, var(--glean-app-background))) !important;
-        border: 1px solid var(--b3-border-color, var(--lv-safe-border, rgba(0, 0, 0, 0.08))) !important;
+        background: var(--glean-card-surface, var(--glean-card-surface, var(--glean-app-background))) !important;
+        border: 1px solid var(--glean-line, var(--lv-safe-border, rgba(0, 0, 0, 0.08))) !important;
         box-shadow: 0 16px 48px -8px rgba(0, 0, 0, 0.22), 0 4px 16px -2px rgba(0, 0, 0, 0.08) !important;
         animation: glean-dialog-pop 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         will-change: transform, opacity;
@@ -15126,7 +15147,7 @@ body:has(.b3-dialog--open, #lv-launchpad-sheet-mask, .lvct-dialog-mask, .sw__mob
         gap: var(--glean-space-2);
         flex-shrink: 0;
         background: transparent !important;
-        border-bottom: 1px solid var(--b3-border-color, var(--lv-safe-border, rgba(0, 0, 0, 0.08))) !important;
+        border-bottom: 1px solid var(--glean-line, var(--lv-safe-border, rgba(0, 0, 0, 0.08))) !important;
 
         .b3-dialog__title {
             flex: 1 1 auto;
@@ -15148,7 +15169,7 @@ body:has(.b3-dialog--open, #lv-launchpad-sheet-mask, .lvct-dialog-mask, .sw__mob
 
             &:hover {
                 opacity: 1;
-                background: var(--b3-theme-surface-light, rgba(128, 128, 128, 0.12));
+                background: var(--glean-card-surface-elevated, rgba(128, 128, 128, 0.12));
                 color: var(--glean-ink-2);
                 transform: scale(1.05);
             }
@@ -15172,7 +15193,7 @@ body:has(.b3-dialog--open, #lv-launchpad-sheet-mask, .lvct-dialog-mask, .sw__mob
 
     .b3-dialog__action {
         background: transparent !important;
-        border-top: 1px solid var(--b3-border-color, var(--lv-safe-border, rgba(0, 0, 0, 0.08))) !important;
+        border-top: 1px solid var(--glean-line, var(--lv-safe-border, rgba(0, 0, 0, 0.08))) !important;
     }
 
     .b3-dialog__scrim {
@@ -15550,12 +15571,12 @@ body:has(.b3-dialog--open, #lv-launchpad-sheet-mask, .lvct-dialog-mask, .sw__mob
 /* ══════════ 输入框专项精修：光标 / 占位符 / 自旋钮 / 搜索清除钮 / 禁用态 ══════════ */
 :is(.glean-panel, .glean-tab-root, .glean-dialog-root, .glean-reader, .glean-dialog) {
     :is(input[type="text"], input[type="search"], input[type="number"], input[type="time"], input[type="date"], input:not([type]), textarea, .b3-text-field) {
-        caret-color: var(--glean-color-action, var(--b3-theme-primary));
+        caret-color: var(--glean-color-action, var(--glean-color-action));
         min-width: 0;
     }
 
     :is(input, textarea, .b3-text-field)::placeholder {
-        color: var(--glean-ink-2, var(--b3-theme-on-surface-light));
+        color: var(--glean-ink-2, var(--glean-ink-3));
         opacity: 1;
     }
 
@@ -15577,7 +15598,7 @@ body:has(.b3-dialog--open, #lv-launchpad-sheet-mask, .lvct-dialog-mask, .sw__mob
     }
 
     ::selection {
-        background: color-mix(in srgb, var(--glean-color-action, var(--b3-theme-primary)) 26%, transparent);
+        background: color-mix(in srgb, var(--glean-color-action, var(--glean-color-action)) 26%, transparent);
     }
 }
 
@@ -15619,8 +15640,8 @@ body:has(.b3-dialog--open, #lv-launchpad-sheet-mask, .lvct-dialog-mask, .sw__mob
     }
 
     :is(select, .b3-select) :is(option, optgroup) {
-        background-color: var(--glean-card-surface, var(--b3-theme-background));
-        color: var(--glean-ink, var(--b3-theme-on-background));
+        background-color: var(--glean-card-surface, var(--glean-app-background));
+        color: var(--glean-ink, var(--glean-ink));
     }
 }
 
@@ -15649,15 +15670,15 @@ body:has(.b3-dialog--open, #lv-launchpad-sheet-mask, .lvct-dialog-mask, .sw__mob
 @media (hover: hover) {
     .glean-card__title:hover,
     .glean-drow__ti:hover {
-        color: var(--glean-color-action, var(--b3-theme-primary));
+        color: var(--glean-color-action, var(--glean-color-action));
     }
     .glean-stale-preview__row:hover,
     .glean-surf-undo__dismiss:hover,
     .glean-settings__ai-toggle:hover {
-        background: color-mix(in srgb, var(--glean-color-action, var(--b3-theme-primary)) 7%, transparent);
+        background: color-mix(in srgb, var(--glean-color-action, var(--glean-color-action)) 7%, transparent);
     }
     .glean-filter-clear:hover {
-        background: var(--b3-theme-surface-lighter);
+        background: var(--glean-surface-muted);
     }
 }
 

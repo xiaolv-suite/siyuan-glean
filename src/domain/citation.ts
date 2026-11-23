@@ -27,9 +27,14 @@ function extractYear(timeStr?: string): string {
     return m ? m[1] : String(new Date().getFullYear());
 }
 
+/** 本地时区 yyyy-MM-dd（GB/T 7714 引用日期禁用 toISOString——UTC+8 凌晨偏一天） */
+function citationLocalDateKey(d: Date): string {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 function extractFullDate(timeStr?: string, fallbackNow = new Date()): string {
     const validNow = fallbackNow instanceof Date && !Number.isNaN(fallbackNow.getTime()) ? fallbackNow : new Date();
-    if (!timeStr) return validNow.toISOString().slice(0, 10);
+    if (!timeStr) return citationLocalDateKey(validNow);
     const cleaned = timeStr.trim().replace(/[-/.]/g, "");
     if (cleaned.length >= 8) {
         return `${cleaned.slice(0, 4)}-${cleaned.slice(4, 6)}-${cleaned.slice(6, 8)}`;
@@ -71,7 +76,7 @@ export function formatGBT7714(item: CitationItem, now = new Date()): string {
     const site = item.site?.trim() || "网络资源";
     const pubDate = extractFullDate(item.time, now);
     const validNow = now instanceof Date && !Number.isNaN(now.getTime()) ? now : new Date();
-    const accessDate = validNow.toISOString().slice(0, 10);
+    const accessDate = citationLocalDateKey(validNow);
     const url = item.url?.trim() || "";
 
     return `${author}. ${title}[EB/OL]. ${site}, ${pubDate}[${accessDate}].${url ? ` ${url}` : ""}`;

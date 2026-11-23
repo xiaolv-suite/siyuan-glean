@@ -192,17 +192,17 @@
 </section>
 
 <style>
-    .glean-reading-position { margin-top: var(--glean-space-3); padding: var(--glean-space-3); border: 1px solid var(--glean-border-soft); border-radius: var(--glean-radius-lg, 16px); color: var(--b3-theme-on-background); background: var(--glean-inset-surface); }
+    .glean-reading-position { margin-top: var(--glean-space-3); padding: var(--glean-space-3); border: 1px solid var(--glean-border-soft); border-radius: var(--glean-radius-lg, 16px); color: var(--glean-ink); background: var(--glean-inset-surface); }
     .glean-reading-position__title { font-size: var(--glean-text-sm); font-weight: 700; }
     .glean-reading-position__actions { display: flex; flex-wrap: wrap; gap: var(--glean-space-2); }
     .glean-reading-position__actions :global(button) { min-width: 0; border-radius: var(--glean-radius-pill); padding: var(--glean-space-1) var(--glean-space-3); transition: background-color 160ms var(--glean-ease-out), border-color 160ms var(--glean-ease-out), transform 120ms var(--glean-ease-out); }
     .glean-reading-position__actions :global(button:active:not(:disabled)) { transform: translateY(1px); }
     .glean-reading-position[aria-busy="true"] .glean-reading-position__actions { opacity: .78; }
     .glean-reading-position[aria-busy="true"] .glean-reading-position__status { border-color: color-mix(in srgb, var(--glean-color-action) 24%, var(--glean-border-soft)); }
-    .glean-reading-position__status { display: none; min-height: 24px; margin-top: var(--glean-space-2); padding: 4px var(--glean-space-3); border-radius: var(--glean-radius-pill); background: var(--glean-status-surface); color: var(--b3-theme-on-surface); overflow-wrap: anywhere; font-size: var(--glean-text-xs); }
+    .glean-reading-position__status { display: none; min-height: 24px; margin-top: var(--glean-space-2); padding: 4px var(--glean-space-3); border-radius: var(--glean-radius-pill); background: var(--glean-status-surface); color: var(--glean-ink-2); overflow-wrap: anywhere; font-size: var(--glean-text-xs); }
     .glean-reading-position__status--visible { display: block; }
     .glean-reading-position__status--success { color: var(--glean-st-done-text); background: color-mix(in srgb, var(--glean-st-done) 8%, var(--glean-status-surface)); }
-    .glean-reading-position__status--error { color: var(--b3-theme-error); background: var(--glean-error-surface); }
+    .glean-reading-position__status--error { color: var(--glean-danger); background: var(--glean-error-surface); }
     .glean-reading-position button:focus-visible { outline: 2px solid var(--glean-color-action); outline-offset: 2px; }
     @media (max-width: 600px) { .glean-reading-position__actions :global(button) { min-height: 44px; flex: 1 1 auto; } }
 </style>

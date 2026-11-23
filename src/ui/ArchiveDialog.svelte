@@ -217,8 +217,8 @@
         padding: 16px;
         border: 1px solid var(--glean-border-soft);
         border-radius: var(--glean-radius-lg, 16px);
-        background: var(--b3-theme-surface);
-        color: var(--b3-theme-on-surface);
+        background: var(--glean-card-surface);
+        color: var(--glean-ink-2);
         box-shadow: var(--glean-shadow-card);
     }
 
@@ -237,7 +237,7 @@
     }
 
     .glean-confirm__details dt {
-        color: var(--b3-theme-on-surface);
+        color: var(--glean-ink-2);
         opacity: .72;
     }
 
@@ -264,9 +264,9 @@
     }
 
     .glean-btn--danger {
-        border: 1px solid color-mix(in srgb, var(--b3-theme-error) 62%, var(--glean-border-soft));
-        background: var(--b3-theme-error);
-        color: var(--b3-theme-on-error, #fff);
+        border: 1px solid color-mix(in srgb, var(--glean-danger) 62%, var(--glean-border-soft));
+        background: var(--glean-danger);
+        color: var(--glean-on-danger, #fff);
     }
 
     .glean-btn--danger:hover:not(:disabled) {
@@ -274,7 +274,7 @@
     }
 
     .glean-btn--danger:focus-visible {
-        outline: 2px solid var(--b3-theme-error) !important;
+        outline: 2px solid var(--glean-danger) !important;
         outline-offset: 2px;
     }
 

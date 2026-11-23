@@ -575,17 +575,17 @@ $effect(() => {
         margin: var(--glean-space-2) 0;
         border: 1px solid var(--glean-border-soft);
         border-radius: var(--glean-radius-lg);
-        background: color-mix(in srgb, var(--b3-theme-surface) 84%, transparent);
+        background: color-mix(in srgb, var(--glean-card-surface) 84%, transparent);
         box-shadow: var(--glean-shadow-card);
     }
     .glean-import-progress h3,
     .glean-import-progress p { margin: 0; overflow-wrap: anywhere; }
     .glean-import-progress h3 {
-        color: var(--b3-theme-on-background);
+        color: var(--glean-ink);
         font-size: var(--glean-text-sm);
         line-height: 1.4;
     }
-    .glean-import-progress p { color: var(--b3-theme-on-surface); font-size: var(--glean-text-xs); line-height: 1.5; }
+    .glean-import-progress p { color: var(--glean-ink-2); font-size: var(--glean-text-xs); line-height: 1.5; }
     .glean-import-progress__actions { display: flex; align-items: center; gap: var(--glean-space-2); flex-wrap: wrap; }
     .glean-import-progress__check { display: flex; align-items: flex-start; gap: var(--glean-space-2); flex-wrap: nowrap; min-width: 0; }
     .glean-import-progress__check input { flex-shrink: 0; }
@@ -595,10 +595,10 @@ $effect(() => {
     .glean-import-progress__error {
         margin: 0;
         padding: var(--glean-space-2) var(--glean-space-3);
-        border: 1px solid color-mix(in srgb, var(--b3-theme-error) 24%, transparent);
+        border: 1px solid color-mix(in srgb, var(--glean-danger) 24%, transparent);
         border-radius: var(--glean-radius-md);
-        background: color-mix(in srgb, var(--b3-theme-error) 8%, transparent);
-        color: var(--b3-theme-error);
+        background: color-mix(in srgb, var(--glean-danger) 8%, transparent);
+        color: var(--glean-danger);
         overflow-wrap: anywhere;
     }
     @media (max-width: 560px) { .glean-import-progress :is(button, summary), .glean-import-progress__check { min-height: 44px; } }
