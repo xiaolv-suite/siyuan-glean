@@ -1,12 +1,12 @@
-import { appendBlock, createDailyNote, getBlockAttrs, insertBlockAfter, listChildBlocks, querySql, updateBlock } from "../api/client.ts";
+import { createDailyNote, getBlockAttrs, insertBlockMarkdownAfter, listChildBlocks, postKernelEnvelope, querySql, updateBlock } from "../api/client.ts";
 import { withDocLock } from "../libs/notice.ts";
 import {
     DAILY_NOTE_SLOT_KEY,
-    DEFAULT_DAILY_NOTE_LABELS,
     formatDailyNoteReadingMarkdown,
     type DailyNoteLabels,
     type DailyNoteReadingEntry,
 } from "../domain/daily-note.ts";
+import { buildXiaolvLifeLogAttrs, ensureXiaolvDiaryZone } from "../libs/lv-notice-kit.ts";
 import { fetchDocMeta, readClip, setDailyNoteSlotAttr } from "./clip-store.ts";
 
 export interface RecordDailyNoteResult {
@@ -44,23 +44,8 @@ export async function findDailyNoteReadingEntryId(dailyDocId: string, articleDoc
 }
 
 /**
- * 查询今日 Daily Note 中是否存在阅读专区标题（如 ## 📖 今日阅读）
- */
-export async function findDailyNoteReadingHeadingId(dailyDocId: string): Promise<string | null> {
-    if (!/^\d{14}-[0-9a-z]{7}$/.test(dailyDocId)) return null;
-    try {
-        const rows = await querySql<{ id: string }>(
-            `SELECT id FROM blocks WHERE root_id = '${dailyDocId}' AND type = 'h' AND (content LIKE '%今日阅读%' OR content LIKE '%阅读%') ORDER BY sort ASC LIMIT 1`
-        );
-        return rows[0]?.id ?? null;
-    } catch {
-        return null;
-    }
-}
-
-/**
  * 将文章阅读记录幂等追加或原地更新到今日 Daily Note（日记）中
- * 保持严格幂等：已有则 updateBlock 原地刷新评分和状态，未有则在阅读专区下追加
+ * 保持严格幂等：已有则 updateBlock 原地刷新评分和状态，未有则统一落入 #### 🐴 小驴记录 折叠区
  */
 export async function recordDailyNoteReading(
     notebookId: string,
@@ -81,7 +66,7 @@ export async function recordDailyNoteReading(
         dailyDocId = await findTodayDailyNoteDocId(targetNb);
     } catch { /* ignore */ }
 
-    // 若全库尚无今日日记，才调用端点创建
+    // 若全库尚无今日日记，才调用端点创建（绝不无参发 {} 触发 v3.8.12 notebook 必填报错）
     if (!dailyDocId) {
         let targetNb = notebookId;
         try {
@@ -89,11 +74,16 @@ export async function recordDailyNoteReading(
             const resolved = await resolveDailyNotebookId();
             if (resolved) targetNb = resolved;
         } catch { /* ignore */ }
-        if (targetNb?.trim()) {
-            dailyDocId = await createDailyNote(targetNb).catch(() => null);
+        if (!targetNb?.trim()) {
+            try {
+                const { listNotebooks } = await import("../api/client.ts");
+                const notebooks = await listNotebooks().catch(() => []);
+                const openNb = notebooks.find((n) => !n.closed) ?? notebooks[0];
+                if (openNb?.id) targetNb = openNb.id;
+            } catch { /* ignore */ }
         }
-        if (!dailyDocId) {
-            dailyDocId = await createDailyNote().catch(() => null);
+        if (targetNb?.trim()) {
+            dailyDocId = await createDailyNote(targetNb.trim()).catch(() => null);
         }
     }
 
@@ -130,18 +120,20 @@ export async function recordDailyNoteReading(
                 return { ok: true, dailyDocId: dailyDocId!, blockId: existingEntryId, updated: true };
             }
 
-            const headingId = await findDailyNoteReadingHeadingId(dailyDocId);
-            let createdBlockId = "";
-            if (headingId) {
-                createdBlockId = await insertBlockAfter(headingId, markdown);
-            } else {
-                const sectionHeader = labels?.sectionHeader || DEFAULT_DAILY_NOTE_LABELS.sectionHeader;
-                const newHeadingId = await appendBlock(dailyDocId, sectionHeader, "markdown");
-                createdBlockId = await insertBlockAfter(newHeadingId, markdown);
-            }
+            const zone = await ensureXiaolvDiaryZone(dailyDocId, { postFn: postKernelEnvelope });
+            const createdBlockId = await insertBlockMarkdownAfter(zone.anchorBlockId, markdown);
 
             if (createdBlockId) {
-                await setDailyNoteSlotAttr(createdBlockId, articleDocId);
+                const unifiedAttrs = buildXiaolvLifeLogAttrs({
+                    type: "阅读拾遗",
+                    body: meta.title || articleDocId,
+                    source: "siyuan-glean",
+                    module: "reading",
+                    target: articleDocId,
+                    refDocId: articleDocId,
+                    refDocTitle: meta.title || "",
+                });
+                await setDailyNoteSlotAttr(createdBlockId, articleDocId, unifiedAttrs);
             }
 
             return { ok: true, dailyDocId, blockId: createdBlockId, updated: false };

@@ -838,9 +838,9 @@ function onWindowKeyDown(event: KeyboardEvent): void {
     .glean-stats__activity {
         padding: 20px;
         border: 1px solid var(--glean-border-soft);
-        border-radius: 16px;
+        border-radius: 12px;
         background: var(--glean-card-surface);
-        box-shadow: none;
+        box-shadow: var(--glean-shadow-card);
     }
 
     .glean-stats__activity h3 {

@@ -184,18 +184,20 @@ In just 3 minutes, transform scattered clippings into structured knowledge asset
 
 ## 📝 Recent Updates
 
-**v1.4.11 (2026-11-23 · Cumulative Updates)**:
+**v1.4.12 (2026-11-26 Milestone Release)**:
 Full version history: [CHANGELOG.md](CHANGELOG.md)
 
-- **Mobile Immersion Space Compaction**: Compacted mobile toolbar height, eliminating clutter and maximizing viewport real estate for focused article reading;
-- **Annotation & Companion Bar Polish**: Enhanced hover annotation bar layout on high-density documents with smoother companion drawer transitions;
-- **Daily Note Sync Hardening & Conflict Prevention**: Reading footprints automatically reuse today's existing daily note across all notebooks with native default fallbacks and double conflict copy exclusions;
-- **Zero Typing Latency**: Scoped mutation and position tracking during typing to eliminate background scans and frame drops;
-- **Launchpad Anchor Stabilization**: Jitter-free topbar presence with instant Bento Launchpad access even in single-plugin installations;
-- **Settings UX & Low Power**: Form inputs aligned with `$ui-checker` 47-point standards, and background sentinel timers extended to 30s.
+- **Preview-Mode Selection Excerpts & Ghostreader Companion**: Select body text directly inside `.protyle-preview` to create quote excerpts, 4-color highlights, block notes, inline **Ghostreader** Q&A, selection translation, Quote Cards, and flashcards; respects official `custom-sy-readonly` / `custom-siyuan-readonly` flags; fixed a reactive `AbortController` self-cancellation bug in `ReaderTab` and isolated reader overlays (`isolation: isolate`);
+- **Unified `.lv-ai-thinking` Wait UX Across 15 AI & Semantic Search Entrypoints**: All 15 AI/embedding flows render the cancelable `.lv-ai-thinking` progress card with `AbortSignal` support and non-blocking browser fetch, plus non-clipping companion tab pills;
+- **Four-Level Folded Daily Note Zone & Conflict Prevention**: Reading footprints and Today's Resurface daily plans write into the folded `#### 🐴 小驴记录` zone with unified LifeLog attributes, prioritizing existing daily notes across notebooks with double conflict copy exclusion;
+- **Shared Ecosystem Hubs & Block Assistant**: Direct Launchpad entry to Glean home & secondary actions, unified AI Router, Block Assistant 1–8 native base + custom double-click, notification/activity bus, and cross-plugin backup/restore;
+- **60fps Zero `:has()` / Zero Heavy-Blur Performance**: Strictly `0` `:has()` selectors, `0` `:root` leaks, and `0` `blur(>=15px)` in source and built CSS; removed global `MutationObserver` and deferred rolling backup scheduling post-startup;
+- **Smart Formatting Modal & AI Batch Panel**: Added side-by-side Markdown cleanup preview (`FormattingDialog`) and batch AI enrichment workbench (`AiBatchPanel`).
 
 <details>
-<summary>View Historical Releases</summary>
+<summary>View Historical Releases (v1.4.11 and earlier)</summary>
+
+- **v1.4.11 (2026-11-23)**: Deferred rolling backups post-startup, loadIndex generation guard, and cold-start regression hardening.
 
 - **SiYuan 3.8.10+ Native Adaptations**: Immersive Zen reading mode (`F11`) automatically coordinates folding/restoring native docks; preview card titles and reader entry support native document tree context menus (`showDocTreeNativeMenu`).
 - **Interaction & Shortcut Hardening**: Tag alias manager modal supports Escape key dismissal; ecosystem-wide clipboard error-handling contracts enforced.
@@ -217,14 +219,14 @@ Full version history: [CHANGELOG.md](CHANGELOG.md)
 
 | Plugin | One-line description | GitHub repository |
 | --- | --- | --- |
-| Lv Quickcut / 小驴雷切 | A unified workspace and context-switching platform. | [siyuan-speed-switch](https://github.com/xiaolv-suite/siyuan-speed-switch) |
+| Lv Speed Switch / 小驴雷切 | A unified workspace and context-switching platform. | [siyuan-speed-switch](https://github.com/xiaolv-suite/siyuan-speed-switch) |
 | Lv Checkin / 小驴打卡 | A local-first workspace for habits, check-ins, and reviews. | [siyuan-checkin](https://github.com/xiaolv-suite/siyuan-checkin) |
 | Lv Contacts / 小驴人脉 | Manage contacts, relationships, and related information in SiYuan. | [siyuan-contacts](https://github.com/xiaolv-suite/siyuan-contacts) |
 | Lv Glean / 小驴拾遗 | Organize clippings with reading management and later review. | [siyuan-glean](https://github.com/xiaolv-suite/siyuan-glean) |
-| Lv Exam / 小驴考试 (Beta) | A local question bank, practice, mock exams, review of mistakes, and AI assistance. | [siyuan-exam](https://github.com/xiaolv-suite/siyuan-exam) |
-| Lv Home / 小驴管家 (Beta) | Household and life records, due-date reminders, and task follow-up. | [siyuan-home](https://github.com/xiaolv-suite/siyuan-home) |
-| Lv Cards / 小驴闪卡 (Beta) | A local-first lifecycle flashcard learning platform in SiYuan. | [siyuan-lv-cards](https://github.com/xiaolv-suite/siyuan-lv-cards) |
-| Lv Common / 小驴常用 (Beta) | Quickly insert common phrases, templates, and code from SiYuan blocks. | [xiaolv-common](https://github.com/xiaolv-suite/xiaolv-common) |
+| Lv Exam / 小驴考试 | A local question bank, practice, mock exams, review of mistakes, and AI assistance. | [siyuan-exam](https://github.com/xiaolv-suite/siyuan-exam) |
+| Lv Home / 小驴管家 | Household and life records, due-date reminders, and task follow-up. | [siyuan-home](https://github.com/xiaolv-suite/siyuan-home) |
+| Lv Cards / 小驴闪卡 | A local-first lifecycle flashcard learning platform in SiYuan. | [siyuan-lv-cards](https://github.com/xiaolv-suite/siyuan-lv-cards) |
+| Lv Common / 小驴常用 | Quickly insert common phrases, templates, and code from SiYuan blocks. | [xiaolv-common](https://github.com/xiaolv-suite/xiaolv-common) |
 
 QQ group: **871707735** for bug reports, feature requests, and discussion.
 
@@ -235,7 +237,7 @@ Please submit bug reports and feature requests via [GitHub Issues](https://githu
 - Development & Testing Protocol: see [AGENTS.md](AGENTS.md) and [CONTRIBUTING.md](CONTRIBUTING.md)
 - Capability Boundaries & Environment Matrix: see [docs/CAPABILITY-MATRIX.md](docs/CAPABILITY-MATRIX.md)
 - Real-Host Acceptance & Known Blockers: see [docs/ACCEPTANCE.md](docs/ACCEPTANCE.md) and [docs/BLOCKERS.md](docs/BLOCKERS.md)
-- Build & Verification: Requires Node.js `>=24` and pnpm `12.5.1`. Common commands: `pnpm check`, `pnpm test`, and `pnpm build`.
+- Build & Verification: Requires Node.js `>=24` and pnpm `12.14.0`. Common commands: `pnpm check`, `pnpm test`, and `pnpm build`.
 
 ## License
 

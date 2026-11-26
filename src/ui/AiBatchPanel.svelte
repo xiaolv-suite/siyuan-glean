@@ -5,6 +5,7 @@
     import { installEscapeHandler } from "../libs/modal-focus";
     import { aiBatchCounts, aiBatchHasUnresolved, type AiBatchRow } from "../domain/ai-batch.ts";
     import { AiBatchError, discardAiBatch, loadAiBatch, previewAiBatchResume, previewNewAiBatch, runAiBatch, stopAiBatchAfterCurrent, subscribeAiBatch, type AiBatchPreview, type AiBatchState } from "../services/ai-batch-service";
+    import AiThinkingCard from "./AiThinkingCard.svelte";
 
     interface Props { facade: GleanFacade; open?: boolean; docIds?: string[] }
     let { facade, open = $bindable(false), docIds = [] }: Props = $props();
@@ -33,6 +34,15 @@
     const pageRows = $derived(task.journal?.rows.slice(page * 25, page * 25 + 25) ?? []);
     const previewPageCount = $derived(Math.max(1, Math.ceil((preview?.rows.length ?? 0) / 25)));
     const previewRows = $derived(preview?.rows.slice(previewPage * 25, previewPage * 25 + 25) ?? []);
+    const batchTotal = $derived(task.journal?.rows.length ?? 0);
+    const batchDone = $derived(counts.succeeded + counts.failed + counts.skipped + counts.unknown);
+    const batchProgressSubtitle = $derived(
+        task.busy === "run"
+            ? (task.stopRequested
+                ? `${t(i18n, "aiBatch.stopHint")} (${batchDone}/${batchTotal})`
+                : `${batchDone}/${batchTotal}`)
+            : undefined
+    );
 
     $effect(() => {
         const signature = JSON.stringify(docIds);
@@ -211,6 +221,16 @@
             <button class="glean-btn glean-btn--ghost" disabled={busy} onclick={() => void reload()}>{t(i18n, "action.retry")}</button>
             {#if task.busy === "run"}<button class="glean-btn" disabled={task.stopRequested} onclick={() => stopAiBatchAfterCurrent(facade.pluginInstance)}>{t(i18n, "aiBatch.pause")}</button>{/if}
         </div>
+        {#if busy}
+            <AiThinkingCard
+                scenario="general"
+                title={task.busy === "run" ? t(i18n, "ai.enriching") : t(i18n, "panel.loading")}
+                subtitle={batchProgressSubtitle}
+                compact
+                cancelLabel={task.busy === "run" && !task.stopRequested ? t(i18n, "aiBatch.pause") : false}
+                onCancel={() => stopAiBatchAfterCurrent(facade.pluginInstance)}
+            />
+        {/if}
         {#if task.journal}
             <p class="glean-ai-batch__counts" role="status" aria-live="polite">{#each Object.entries(counts) as [stage, count]}<span class="glean-ai-batch__count glean-ai-batch__count--{stage}"><i aria-hidden="true"></i>{t(i18n, `aiBatch.stage.${stage}`)}: {count}</span>{/each}</p>
             <p>{t(i18n, "aiBatch.resumeHint")}</p>
@@ -278,7 +298,6 @@
                 <button class="glean-btn glean-btn--ghost" disabled={busy || !discardConfirmed || !task.journalSignature} onclick={() => void discard()}>{t(i18n, "aiBatch.discard")}</button>
             </div>
         {/if}
-        {#if busy}<p class="glean-ai-batch__busy" role="status" aria-live="polite">{task.busy === "run" ? t(i18n, "ai.enriching") : t(i18n, "panel.loading")}</p>{/if}
         {#if errorKey || task.error}<p class="glean-ai-batch__error" role="alert" aria-live="assertive">{t(i18n, errorKey || `aiBatch.error.${task.error}`)}</p>{/if}
     </section>
 {:else if task.journal || task.error}
@@ -366,7 +385,7 @@
         scrollbar-gutter: stable;
     }
     .glean-ai-batch details summary { cursor: pointer; color: var(--glean-color-action); }
-    .glean-ai-batch__preview { display: grid; gap: var(--glean-space-3, 12px); padding: var(--glean-space-3, 12px); border: 1px solid var(--glean-border-soft); border-radius: var(--glean-radius-lg, 16px); background: var(--glean-grad-soft); box-shadow: var(--glean-shadow-card, none); }
+    .glean-ai-batch__preview { display: grid; gap: var(--glean-space-3, 12px); padding: var(--glean-space-3, 12px); border: 1px solid var(--glean-border-soft); border-radius: var(--glean-radius-lg, 12px); background: var(--glean-card-surface); box-shadow: var(--glean-shadow-card, none); }
     .glean-ai-batch__preview-meta { display: grid; gap: 4px; padding-bottom: var(--glean-space-2, 8px); border-bottom: 1px solid color-mix(in srgb, var(--glean-border-soft) 72%, transparent); }
     .glean-ai-batch__preview-meta p { font-variant-numeric: tabular-nums; }
     .glean-ai-batch__preview-meta p:first-child { color: var(--glean-ink); font-weight: 650; }

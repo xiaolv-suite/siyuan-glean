@@ -4,15 +4,19 @@
     import { t } from "../libs/i18n";
     import { ReaderDOMSearchController } from "../libs/reader-search-dom";
     import { formatMatchCount, type ReaderSearchState } from "../domain/reader-search";
+    import { waitForWysiwygReady } from "../services/siyuan-comment-bridge";
 
     interface Props {
         host: HTMLElement | null;
         i18n: any;
         open?: boolean;
+        docId?: string;
+        mode?: "read" | "edit";
+        stage?: "loading" | "ready" | "failed";
         onClose?: () => void;
     }
 
-    let { host, i18n, open = $bindable(false), onClose }: Props = $props();
+    let { host, i18n, open = $bindable(false), docId = "", mode = "read", stage = "ready", onClose }: Props = $props();
 
     const controller = new ReaderDOMSearchController();
     let searchState = $state<ReaderSearchState>(controller.getState());
@@ -83,7 +87,25 @@
     }
 
     $effect(() => {
-        controller.setRoot(host);
+        const currentHost = host;
+        const currentDocId = docId;
+        const currentMode = mode;
+        const currentStage = stage;
+        const contextKey = `${currentDocId}:${currentMode}:${currentStage}`;
+        if (currentStage !== "ready") {
+            controller.setRoot(null, contextKey);
+            return;
+        }
+        controller.setRoot(currentHost, contextKey);
+        if (currentMode === "edit" && currentHost && open) {
+            let active = true;
+            void waitForWysiwygReady(currentHost, 1200).then((el) => {
+                if (active && el && host === currentHost && mode === "edit" && docId === currentDocId) {
+                    controller.refresh();
+                }
+            });
+            return () => { active = false; };
+        }
     });
 
     $effect(() => {

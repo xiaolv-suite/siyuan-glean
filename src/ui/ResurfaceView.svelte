@@ -833,9 +833,7 @@ async function exportPicksToDailyNote(): Promise<void> {
     try {
         const { recordBatchDailyNotePlan } = await import("../services/daily-note-service");
         const docIds = picks.map((p) => p.item.id);
-        const res = await recordBatchDailyNotePlan(notebookId, docIds, {
-            sectionHeader: `### 🎯 ${t(i18n, "resurface.dailyPlanTitle")}`,
-        });
+        const res = await recordBatchDailyNotePlan(notebookId, docIds);
         if (res.ok) {
             showMessage(t(i18n, "resurface.dailyPlanExported", { n: res.count }), 3000);
         } else {

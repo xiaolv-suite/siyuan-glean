@@ -47,6 +47,8 @@
             const result = await action() as { indexSyncFailed?: boolean } | undefined;
             facade.notifyDataChanged();
             showMessage(t(i18n, result?.indexSyncFailed ? "msg.statusIndexPending" : feedbackKey), result?.indexSyncFailed ? 4000 : 3000);
+            pending = false;
+            purgeConfirmOpen = false;
             onClose();
         } catch (error) {
             console.warn("[glean] 归档后处理失败:", error);

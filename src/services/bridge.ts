@@ -1,6 +1,7 @@
 import type { DocRow } from "../api/client";
 import { querySql } from "../api/client";
 import { matchesLibraryFilter } from "../domain/library-view";
+import { normalizeUrl } from "../domain/url";
 import { CLIP_STATUSES, parseClipAttrs, parseUserTags, siyuanTimestamp, type ClipAttrs, type ClipStatus } from "../domain/schema";
 import { readingEventRef, readingEventNote } from "../domain/checkin";
 import { logCheckinEventSafely } from "../libs/ecosystem-bridge-kit";
@@ -287,30 +288,81 @@ export function installBridge(facade: BridgeFacade, version: string, host: Bridg
             });
         },
         async ingestClip(options: GleanIngestOptions): Promise<{ ok: boolean; docId?: string }> {
-            assertActive();
-            let docId = options?.docId;
-            if (!docId && options?.blockId) {
+            assertWritable();
+            if (!options || typeof options !== "object" || Array.isArray(options)) {
+                throw new TypeError("Invalid ingest options");
+            }
+            if (options.docId !== undefined) {
+                validateDocumentId(options.docId);
+            }
+            if (options.blockId !== undefined) {
+                validateDocumentId(options.blockId);
+            }
+            let safeUrl: string | undefined;
+            if (options.url !== undefined) {
+                if (typeof options.url !== "string") {
+                    throw new TypeError("Invalid clip URL");
+                }
+                const trimmedUrl = options.url.trim();
+                if (trimmedUrl.length > 0) {
+                    const normalized = normalizeUrl(trimmedUrl);
+                    if (!normalized) {
+                        throw new TypeError("Invalid clip URL");
+                    }
+                    safeUrl = trimmedUrl;
+                }
+            }
+            if (options.summary !== undefined && typeof options.summary !== "string") {
+                throw new TypeError("Invalid clip summary");
+            }
+            let docId = options.docId;
+            if (!docId && options.blockId) {
                 try {
                     const rows = await querySql<DocRow>(`SELECT root_id FROM blocks WHERE id = '${options.blockId}' LIMIT 1`);
-                    docId = (rows[0] as any)?.root_id;
-                } catch {}
+                    assertWritable();
+                    const rootId = (rows[0] as { root_id?: unknown } | undefined)?.root_id;
+                    if (typeof rootId === "string" && rootId) {
+                        validateDocumentId(rootId);
+                        docId = rootId;
+                    }
+                } catch (err) {
+                    if (err instanceof TypeError || (err instanceof Error && (err.message.includes("disabled") || err.message.includes("unloaded")))) {
+                        throw err;
+                    }
+                }
             }
             if (!docId) return { ok: false };
+            validateDocumentId(docId);
             return run(async () => {
+                assertWritable();
                 try {
                     await captureDocument(facade.pluginInstance, docId, {
                         src: "plugin",
-                        url: options.url,
+                        url: safeUrl,
                     });
+                    assertWritable();
                     const patch: Partial<ClipAttrs> = {};
-                    if (options.summary) patch.summary = options.summary;
-                    if (options.tags && Array.isArray(options.tags)) patch.aiTags = options.tags;
+                    if (typeof options.summary === "string" && options.summary.trim()) {
+                        patch.summary = options.summary.trim().slice(0, 2000);
+                    }
+                    if (Array.isArray(options.tags)) {
+                        const cleanTags = [...new Set(
+                            options.tags
+                                .filter((tag): tag is string => typeof tag === "string")
+                                .map((tag) => tag.trim())
+                                .filter((tag) => tag.length > 0),
+                        )].slice(0, 50);
+                        if (cleanTags.length > 0) patch.aiTags = cleanTags;
+                    }
                     if (Object.keys(patch).length > 0) {
                         await writeClip(facade.pluginInstance, docId, patch, { force: true });
                     }
                     facade.notifyDataChanged();
                     return { ok: true, docId };
-                } catch {
+                } catch (err) {
+                    if (err instanceof Error && (err.message.includes("disabled") || err.message.includes("unloaded"))) {
+                        throw err;
+                    }
                     return { ok: false };
                 }
             });
@@ -319,8 +371,8 @@ export function installBridge(facade: BridgeFacade, version: string, host: Bridg
 
     const onAddClip = (evt: Event) => {
         const detail = (evt as CustomEvent).detail;
-        if (detail) {
-            void bridge.ingestClip(detail);
+        if (detail && typeof detail === "object") {
+            void bridge.ingestClip(detail).catch(() => undefined);
         }
     };
     if (typeof window !== "undefined" && typeof window.addEventListener === "function") {

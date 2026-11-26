@@ -1,8 +1,6 @@
 <script lang="ts">
 /** 设置视图：分类导航与连续配置分组，保留草稿、保存回执及维护任务入口。 */
 import { onMount, tick } from "svelte";
-// DL2 阶段0：生态统一「外观与动效」偏好分组（庆祝/吉祥物/光效可关）
-import { createLvUiPrefsSection } from "../libs/lv-ui-prefs";
 import { getFrontend } from "siyuan";
 import { showMessage } from "../libs/notice";
 import { listNotebooks, type NotebookMeta } from "../api/client";
@@ -24,6 +22,7 @@ import BackupPanel from "./BackupPanel.svelte";
 import FlashcardRecoveryPanel from "./FlashcardRecoveryPanel.svelte";
 import AiTagMergePanel from "./AiTagMergePanel.svelte";
 import SnapshotGovernance from "./SnapshotGovernance.svelte";
+import AiThinkingCard from "./AiThinkingCard.svelte";
 import { lvEcosystem } from "../libs/notice";
 
 interface Props {
@@ -56,13 +55,6 @@ const SETTINGS_SECTIONS: Array<{ id: SettingsSectionId; labelKey: string; titleK
 let activeSection = $state<SettingsSectionId>("workspace");
 const activeSectionMeta = $derived(SETTINGS_SECTIONS.find((section) => section.id === activeSection) ?? SETTINGS_SECTIONS[0]);
 
-
-/** DL2 阶段0：挂载生态「外观与动效」偏好分组（svelte action：随工作区分组挂载/卸载） */
-function mountLvUiPrefsGroup(node: HTMLElement) {
-    node.appendChild(createLvUiPrefsSection());
-    return {};
-}
-
 let notebooks = $state<NotebookMeta[]>([]);
 let notebookLoading = $state(false);
 let notebookLoadError = $state(false);
@@ -93,6 +85,7 @@ let customModel = $state(DEFAULT_SETTINGS.ai.customModel);
 const customEndpointSecurity = $derived(inspectCustomEndpointSecurity(customBaseUrl));
 let customSecretName = $state(DEFAULT_SETTINGS.ai.customSecretName);
 let testBusy = $state(false);
+let testAbort = $state.raw<AbortController | null>(null);
 let checkinEnabled = $state(DEFAULT_SETTINGS.integration.checkinEnabled);
 let checkinItemId = $state(DEFAULT_SETTINGS.integration.checkinItemId);
 let bridgeWriteEnabled = $state(DEFAULT_SETTINGS.integration.bridgeWriteEnabled);
@@ -205,8 +198,26 @@ function handleConfirmKeydown(event: KeyboardEvent): void {
     }
 }
 
+function handleResetConfirmKeydown(event: KeyboardEvent): void {
+    if (event.defaultPrevented || event.isComposing || event.keyCode === 229) return;
+    if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        confirmResetOpen = false;
+    }
+}
+
 function handleWindowKeydown(event: KeyboardEvent): void {
-    if (event.defaultPrevented || event.isComposing || event.keyCode === 229 || event.repeat) return;
+    if (event.isComposing || event.keyCode === 229 || event.repeat) return;
+
+    if (confirmResetOpen) {
+        if (event.key === "Escape") {
+            event.preventDefault();
+            event.stopPropagation();
+            confirmResetOpen = false;
+        }
+        return;
+    }
 
     if (confirmDiscardOpen) {
         if (event.key === "Escape") {
@@ -308,6 +319,8 @@ onMount(() => {
     return () => {
         active = false;
         mounted = false;
+        testAbort?.abort();
+        testAbort = null;
         unregisterCloseGuard?.();
         document.removeEventListener("glean:data-changed", refreshUsage);
     };
@@ -560,20 +573,35 @@ function setChannel(channel: "siyuan" | "custom") {
     aiChannel = channel;
 }
 
+function cancelTestChannel() {
+    if (!testBusy) return;
+    testAbort?.abort();
+    testAbort = null;
+    testBusy = false;
+    showMessage(t(i18n, "ai.testCancelled"), 2500);
+}
+
 async function testChannel() {
     if (testBusy) return;
+    const controller = new AbortController();
+    testAbort = controller;
     testBusy = true;
     try {
-        const result = await testDirectChannel(facade.pluginInstance, buildDraftSettings());
+        const result = await testDirectChannel(facade.pluginInstance, buildDraftSettings(), { signal: controller.signal });
+        if (controller.signal.aborted || result.aborted) return;
         showMessage(
             result.ok ? t(i18n, "ai.testOk", { message: result.message }) : t(i18n, "ai.testFail", { message: result.message }),
             4500
         );
     } catch {
+        if (controller.signal.aborted) return;
         console.warn("[glean] AI 通道测试异常");
         showMessage(t(i18n, "ai.testError"), 4500);
     } finally {
-        testBusy = false;
+        if (testAbort === controller) {
+            testAbort = null;
+            testBusy = false;
+        }
     }
 }
 
@@ -714,9 +742,6 @@ async function doMountBoard() {
                         {/if}
                     </button>
                 {/each}
-            </div>
-            <div class="glean-settings__nav-ecosystem" title={ecosystemBadgeText}>
-                <span class="glean-settings__ecosystem-badge">{ecosystemBadgeText}</span>
             </div>
         </nav>
         <div id={panelId} class="glean-settings__content" role="tabpanel" aria-labelledby={`${idPrefix}-tab-${activeSection}`} tabindex="-1" inert={saveBusy}>
@@ -870,8 +895,6 @@ async function doMountBoard() {
                 <button class="glean-sw" class:glean-sw--on={cloudInboxEnabled} aria-label={t(i18n, "settings.cloudInboxEnabled")} aria-pressed={cloudInboxEnabled} onclick={() => { cloudInboxEnabled = !cloudInboxEnabled; }}></button>
             </div>
         </div>
-        <!-- DL2 阶段0：生态统一外观与动效偏好分组 -->
-        <div class="glean-set-group" use:mountLvUiPrefsGroup></div>
     </div>
 
     {/if}
@@ -977,7 +1000,7 @@ async function doMountBoard() {
                 </div>
             </div>
             <div class="glean-set-row glean-seg-row">
-                <div class="glean-seg" role="group" aria-label={t(i18n, "settings.aiChannel")}>
+                <div class="glean-seg glean-seg--two" role="group" aria-label={t(i18n, "settings.aiChannel")}>
                     <button
                         class="glean-seg__btn"
                         class:glean-seg__btn--on={aiChannel === "siyuan"}
@@ -1019,6 +1042,15 @@ async function doMountBoard() {
                         {testBusy ? t(i18n, "panel.loading") : t(i18n, "settings.testConnection")}
                     </button>
                 </div>
+                {#if testBusy}
+                    <AiThinkingCard
+                        scenario="general"
+                        title={t(i18n, "settings.testConnection")}
+                        compact
+                        signal={testAbort?.signal}
+                        onCancel={cancelTestChannel}
+                    />
+                {/if}
             {/if}
         </div>
     </div>
@@ -1216,7 +1248,7 @@ async function doMountBoard() {
                     {t(i18n, "settings.readerMode")}
                     <div class="glean-set-row__desc">{t(i18n, "settings.readerModeHint")}</div>
                 </div>
-                <div class="glean-seg" role="group" aria-label={t(i18n, "settings.readerMode")}>
+                <div class="glean-seg glean-seg--two" role="group" aria-label={t(i18n, "settings.readerMode")}>
                     <button
                         class="glean-seg__btn"
                         class:glean-seg__btn--on={readerMode === "read"}
@@ -1295,12 +1327,34 @@ async function doMountBoard() {
                 </div>
             </div>
         {:else if confirmResetOpen}
-            <div class="glean-settings__close-confirm" role="group" aria-live="assertive" aria-labelledby={`${idPrefix}-reset-title`} aria-describedby={`${idPrefix}-reset-description`}>
+            <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+            <div class="glean-settings__close-confirm" role="group" aria-live="assertive" aria-labelledby={`${idPrefix}-reset-title`} aria-describedby={`${idPrefix}-reset-description`} onkeydown={handleResetConfirmKeydown}>
                 <strong id={`${idPrefix}-reset-title`}>{t(i18n, "settings.resetConfirmTitle")}</strong>
                 <span id={`${idPrefix}-reset-description`}>{t(i18n, "settings.resetConfirmDescription")}</span>
                 <div class="glean-settings__close-confirm-actions">
-                    <button class="glean-btn glean-btn--ghost" bind:this={cancelResetButton} onclick={() => { confirmResetOpen = false; }}>{t(i18n, "action.cancel")}</button>
-                    <button class="glean-btn glean-btn--danger" onclick={resetDefaults}>{t(i18n, "settings.resetDefaults")}</button>
+                    <button
+                        class="glean-btn glean-btn--ghost"
+                        bind:this={cancelResetButton}
+                        onclick={() => { confirmResetOpen = false; }}
+                        onkeydown={(e) => {
+                            if (e.key === "Escape") {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                confirmResetOpen = false;
+                            }
+                        }}
+                    >{t(i18n, "action.cancel")}</button>
+                    <button
+                        class="glean-btn glean-btn--danger"
+                        onclick={resetDefaults}
+                        onkeydown={(e) => {
+                            if (e.key === "Escape") {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                confirmResetOpen = false;
+                            }
+                        }}
+                    >{t(i18n, "settings.resetDefaults")}</button>
                 </div>
             </div>
         {:else}
@@ -1636,7 +1690,7 @@ async function doMountBoard() {
         border: 1px solid var(--glean-border-soft);
         border-radius: var(--glean-radius-lg);
         background: var(--glean-card-surface);
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+        box-shadow: var(--glean-shadow-card);
     }
 
     .glean-settings__section .glean-set-row {
@@ -1668,12 +1722,14 @@ async function doMountBoard() {
 
     .glean-settings .glean-mini-input,
     .glean-settings .b3-select {
-        min-height: 38px;
+        min-height: 36px;
         border-radius: var(--glean-radius-pill);
-        background: var(--glean-app-background);
-        border: 1px solid var(--glean-border-soft);
+        background: var(--glean-inset-surface);
+        border: 1px solid var(--glean-line-strong, var(--glean-border-soft));
         padding-inline: var(--glean-space-3);
         font-size: 13px;
+        max-width: 100%;
+        box-sizing: border-box;
         transition: border-color var(--glean-duration-fast) var(--glean-ease-enter), box-shadow var(--glean-duration-fast) var(--glean-ease-enter);
     }
 
@@ -1729,6 +1785,8 @@ async function doMountBoard() {
     .glean-settings {
         container: glean-settings / inline-size;
         overflow: hidden;
+        max-width: 100%;
+        box-sizing: border-box;
         font-size: 14px;
         line-height: 1.65;
     }
@@ -1747,14 +1805,6 @@ async function doMountBoard() {
         justify-content: flex-end;
         flex-wrap: wrap;
         gap: var(--glean-space-2);
-    }
-
-    .glean-settings__nav-ecosystem {
-        margin-top: auto;
-        padding: var(--glean-space-3) var(--glean-space-1) 0;
-        border-top: 1px dashed var(--glean-border-soft);
-        font-size: var(--glean-text-xs);
-        line-height: var(--glean-leading-tight);
     }
 
     .glean-settings__ecosystem-badge {
@@ -1780,10 +1830,6 @@ async function doMountBoard() {
         .glean-settings__layout {
             flex-direction: column;
             gap: var(--glean-space-4);
-        }
-
-        .glean-settings__nav-ecosystem {
-            display: none;
         }
 
         .glean-settings__nav {
@@ -1868,10 +1914,6 @@ async function doMountBoard() {
         .glean-settings__layout {
             flex-direction: column;
             gap: var(--glean-space-3);
-        }
-
-        .glean-settings__nav-ecosystem {
-            display: none;
         }
 
         .glean-settings__nav {

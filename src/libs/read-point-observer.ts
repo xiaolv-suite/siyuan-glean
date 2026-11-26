@@ -8,6 +8,8 @@ export interface ReadPointObserverOptions {
     onReadPointChange: (blockId: string) => void;
     /** 驻留记录防抖时间，默认 1000ms（Issue #17 标准） */
     dwellMs?: number;
+    /** 返回 true 时冻结断点写入（如正在恢复历史断点） */
+    isWriteFrozen?: () => boolean;
 }
 
 export interface ReadPointObserverHandle {
@@ -16,12 +18,44 @@ export interface ReadPointObserverHandle {
     captureCurrentPoint: () => string | null;
 }
 
+function getBlockId(el: Element): string {
+    return el.getAttribute("data-node-id") || el.getAttribute("id") || "";
+}
+
+function isHiddenNode(el: Element): boolean {
+    return typeof el.closest === "function" && Boolean(el.closest(".fn__none"));
+}
+
+function isValidReadingBlock(el: Element, docId: string): boolean {
+    if (el.getAttribute("data-type") === "NodeDocument") return false;
+    if (isHiddenNode(el)) return false;
+    const id = getBlockId(el);
+    return BLOCK_ID_PATTERN.test(id) && id !== docId;
+}
+
+function collectCandidateBlocks(root: HTMLElement, docId: string): HTMLElement[] {
+    const found = new Set<HTMLElement>();
+    for (const node of Array.from(root.querySelectorAll<HTMLElement>("[data-node-id]"))) {
+        if (isValidReadingBlock(node, docId)) found.add(node);
+    }
+    if (typeof root.matches === "function" && root.matches(".b3-typography")) {
+        for (const node of Array.from(root.querySelectorAll<HTMLElement>("[id]"))) {
+            if (isValidReadingBlock(node, docId)) found.add(node);
+        }
+    } else {
+        for (const node of Array.from(root.querySelectorAll<HTMLElement>(".protyle-preview:not(.fn__none) .b3-typography [id]"))) {
+            if (isValidReadingBlock(node, docId)) found.add(node);
+        }
+    }
+    return Array.from(found);
+}
+
 /**
  * 视口相交高精度断点续读引擎（Read-Point Engine）
  * 遵循 Issue #17 统领指令与小驴生态跨插件联邦标准。
  */
 export function createReadPointObserver(options: ReadPointObserverOptions): ReadPointObserverHandle {
-    const { host, docId, onReadPointChange, dwellMs = 1000 } = options;
+    const { host, docId, onReadPointChange, dwellMs = 1000, isWriteFrozen } = options;
     if (!host || typeof window === "undefined") {
         return { disconnect: () => {}, captureCurrentPoint: () => null };
     }
@@ -38,35 +72,65 @@ export function createReadPointObserver(options: ReadPointObserverOptions): Read
         }
     };
 
-    const viewport = readingViewport(host) ?? host.querySelector<HTMLElement>(".protyle-content") ?? host;
+    const resolveViewport = (): HTMLElement => {
+        return readingViewport(host)
+            ?? host.querySelector<HTMLElement>(".protyle-content:not(.fn__none), .protyle-preview:not(.fn__none) .b3-typography, .protyle-preview:not(.fn__none)")
+            ?? host;
+    };
+
+    let viewport: HTMLElement = resolveViewport();
 
     function findCenterBlock(): HTMLElement | null {
         if (!viewport || !viewport.isConnected) return null;
         const rect = viewport.getBoundingClientRect();
         const centerY = rect.top + rect.height / 2;
-        const blocks = Array.from(viewport.querySelectorAll<HTMLElement>("[data-node-id]"))
-            .filter((el) => {
-                const id = el.getAttribute("data-node-id") || "";
-                return BLOCK_ID_PATTERN.test(id) && id !== docId;
-            });
+        const blocks = collectCandidateBlocks(viewport, docId);
+        if (blocks.length === 0) return null;
+
+        let spanMatch: HTMLElement | null = null;
+        let nearestVisible: HTMLElement | null = null;
+        let nearestDist = Infinity;
+        let lastVisible: HTMLElement | null = null;
 
         for (const block of blocks) {
             const bRect = block.getBoundingClientRect();
+            if (bRect.height <= 0 || bRect.width <= 0) continue;
             if (bRect.top <= centerY && bRect.bottom >= centerY) {
-                return block;
+                spanMatch = block;
+            }
+            if (bRect.bottom > rect.top && bRect.top < rect.bottom) {
+                lastVisible = block;
+                const dist = bRect.bottom < centerY ? centerY - bRect.bottom : bRect.top > centerY ? bRect.top - centerY : 0;
+                if (dist < nearestDist) {
+                    nearestDist = dist;
+                    nearestVisible = block;
+                }
             }
         }
-        return null;
+
+        if (spanMatch) return spanMatch;
+        const atBottomOrShort = viewport.scrollHeight <= viewport.clientHeight + 24
+            || (viewport.scrollTop + viewport.clientHeight >= viewport.scrollHeight - 24);
+        if (atBottomOrShort && lastVisible) {
+            return nearestVisible ?? lastVisible;
+        }
+        return nearestVisible;
     }
 
     function onTargetBlockCandidate(blockId: string) {
         if (disposed || !blockId || blockId === activeBlockId) return;
+        if (isWriteFrozen?.()) return;
         if (blockId === pendingBlockId && dwellTimer !== null) return;
 
         clearDwell();
         pendingBlockId = blockId;
         dwellTimer = setTimeout(() => {
             if (disposed) return;
+            if (isWriteFrozen?.()) {
+                dwellTimer = null;
+                pendingBlockId = null;
+                return;
+            }
             activeBlockId = pendingBlockId;
             if (activeBlockId) {
                 onReadPointChange(activeBlockId);
@@ -76,44 +140,8 @@ export function createReadPointObserver(options: ReadPointObserverOptions): Read
     }
 
     let observer: IntersectionObserver | null = null;
-
-    if (typeof IntersectionObserver !== "undefined") {
-        try {
-            observer = new IntersectionObserver(
-                (entries) => {
-                    if (disposed) return;
-                    // 找到最靠近视口中心的相交块
-                    const intersecting = entries.filter((e) => e.isIntersecting && e.target instanceof HTMLElement);
-                    if (intersecting.length > 0) {
-                        const targetEl = intersecting[0].target as HTMLElement;
-                        const id = targetEl.getAttribute("data-node-id");
-                        if (id && BLOCK_ID_PATTERN.test(id) && id !== docId) {
-                            onTargetBlockCandidate(id);
-                        }
-                    }
-                },
-                {
-                    root: viewport === host ? null : viewport,
-                    rootMargin: "-45% 0px -45% 0px", // 仅聚焦正中心 10% 视口范围
-                    threshold: 0,
-                }
-            );
-
-            // 观察视口内部的块
-            const nodes = viewport.querySelectorAll<HTMLElement>("[data-node-id]");
-            for (const node of Array.from(nodes)) {
-                const id = node.getAttribute("data-node-id") || "";
-                if (BLOCK_ID_PATTERN.test(id) && id !== docId) {
-                    observer.observe(node);
-                }
-            }
-        } catch (e) {
-            // 环境不支持 rootMargin 时平滑降级
-            console.debug("[glean] IntersectionObserver 初始化回退:", e);
-        }
-    }
-
-    // 监听滚动进行补位防抖采样（rAF 节流，杜绝高速滚动时的强制布局雪崩）
+    let lastObserverShort: boolean | null = null;
+    const observedNodes = new WeakSet<Element>();
     let scrollRaf: number | null = null;
     const scrollHandler = () => {
         if (disposed || scrollRaf !== null) return;
@@ -122,7 +150,7 @@ export function createReadPointObserver(options: ReadPointObserverOptions): Read
             if (disposed) return;
             const center = findCenterBlock();
             if (center) {
-                const id = center.getAttribute("data-node-id");
+                const id = getBlockId(center);
                 if (id && BLOCK_ID_PATTERN.test(id) && id !== docId) {
                     onTargetBlockCandidate(id);
                 }
@@ -130,7 +158,81 @@ export function createReadPointObserver(options: ReadPointObserverOptions): Read
         });
     };
 
+    const bindViewportAndObserve = () => {
+        if (disposed) return;
+        const nextViewport = resolveViewport();
+        if (nextViewport !== viewport) {
+            viewport.removeEventListener("scroll", scrollHandler);
+            viewport = nextViewport;
+            viewport.addEventListener("scroll", scrollHandler, { passive: true });
+            if (observer) {
+                observer.disconnect();
+                observer = null;
+            }
+            lastObserverShort = null;
+        }
+
+        const isShortViewport = viewport.scrollHeight <= viewport.clientHeight + 1;
+        if (lastObserverShort !== null && lastObserverShort !== isShortViewport && observer) {
+            observer.disconnect();
+            observer = null;
+        }
+
+        if (typeof IntersectionObserver !== "undefined") {
+            try {
+                if (!observer) {
+                    lastObserverShort = isShortViewport;
+                    observer = new IntersectionObserver(
+                        (entries) => {
+                            if (disposed) return;
+                            const intersecting = entries.filter((e) => e.isIntersecting && e.target instanceof HTMLElement);
+                            if (intersecting.length > 0) {
+                                const targetEl = intersecting[0].target as HTMLElement;
+                                const id = getBlockId(targetEl);
+                                if (id && BLOCK_ID_PATTERN.test(id) && id !== docId) {
+                                    onTargetBlockCandidate(id);
+                                }
+                            }
+                        },
+                        {
+                            root: viewport === host ? null : viewport,
+                            rootMargin: isShortViewport ? "0px" : "-45% 0px -45% 0px",
+                            threshold: 0,
+                        }
+                    );
+                }
+                for (const node of collectCandidateBlocks(viewport, docId)) {
+                    if (!observedNodes.has(node)) {
+                        observedNodes.add(node);
+                        observer.observe(node);
+                    }
+                }
+            } catch (e) {
+                console.debug("[glean] IntersectionObserver 初始化回退:", e);
+            }
+        }
+    };
+
     viewport.addEventListener("scroll", scrollHandler, { passive: true });
+    bindViewportAndObserve();
+
+    let mutationObserver: MutationObserver | null = null;
+    let rebindScheduled = false;
+    if (typeof MutationObserver !== "undefined" && typeof Node !== "undefined" && host instanceof Node) {
+        try {
+            mutationObserver = new MutationObserver(() => {
+                if (disposed || rebindScheduled) return;
+                rebindScheduled = true;
+                queueMicrotask(() => {
+                    rebindScheduled = false;
+                    bindViewportAndObserve();
+                });
+            });
+            mutationObserver.observe(host, { childList: true, subtree: true });
+        } catch {
+            mutationObserver = null;
+        }
+    }
 
     return {
         disconnect() {
@@ -140,6 +242,10 @@ export function createReadPointObserver(options: ReadPointObserverOptions): Read
                 cancelAnimationFrame(scrollRaf);
                 scrollRaf = null;
             }
+            if (mutationObserver) {
+                mutationObserver.disconnect();
+                mutationObserver = null;
+            }
             if (observer) {
                 observer.disconnect();
                 observer = null;
@@ -148,7 +254,7 @@ export function createReadPointObserver(options: ReadPointObserverOptions): Read
         },
         captureCurrentPoint() {
             const center = findCenterBlock();
-            return center ? center.getAttribute("data-node-id") : null;
+            return center ? getBlockId(center) || null : null;
         },
     };
 }
@@ -159,7 +265,17 @@ export function createReadPointObserver(options: ReadPointObserverOptions): Read
 export function scrollAndPulseReadPoint(host: HTMLElement | null, blockId: string | null | undefined): boolean {
     if (!host || !blockId || !BLOCK_ID_PATTERN.test(blockId)) return false;
     const escaped = typeof CSS !== "undefined" && typeof CSS.escape === "function" ? CSS.escape(blockId) : blockId;
-    const target = host.querySelector<HTMLElement>(`[data-node-id="${escaped}"]`);
+    const previewVisibleMatch = host.querySelector<HTMLElement>(`.protyle-preview:not(.fn__none) .b3-typography [id="${escaped}"]`);
+    const wysiwygVisibleMatch = host.querySelector<HTMLElement>(`.protyle-wysiwyg:not(.fn__none) [data-node-id="${escaped}"]`);
+    const previewFallbackMatch = host.querySelector<HTMLElement>(`.protyle-preview .b3-typography [id="${escaped}"]`);
+    const previewAttrFallbackMatch = host.querySelector<HTMLElement>(`.protyle-preview:not(.fn__none) [id="${escaped}"]`);
+    const fallbackMatch = host.querySelector<HTMLElement>(`[data-node-id="${escaped}"]`);
+    const isVisibleMatch = (el: HTMLElement | null): el is HTMLElement => {
+        if (!el || isHiddenNode(el)) return false;
+        if (typeof el.getClientRects === "function") return el.getClientRects().length > 0;
+        return true;
+    };
+    const target = [previewVisibleMatch, wysiwygVisibleMatch, previewFallbackMatch, previewAttrFallbackMatch, fallbackMatch].find(isVisibleMatch);
     if (!target) return false;
 
     target.scrollIntoView({ block: "center", behavior: (typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches) ? "auto" : "smooth" });

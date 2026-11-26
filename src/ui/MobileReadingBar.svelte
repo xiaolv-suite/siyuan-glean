@@ -113,13 +113,29 @@
     let saveTimer: number | null = null;
 
     // 应用排版样式到思源正文容器
+    function resolveTargetProtyle(): HTMLElement | null {
+        if (protyleElement) return protyleElement;
+        if (typeof document === "undefined") return null;
+        return document.querySelector(".protyle:not(.glean-protyle-host)") as HTMLElement | null;
+    }
+
     function applyAppearanceToDom(app: MobileReaderAppearance) {
-        const target = protyleElement || (typeof document !== "undefined" ? document.querySelector(".protyle:not(.glean-protyle-host)") as HTMLElement : null);
+        const target = resolveTargetProtyle();
         if (target) {
             target.style.setProperty("--glean-reader-font-size", `${app.fontSize}px`);
             target.style.setProperty("--glean-reader-line-height", `${app.lineHeight}`);
         }
     }
+
+    // 显式在所属 .protyle 切换状态类，替代 CSS :has(.glean-mobile-reading-bar)
+    $effect(() => {
+        const target = resolveTargetProtyle();
+        if (!target) return;
+        target.classList.add("glean-protyle--has-mobile-bar");
+        return () => {
+            target.classList.remove("glean-protyle--has-mobile-bar");
+        };
+    });
 
     $effect(() => {
         void (async () => {
@@ -249,50 +265,48 @@
         keyboardHidden = shouldHide;
     }
 
-    // 键盘检测与输入框聚焦避让（实时重算 + DOM 变动监听）
+    // 键盘检测与输入框聚焦避让（visualViewport + focusin / focusout 轻量监听，无全局 DOM 观察器）
     $effect(() => {
         if (typeof window === "undefined") return;
 
         recomputeKeyboardState();
 
+        let interactionTimer: number | null = null;
+        let focusOutTimer: number | null = null;
+
         const handleFocusIn = () => recomputeKeyboardState();
+        const handleFocusOut = () => {
+            if (focusOutTimer !== null) clearTimeout(focusOutTimer);
+            focusOutTimer = window.setTimeout(() => {
+                focusOutTimer = null;
+                recomputeKeyboardState();
+            }, 0);
+        };
         const handleInteraction = () => {
             // 在点击、轻触等动作后短延迟复查焦点状态
-            setTimeout(recomputeKeyboardState, 80);
+            if (interactionTimer !== null) clearTimeout(interactionTimer);
+            interactionTimer = window.setTimeout(() => {
+                interactionTimer = null;
+                recomputeKeyboardState();
+            }, 80);
         };
 
         window.addEventListener("resize", recomputeKeyboardState);
         window.visualViewport?.addEventListener("resize", recomputeKeyboardState);
         window.visualViewport?.addEventListener("scroll", recomputeKeyboardState, { passive: true });
         document.addEventListener("focusin", handleFocusIn);
+        document.addEventListener("focusout", handleFocusOut);
         document.addEventListener("pointerdown", handleInteraction, { passive: true });
-
-        // 监听焦点元素被直接从 DOM 移除的场景
-        let observer: MutationObserver | null = null;
-        if (typeof MutationObserver !== "undefined" && document.body) {
-            observer = new MutationObserver((mutations) => {
-                // 性能护栏：打字输入（无节点移除）直接早退，仅在有节点被移除时复查焦点状态
-                let hasRemovedNodes = false;
-                for (const m of mutations) {
-                    if (m.removedNodes.length > 0) {
-                        hasRemovedNodes = true;
-                        break;
-                    }
-                }
-                if (hasRemovedNodes) {
-                    recomputeKeyboardState();
-                }
-            });
-            observer.observe(document.body, { childList: true, subtree: true });
-        }
 
         return () => {
             window.removeEventListener("resize", recomputeKeyboardState);
             window.visualViewport?.removeEventListener("resize", recomputeKeyboardState);
             window.visualViewport?.removeEventListener("scroll", recomputeKeyboardState);
             document.removeEventListener("focusin", handleFocusIn);
+            document.removeEventListener("focusout", handleFocusOut);
             document.removeEventListener("pointerdown", handleInteraction);
-            observer?.disconnect();
+            if (interactionTimer !== null) clearTimeout(interactionTimer);
+            if (focusOutTimer !== null) clearTimeout(focusOutTimer);
             if (saveTimer !== null) clearTimeout(saveTimer);
         };
     });

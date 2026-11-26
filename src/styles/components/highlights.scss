@@ -249,17 +249,14 @@
 }
 
 .glean-highlights button {
-    min-width: 44px;
-    cursor: pointer;
-    overflow-wrap: anywhere;
-    white-space: normal;
-}
-
-.glean-highlights button:has(.glean-icon) {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: var(--glean-space-2);
+    min-width: 44px;
+    cursor: pointer;
+    overflow-wrap: anywhere;
+    white-space: normal;
 }
 
 .glean-highlights button[aria-pressed="true"] {
@@ -358,7 +355,7 @@
     content: "";
 }
 
-.glean-highlights__item:has(input:checked) {
+.glean-highlights__item--checked {
     border-color: var(--glean-color-action);
     background: var(--glean-selection-surface);
 }
@@ -796,7 +793,7 @@
     border: 1px solid var(--glean-line);
     border-radius: 16px;
     box-shadow: var(--glean-shadow-float);
-    backdrop-filter: blur(14px);
+    backdrop-filter: blur(12px);
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -950,9 +947,15 @@
 }
 
 .glean-highlight-outline-tag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    vertical-align: middle;
+    box-sizing: border-box;
     font-size: 10px;
     font-weight: 700;
-    padding: 1px 5px;
+    padding: 2px 5px;
     border-radius: 4px;
     background: var(--glean-color-action-soft);
     color: var(--glean-color-action);

@@ -2,6 +2,7 @@
     import AuthorEditor from "./AuthorEditor.svelte";
     import AnnotationEditorDialog from "./AnnotationEditorDialog.svelte";
     import ReaderSearch from "./ReaderSearch.svelte";
+    import AiThinkingCard from "./AiThinkingCard.svelte";
     import { isFindShortcut } from "../domain/reader-search";
     /**
      * 内嵌阅读页签（D-0029/T-1730）：左 = 真实思源编辑器（Protyle 实例），右 = 伴生栏。
@@ -9,7 +10,7 @@
      * 按真实成功数反馈。编辑/标注经 Protyle 走内核事务，插件不另存正文副本。
      */
     import { openTab } from "siyuan";
-    import { showMessage } from "../libs/notice";
+    import { showMessage, withLvAiWait } from "../libs/notice";
     import { isNativeDockVisible, showDocTreeNativeMenu, toggleNativeDock } from "../libs/lv-notice-kit";
     import { exportMdContent, querySql } from "../api/client";
     import type { ProtyleController } from "../libs/protyle-controller";
@@ -26,20 +27,23 @@ import { aiFailureKey } from "../libs/ai-feedback";
     import { isWechatUrl, cleanWechatArticleUrl, extractWechatAuthor, displayWechatAuthor, cleanWechatNoise, repairWechatContent } from "../domain/wechat";
     import { chunkSpeechText, clampSpeechRate, resumeSpeechChunkIndex, speechLanguage } from "../domain/speech";
     import type { ClipStatus } from "../domain/schema";
-    import { DEFAULT_SETTINGS } from "../services/settings";
+    import { DEFAULT_SETTINGS, type GleanSettings } from "../services/settings";
+    import { safeDocTitleFromHPath } from "../libs/lv-notice-kit";
     import {
         batchSetStatusDetailed,
+        captureDocument,
+        fetchDocMeta,
+        isDocumentReadonly,
         measureClipBody,
         readClipContext,
         saveReadingMinutes,
         writeClip,
-        writeHighlightColor,
         markGleanHighlight,
         type ReadingClipContext,
     } from "../services/clip-store";
     import { snapshotClip } from "../services/snapshot-service";
     import { recordReadingDone } from "../services/checkin-bridge";
-    import { excerptFromSelection, insertQuoteExcerpt, selectionBelongsToHost } from "../services/excerpt-service";
+    import { excerptFromSelection, extractSelectionSearchContext, insertQuoteExcerpt, selectionBelongsToHost } from "../services/excerpt-service";
     import { makeQuoteCardPreview } from "./flashcard-dialog";
     import { openQuoteCardDialog } from "./quote-card-dialog";
     import { openDocSlicingDialog } from "./doc-slicing-dialog";
@@ -62,7 +66,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
     import { listDocHighlights, type HighlightItem } from "../services/highlights";
     import {
         addAnnotationReply, createArticleHighlightsDoc, deleteAnnotation,
-        resolveExcerptBlockId, setAnnotationTag, updateHighlightMemo,
+        resolveExcerptBlockId, setAnnotationColor, setAnnotationTag, updateHighlightMemo,
     } from "../services/highlights";
     import {
         BUILTIN_ANNOTATION_TAGS, formatHighlightShare, formatHighlightTime, resolveAnnotationTagDisplay,
@@ -139,9 +143,13 @@ import { aiFailureKey } from "../libs/ai-feedback";
     const rankTitleId = idFor("rank-title");
 
     let docId = $state<string | null>(null);
+    let docTitle = $state<string>("");
+    let addingToLibrary = $state(false);
+    let activeSettings = $state<GleanSettings>(untrack(() => facade.settings));
     let mode = $state<"read" | "edit">(DEFAULT_SETTINGS.reader.defaultMode);
     let protyleHost = $state<HTMLDivElement | null>(null);
     let protyleInstance = $state<unknown>(null);
+    let protyleStage = $state<"loading" | "ready" | "failed">("loading");
     let excerptRange = $state<Range | null>(null);
     let selectionBarLock = false;
     let selectionBarLockTimer: number | null = null;
@@ -155,6 +163,8 @@ import { aiFailureKey } from "../libs/ai-feedback";
     }
     let readPointHandle: ReadPointObserverHandle | null = null;
     let readPointRestoredDocId = "";
+    let wechatAutoScannedDocId = "";
+    let modeSwitchAnchorId: string | null = null;
     let paletteMenuOpen = $state(false);
     let currentThemePalette = $state<ThemePaletteId>("teal");
     let purifying = $state(false);
@@ -270,6 +280,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
     let outlineGeneration = 0;
     let currentBookmarkBlockId = $state<string | null>(null);
     let pendingScrollBlockId = $state<string | null>(null);
+    let docAttrReadonly = $state(false);
     const showBackToTop = $derived((readingPercentage ?? 0) > 12);
     let companionTab = $state<"outline" | "notes" | "ai" | "tools" | "fold" | "all">("outline");
     let foldNodes = $state<FoldNode[]>([]);
@@ -277,12 +288,25 @@ import { aiFailureKey } from "../libs/ai-feedback";
     let foldGlobalLevel = $state<FoldLevel>(2);
     let foldAiBusy = $state(false);
     let foldAiEnriched = $state(false);
+    let foldAiAbort = $state.raw<AbortController | null>(null);
+
+    function cancelFoldAiEnrich(): void {
+        if (!foldAiBusy) return;
+        foldAiAbort?.abort();
+        foldAiAbort = null;
+        foldAiBusy = false;
+    }
 
     async function runFoldAiEnrich(): Promise<void> {
         if (!docId || foldNodes.length === 0 || foldAiBusy) return;
+        const targetDocId = docId;
+        const generation = sessionGeneration;
+        const controller = new AbortController();
+        foldAiAbort = controller;
         foldAiBusy = true;
         try {
-            const res = await enrichFoldNodesWithAi(facade.pluginInstance, facade.settings, foldNodes);
+            const res = await enrichFoldNodesWithAi(facade.pluginInstance, activeSettings, foldNodes, 12, { signal: controller.signal });
+            if (controller.signal.aborted || res.aborted || !currentSession(targetDocId, generation)) return;
             if (res.ok && res.count > 0) {
                 foldNodes = res.nodes;
                 foldAiEnriched = true;
@@ -291,10 +315,15 @@ import { aiFailureKey } from "../libs/ai-feedback";
                 showMessage(res.error || t(i18n, "msg.foldAiEmpty"), 3500);
             }
         } catch (err) {
-            console.warn("[glean] runFoldAiEnrich failed:", err);
-            showMessage(t(i18n, "msg.foldAiFailed") + (err instanceof Error ? err.message : String(err)), 3500);
+            if (!controller.signal.aborted) {
+                console.warn("[glean] runFoldAiEnrich failed:", err);
+                showMessage(t(i18n, "msg.foldAiFailed") + (err instanceof Error ? err.message : String(err)), 3500);
+            }
         } finally {
-            foldAiBusy = false;
+            if (foldAiAbort === controller) {
+                foldAiAbort = null;
+                foldAiBusy = false;
+            }
         }
     }
 
@@ -409,6 +438,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
     let readingTimerDocId = "";
     let readingTimerExpectedRaw: string | null = null;
     let readingTimerExpectedLocation: { box: string; hpath: string } | null = null;
+    let readingTimerPersistedMinutes = 0;
     const displayedReadMinutes = $derived(Math.max(context?.readMinutes ?? 0, readingTimerMinutes(readingTimer)));
 
     function readingTimerHostReady(): boolean {
@@ -432,25 +462,39 @@ import { aiFailureKey } from "../libs/ai-feedback";
         readingTimer = setReadingTimerActive(readingTimer, readingTimerEligible(), Date.now());
     }
 
-    async function flushReadingMinutes(id: string, generation: number): Promise<boolean> {
+    async function flushReadingMinutes(id: string, generation: number, options?: { silent?: boolean }): Promise<boolean> {
         if (readingTimerDocId !== id || !readingTimerExpectedLocation) return true;
         readingTimer = setReadingTimerActive(readingTimer, false, Date.now());
         const minutes = readingTimerMinutes(readingTimer);
-        const persisted = context?.id === id ? context.readMinutes ?? 0 : 0;
+        const persisted = Math.max(readingTimerPersistedMinutes, context?.id === id ? context.readMinutes ?? 0 : 0);
         if (minutes <= persisted || minutes <= 0) return true;
+        const expectedRaw = readingTimerExpectedRaw;
+        const expectedLocation = readingTimerExpectedLocation;
+        readingTimerPersistedMinutes = minutes;
         try {
             const saved = await saveReadingMinutes(facade.pluginInstance, id, {
-                raw: readingTimerExpectedRaw,
-                location: readingTimerExpectedLocation,
+                raw: expectedRaw,
+                location: expectedLocation,
             }, minutes);
-            readingTimerExpectedRaw = saved.raw;
+            if (readingTimerDocId === id) {
+                readingTimerExpectedRaw = saved.raw;
+                readingTimerPersistedMinutes = saved.minutes;
+            }
             if (currentSession(id, generation) && context?.id === id) {
                 context = { ...context, readMinutes: saved.minutes, readMinutesRaw: saved.raw };
             }
+            if ((facade.pluginInstance as { loaded?: boolean })?.loaded !== false) {
+                facade.notifyDataChanged();
+            }
             return true;
         } catch (error) {
+            if (readingTimerDocId === id && readingTimerPersistedMinutes === minutes) {
+                readingTimerPersistedMinutes = persisted;
+            }
             console.debug("[glean] 真实阅读分钟写回失败:", error);
-            showMessage(t(i18n, "reader.readMinutesSaveFailed"), 3500);
+            if (!options?.silent && mounted) {
+                showMessage(t(i18n, "reader.readMinutesSaveFailed"), 3500);
+            }
             return false;
         }
     }
@@ -466,9 +510,10 @@ import { aiFailureKey } from "../libs/ai-feedback";
 
     onMount(() => {
         mounted = true;
+        activeSettings = facade.settings;
         docId = facade.consumeReaderFocus(tabId);
         refreshRecentReadings();
-        mode = facade.settings.reader.defaultMode;
+        mode = activeSettings.reader.defaultMode;
         void loadUiPrefs(facade.pluginInstance).then((prefs) => {
             if (!mounted) return;
             if (!appearanceTouched) readerAppearance = prefs.readerAppearance;
@@ -487,9 +532,21 @@ import { aiFailureKey } from "../libs/ai-feedback";
         checkShortHeight();
         window.addEventListener("resize", checkShortHeight);
         return () => {
-            readingTimer = setReadingTimerActive(readingTimer, false, Date.now());
+            const closingDocId = readingTimerDocId || docId;
+            const closingGen = sessionGeneration;
             mounted = false;
+            if (closingDocId) {
+                void flushReadingMinutes(closingDocId, closingGen, { silent: true });
+            } else {
+                readingTimer = setReadingTimerActive(readingTimer, false, Date.now());
+            }
             sessionGeneration += 1;
+            aiAbort?.abort();
+            aiAbort = null;
+            ghostreaderAbort?.abort();
+            ghostreaderAbort = null;
+            foldAiAbort?.abort();
+            foldAiAbort = null;
             contextRequests.invalidate();
             readPointHandle?.disconnect();
             readPointHandle = null;
@@ -517,22 +574,23 @@ import { aiFailureKey } from "../libs/ai-feedback";
     let excerpt = $state<{ text: string; blockId: string } | null>(null);
 
     // AI 伴读段（D-0030）：显式动作 + 结果卡；额度与富化共享。
-    const aiOn = $derived(readerAiEnabled(facade.settings));
+    const aiOn = $derived(readerAiEnabled(activeSettings));
     // 自定义通道缺少地址、模型或密钥名时，动作保持禁用并给出可操作的配置入口。
     // 思源内置通道的具体模型由内核设置管理，插件不臆测其可用性。
     const aiConfigured = $derived(
-        facade.settings.ai.channel !== "custom"
-            || Boolean(facade.settings.ai.customBaseUrl.trim() && facade.settings.ai.customModel.trim() && facade.settings.ai.customSecretName.trim())
+        activeSettings.ai.channel !== "custom"
+            || Boolean(activeSettings.ai.customBaseUrl.trim() && activeSettings.ai.customModel.trim() && activeSettings.ai.customSecretName.trim())
     );
     const aiReady = $derived(aiOn && aiConfigured);
-    const relatedOn = $derived(aiReady && facade.settings.ai.relatedWhileReading);
-    const articleQuestionOn = $derived(articleQuestionEnabled(facade.settings));
+    const relatedOn = $derived(aiReady && activeSettings.ai.relatedWhileReading);
+    const articleQuestionOn = $derived(articleQuestionEnabled(activeSettings));
     const channelLabel = $derived(
-        facade.settings.ai.channel === "custom"
-            ? facade.settings.ai.customModel || "custom"
+        activeSettings.ai.channel === "custom"
+            ? activeSettings.ai.customModel || "custom"
             : t(i18n, "reader.aiChannelSiyuan")
     );
     let aiBusy = $state("");
+    let aiAbort = $state.raw<AbortController | null>(null);
     let aiResult = $state<{ kind: "summarize" | "translate"; action: string; text: string; scope: "full" | "selection" } | null>(null);
     let summarySaving = $state(false);
     let summarySaved = $state(false);
@@ -548,6 +606,8 @@ import { aiFailureKey } from "../libs/ai-feedback";
     let ghostreaderOpen = $state(false);
     let ghostreaderCustomQuery = $state("");
     let ghostreaderBusy = $state(false);
+    let ghostreaderHasChunk = $state(false);
+    let ghostreaderAbort = $state.raw<AbortController | null>(null);
     let ghostreaderResult = $state<GhostreaderResult | null>(null);
     let ghostreaderInserting = $state(false);
 
@@ -686,6 +746,48 @@ import { aiFailureKey } from "../libs/ai-feedback";
         }, 0);
     }
 
+    function isCurrentDocReadonly(): boolean {
+        if (docAttrReadonly || context?.readonly) return true;
+        const inst = protyleInstance as { protyle?: { disabled?: boolean }; disabled?: boolean } | null;
+        if (inst?.protyle?.disabled === true || inst?.disabled === true) return true;
+        if (protyleHost?.querySelector(".protyle-wysiwyg[contenteditable='false'], [custom-sy-readonly='true'], [custom-siyuan-readonly='true']")) {
+            return true;
+        }
+        return false;
+    }
+
+    async function ensureWritableDoc(targetDocId?: string): Promise<boolean> {
+        if (isCurrentDocReadonly()) {
+            showMessage(t(i18n, "reader.readonlyBlocked"), 3000);
+            return false;
+        }
+        const checkId = targetDocId || docId;
+        if (checkId && await isDocumentReadonly(checkId)) {
+            if (checkId === docId) docAttrReadonly = true;
+            showMessage(t(i18n, "reader.readonlyBlocked"), 3000);
+            return false;
+        }
+        return true;
+    }
+
+    $effect(() => {
+        const id = docId;
+        const ctx = context;
+        if (!id) {
+            docAttrReadonly = false;
+            return;
+        }
+        if (ctx && ctx.id === id) {
+            docAttrReadonly = Boolean(ctx.readonly);
+            return;
+        }
+        let active = true;
+        void isDocumentReadonly(id).then((ro) => {
+            if (active && mounted && docId === id) docAttrReadonly = ro;
+        }).catch(() => undefined);
+        return () => { active = false; };
+    });
+
     function modeValue(value: "read" | "edit"): "preview" | "wysiwyg" {
         return value === "edit" ? "wysiwyg" : "preview";
     }
@@ -706,6 +808,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
                     readingTimerDocId = id;
                     readingTimerExpectedRaw = next.readMinutesRaw;
                     readingTimerExpectedLocation = next.location;
+                    readingTimerPersistedMinutes = next.readMinutes ?? 0;
                     readingTimer = createReadingTimer(next.readMinutes ?? 0);
                 }
                 if (next) {
@@ -730,10 +833,51 @@ import { aiFailureKey } from "../libs/ai-feedback";
     }
 
     function retryContext(): void {
-        if (docId) void loadContext(docId);
+        if (docId) {
+            void loadContext(docId);
+            void loadDocTitle(docId);
+        }
     }
 
-    async function loadOutline(id: string): Promise<void> {
+    async function loadDocTitle(id: string): Promise<void> {
+        try {
+            const meta = await fetchDocMeta(id);
+            if (!mounted || docId !== id) return;
+            const resolved = safeDocTitleFromHPath(meta, meta.title || meta.hpath || "").trim();
+            if (resolved) {
+                docTitle = resolved;
+                facade.recordRecentReading(id, resolved);
+            }
+        } catch {
+            // ignore title fallback failure
+        }
+    }
+
+    async function addCurrentNoteToLibrary(): Promise<void> {
+        if (!docId || addingToLibrary) return;
+        const targetDocId = docId;
+        addingToLibrary = true;
+        try {
+            const res = await captureDocument(facade.pluginInstance, targetDocId, { src: "manual" });
+            if (!mounted || docId !== targetDocId) return;
+            if (res.captured) {
+                showMessage(t(i18n, "reader.addedToLibrary"), 2500);
+                facade.notifyDataChanged();
+                await loadContext(targetDocId);
+            } else if (res.conflict) {
+                showMessage(t(i18n, "inbox.duplicate"), 3000);
+                await loadContext(targetDocId);
+            } else {
+                showMessage(t(i18n, "msg.actionFailed"), 3000);
+            }
+        } catch {
+            showMessage(t(i18n, "msg.actionFailed"), 3000);
+        } finally {
+            addingToLibrary = false;
+        }
+    }
+
+    async function loadOutline(id: string, retryAttempt = 0): Promise<void> {
         const generation = ++outlineGeneration;
         outlineLoading = true;
         outlineError = false;
@@ -743,8 +887,9 @@ import { aiFailureKey } from "../libs/ai-feedback";
             outline = next;
         } catch (error) {
             if (generation !== outlineGeneration || docId !== id) return;
-            if (String(error).includes("已过期")) {
-                void loadOutline(id);
+            const msg = `${error instanceof Error ? error.message : String(error)} ${String((error as { cause?: unknown })?.cause ?? "")}`;
+            if (msg.includes("已过期") && retryAttempt < 1) {
+                void loadOutline(id, retryAttempt + 1);
                 return;
             }
             console.debug("[glean] 阅读大纲读取失败:", error);
@@ -755,9 +900,38 @@ import { aiFailureKey } from "../libs/ai-feedback";
         }
     }
 
+    function findReaderBlockElement(candidate: string): HTMLElement | null {
+        if (!protyleHost || !candidate) return null;
+        const escaped = typeof CSS !== "undefined" && typeof CSS.escape === "function" ? CSS.escape(candidate) : candidate;
+        const selectors = mode === "read"
+            ? [
+                `.protyle-preview:not(.fn__none) .b3-typography [id="${escaped}"]`,
+                `.protyle-preview:not(.fn__none) [id="${escaped}"]`,
+                `.protyle-preview:not(.fn__none) [data-node-id="${escaped}"]`,
+                `.protyle-wysiwyg:not(.fn__none) [data-node-id="${escaped}"]`,
+                `[data-node-id="${escaped}"]`,
+                `.protyle-preview .b3-typography [id="${escaped}"]`,
+                `.protyle-preview [id="${escaped}"]`,
+            ]
+            : [
+                `.protyle-wysiwyg:not(.fn__none) [data-node-id="${escaped}"]`,
+                `.protyle-preview:not(.fn__none) .b3-typography [id="${escaped}"]`,
+                `.protyle-preview:not(.fn__none) [id="${escaped}"]`,
+                `[data-node-id="${escaped}"]`,
+                `.protyle-preview .b3-typography [id="${escaped}"]`,
+            ];
+        const candidates: HTMLElement[] = [];
+        for (const selector of selectors) {
+            const el = protyleHost.querySelector<HTMLElement>(selector);
+            if (el && !el.closest(".fn__none")) candidates.push(el);
+        }
+        return candidates.find((el) => typeof el.getClientRects !== "function" || el.getClientRects().length > 0)
+            ?? candidates[0]
+            ?? null;
+    }
+
     function scrollToOutline(item: OutlineItem): void {
-        const escaped = typeof CSS !== "undefined" && typeof CSS.escape === "function" ? CSS.escape(item.id) : item.id;
-        const target = protyleHost?.querySelector<HTMLElement>(`[data-node-id="${escaped}"]`);
+        const target = findReaderBlockElement(item.id);
         if (target) {
             target.scrollIntoView({ block: "center", behavior: (typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches) ? "auto" : "smooth" });
             target.focus({ preventScroll: true });
@@ -917,8 +1091,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
         const matched = docHighlights.find((h) => h.id === id);
         const candidates = [matched?.sourceBlockId, id].filter((v): v is string => Boolean(v));
         for (const candidate of candidates) {
-            const escaped = typeof CSS !== "undefined" && typeof CSS.escape === "function" ? CSS.escape(candidate) : candidate;
-            const target = protyleHost?.querySelector<HTMLElement>(`[data-node-id="${escaped}"]`);
+            const target = findReaderBlockElement(candidate);
             if (target) {
                 target.scrollIntoView({ block: "center", behavior: (typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches) ? "auto" : "smooth" });
                 target.focus({ preventScroll: true });
@@ -950,12 +1123,15 @@ import { aiFailureKey } from "../libs/ai-feedback";
 
     async function submitEditMemo(hl: HighlightItem): Promise<void> {
         if (editingMemoBusy) return;
+        if ((!hl.commentDocId || hl.commentDocId === docId) && !(await ensureWritableDoc())) return;
         editingMemoBusy = true;
         try {
             const saved = await updateHighlightMemo(hl, editingMemoDraft, facade.pluginInstance.app);
             docHighlights = docHighlights.map((item) => item.id === hl.id ? { ...item, memo: saved || undefined } : item);
             editingMemoId = "";
             editingMemoDraft = "";
+            if (docId) refreshWhaleDecorationsInProtyle(facade.pluginInstance.app, docId);
+            facade.notifyDataChanged();
             showMessage(t(i18n, "highlight.memoSaved"), 2000);
         } catch (error) {
             console.warn("[glean] 更新批注想法失败:", error);
@@ -966,11 +1142,14 @@ import { aiFailureKey } from "../libs/ai-feedback";
     }
 
     async function applyHighlightTag(hl: HighlightItem, nextTag: string): Promise<void> {
+        if ((!hl.commentDocId || hl.commentDocId === docId) && !(await ensureWritableDoc())) return;
         const resolved = hl.annotationTag === nextTag ? "" : nextTag;
         try {
             await setAnnotationTag(hl, resolved, facade.pluginInstance.app);
             docHighlights = docHighlights.map((item) => item.id === hl.id ? { ...item, annotationTag: resolved || undefined } : item);
             tagPickerId = "";
+            if (docId) refreshWhaleDecorationsInProtyle(facade.pluginInstance.app, docId);
+            facade.notifyDataChanged();
             showMessage(t(i18n, "highlight.tagUpdated"), 1800);
         } catch (error) {
             console.warn("[glean] 更新批注标记失败:", error);
@@ -980,12 +1159,15 @@ import { aiFailureKey } from "../libs/ai-feedback";
 
     async function submitHighlightReply(hl: HighlightItem): Promise<void> {
         if (replyBusy || !replyDraft.trim()) return;
+        if ((!hl.commentDocId || hl.commentDocId === docId) && !(await ensureWritableDoc())) return;
         replyBusy = true;
         try {
             const nextReplies = await addAnnotationReply(hl, replyDraft, facade.pluginInstance.app);
             docHighlights = docHighlights.map((item) => item.id === hl.id ? { ...item, replies: nextReplies } : item);
             replyDraft = "";
             replyingId = "";
+            if (docId) refreshWhaleDecorationsInProtyle(facade.pluginInstance.app, docId);
+            facade.notifyDataChanged();
             showMessage(t(i18n, "highlight.replyAdded"), 2000);
         } catch (error) {
             console.warn("[glean] 追加批注追记失败:", error);
@@ -996,6 +1178,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
     }
 
     async function handleDeleteHighlight(hl: HighlightItem): Promise<void> {
+        if ((!hl.commentDocId || hl.commentDocId === docId) && !(await ensureWritableDoc())) return;
         if (confirmDeleteId !== hl.id) {
             confirmDeleteId = hl.id;
             window.setTimeout(() => { if (confirmDeleteId === hl.id) confirmDeleteId = ""; }, 3200);
@@ -1026,15 +1209,17 @@ import { aiFailureKey } from "../libs/ai-feedback";
 
     async function invokeWhaleCommentFromSelection(): Promise<void> {
         if (!docId || !excerpt?.text) return;
+        if (!(await ensureWritableDoc())) return;
         const savedText = excerpt.text;
+        const savedBlockId = excerpt.blockId && excerpt.blockId !== docId ? excerpt.blockId : "";
         let rangeToUse = excerptRange;
 
         // 若处于阅读预览态（无 data-node-id），先切到编辑态并等待 wysiwyg DOM 就绪再定位 Range
-        if (mode === "read" || !excerpt.blockId) {
+        if (mode === "read" || !savedBlockId) {
             await setMode("edit");
             await tick();
             const wysiwyg = await waitForWysiwygReady(protyleHost, 1800);
-            const matched = findTextRangeInWysiwyg(wysiwyg, savedText);
+            const matched = findTextRangeInWysiwyg(wysiwyg, savedText, savedBlockId);
             if (matched) {
                 rangeToUse = matched;
             } else {
@@ -1060,12 +1245,13 @@ import { aiFailureKey } from "../libs/ai-feedback";
     async function invokeWhaleAiFromSelection(): Promise<void> {
         if (!docId || !excerpt?.text) return;
         const savedText = excerpt.text;
+        const savedBlockId = excerpt.blockId && excerpt.blockId !== docId ? excerpt.blockId : "";
         let rangeToUse = excerptRange;
-        if (mode === "read" || !excerpt.blockId) {
+        if (mode === "read" || !savedBlockId) {
             await setMode("edit");
             await tick();
             const wysiwyg = await waitForWysiwygReady(protyleHost, 1800);
-            const matched = findTextRangeInWysiwyg(wysiwyg, savedText);
+            const matched = findTextRangeInWysiwyg(wysiwyg, savedText, savedBlockId);
             if (matched) rangeToUse = matched;
         }
         const res = triggerWhaleAiExplain(facade.pluginInstance.app, protyleInstance, rangeToUse);
@@ -1213,12 +1399,15 @@ import { aiFailureKey } from "../libs/ai-feedback";
     }
 
     async function cycleHighlightColor(item: HighlightItem): Promise<void> {
-        const order = ["yellow", "red", "blue", "green"];
-        const currentIdx = order.indexOf(item.color || "yellow");
+        if ((!item.commentDocId || item.commentDocId === docId) && !(await ensureWritableDoc())) return;
+        const order = ["yellow", "red", "blue", "green"] as const;
+        const currentIdx = order.indexOf((item.color || "yellow") as (typeof order)[number]);
         const next = order[(currentIdx + 1) % order.length];
         try {
-            await writeHighlightColor(item.id, next);
-            docHighlights = docHighlights.map((hl) => (hl.id === item.id ? { ...hl, color: next } : hl));
+            await setAnnotationColor(item, next);
+            docHighlights = docHighlights.map((hl) => (hl.id === item.id ? { ...hl, color: next, customColor: undefined } : hl));
+            if (docId) refreshWhaleDecorationsInProtyle(facade.pluginInstance.app, docId);
+            facade.notifyDataChanged();
         } catch (error) {
             console.debug("[glean] 切换批注颜色失败:", error);
             showMessage(t(i18n, "msg.actionFailed"), 2500);
@@ -1249,7 +1438,13 @@ import { aiFailureKey } from "../libs/ai-feedback";
     async function copyAllDocHighlights(): Promise<void> {
         if (!docHighlights.length) return;
         try {
-            const lines = docHighlights.map((hl) => `> ${hl.text}\n\n— [${context?.title || t(i18n, "panel.untitled")}](siyuan://blocks/${hl.id})`).join("\n\n---\n\n");
+            const lines = docHighlights.map((hl) => {
+                const quoteLines = hl.text.split(/\r?\n/).map((line) => `> ${line}`).join("\n");
+                const memoBlock = hl.memo?.trim()
+                    ? "\n>\n" + hl.memo.trim().split(/\r?\n/).map((line, idx) => (idx === 0 ? `> 💡 ${line}` : `> ${line}`)).join("\n")
+                    : "";
+                return `${quoteLines}${memoBlock}\n\n— [${context?.title || t(i18n, "panel.untitled")}](siyuan://blocks/${hl.id})`;
+            }).join("\n\n---\n\n");
             await navigator.clipboard.writeText(lines);
             showMessage(t(i18n, "highlight.copied"), 2000);
         } catch {
@@ -1353,6 +1548,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
 
     async function runPurifyWechat(): Promise<void> {
         if (!docId || purifying) return;
+        if (!(await ensureWritableDoc())) return;
         purifying = true;
         try {
             const result = await purifyWechatArticle(facade.pluginInstance, docId);
@@ -1721,8 +1917,8 @@ import { aiFailureKey } from "../libs/ai-feedback";
         }
         if (action === "done" && (!context || context.id !== docId || statusBusy || context.status === "done")) return;
         if (action === "excerpt") {
-            excerpt = excerptFromSelection(protyleHost, window.getSelection());
-            if (!excerpt?.blockId || !context || context.id !== docId || excerptBusy) return;
+            excerpt = excerptFromSelection(protyleHost, window.getSelection(), docId);
+            if (!excerpt?.text || !docId || excerptBusy) return;
         }
         event.preventDefault();
         event.stopPropagation();
@@ -1754,21 +1950,36 @@ import { aiFailureKey } from "../libs/ai-feedback";
         void mode;
         void docId;
         if (!host) return;
-        const resolveScroller = (event?: Event): HTMLElement => {
-            const target = event?.target;
-            if (target instanceof HTMLElement && host.contains(target) && target.scrollHeight > target.clientHeight + 1) {
-                return target;
+        let scrollRafId: number | null = null;
+        let lastScrollTarget: EventTarget | null = null;
+        const resolveScroller = (targetEl?: EventTarget | null): HTMLElement => {
+            if (targetEl instanceof HTMLElement && host.contains(targetEl) && targetEl.scrollHeight > targetEl.clientHeight + 1) {
+                return targetEl;
             }
             return host.querySelector<HTMLElement>(".protyle-preview:not(.fn__none), .protyle-content:not(.fn__none), .protyle-wysiwyg:not(.fn__none)") ?? host;
         };
-        const handleScroll = (event?: Event) => {
-            const scroller = resolveScroller(event);
+        const flushScrollPercentage = () => {
+            scrollRafId = null;
+            const scroller = resolveScroller(lastScrollTarget);
             readingPercentage = estimateReadingPercentage(scroller.scrollTop, scroller.scrollHeight, scroller.clientHeight);
         };
+        const handleScroll = (event?: Event) => {
+            if (event) lastScrollTarget = event.target;
+            if (scrollRafId !== null) return;
+            if (typeof requestAnimationFrame === "function") {
+                scrollRafId = requestAnimationFrame(flushScrollPercentage);
+            } else {
+                flushScrollPercentage();
+            }
+        };
         host.addEventListener("scroll", handleScroll, { passive: true, capture: true });
-        handleScroll();
+        flushScrollPercentage();
         return () => {
             host.removeEventListener("scroll", handleScroll, true);
+            if (scrollRafId !== null && typeof cancelAnimationFrame === "function") {
+                cancelAnimationFrame(scrollRafId);
+                scrollRafId = null;
+            }
         };
     });
 
@@ -1777,54 +1988,85 @@ import { aiFailureKey } from "../libs/ai-feedback";
         const id = docId;
         const host = protyleHost;
         if (!id || !host) return;
-        sessionGeneration += 1;
-        contextRequests.invalidate();
-        context = null;
-        contextLoading = true;
-        contextError = false;
-        readingTimerDocId = "";
-        readingTimerExpectedRaw = null;
-        readingTimerExpectedLocation = null;
-        readingTimer = createReadingTimer();
-        moreToolsOpen = false;
-        appearanceOpen = false;
-        toolsAppearanceOpen = false;
-        outline = [];
-        aiResult = null;
-        summarySaving = false;
-        summarySaved = false;
-        questionResult = null;
-        question = "";
-        questionMode = "full";
-        relatedShown = false;
-        relatedItems = [];
-        relatedReason = null;
-        excerpt = null;
-        speechChunks = [];
-        speechChunkIndex = 0;
-        speechScope = null;
-        stopSpeech();
-        docHighlights = [];
-        readingPercentage = null;
-        companionTab = "outline";
-        editingAnnotation = null;
-        foldNodes = [];
-        foldLoading = false;
-        outlineFilter = "";
-        highlightColorFilter = "";
-        highlightKindFilter = "";
-        highlightTagFilter = "";
-        editingMemoId = "";
-        replyingId = "";
-        tagPickerId = "";
-        confirmDeleteId = "";
-        whaleStatus = getWhaleBridgeStatus(facade.pluginInstance.app);
-        void loadWhaleCustomTags(facade.pluginInstance.app).then((tags) => { if (mounted) whaleCustomTags = tags; });
-        void untrack(() => loadContext(id));
-        void untrack(() => loadOutline(id));
-        void untrack(() => loadDocHighlights(id));
-        return () => {
+        // 必须用 untrack 包裹重置逻辑：aiAbort/ghostreaderAbort/foldAiAbort 是 $state.raw，
+        // 若直接读取会导致开启 AI 请求时立刻重跑本 $effect 并当场中止请求、将 companionTab 弹回 outline！
+        untrack(() => {
             sessionGeneration += 1;
+            contextRequests.invalidate();
+            context = null;
+            docTitle = "";
+            contextLoading = true;
+            contextError = false;
+            readingTimerDocId = "";
+            readingTimerExpectedRaw = null;
+            readingTimerExpectedLocation = null;
+            readingTimerPersistedMinutes = 0;
+            readingTimer = createReadingTimer();
+            readPointRestoredDocId = "";
+            docAttrReadonly = false;
+            wechatAutoScannedDocId = "";
+            modeSwitchAnchorId = null;
+            moreToolsOpen = false;
+            appearanceOpen = false;
+            toolsAppearanceOpen = false;
+            outline = [];
+            aiAbort?.abort();
+            aiAbort = null;
+            aiBusy = "";
+            ghostreaderAbort?.abort();
+            ghostreaderAbort = null;
+            ghostreaderBusy = false;
+            ghostreaderHasChunk = false;
+            ghostreaderResult = null;
+            foldAiAbort?.abort();
+            foldAiAbort = null;
+            foldAiBusy = false;
+            aiResult = null;
+            summarySaving = false;
+            summarySaved = false;
+            questionResult = null;
+            question = "";
+            questionMode = "full";
+            relatedShown = false;
+            relatedItems = [];
+            relatedReason = null;
+            excerpt = null;
+            speechChunks = [];
+            speechChunkIndex = 0;
+            speechScope = null;
+            stopSpeech();
+            docHighlights = [];
+            readingPercentage = null;
+            companionTab = "outline";
+            editingAnnotation = null;
+            foldNodes = [];
+            foldLoading = false;
+            outlineFilter = "";
+            highlightColorFilter = "";
+            highlightKindFilter = "";
+            highlightTagFilter = "";
+            editingMemoId = "";
+            replyingId = "";
+            tagPickerId = "";
+            confirmDeleteId = "";
+            whaleStatus = getWhaleBridgeStatus(facade.pluginInstance.app);
+            void loadWhaleCustomTags(facade.pluginInstance.app).then((tags) => { if (mounted) whaleCustomTags = tags; });
+            void loadContext(id);
+            void loadDocTitle(id);
+            void loadOutline(id);
+            void loadDocHighlights(id);
+        });
+        return () => {
+            if (readingTimerDocId === id) {
+                void flushReadingMinutes(id, sessionGeneration, { silent: !mounted });
+            }
+            sessionGeneration += 1;
+            aiAbort?.abort();
+            aiAbort = null;
+            ghostreaderAbort?.abort();
+            ghostreaderAbort = null;
+            foldAiAbort?.abort();
+            foldAiAbort = null;
             contextRequests.invalidate();
             stopSpeech();
             outlineGeneration += 1;
@@ -1845,10 +2087,12 @@ import { aiFailureKey } from "../libs/ai-feedback";
         const onRecentReading = () => refreshRecentReadings();
         const onResize = () => protyle?.resize();
         const onData = () => {
+            activeSettings = facade.settings;
             if (docId) {
                 // 正文可能已在 Protyle 或其他页签中修改，避免伴读继续使用旧导出。
                 clearReaderMarkdownCache(facade.pluginInstance, docId);
                 void loadContext(docId);
+                void loadDocTitle(docId);
                 void loadOutline(docId);
                 void loadDocHighlights(docId);
                 if (companionTab === "fold") {
@@ -1859,10 +2103,13 @@ import { aiFailureKey } from "../libs/ai-feedback";
         const onVisibility = () => syncReadingTimer();
         const onWindowFocus = () => syncReadingTimer();
         const onWindowBlur = () => syncReadingTimer();
-        const onSelect = () => {
+        let selectTimer: number | null = null;
+        const applySelection = () => {
+            selectTimer = null;
+            const host = protyleHost;
             const selection = window.getSelection();
-            if (selectionBelongsToHost(protyleHost, selection)) {
-                const next = excerptFromSelection(protyleHost, selection);
+            if (host && selectionBelongsToHost(host, selection)) {
+                const next = excerptFromSelection(host, selection, docId);
                 if (next) {
                     excerpt = next;
                     excerptRange = selection && selection.rangeCount > 0 ? selection.getRangeAt(0).cloneRange() : null;
@@ -1870,8 +2117,26 @@ import { aiFailureKey } from "../libs/ai-feedback";
                 }
             }
             if (memoInputOpen || selectionBarLock) return;
-            excerpt = null;
-            excerptRange = null;
+            if (excerpt !== null || excerptRange !== null) {
+                excerpt = null;
+                excerptRange = null;
+            }
+        };
+        const onSelect = () => {
+            const host = protyleHost;
+            if (!host) return;
+            const selection = window.getSelection();
+            const anchorNode = selection?.anchorNode ?? null;
+            const inHost = Boolean(anchorNode && host.contains(anchorNode));
+            if (!inHost && excerpt === null && excerptRange === null) {
+                if (selectTimer !== null) {
+                    window.clearTimeout(selectTimer);
+                    selectTimer = null;
+                }
+                return;
+            }
+            if (selectTimer !== null) window.clearTimeout(selectTimer);
+            selectTimer = window.setTimeout(applySelection, 120);
         };
         const onWhaleUpdated = () => {
             whaleStatus = getWhaleBridgeStatus(facade.pluginInstance.app);
@@ -1893,6 +2158,10 @@ import { aiFailureKey } from "../libs/ai-feedback";
         window.addEventListener("siyuan-comment-pin-updated", onWhaleUpdated);
         window.addEventListener("siyuan-comment-settings-updated", onWhaleSettingsUpdated);
         return () => {
+            if (selectTimer !== null) {
+                window.clearTimeout(selectTimer);
+                selectTimer = null;
+            }
             if (prevLeftDock || prevRightDock || prevBottomDock) {
                 exitZenMode();
             }
@@ -1916,8 +2185,12 @@ import { aiFailureKey } from "../libs/ai-feedback";
         void protyleHost;
         void mode;
         void bodyState;
+        const ready = protyleStage === "ready";
         untrack(syncReadingTimer);
-        untrack(scanWechatPublisher);
+        if (ready && docId && context?.id === docId && wechatAutoScannedDocId !== docId) {
+            wechatAutoScannedDocId = docId;
+            untrack(() => void scanWechatPublisher(false));
+        }
     });
 
     $effect(() => {
@@ -1932,8 +2205,14 @@ import { aiFailureKey } from "../libs/ai-feedback";
     });
 
     // 视口相交高精度断点续读引擎联动（Issue #17 / D-0343）
+    // 仅依赖 docId / protyleHost / contextReady / ready，避免元数据/收藏刷新时重建 observer 造成抖动
     $effect(() => {
-        if (!docId || !protyleHost || !context) {
+        const ready = protyleStage === "ready";
+        const currentDocId = docId;
+        const host = protyleHost;
+        const contextReady = Boolean(context && context.id === currentDocId);
+        const currentMode = mode;
+        if (!currentDocId || !host || !contextReady || !ready) {
             if (readPointHandle) {
                 readPointHandle.disconnect();
                 readPointHandle = null;
@@ -1941,34 +2220,139 @@ import { aiFailureKey } from "../libs/ai-feedback";
             return;
         }
 
+        let disposed = false;
         let restoreTimer: number | null = null;
-        if (readPointRestoredDocId !== docId && context.readPoint) {
-            readPointRestoredDocId = docId;
-            const targetBlockId = context.readPoint;
-            restoreTimer = window.setTimeout(() => {
-                if (mounted && docId) {
-                    scrollAndPulseReadPoint(protyleHost, targetBlockId);
-                }
-            }, 400);
+        let restoreRetryTimer: number | null = null;
+        let settleTimer: number | null = null;
+        let restoreMutationObserver: MutationObserver | null = null;
+        const switchAnchor = untrack(() => modeSwitchAnchorId);
+        const initialReadPoint = switchAnchor ?? untrack(() => context?.readPoint);
+        const needsRestore = Boolean(initialReadPoint && (switchAnchor !== null || readPointRestoredDocId !== currentDocId));
+        // 在断点恢复完成（或用户真实主动滚动）前，严格冻结写入，防止首屏或切模式 scrollTop=0 反向覆写 custom-lv-read-point
+        let writeFrozen = needsRestore;
+
+        const clearRestoreWatchers = () => {
+            if (restoreTimer !== null) {
+                window.clearTimeout(restoreTimer);
+                restoreTimer = null;
+            }
+            if (restoreRetryTimer !== null) {
+                window.clearInterval(restoreRetryTimer);
+                restoreRetryTimer = null;
+            }
+            if (restoreMutationObserver) {
+                restoreMutationObserver.disconnect();
+                restoreMutationObserver = null;
+            }
+        };
+
+        const unfreezeOnUserScroll = () => {
+            if (disposed || !writeFrozen) return;
+            writeFrozen = false;
+            modeSwitchAnchorId = null;
+            readPointRestoredDocId = currentDocId;
+            clearRestoreWatchers();
+            if (settleTimer !== null) {
+                window.clearTimeout(settleTimer);
+                settleTimer = null;
+            }
+        };
+
+        const onUserKeyScroll = (event: KeyboardEvent) => {
+            if (event.key === " " || event.key === "Spacebar" || event.key === "PageDown" || event.key === "PageUp" || event.key === "ArrowDown" || event.key === "ArrowUp") {
+                unfreezeOnUserScroll();
+            }
+        };
+
+        if (needsRestore) {
+            host.addEventListener("wheel", unfreezeOnUserScroll, { passive: true, once: true });
+            host.addEventListener("touchmove", unfreezeOnUserScroll, { passive: true, once: true });
+            host.addEventListener("pointerdown", unfreezeOnUserScroll, { passive: true, once: true });
+            window.addEventListener("keydown", onUserKeyScroll, { passive: true });
         }
 
         if (readPointHandle) {
             readPointHandle.disconnect();
         }
         readPointHandle = createReadPointObserver({
-            host: protyleHost,
-            docId,
+            host,
+            docId: currentDocId,
             dwellMs: 1000,
+            isWriteFrozen: () => writeFrozen,
             onReadPointChange(blockId) {
-                if (mounted && docId) {
-                    void saveReadPoint(facade.pluginInstance, docId, blockId);
+                if (writeFrozen) return;
+                if (mounted && docId === currentDocId) {
+                    currentBookmarkBlockId = blockId;
+                    void saveReadPoint(facade.pluginInstance, currentDocId, blockId);
                 }
             },
         });
 
+        if (needsRestore && initialReadPoint) {
+            const targetBlockId = initialReadPoint;
+            const startedAt = Date.now();
+            const isModeDomReady = (): boolean => {
+                if (!protyleHost) return false;
+                if (currentMode === "edit") {
+                    return Boolean(protyleHost.querySelector(".protyle-wysiwyg:not(.fn__none) [data-node-id]"));
+                }
+                return Boolean(protyleHost.querySelector('.protyle-preview:not(.fn__none) .b3-typography [id], .protyle-preview:not(.fn__none) [data-node-id]'));
+            };
+            const tryRestore = (): boolean => {
+                if (disposed || !mounted || docId !== currentDocId || !protyleHost) return true;
+                if (!writeFrozen) return true;
+                if (isModeDomReady() && scrollAndPulseReadPoint(protyleHost, targetBlockId)) {
+                    readPointRestoredDocId = currentDocId;
+                    modeSwitchAnchorId = null;
+                    currentBookmarkBlockId = targetBlockId;
+                    clearRestoreWatchers();
+                    settleTimer = window.setTimeout(() => {
+                        if (!disposed) writeFrozen = false;
+                    }, 900);
+                    return true;
+                }
+                if (Date.now() - startedAt >= 4000) {
+                    clearRestoreWatchers();
+                    if (isModeDomReady()) {
+                        readPointRestoredDocId = currentDocId;
+                        modeSwitchAnchorId = null;
+                        writeFrozen = false;
+                    }
+                    return true;
+                }
+                return false;
+            };
+
+            restoreTimer = window.setTimeout(() => {
+                if (!tryRestore() && !disposed) {
+                    if (typeof MutationObserver !== "undefined" && host instanceof Node) {
+                        try {
+                            restoreMutationObserver = new MutationObserver(() => {
+                                void tryRestore();
+                            });
+                            restoreMutationObserver.observe(host, { childList: true, subtree: true, attributes: true, attributeFilter: ["class"] });
+                        } catch {
+                            restoreMutationObserver = null;
+                        }
+                    }
+                    restoreRetryTimer = window.setInterval(() => {
+                        void tryRestore();
+                    }, 120);
+                }
+            }, 60);
+        }
+
         return () => {
-            if (restoreTimer !== null) {
-                window.clearTimeout(restoreTimer);
+            disposed = true;
+            clearRestoreWatchers();
+            if (settleTimer !== null) {
+                window.clearTimeout(settleTimer);
+            }
+            if (needsRestore) {
+                host.removeEventListener("wheel", unfreezeOnUserScroll);
+                host.removeEventListener("touchmove", unfreezeOnUserScroll);
+                host.removeEventListener("pointerdown", unfreezeOnUserScroll);
+                window.removeEventListener("keydown", onUserKeyScroll);
             }
             if (readPointHandle) {
                 readPointHandle.disconnect();
@@ -2095,25 +2479,34 @@ import { aiFailureKey } from "../libs/ai-feedback";
 
     async function quoteExcerpt(memo?: string, color?: string): Promise<void> {
         if (!excerpt?.text || !docId || excerptBusy) return;
+        if (!(await ensureWritableDoc())) return;
         excerptBusy = true;
         try {
-            let targetBlockId = excerpt.blockId;
+            let targetBlockId = excerpt.blockId && excerpt.blockId !== docId ? excerpt.blockId : "";
+            const selectionContext = extractSelectionSearchContext(protyleHost, excerptRange, excerpt.text);
             if (!targetBlockId) {
-                const wysiwyg = protyleHost?.querySelector<HTMLElement>(".protyle-wysiwyg") ?? null;
+                const wysiwyg = protyleHost?.querySelector<HTMLElement>(".protyle-wysiwyg:not(.fn__none)") ?? null;
                 const matchedRange = wysiwyg ? findTextRangeInWysiwyg(wysiwyg, excerpt.text) : null;
                 const startEl = matchedRange?.startContainer instanceof Element
                     ? matchedRange.startContainer
                     : matchedRange?.startContainer?.parentElement;
-                targetBlockId = startEl?.closest("[data-node-id]")?.getAttribute("data-node-id") ?? "";
+                let matchedBlock = startEl?.closest("[data-node-id]") ?? null;
+                if (matchedBlock?.getAttribute("data-type") === "NodeListItem") {
+                    matchedBlock = matchedBlock.parentElement?.closest("[data-node-id]") ?? null;
+                }
+                const candidateId = matchedBlock?.getAttribute("data-node-id") ?? "";
+                if (candidateId && candidateId !== docId && matchedBlock?.getAttribute("data-type") !== "NodeDocument") {
+                    targetBlockId = candidateId;
+                }
             }
             if (!targetBlockId) {
-                targetBlockId = await resolveExcerptBlockId(docId, excerpt.text);
+                targetBlockId = await resolveExcerptBlockId(docId, excerpt.text, selectionContext);
             }
-            if (!targetBlockId) {
+            if (!targetBlockId || targetBlockId === docId) {
                 await copyText(memo ? `${excerpt.text}\n\n💡 ${memo}` : excerpt.text);
                 return;
             }
-            const newBlockId = await insertQuoteExcerpt(targetBlockId, excerpt.text, memo);
+            const newBlockId = await insertQuoteExcerpt(targetBlockId, excerpt.text, memo, { normalizeListAnchor: true });
             try {
                 await markGleanHighlight(newBlockId, color);
             } catch (err) {
@@ -2135,6 +2528,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
     }
 
     function handleMemoKeyDown(event: KeyboardEvent): void {
+        if (event.isComposing || event.keyCode === 229) return;
         if (event.key === "Enter") {
             event.preventDefault();
             event.stopPropagation();
@@ -2265,80 +2659,125 @@ import { aiFailureKey } from "../libs/ai-feedback";
         }
     }
 
+    function cancelAiTask(): void {
+        if (!aiBusy) return;
+        aiAbort?.abort();
+        aiAbort = null;
+        aiBusy = "";
+    }
+
     async function runSummarize(): Promise<void> {
-        if (!context || context.id !== docId || aiBusy || !aiReady) return;
-        const current = context;
+        if (!docId || aiBusy || !aiReady) return;
+        const targetDocId = docId;
         const generation = sessionGeneration;
+        const controller = new AbortController();
+        aiAbort = controller;
         aiBusy = "summarize";
         aiResult = null;
         summarySaved = false;
         try {
-            const outcome = await readerSummarize(facade.pluginInstance, current.id, facade.settings);
-            if (!currentSession(current.id, generation)) return;
+            const outcome = await readerSummarize(facade.pluginInstance, targetDocId, activeSettings, { signal: controller.signal });
+            if (controller.signal.aborted || outcome.aborted || !currentSession(targetDocId, generation)) return;
             if (outcome.ok && outcome.text) {
                 aiResult = { kind: "summarize", action: t(i18n, "reader.aiSummarize"), text: outcome.text, scope: "full" };
             } else if (outcome.skipped === "cap") {
-                showMessage(t(i18n, "ai.capReached", { n: facade.settings.ai.enrichDailyCap }), 4000);
+                showMessage(t(i18n, "ai.capReached", { n: activeSettings.ai.enrichDailyCap }), 4000);
             } else if (outcome.skipped !== "off") {
                 showMessage(t(i18n, aiFailureKey(outcome.skipped) ?? "ai.enrichFailed"), 3000);
             }
         } catch (error) {
-            console.warn("[glean] AI 摘要异常:", error);
-            showMessage(t(i18n, "reader.actionFailed"), 3000);
+            if (!controller.signal.aborted) {
+                console.warn("[glean] AI 摘要异常:", error);
+                showMessage(t(i18n, "reader.actionFailed"), 3000);
+            }
         } finally {
-            aiBusy = "";
+            if (aiAbort === controller) {
+                aiAbort = null;
+                aiBusy = "";
+            }
         }
     }
 
     async function runTranslate(): Promise<void> {
-        if (!context || context.id !== docId || aiBusy || !aiReady || !excerpt?.text) return;
-        const current = context;
+        if (!docId || aiBusy || !aiReady || !excerpt?.text) return;
+        const targetDocId = docId;
+        const selectedText = excerpt.text;
         const generation = sessionGeneration;
+        const controller = new AbortController();
+        aiAbort = controller;
         aiBusy = "translate";
         aiResult = null;
         summarySaved = false;
+        const needOverlay = immersive || zenMode;
+        if (!needOverlay) {
+            sidebarCollapsed = false;
+            if (companionTab !== "all") companionTab = "ai";
+        }
         try {
-            const outcome = await readerTranslate(facade.pluginInstance, current.id, excerpt.text, facade.settings);
-            if (!currentSession(current.id, generation)) return;
+            const outcome = needOverlay
+                ? await withLvAiWait(
+                    {
+                        scenario: "transform",
+                        title: t(i18n, "reader.aiTranslate"),
+                        signal: controller.signal,
+                        onCancel: cancelAiTask,
+                    },
+                    (signal) => readerTranslate(facade.pluginInstance, targetDocId, selectedText, activeSettings, { signal }),
+                )
+                : await readerTranslate(facade.pluginInstance, targetDocId, selectedText, activeSettings, { signal: controller.signal });
+            if (controller.signal.aborted || outcome.aborted || !currentSession(targetDocId, generation)) return;
             if (outcome.ok && outcome.text) {
                 aiResult = { kind: "translate", action: t(i18n, "reader.aiTranslate"), text: outcome.text, scope: "selection" };
+                if (needOverlay) {
+                    immersive = false;
+                    zenMode = false;
+                    sidebarCollapsed = false;
+                    if (companionTab !== "all") companionTab = "ai";
+                }
             } else if (outcome.skipped === "cap") {
-                showMessage(t(i18n, "ai.capReached", { n: facade.settings.ai.enrichDailyCap }), 4000);
+                showMessage(t(i18n, "ai.capReached", { n: activeSettings.ai.enrichDailyCap }), 4000);
             } else if (outcome.skipped !== "off") {
                 showMessage(t(i18n, aiFailureKey(outcome.skipped) ?? "ai.enrichFailed"), 3000);
             }
         } catch (error) {
-            console.warn("[glean] AI 翻译异常:", error);
-            showMessage(t(i18n, "reader.actionFailed"), 3000);
+            if (!controller.signal.aborted) {
+                console.warn("[glean] AI 翻译异常:", error);
+                showMessage(t(i18n, "reader.actionFailed"), 3000);
+            }
         } finally {
-            aiBusy = "";
+            if (aiAbort === controller) {
+                aiAbort = null;
+                aiBusy = "";
+            }
         }
     }
 
     function triggerQuickQuestion(promptText: string): void {
-        if (!context || context.id !== docId || aiBusy || !aiReady || !articleQuestionOn) return;
+        if (!docId || aiBusy || !aiReady || !articleQuestionOn) return;
         question = promptText;
         void runArticleQuestion();
     }
 
     async function runArticleQuestion(): Promise<void> {
-        if (!context || context.id !== docId || aiBusy || !aiReady || !articleQuestionOn) return;
-        const current = context;
+        if (!docId || aiBusy || !aiReady || !articleQuestionOn) return;
+        const targetDocId = docId;
         const generation = sessionGeneration;
         const source = questionMode === "selection" && excerpt?.blockId ? excerpt.text : "";
         if (questionMode === "selection" && !source) {
             showMessage(t(i18n, "reader.articleQuestion.invalid"), 3000);
             return;
         }
+        const controller = new AbortController();
+        aiAbort = controller;
         aiBusy = "question";
         questionResult = null;
         try {
-            const outcome = await readerArticleQuestion(facade.pluginInstance, current.id, question, facade.settings, source, questionMode === "selection" ? excerpt?.blockId ?? "" : "");
-            if (!currentSession(current.id, generation)) return;
+            const outcome = await readerArticleQuestion(facade.pluginInstance, targetDocId, question, activeSettings, source, questionMode === "selection" ? excerpt?.blockId ?? "" : "", { signal: controller.signal });
+            if (controller.signal.aborted || outcome.aborted || !currentSession(targetDocId, generation)) return;
             if (outcome.ok && outcome.result) {
                 questionResult = { answer: outcome.result.answer, evidence: outcome.result.evidence, truncated: Boolean(outcome.truncated), scope: questionMode };
             } else if (outcome.skipped === "cap") {
-                showMessage(t(i18n, "ai.capReached", { n: facade.settings.ai.enrichDailyCap }), 4000);
+                showMessage(t(i18n, "ai.capReached", { n: activeSettings.ai.enrichDailyCap }), 4000);
             } else if (outcome.skipped === "changed") {
                 showMessage(t(i18n, "reader.articleQuestion.changed"), 3500);
             } else if (outcome.skipped === "invalid") {
@@ -2347,30 +2786,51 @@ import { aiFailureKey } from "../libs/ai-feedback";
                 showMessage(t(i18n, aiFailureKey(outcome.skipped) ?? "ai.enrichFailed"), 3000);
             }
         } catch (error) {
-            console.warn("[glean] 文章提问异常:", error);
-            showMessage(t(i18n, "reader.actionFailed"), 3000);
+            if (!controller.signal.aborted) {
+                console.warn("[glean] 文章提问异常:", error);
+                showMessage(t(i18n, "reader.actionFailed"), 3000);
+            }
         } finally {
-            aiBusy = "";
+            if (aiAbort === controller) {
+                aiAbort = null;
+                aiBusy = "";
+            }
         }
+    }
+
+    function cancelGhostreader(): void {
+        ghostreaderAbort?.abort();
+        ghostreaderAbort = null;
+        ghostreaderBusy = false;
+        ghostreaderHasChunk = false;
+        ghostreaderResult = null;
     }
 
     async function handleGhostreader(action: GhostreaderAction, query?: string): Promise<void> {
         if (!docId || !excerpt?.text || ghostreaderBusy) return;
+        if (!aiOn) {
+            showMessage(t(i18n, "reader.aiOff"), 3000);
+            return;
+        }
         // 2026-11-21 走查修复（P2）：补会话守卫——流式期间切换文章时旧分析残留新面板、
         // 插入会把 A 文解读写进 B 文（同文件 runRelated/ai 分支均有 currentSession 守卫，唯此处缺失）。
         const generation = sessionGeneration;
         const srcDocId = docId;
+        ghostreaderAbort?.abort();
+        const controller = new AbortController();
+        ghostreaderAbort = controller;
         ghostreaderBusy = true;
+        ghostreaderHasChunk = false;
         const sourceText = excerpt.text;
         const sourceBlockId = excerpt.blockId;
-        const title = context?.title;
+        const title = context?.title || docTitle;
 
         ghostreaderResult = {
             action,
             actionLabel: GHOSTREADER_ACTIONS.find((a) => a.id === action)?.label || "伴读分析",
             sourceText,
             sourceBlockId,
-            answer: "正在深度思考与剖析...",
+            answer: "",
             timestamp: new Date().toISOString(),
             status: "streaming",
         };
@@ -2383,25 +2843,34 @@ import { aiFailureKey } from "../libs/ai-feedback";
                 title,
                 query,
                 (partial) => {
-                    if (ghostreaderResult && currentSession(srcDocId, generation)) {
+                    if (!controller.signal.aborted && ghostreaderResult && currentSession(srcDocId, generation)) {
+                        ghostreaderHasChunk = true;
                         ghostreaderResult.answer = partial;
                     }
-                }
+                },
+                { plugin: facade.pluginInstance, settings: activeSettings, docId: srcDocId, signal: controller.signal }
             );
-            if (!currentSession(srcDocId, generation)) return; // 已切换文档：丢弃过期结果
+            if (controller.signal.aborted || res.aborted || !currentSession(srcDocId, generation)) return; // 已取消或已切换文档：丢弃结果
             ghostreaderResult = res;
+            if (res.status === "failed" && res.skipped === "cap") {
+                showMessage(t(i18n, "ai.capReached", { n: String(activeSettings.ai.enrichDailyCap) }), 3500);
+            }
         } catch (err) {
-            if (ghostreaderResult && currentSession(srcDocId, generation)) {
+            if (!controller.signal.aborted && ghostreaderResult && currentSession(srcDocId, generation)) {
                 ghostreaderResult.status = "failed";
                 ghostreaderResult.error = err instanceof Error ? err.message : "请求失败";
             }
         } finally {
-            ghostreaderBusy = false;
+            if (ghostreaderAbort === controller) {
+                ghostreaderAbort = null;
+                ghostreaderBusy = false;
+            }
         }
     }
 
     async function handleSaveGhostreaderCallout(): Promise<void> {
         if (!docId || !ghostreaderResult || ghostreaderInserting) return;
+        if (!(await ensureWritableDoc())) return;
         // 2026-11-21 走查修复（P2）：插入前校验解读来源段落与当前选中段落一致，杜绝跨文档/跨段落串写
         if (ghostreaderResult.sourceBlockId !== excerpt?.blockId) {
             showMessage(t(i18n, "msg.ghostreaderStale"), 3200, "error");
@@ -2456,26 +2925,32 @@ import { aiFailureKey } from "../libs/ai-feedback";
     }
 
     async function runRelated(): Promise<void> {
-        if (!context || context.id !== docId || aiBusy || !aiReady) return;
-        const current = context;
+        if (!docId || aiBusy || !aiReady) return;
+        const targetDocId = docId;
+        const targetTitle = context?.title || docTitle || "";
         const generation = sessionGeneration;
+        const controller = new AbortController();
+        aiAbort = controller;
         aiBusy = "related";
         relatedReason = null;
         try {
-            const outcome = await findRelatedOutcome(current.id, current.title, [], { plugin: facade.pluginInstance, settings: facade.settings });
-            if (!currentSession(current.id, generation)) return;
+            const outcome = await findRelatedOutcome(targetDocId, targetTitle, [], { plugin: facade.pluginInstance, settings: activeSettings, signal: controller.signal });
+            if (controller.signal.aborted || outcome.aborted || !currentSession(targetDocId, generation)) return;
             relatedItems = outcome.items;
             relatedReason = outcome.reason;
             relatedShown = true;
         } catch {
-            if (currentSession(current.id, generation)) {
+            if (!controller.signal.aborted && currentSession(targetDocId, generation)) {
                 relatedItems = [];
                 relatedReason = "error";
                 relatedShown = true;
                 showMessage(t(i18n, "reader.relatedFailed"), 3500);
             }
         } finally {
-            aiBusy = "";
+            if (aiAbort === controller) {
+                aiAbort = null;
+                aiBusy = "";
+            }
         }
     }
 
@@ -2525,6 +3000,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
 
     async function insertAiResultCallout(): Promise<void> {
         if (!docId || !aiResult || insertingCallout) return;
+        if (!(await ensureWritableDoc())) return;
         insertingCallout = true;
         try {
             await insertAiCalloutToDocument(docId, aiResult.text, {
@@ -2545,6 +3021,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
 
     async function handleSyncMetaCallout(): Promise<void> {
         if (!docId || syncingMetaCallout) return;
+        if (!(await ensureWritableDoc())) return;
         syncingMetaCallout = true;
         try {
             const labels = {
@@ -2600,6 +3077,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
 
     async function insertQuestionCallout(): Promise<void> {
         if (!docId || !questionResult || insertingCallout) return;
+        if (!(await ensureWritableDoc())) return;
         insertingCallout = true;
         const body = questionResult.evidence.length > 0
             ? `${questionResult.answer}\n\n${questionResult.evidence.map((line) => `> ${line}`).join("\n")}`
@@ -2621,9 +3099,21 @@ import { aiFailureKey } from "../libs/ai-feedback";
 
     function setMode(next: "read" | "edit"): void {
         if (mode === next) return;
+        const capturedAnchor = readPointHandle?.captureCurrentPoint() ?? currentBookmarkBlockId ?? context?.readPoint ?? null;
+        modeSwitchAnchorId = capturedAnchor;
+        if (capturedAnchor) currentBookmarkBlockId = capturedAnchor;
+        const switchDocId = docId;
         mode = next;
         if (protyle) {
             protyle.setMode(modeValue(next));
+        }
+        if (next === "read" && switchDocId) {
+            clearReaderMarkdownCache(facade.pluginInstance, switchDocId);
+            void loadOutline(switchDocId);
+            void loadDocHighlights(switchDocId);
+            if (companionTab === "fold") {
+                void refreshFoldNodes(switchDocId);
+            }
         }
         showMessage(t(i18n, next === "edit" ? "reader.editHint" : "reader.readHint"), 2500);
     }
@@ -2830,6 +3320,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
     function backToLibrary(): void {
         stopSpeech();
         if (context?.id === docId) void facade.openLibraryArticle(context.id);
+        else facade.openPanel("library");
     }
 
     function carrierLabel(value: string | undefined): string {
@@ -2872,7 +3363,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
                         type="button"
                         class="glean-reader__toolbar-title glean-linkish"
                         style="background: transparent; border: none; padding: 0; text-align: left; cursor: pointer;"
-                        title={`${context?.title || t(i18n, "panel.untitled")}${t(i18n, "reader.openDocHint")}`}
+                        title={`${context?.title || docTitle || t(i18n, "panel.untitled")}${t(i18n, "reader.openDocHint")}`}
                         onclick={() => { if (docId) void openTab({ app: facade.pluginInstance.app, doc: { id: docId } }); }}
                         oncontextmenu={async (e) => {
                             if (docId) {
@@ -2894,11 +3385,13 @@ import { aiFailureKey } from "../libs/ai-feedback";
                                 }
                             }
                         }}
-                    >{context?.title || t(i18n, "panel.untitled")}</button>
+                    >{context?.title || docTitle || t(i18n, "panel.untitled")}</button>
                     {#if context}
                         <span class="glean-reader__toolbar-meta">
                             {carrierLabel(context.contentType)}{#if context.site} · {context.site}{/if}{#if context.author} · {#if authorPerson}<button type="button" class="glean-linkish glean-reader__author-contact-btn" title={t(i18n, "reader.authorContactHint", {name: authorPerson.name})} onclick={openAuthorContactDoc}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanUser" /></svg> {context.author}</button>{:else}{context.author}{/if}{/if}{#if (context.words ?? 0) > 0} · {t(i18n, "panel.words", { n: context.words ?? 0 })}{/if}{#if estReadingMinutes} · 约 {estReadingMinutes}m{/if}
                         </span>
+                    {:else if !contextLoading && !contextError}
+                        <span class="glean-reader__toolbar-meta">{t(i18n, "reader.notInLibraryBadge")}</span>
                     {/if}
                 </div>
             </div>
@@ -3164,8 +3657,8 @@ import { aiFailureKey } from "../libs/ai-feedback";
             <div class="glean-reader__progress-bar" style="width: {readingPercentage}%" role="progressbar" aria-valuenow={readingPercentage} aria-valuemin="0" aria-valuemax="100" aria-label={t(i18n, "reader.progress")}></div>
         {/if}
         {#if docId}
-            <ProtyleHost app={facade.pluginInstance.app} {docId} mode={modeValue(mode)} {i18n} bind:host={protyleHost} bind:controller={protyle} bind:protyleInstance className="glean-reader__host" onOpenDocument={() => { if (docId) void openTab({ app: facade.pluginInstance.app, doc: { id: docId } }); }} />
-            <ReaderSearch bind:open={searchOpen} host={protyleHost} {i18n} onClose={() => { searchOpen = false; }} />
+            <ProtyleHost app={facade.pluginInstance.app} {docId} mode={modeValue(mode)} {i18n} bind:host={protyleHost} bind:controller={protyle} bind:protyleInstance bind:stage={protyleStage} className="glean-reader__host" onOpenDocument={() => { if (docId) void openTab({ app: facade.pluginInstance.app, doc: { id: docId } }); }} />
+            <ReaderSearch bind:open={searchOpen} host={protyleHost} {docId} {mode} stage={protyleStage} {i18n} onClose={() => { searchOpen = false; }} />
             {#if excerpt?.text && !searchOpen}
                 <div
                     class="glean-reader__selection-bar"
@@ -3222,9 +3715,9 @@ import { aiFailureKey } from "../libs/ai-feedback";
                         type="button"
                         class="glean-btn glean-btn--ghost glean-reader__selection-btn glean-reader__ghostreader-btn"
                         class:glean-btn--active={ghostreaderOpen}
-                        disabled={excerptBusy || ghostreaderBusy}
+                        disabled={excerptBusy || ghostreaderBusy || !aiOn}
                         onclick={() => { ghostreaderOpen = !ghostreaderOpen; }}
-                        title={t(i18n, "ghost.askBtnHint")}
+                        title={aiOn ? t(i18n, "ghost.askBtnHint") : t(i18n, "reader.aiOff")}
                     >
                         <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg>
                         <span>Ghostreader</span>
@@ -3325,6 +3818,9 @@ import { aiFailureKey } from "../libs/ai-feedback";
 
             {#if ghostreaderOpen && excerpt?.text}
                 <div class="glean-ghostreader-panel" role="region" aria-label={t(i18n, "ghost.panelAria")}>
+                    {#if !aiOn}
+                        <div class="glean-reader__hint">{t(i18n, "reader.aiOff")}</div>
+                    {:else}
                     <div class="glean-ghostreader-actions">
                         <button
                             type="button"
@@ -3358,6 +3854,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
                             bind:value={ghostreaderCustomQuery}
                             placeholder={t(i18n, "ghost.customPlaceholder")}
                             onkeydown={(e) => {
+                                if (e.isComposing || e.keyCode === 229) return;
                                 if (e.key === "Enter" && ghostreaderCustomQuery.trim()) {
                                     void handleGhostreader("custom", ghostreaderCustomQuery);
                                 }
@@ -3380,6 +3877,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
                             <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanClose" /></svg>
                         </button>
                     </div>
+                    {/if}
                 </div>
             {/if}
 
@@ -3389,14 +3887,11 @@ import { aiFailureKey } from "../libs/ai-feedback";
                         <div class="glean-ghostreader-card__title">
                             <span class="glean-ghostreader-card__badge">🤖 Ghostreader</span>
                             <strong>{ghostreaderResult.actionLabel}</strong>
-                            {#if ghostreaderBusy}
-                                <span class="glean-ghostreader-card__spinner glean-spin">◷</span>
-                            {/if}
                         </div>
                         <button
                             type="button"
                             class="glean-icon-btn"
-                            onclick={() => { ghostreaderResult = null; }}
+                            onclick={cancelGhostreader}
                             title={t(i18n, "action.close")}
                         >
                             <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanClose" /></svg>
@@ -3408,6 +3903,14 @@ import { aiFailureKey } from "../libs/ai-feedback";
                     <div class="glean-ghostreader-card__body">
                         {#if ghostreaderResult.status === "failed"}
                             <div class="glean-ghostreader-card__error">{ghostreaderResult.error || "生成失败"}</div>
+                        {:else if ghostreaderBusy && !ghostreaderHasChunk}
+                            <AiThinkingCard
+                                scenario="socratic"
+                                title={`Ghostreader · ${ghostreaderResult.actionLabel}`}
+                                compact
+                                signal={ghostreaderAbort?.signal}
+                                onCancel={cancelGhostreader}
+                            />
                         {:else}
                             <div class="glean-ghostreader-card__text">{ghostreaderResult.answer}</div>
                         {/if}
@@ -3743,13 +4246,22 @@ import { aiFailureKey } from "../libs/ai-feedback";
                     {/if}
                 </div>
             {:else if !isWechatArticle && (companionTab === "tools" || companionTab === "all")}
-                <div class="glean-reader__meta">
-                    <span class={`glean-carrier-badge glean-carrier-badge--${resolveCarrier(context?.contentType)}`}>
-                        {carrierLabel(context?.contentType)}
-                    </span>
-                    {#if context?.site}<span>{context.site}</span>{/if}
-                    {#if context?.author}<span>{context.author}</span>{/if}
-                </div>
+                {#if context}
+                    <div class="glean-reader__meta">
+                        <span class={`glean-carrier-badge glean-carrier-badge--${resolveCarrier(context.contentType)}`}>
+                            {carrierLabel(context.contentType)}
+                        </span>
+                        {#if context.site}<span>{context.site}</span>{/if}
+                        {#if context.author}<span>{context.author}</span>{/if}
+                    </div>
+                {:else if !contextLoading && !contextError}
+                    <div class="glean-reader__meta">
+                        <span class="glean-carrier-badge glean-carrier-badge--local">{t(i18n, "reader.notInLibraryBadge")}</span>
+                        <button type="button" class="glean-btn glean-btn--pri glean-btn--xs" disabled={addingToLibrary} onclick={() => void addCurrentNoteToLibrary()}>
+                            {addingToLibrary ? t(i18n, "reader.addingToLibrary") : t(i18n, "reader.addToLibrary")}
+                        </button>
+                    </div>
+                {/if}
             {/if}
             {#if (companionTab === "outline" || companionTab === "all") && context && !contextLoading}
                 <div class="glean-reader__metric-capsule" role="region" aria-label={t(i18n, "panel.rankTitle")}>
@@ -3912,7 +4424,9 @@ import { aiFailureKey } from "../libs/ai-feedback";
                         loading={foldLoading}
                         aiBusy={foldAiBusy}
                         aiEnriched={foldAiEnriched}
+                        aiSignal={foldAiAbort?.signal}
                         onRunAiEnrich={runFoldAiEnrich}
+                        onCancelAiEnrich={cancelFoldAiEnrich}
                         onLevelChange={(lvl) => {
                             foldGlobalLevel = lvl;
                             foldNodes = applyGlobalFoldLevel(foldNodes, lvl);
@@ -4008,7 +4522,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
                             {/if}
                         </div>
                     {/if}
-                    {#if outlineLoading}
+                    {#if outlineLoading && outline.length === 0}
                         <div class="glean-reader__hint" role="status" aria-live="polite">{t(i18n, "reader.outlineLoading")}</div>
                     {:else if outlineError}
                         <div class="glean-reader__issue" role="alert">{t(i18n, "reader.outlineFailed")}</div>
@@ -4143,7 +4657,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
                 {/if}
             {/snippet}
 
-            {#if (companionTab === "all" || companionTab === "outline") && (outline.length > 0 || outlineLoading)}
+            {#if (companionTab === "all" || companionTab === "outline") && (outline.length > 0 || outlineLoading || outlineError)}
                 {#if companionTab === "all"}
                     <details id={outlineTitleId} class="glean-reader__section glean-reader__section--card glean-reader__fold" aria-labelledby={outlineTitleId} bind:open={outlineOpen} ontoggle={onOutlineToggle}>
                         <summary id={outlineTitleId} class="glean-reader__section-title">
@@ -4224,7 +4738,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
                         </button>
                     {/if}
                 </div>
-                {#if highlightsLoading}
+                {#if highlightsLoading && docHighlights.length === 0}
                     <div class="glean-reader__hint" role="status" aria-live="polite">{t(i18n, "panel.loading")}</div>
                 {:else if docHighlights.length === 0}
                         <div class="glean-reader__hint">{t(i18n, "reader.highlightsEmpty")}</div>
@@ -4329,6 +4843,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
                                                 bind:value={editingMemoDraft}
                                                 placeholder={t(i18n, "highlight.memoPlaceholderEdit")}
                                                 onkeydown={(e) => {
+                                                    if (e.isComposing || e.keyCode === 229) return;
                                                     if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); void submitEditMemo(hl); }
                                                     if (e.key === "Escape") { e.preventDefault(); editingMemoId = ""; }
                                                 }}
@@ -4378,6 +4893,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
                                                 bind:value={replyDraft}
                                                 placeholder={t(i18n, "highlight.replyPlaceholder")}
                                                 onkeydown={(e) => {
+                                                    if (e.isComposing || e.keyCode === 229) return;
                                                     if (e.key === "Enter") { e.preventDefault(); void submitHighlightReply(hl); }
                                                     if (e.key === "Escape") { e.preventDefault(); replyingId = ""; }
                                                 }}
@@ -4490,13 +5006,14 @@ import { aiFailureKey } from "../libs/ai-feedback";
                         <div id={recentTitleId} class="glean-reader__section-title" role="heading" aria-level="3">{t(i18n, "reader.recentTitle")}</div>
                         <div class="glean-reader__recent-list">
                             {#each recentReadings as item (item.id)}
+                                {@const displayRecentTitle = item.title || (item.id === docId ? docTitle : "") || t(i18n, "panel.untitled")}
                                 <button
                                     class="glean-reader__recent-item"
                                     class:glean-reader__recent-item--current={item.id === docId}
                                     aria-current={item.id === docId ? "page" : undefined}
-                                    title={item.title || item.id}
+                                    title={displayRecentTitle}
                                     onclick={() => openRecentReading(item)}
-                                >{item.title || item.id}</button>
+                                >{displayRecentTitle}</button>
                             {:else}
                                 <div class="glean-reader__hint">{t(i18n, "reader.recentEmpty")}</div>
                             {/each}
@@ -4545,7 +5062,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
                         </div>
                     {/if}
                     <details id={toolsAppearancePanelId} class="glean-reader__section glean-reader__section--utility glean-reader__appearance glean-reader__fold" aria-labelledby={toolsAppearanceTitleId} bind:open={toolsAppearanceOpen}>
-                        <summary id={toolsAppearanceTitleId} class="glean-reader__section-title">{t(i18n, "reader.appearanceTitle")}</summary>
+                        <summary id={toolsAppearanceTitleId} class="glean-reader__section-title"><span>{t(i18n, "reader.appearanceTitle")}</span></summary>
                         <label>{t(i18n, "reader.appearanceFontSize")}
                             <select class="b3-select" disabled={appearanceBusy} value={readerAppearance.fontSize} onchange={(event) => void updateAppearance("fontSize", (event.currentTarget as HTMLSelectElement).value)}>
                                 <option value="small">{t(i18n, "reader.appearanceSmall")}</option>
@@ -4581,7 +5098,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
             {#if companionTab === "all" || companionTab === "tools"}
                 {#if companionTab === "all"}
                     <details id={moreToolsId} class="glean-reader__section glean-reader__section--utility glean-reader__more-tools glean-reader__fold" aria-labelledby={moreToolsTitleId} bind:open={moreToolsOpen}>
-                        <summary id={moreToolsTitleId} class="glean-reader__section-title">{t(i18n, "reader.moreTools")}</summary>
+                        <summary id={moreToolsTitleId} class="glean-reader__section-title"><span>{t(i18n, "reader.moreTools")}</span></summary>
                         {@render toolsBody()}
                     </details>
                 {:else}
@@ -4591,158 +5108,167 @@ import { aiFailureKey } from "../libs/ai-feedback";
                     </div>
                 {/if}
             {/if}
-            {#if context}
-                {#if docId}
-                    {#if (companionTab === "all" || companionTab === "notes") && excerpt}
-                        <div class="glean-reader__section glean-reader__section--enhanced" aria-labelledby={excerptTitleId}>
-                            <div id={excerptTitleId} class="glean-reader__section-title" role="heading" aria-level="3">{t(i18n, "reader.excerptTitle")}</div>
-                            {#if excerpt}
-                                <div class="glean-reader__excerpt" title={excerpt.text}>
-                                    {excerpt.text.slice(0, 80)}{excerpt.text.length > 80 ? "…" : ""}
-                                </div>
-                                {#if !excerpt.blockId}
-                                    <div class="glean-reader__issue"><span>{t(i18n, "reader.excerptNoBlock")}</span></div>
-                                {/if}
-                                <div class="glean-reader__ops">
-                                    <button
-                                        class="glean-btn glean-btn--pri"
-                                        aria-busy={excerptBusy}
-                                        disabled={!excerpt.blockId || excerptBusy}
-                                        title={excerpt.blockId ? "" : t(i18n, "reader.excerptNoBlock")}
-                                        onclick={() => void quoteExcerpt()}
-                                    >{t(i18n, "reader.excerptQuote")}</button>
-                                    <button class="glean-btn glean-btn--ghost" disabled={!excerpt.blockId} title={excerpt.blockId ? "" : t(i18n, "reader.excerptNoBlock")} onclick={() => void cardFromExcerpt()}>
-                                        {t(i18n, "flashcard.make")}
-                                    </button>
-                                    <button class="glean-btn glean-btn--ghost" onclick={() => void copyExcerpt()}>
-                                        {t(i18n, "reader.copy")}
-                                    </button>
-                                </div>
-                            {:else}
-                                <div class="glean-reader__hint">{t(i18n, "reader.excerptHint")}</div>
-                            {/if}
+            {#if (companionTab === "all" || companionTab === "notes") && excerpt}
+                <div class="glean-reader__section glean-reader__section--enhanced" aria-labelledby={excerptTitleId}>
+                    <div id={excerptTitleId} class="glean-reader__section-title" role="heading" aria-level="3">{t(i18n, "reader.excerptTitle")}</div>
+                    {#if excerpt}
+                        <div class="glean-reader__excerpt" title={excerpt.text}>
+                            {excerpt.text.slice(0, 80)}{excerpt.text.length > 80 ? "…" : ""}
+                        </div>
+                        {#if !excerpt.blockId}
+                            <div class="glean-reader__issue"><span>{t(i18n, "reader.excerptNoBlock")}</span></div>
+                        {/if}
+                        <div class="glean-reader__ops">
+                            <button
+                                class="glean-btn glean-btn--pri"
+                                aria-busy={excerptBusy}
+                                disabled={!excerpt.blockId || excerptBusy}
+                                title={excerpt.blockId ? "" : t(i18n, "reader.excerptNoBlock")}
+                                onclick={() => void quoteExcerpt()}
+                            >{t(i18n, "reader.excerptQuote")}</button>
+                            <button class="glean-btn glean-btn--ghost" disabled={!excerpt.blockId} title={excerpt.blockId ? "" : t(i18n, "reader.excerptNoBlock")} onclick={() => void cardFromExcerpt()}>
+                                {t(i18n, "flashcard.make")}
+                            </button>
+                            <button class="glean-btn glean-btn--ghost" onclick={() => void copyExcerpt()}>
+                                {t(i18n, "reader.copy")}
+                            </button>
+                        </div>
+                    {:else}
+                        <div class="glean-reader__hint">{t(i18n, "reader.excerptHint")}</div>
+                    {/if}
+                </div>
+            {/if}
+            {#if companionTab === "all" || companionTab === "ai"}
+                <div class="glean-reader__section glean-reader__section--enhanced" aria-labelledby={aiTitleId}>
+                    <div id={aiTitleId} class="glean-reader__section-title" role="heading" aria-level="3">{t(i18n, "reader.aiTitle")}</div>
+                    {#if !context && !contextLoading && !contextError}
+                        <div class="glean-reader__context-state glean-reader__context-state--unfiled" role="status">
+                            <div class="glean-reader__hint">{t(i18n, "reader.aiUnfiledNotice")}</div>
+                            <button type="button" class="glean-btn glean-btn--pri glean-btn--sm" disabled={addingToLibrary} onclick={() => void addCurrentNoteToLibrary()}>
+                                {addingToLibrary ? t(i18n, "reader.addingToLibrary") : t(i18n, "reader.addToLibrary")}
+                            </button>
                         </div>
                     {/if}
-                    {#if companionTab === "all" || companionTab === "ai"}
-                        <div class="glean-reader__section glean-reader__section--enhanced" aria-labelledby={aiTitleId}>
-                            <div id={aiTitleId} class="glean-reader__section-title" role="heading" aria-level="3">{t(i18n, "reader.aiTitle")}</div>
-                            {#if !aiOn}
-                                <div class="glean-reader__hint">{t(i18n, "reader.aiOff")}</div>
-                                <button class="glean-btn glean-btn--ghost" onclick={() => facade.openSettings()}>{t(i18n, "panel.settings")}</button>
-                            {:else}
-                                <div class="glean-reader__hint">
-                                    {t(i18n, aiConfigured ? "reader.aiPrivacy" : "reader.aiSetupMissing")}
-                                </div>
-                                {#if !aiConfigured}
-                                    <button class="glean-btn glean-btn--ghost" onclick={() => facade.openSettings()}>{t(i18n, "panel.settings")}</button>
-                                {/if}
-                                <div class="glean-reader__ops">
-                                    <button class="glean-btn glean-btn--pri" aria-busy={Boolean(aiBusy)} disabled={Boolean(aiBusy) || !aiReady} onclick={() => void runSummarize()}>
-                                        <svg class="glean-icon" aria-hidden="true"><use href="#iconGleanSpark" /></svg>{t(i18n, "reader.aiSummarize")}
-                                    </button>
-                                    <button
-                                        class="glean-btn glean-btn--ghost"
-                                        aria-busy={Boolean(aiBusy)}
-                                        disabled={Boolean(aiBusy) || !aiReady || !excerpt?.text}
-                                        title={excerpt?.text ? "" : t(i18n, "reader.excerptHint")}
-                                        onclick={() => void runTranslate()}
-                                    >{t(i18n, "reader.aiTranslate")}</button>
-                                    {#if relatedOn}
-                                        <button class="glean-btn glean-btn--ghost" aria-busy={Boolean(aiBusy)} disabled={Boolean(aiBusy)} onclick={() => void runRelated()}>
-                                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
-                                            <span>{t(i18n, "reader.aiRelated")}</span>
-                                        </button>
-                                    {/if}
-                                    {#if articleQuestionOn}
-                                        <div class="glean-reader__question">
-                                            <input class="glean-mini-input" disabled={!aiReady} maxlength="1000" placeholder={t(i18n, "reader.articleQuestion.placeholder")} aria-label={t(i18n, "reader.articleQuestion.action")} bind:value={question} onkeydown={(event) => { if (event.isComposing || event.keyCode === 229) return; if (event.key === "Enter") void runArticleQuestion(); else if (event.key === "Escape" && question) { event.stopPropagation(); question = ""; } }} />
-                                            <div class="glean-reader__preset-prompts" role="group" aria-label={t(i18n, "reader.articleQuestion.action")}>
-                                                <button type="button" class="glean-reader__preset-chip" disabled={!aiReady || Boolean(aiBusy)} onclick={() => triggerQuickQuestion(t(i18n, "reader.quickPromptPoints"))}>
-                                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg>
-                                                    <span>{t(i18n, "reader.quickPromptPoints")}</span>
-                                                </button>
-                                                <button type="button" class="glean-reader__preset-chip" disabled={!aiReady || Boolean(aiBusy)} onclick={() => triggerQuickQuestion(t(i18n, "reader.quickPromptActionable"))}>
-                                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanEdit" /></svg>
-                                                    <span>{t(i18n, "reader.quickPromptActionable")}</span>
-                                                </button>
-                                                <button type="button" class="glean-reader__preset-chip" disabled={!aiReady || Boolean(aiBusy)} onclick={() => triggerQuickQuestion(t(i18n, "reader.quickPromptSummary"))}>
-                                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg>
-                                                    <span>{t(i18n, "reader.quickPromptSummary")}</span>
-                                                </button>
-                                            </div>
-                                            <div class="glean-reader__ops">
-                                                <button class="glean-btn glean-btn--ghost" disabled={!aiReady} class:glean-seg__btn--on={questionMode === "full"} onclick={() => { questionMode = "full"; }}>{t(i18n, "reader.articleQuestion.full")}</button>
-                                                <button class="glean-btn glean-btn--ghost" disabled={!aiReady || !excerpt?.blockId} class:glean-seg__btn--on={questionMode === "selection"} onclick={() => { questionMode = "selection"; }}>{t(i18n, "reader.articleQuestion.selection")}</button>
-                                                <button class="glean-btn glean-btn--pri" aria-busy={Boolean(aiBusy)} disabled={Boolean(aiBusy) || !aiReady || !question.trim()} onclick={() => void runArticleQuestion()}>{t(i18n, "reader.articleQuestion.ask")}</button>
-                                            </div>
-                                        </div>
-                                    {/if}
-                                </div>
-                            {#if aiBusy}
-                                <div class="glean-reader__ai-status" role="status" aria-live="polite">
-                                    <span class="glean-reader__ai-status-dot" aria-hidden="true"></span>
-                                    {aiBusyMessage()}
-                                </div>
-                            {/if}
-                            {#if aiResult}
-                                <div class="glean-reader__ai-card" role="status" aria-live="polite">
-                                    <div class="glean-reader__ai-src">
-                                        {t(i18n, "reader.aiSource", { channel: channelLabel, action: aiResult.action })}
-                                    </div>
-                                    <div class="glean-reader__ai-scope">{t(i18n, aiResult.scope === "full" ? "reader.aiScopeFull" : "reader.aiScopeSelection")}</div>
-                                    <div class="glean-reader__ai-text">{aiResult.text}</div>
-                                    <div class="glean-reader__ops">
-                                        <button class="glean-btn glean-btn--ghost" onclick={() => void copyAiResult()}>
-                                            {t(i18n, "reader.copy")}
-                                        </button>
-                                        {#if aiResult.kind === "summarize"}
-                                            <button class="glean-btn glean-btn--ghost" aria-busy={summarySaving} disabled={summarySaving || summarySaved} onclick={() => void keepSummary()}>
-                                                {t(i18n, summarySaved ? "reader.aiSummarySaved" : "reader.aiSaveSummary")}
-                                            </button>
-                                        {/if}
-                                        <button class="glean-btn glean-btn--ghost" disabled={insertingCallout} onclick={() => void insertAiResultCallout()}>
-                                            {t(i18n, "reader.aiInsertCallout")}
-                                        </button>
-                                        <button class="glean-btn glean-btn--ghost" onclick={() => { aiResult = null; }}>
-                                            {t(i18n, "action.close")}
-                                        </button>
-                                    </div>
-                                </div>
-                            {/if}
-                            {#if questionResult}
-                                <div class="glean-reader__ai-card" role="status" aria-live="polite">
-                                    <div class="glean-reader__ai-src">{t(i18n, "reader.articleQuestion.action")}</div>
-                                    <div class="glean-reader__ai-scope">{t(i18n, questionResult.scope === "full" ? "reader.aiScopeFull" : "reader.aiScopeSelection")}</div>
-                                    <div class="glean-reader__ai-text">{questionResult.answer}</div>
-                                    {#if questionResult.truncated}<div class="glean-reader__hint">{t(i18n, "reader.articleQuestion.truncated")}</div>{/if}
-                                    {#if questionResult.evidence.length > 0}
-                                        <div class="glean-reader__ai-src">{t(i18n, "reader.articleQuestion.evidence")}</div>
-                                        {#each questionResult.evidence as evidence}<blockquote>{evidence}</blockquote>{/each}
-                                    {:else}<div class="glean-reader__hint">{t(i18n, "reader.articleQuestion.insufficient")}</div>{/if}
-                                    <div class="glean-reader__ops">
-                                        <button class="glean-btn glean-btn--ghost" onclick={() => void copyText(`${questionResult!.answer}\n\n${questionResult!.evidence.join("\n")}`)}>{t(i18n, "reader.copy")}</button>
-                                        <button class="glean-btn glean-btn--ghost" disabled={insertingCallout} onclick={() => void insertQuestionCallout()}>{t(i18n, "reader.aiInsertCallout")}</button>
-                                        <button class="glean-btn glean-btn--ghost" onclick={() => { questionResult = null; }}>{t(i18n, "action.close")}</button>
-                                    </div>
-                                </div>
-                            {/if}
-                            {#if relatedShown && relatedItems.length > 0}
-                                <div class="glean-reader__related">
-                                    {#each relatedItems as item (item.id)}
-                                        <button class="glean-reader__related-item" title={item.title} onclick={() => openRelatedDoc(item.id, item.title)}>
-                                            {item.title}
-                                        </button>
-                                    {/each}
-                                </div>
-                            {:else if relatedShown}
-                                <div class="glean-reader__hint" role={relatedReason === "error" ? "alert" : "status"}>
-                                    {relatedStatusMessage(relatedReason)}
-                                </div>
-                            {/if}
+                    {#if !aiOn}
+                        <div class="glean-reader__hint">{t(i18n, "reader.aiOff")}</div>
+                        <button class="glean-btn glean-btn--ghost" onclick={() => facade.openSettings()}>{t(i18n, "panel.settings")}</button>
+                    {:else}
+                        <div class="glean-reader__hint">
+                            {t(i18n, aiConfigured ? "reader.aiPrivacy" : "reader.aiSetupMissing")}
+                        </div>
+                        {#if !aiConfigured}
+                            <button class="glean-btn glean-btn--ghost" onclick={() => facade.openSettings()}>{t(i18n, "panel.settings")}</button>
                         {/if}
-                    </div>
+                        <div class="glean-reader__ops">
+                            <button class="glean-btn glean-btn--pri" aria-busy={Boolean(aiBusy)} disabled={Boolean(aiBusy) || !aiReady} onclick={() => void runSummarize()}>
+                                <svg class="glean-icon" aria-hidden="true"><use href="#iconGleanSpark" /></svg>{t(i18n, "reader.aiSummarize")}
+                            </button>
+                            <button
+                                class="glean-btn glean-btn--ghost"
+                                aria-busy={Boolean(aiBusy)}
+                                disabled={Boolean(aiBusy) || !aiReady || !excerpt?.text}
+                                title={excerpt?.text ? "" : t(i18n, "reader.excerptHint")}
+                                onclick={() => void runTranslate()}
+                            >{t(i18n, "reader.aiTranslate")}</button>
+                            {#if relatedOn}
+                                <button class="glean-btn glean-btn--ghost" aria-busy={Boolean(aiBusy)} disabled={Boolean(aiBusy)} onclick={() => void runRelated()}>
+                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
+                                    <span>{t(i18n, "reader.aiRelated")}</span>
+                                </button>
+                            {/if}
+                            {#if articleQuestionOn}
+                                <div class="glean-reader__question">
+                                    <input class="glean-mini-input" disabled={!aiReady} maxlength="1000" placeholder={t(i18n, "reader.articleQuestion.placeholder")} aria-label={t(i18n, "reader.articleQuestion.action")} bind:value={question} onkeydown={(event) => { if (event.isComposing || event.keyCode === 229) return; if (event.key === "Enter") void runArticleQuestion(); else if (event.key === "Escape" && question) { event.stopPropagation(); question = ""; } }} />
+                                    <div class="glean-reader__preset-prompts" role="group" aria-label={t(i18n, "reader.articleQuestion.action")}>
+                                        <button type="button" class="glean-reader__preset-chip" disabled={!aiReady || Boolean(aiBusy)} onclick={() => triggerQuickQuestion(t(i18n, "reader.quickPromptPoints"))}>
+                                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg>
+                                            <span>{t(i18n, "reader.quickPromptPoints")}</span>
+                                        </button>
+                                        <button type="button" class="glean-reader__preset-chip" disabled={!aiReady || Boolean(aiBusy)} onclick={() => triggerQuickQuestion(t(i18n, "reader.quickPromptActionable"))}>
+                                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanEdit" /></svg>
+                                            <span>{t(i18n, "reader.quickPromptActionable")}</span>
+                                        </button>
+                                        <button type="button" class="glean-reader__preset-chip" disabled={!aiReady || Boolean(aiBusy)} onclick={() => triggerQuickQuestion(t(i18n, "reader.quickPromptSummary"))}>
+                                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg>
+                                            <span>{t(i18n, "reader.quickPromptSummary")}</span>
+                                        </button>
+                                    </div>
+                                    <div class="glean-reader__ops">
+                                        <button class="glean-btn glean-btn--ghost" disabled={!aiReady} class:glean-seg__btn--on={questionMode === "full"} onclick={() => { questionMode = "full"; }}>{t(i18n, "reader.articleQuestion.full")}</button>
+                                        <button class="glean-btn glean-btn--ghost" disabled={!aiReady || !excerpt?.blockId} class:glean-seg__btn--on={questionMode === "selection"} onclick={() => { questionMode = "selection"; }}>{t(i18n, "reader.articleQuestion.selection")}</button>
+                                        <button class="glean-btn glean-btn--pri" aria-busy={Boolean(aiBusy)} disabled={Boolean(aiBusy) || !aiReady || !question.trim()} onclick={() => void runArticleQuestion()}>{t(i18n, "reader.articleQuestion.ask")}</button>
+                                    </div>
+                                </div>
+                            {/if}
+                        </div>
+                    {#if aiBusy}
+                        <AiThinkingCard
+                            scenario={aiBusy === "translate" ? "transform" : aiBusy === "question" ? "socratic" : aiBusy === "related" ? "doc-judge" : "general"}
+                            title={aiBusyMessage()}
+                            compact
+                            signal={aiAbort?.signal}
+                            onCancel={cancelAiTask}
+                        />
+                    {/if}
+                    {#if aiResult}
+                        <div class="glean-reader__ai-card" role="status" aria-live="polite">
+                            <div class="glean-reader__ai-src">
+                                {t(i18n, "reader.aiSource", { channel: channelLabel, action: aiResult.action })}
+                            </div>
+                            <div class="glean-reader__ai-scope">{t(i18n, aiResult.scope === "full" ? "reader.aiScopeFull" : "reader.aiScopeSelection")}</div>
+                            <div class="glean-reader__ai-text">{aiResult.text}</div>
+                            <div class="glean-reader__ops">
+                                <button class="glean-btn glean-btn--ghost" onclick={() => void copyAiResult()}>
+                                    {t(i18n, "reader.copy")}
+                                </button>
+                                {#if aiResult.kind === "summarize" && context}
+                                    <button class="glean-btn glean-btn--ghost" aria-busy={summarySaving} disabled={summarySaving || summarySaved} onclick={() => void keepSummary()}>
+                                        {t(i18n, summarySaved ? "reader.aiSummarySaved" : "reader.aiSaveSummary")}
+                                    </button>
+                                {/if}
+                                <button class="glean-btn glean-btn--ghost" disabled={insertingCallout} onclick={() => void insertAiResultCallout()}>
+                                    {t(i18n, "reader.aiInsertCallout")}
+                                </button>
+                                <button class="glean-btn glean-btn--ghost" onclick={() => { aiResult = null; }}>
+                                    {t(i18n, "action.close")}
+                                </button>
+                            </div>
+                        </div>
+                    {/if}
+                    {#if questionResult}
+                        <div class="glean-reader__ai-card" role="status" aria-live="polite">
+                            <div class="glean-reader__ai-src">{t(i18n, "reader.articleQuestion.action")}</div>
+                            <div class="glean-reader__ai-scope">{t(i18n, questionResult.scope === "full" ? "reader.aiScopeFull" : "reader.aiScopeSelection")}</div>
+                            <div class="glean-reader__ai-text">{questionResult.answer}</div>
+                            {#if questionResult.truncated}<div class="glean-reader__hint">{t(i18n, "reader.articleQuestion.truncated")}</div>{/if}
+                            {#if questionResult.evidence.length > 0}
+                                <div class="glean-reader__ai-src">{t(i18n, "reader.articleQuestion.evidence")}</div>
+                                {#each questionResult.evidence as evidence}<blockquote>{evidence}</blockquote>{/each}
+                            {:else}<div class="glean-reader__hint">{t(i18n, "reader.articleQuestion.insufficient")}</div>{/if}
+                            <div class="glean-reader__ops">
+                                <button class="glean-btn glean-btn--ghost" onclick={() => void copyText(`${questionResult!.answer}\n\n${questionResult!.evidence.join("\n")}`)}>{t(i18n, "reader.copy")}</button>
+                                <button class="glean-btn glean-btn--ghost" disabled={insertingCallout} onclick={() => void insertQuestionCallout()}>{t(i18n, "reader.aiInsertCallout")}</button>
+                                <button class="glean-btn glean-btn--ghost" onclick={() => { questionResult = null; }}>{t(i18n, "action.close")}</button>
+                            </div>
+                        </div>
+                    {/if}
+                    {#if relatedShown && relatedItems.length > 0}
+                        <div class="glean-reader__related">
+                            {#each relatedItems as item (item.id)}
+                                <button class="glean-reader__related-item" title={item.title} onclick={() => openRelatedDoc(item.id, item.title)}>
+                                    {item.title}
+                                </button>
+                            {/each}
+                        </div>
+                    {:else if relatedShown}
+                        <div class="glean-reader__hint" role={relatedReason === "error" ? "alert" : "status"}>
+                            {relatedStatusMessage(relatedReason)}
+                        </div>
                     {/if}
                 {/if}
+            </div>
+            {/if}
+            {#if context}
                 {#if companionTab === "tools" || companionTab === "all"}
                     <div class="glean-reader__ops glean-reader__tools-footer-ops">
                         <button class="glean-btn glean-btn--ghost" onclick={() => openFormattingDialog(facade, context!.id)}>{t(i18n, "formatting.open")}</button>
@@ -4775,8 +5301,8 @@ import { aiFailureKey } from "../libs/ai-feedback";
                     {/if}
                     <button class="glean-reader__back" onclick={backToLibrary}>{t(i18n, "reading.backToLibrary")}</button>
                 {/if}
-            {:else if !contextLoading && !contextError}
-                <div class="glean-reader__issue"><span>{t(i18n, "reader.emptyHint")}</span></div>
+            {:else if !contextLoading && !contextError && (companionTab === "tools" || companionTab === "all")}
+                <div class="glean-reader__hint">{t(i18n, "reader.toolsUnfiledHint")}</div>
             {/if}
         </aside>
     {/if}
@@ -4793,6 +5319,7 @@ import { aiFailureKey } from "../libs/ai-feedback";
         onUpdated={(next) => {
             docHighlights = docHighlights.map((item) => item.id === next.id ? next : item);
             if (docId) refreshWhaleDecorationsInProtyle(facade.pluginInstance.app, docId);
+            facade.notifyDataChanged();
         }}
         onDeleted={(id) => {
             docHighlights = docHighlights.filter((item) => item.id !== id);

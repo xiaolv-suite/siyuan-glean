@@ -206,28 +206,33 @@ export async function draftQuestionCard(
     plugin: Plugin,
     session: FlashcardSession,
     settings: GleanSettings,
+    options: { signal?: AbortSignal } = {},
 ): Promise<{ ok: boolean; reason?: QuestionCardReason }> {
     if (!questionCardEnabled(activeAiSettings(plugin, settings))) return { ok: false, reason: "off" };
-    if (session.cancelled) return { ok: false, reason: "cancelled" };
+    if (session.cancelled || options.signal?.aborted) return { ok: false, reason: "cancelled" };
     if (session.busy || session.state !== "ready") return { ok: false, reason: "busy" };
     const prompt = buildQuestionCardPrompt(session.source);
     if (!prompt) return { ok: false, reason: "invalid" };
     session.busy = true;
     try {
         return await enqueueEnrich(async () => {
-            if (session.cancelled) return { ok: false, reason: "cancelled" as const };
+            if (session.cancelled || options.signal?.aborted) return { ok: false, reason: "cancelled" as const };
             if (!questionCardEnabled(activeAiSettings(plugin, settings))) return { ok: false, reason: "off" as const };
             const sourceIssue = await verifySource(session.source);
             if (sourceIssue) return { ok: false, reason: sourceIssue };
             if (!questionCardEnabled(activeAiSettings(plugin, settings))) return { ok: false, reason: "off" as const };
             if (!(await aiQuotaAvailable(plugin, activeAiSettings(plugin, settings)))) return { ok: false, reason: "cap" as const };
-            if (session.cancelled) return { ok: false, reason: "cancelled" as const };
+            if (session.cancelled || options.signal?.aborted) return { ok: false, reason: "cancelled" as const };
             const currentSettings = activeAiSettings(plugin, settings);
             if (!questionCardEnabled(currentSettings)) return { ok: false, reason: "off" as const };
-            const outcome = await callLLM(plugin, currentSettings, prompt);
+            const outcome = await callLLM(plugin, currentSettings, prompt, {
+                priority: "high",
+                ...(options.signal ? { signal: options.signal } : {}),
+            });
+            if (outcome.aborted || options.signal?.aborted) return { ok: false, reason: "cancelled" as const };
             if (!outcome.ok) return { ok: false, reason: outcome.failure ?? "error" as const };
             await recordAiUsage(plugin);
-            if (session.cancelled) return { ok: false, reason: "cancelled" as const };
+            if (session.cancelled || options.signal?.aborted) return { ok: false, reason: "cancelled" as const };
             if (!questionCardEnabled(activeAiSettings(plugin, settings))) return { ok: false, reason: "off" as const };
             const finalSourceIssue = await verifySource(session.source);
             if (finalSourceIssue) return { ok: false, reason: finalSourceIssue };

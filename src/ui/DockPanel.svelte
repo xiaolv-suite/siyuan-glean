@@ -2,7 +2,7 @@
 /** 读库 Dock 面板 v2（T-1104/T-1201/T-1202/T-1300/T-1400c）：库 / 统计 / 高亮 三视图；tab 画布 rail+行表/看板。 */
 import { onMount, tick, untrack } from "svelte";
 import { openTab, Menu } from "siyuan";
-import { showMessage } from "../libs/notice";
+import { showMessage, withLvAiWait } from "../libs/notice";
 import { showDocTreeNativeMenu } from "../libs/lv-notice-kit";
 // DL2 阶段3：空态吉祥物（mascot 偏好门控，关闭回退麦穗线性图标）
 import { lvMascot } from "../libs/ui/mascots";
@@ -322,6 +322,8 @@ onMount(() => {
     window.addEventListener("online", syncOnlineState);
     window.addEventListener("offline", syncOnlineState);
     return () => {
+        enrichAbort?.abort();
+        enrichAbort = null;
         restoreMobileFilterBackground();
         disposeMobileFilterFocus();
         cleanup();
@@ -337,6 +339,7 @@ const previewEntry = $derived<Row | null>(index.clips[previewId]
 let dragOverCol = $state<ClipStatus | null>(null);
 let dragId = $state("");
 let enrichingId = $state("");
+let enrichAbort: AbortController | null = null;
 let statusActionId = $state("");
 let pendingFocusId = $state("");
 let focusRequested = false;
@@ -2423,12 +2426,26 @@ function lengthLabel(entry: ClipIndexEntry): string {
     return `${t(i18n, "panel.words", { n: entry.words })} · ${t(i18n, "panel.minutes", { n: entry.minutes })}`;
 }
 
-/** 手动 AI 富化（卡上 ✨，静默降级） */
+/** 手动 AI 富化（卡上 ✨，非阻塞标准思考卡 + 可取消，静默降级） */
 async function enrich(entry: ClipIndexEntry) {
     if (enrichingId) return;
+    const controller = new AbortController();
+    enrichAbort = controller;
     enrichingId = entry.id;
     try {
-        const outcome = await enrichClip(facade.pluginInstance, entry.id, facade.settings);
+        const outcome = await withLvAiWait(
+            {
+                scenario: "general",
+                title: t(i18n, "ai.actionEnrich"),
+                subtitle: entry.title || t(i18n, "panel.untitled"),
+                signal: controller.signal,
+                onCancel: () => controller.abort(),
+            },
+            (signal) => enrichClip(facade.pluginInstance, entry.id, facade.settings, { signal }),
+        );
+        if (controller.signal.aborted || outcome.aborted) {
+            return;
+        }
         if (outcome.ok) {
             showMessage(
                 outcome.indexSyncFailed
@@ -2447,6 +2464,7 @@ async function enrich(entry: ClipIndexEntry) {
         }
         if (outcome.ok) facade.notifyDataChanged();
     } finally {
+        if (enrichAbort === controller) enrichAbort = null;
         enrichingId = "";
         await reload();
     }
@@ -3597,7 +3615,7 @@ $effect(() => {
         {/if}
 
         {#if !facade.isMobile}
-            <div class="glean-views">
+            <div class="glean-views glean-views--with-roam">
                 {#each views as item (item.key)}
                     <button
                         class="glean-views__btn"

@@ -95,7 +95,7 @@ export function collectVisibleTextSegments(root: HTMLElement): { segments: TextS
                 if (tag === "SCRIPT" || tag === "STYLE" || tag === "NOSCRIPT" || tag === "SVG") {
                     return NodeFilter.FILTER_REJECT;
                 }
-                if (parent.closest("[aria-hidden='true'], [hidden], .glean-reader__find-bar")) {
+                if (parent.closest("[aria-hidden='true'], [hidden], .fn__none, .glean-reader__find-bar")) {
                     return NodeFilter.FILTER_REJECT;
                 }
 
@@ -170,6 +170,7 @@ export function mapOffsetsToRange(
 
 export class ReaderDOMSearchController {
     private root: HTMLElement | null = null;
+    private contextKey = "";
     private state: ReaderSearchState = initialReaderSearchState();
     private matches: DOMSearchMatch[] = [];
     private stateChangeListeners: Array<(state: ReaderSearchState) => void> = [];
@@ -180,12 +181,36 @@ export class ReaderDOMSearchController {
         }
     }
 
-    public setRoot(root: HTMLElement | null): void {
-        if (this.root === root) return;
+    public setRoot(root: HTMLElement | null, contextKey = ""): void {
+        if (this.root === root && this.contextKey === contextKey) return;
         this.clearHighlights();
+        this.matches = [];
         this.root = root;
+        this.contextKey = contextKey;
         if (this.state.open && this.state.keyword) {
             this.performSearch(this.state.keyword, this.state.caseSensitive);
+        } else {
+            this.state = {
+                ...this.state,
+                activeIndex: -1,
+                totalMatches: 0,
+            };
+            this.notifyState();
+        }
+    }
+
+    public refresh(): void {
+        this.clearHighlights();
+        this.matches = [];
+        if (this.state.open && this.state.keyword) {
+            this.performSearch(this.state.keyword, this.state.caseSensitive);
+        } else {
+            this.state = {
+                ...this.state,
+                activeIndex: -1,
+                totalMatches: 0,
+            };
+            this.notifyState();
         }
     }
 
@@ -410,8 +435,11 @@ export class ReaderDOMSearchController {
     private scrollToMatch(match: DOMSearchMatch | null): void {
         if (!match) return;
         try {
-            const element = match.range.startContainer.parentElement;
-            if (element && typeof element.scrollIntoView === "function") {
+            const container = match.range.startContainer;
+            const element = (container && "nodeType" in container && container.nodeType === 1)
+                ? (container as unknown as Element)
+                : container?.parentElement;
+            if (element && (element as { isConnected?: boolean }).isConnected !== false && typeof element.scrollIntoView === "function") {
                 element.scrollIntoView({ behavior: (typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches) ? "auto" : "smooth", block: "center", inline: "nearest" });
             }
         } catch {

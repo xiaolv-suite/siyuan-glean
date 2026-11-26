@@ -138,10 +138,14 @@ async function directChatOnce(url: string, model: string, msg: string, apiKey: s
 /** 连接测试（设置页"测试"按钮）：发一句 ping，返回人类可读结果。 */
 export async function testDirectChannel(
     plugin: { getSecret?: (name: string) => string },
-    settings: GleanSettings
-): Promise<{ ok: boolean; message: string }> {
-    const result = await chatCompletionDirect(plugin, settings, '请只回复两个字："正常"');
+    settings: GleanSettings,
+    options: DirectCallOptions = {},
+): Promise<{ ok: boolean; message: string; aborted?: boolean }> {
+    const result = await chatCompletionDirect(plugin, settings, '请只回复两个字："正常"', options);
     if (result.ok) return { ok: true, message: result.text!.slice(0, 40) };
+    if (result.reason === "aborted" || options.signal?.aborted) {
+        return { ok: false, message: "已取消连接测试", aborted: true };
+    }
     const reasons: Record<string, string> = {
         "no-base-url": "未填写 API 地址",
         "no-model": "未填写模型名",

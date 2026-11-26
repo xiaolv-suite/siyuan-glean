@@ -131,6 +131,7 @@ export interface EnrichOutcome {
     duplicates: DuplicateWarning[];
     /** 未富化的原因：off / cap / parse / error；成功为空串 */
     skipped?: "off" | "cap" | "parse" | "error" | AiCallFailure;
+    aborted?: boolean;
     indexSyncFailed?: boolean;
 }
 
@@ -142,12 +143,13 @@ export async function callLLM(
     settings: GleanSettings,
     msg: string,
     options: { priority?: "high" | "low"; signal?: AbortSignal } = { priority: "low" }
-): Promise<{ ok: boolean; text?: string; failure?: AiCallFailure }> {
+): Promise<{ ok: boolean; text?: string; failure?: AiCallFailure; aborted?: boolean }> {
     const res = await dispatchUnifiedAiChat(plugin, settings, msg, options);
     return {
         ok: res.ok,
         ...(res.text ? { text: res.text } : {}),
         ...(res.failure ? { failure: res.failure } : {}),
+        ...(res.aborted ? { aborted: true } : {}),
     };
 }
 
@@ -172,22 +174,28 @@ async function loadExistingTagVocabulary(plugin: Plugin, excludeDocId?: string):
 }
 
 /** 单篇富化（串行队列执行）。关闭模式不调用模型；每日上限由队列内统一把守。 */
-export function enrichClip(plugin: Plugin, docId: string, settings: GleanSettings, options: Pick<WriteClipOptions, "expectedAttrs" | "expectedLocation"> = {}): Promise<EnrichOutcome> {
+export function enrichClip(plugin: Plugin, docId: string, settings: GleanSettings, options: Pick<WriteClipOptions, "expectedAttrs" | "expectedLocation"> & { signal?: AbortSignal } = {}): Promise<EnrichOutcome> {
     if (!aiEnabled(activeAiSettings(plugin, settings))) {
         return Promise.resolve({ ok: false, duplicates: [], skipped: "off" });
+    }
+    if (options.signal?.aborted) {
+        return Promise.resolve({ ok: false, duplicates: [], skipped: "error", aborted: true });
     }
     const expected = {
         ...(options.expectedAttrs ? { expectedAttrs: { ...options.expectedAttrs } } : {}),
         ...(options.expectedLocation ? { expectedLocation: { ...options.expectedLocation } } : {}),
+        ...(options.signal ? { signal: options.signal } : {}),
     };
     return enqueueEnrich(() => enrichClipInner(plugin, docId, settings, expected));
 }
 
-async function enrichClipInner(plugin: Plugin, docId: string, settings: GleanSettings, options: Pick<WriteClipOptions, "expectedAttrs" | "expectedLocation">): Promise<EnrichOutcome> {
+async function enrichClipInner(plugin: Plugin, docId: string, settings: GleanSettings, options: Pick<WriteClipOptions, "expectedAttrs" | "expectedLocation"> & { signal?: AbortSignal }): Promise<EnrichOutcome> {
+    if (options.signal?.aborted) return { ok: false, duplicates: [], skipped: "error", aborted: true };
     let currentSettings = activeAiSettings(plugin, settings);
     if (!aiEnabled(currentSettings)) return { ok: false, duplicates: [], skipped: "off" };
     try {
         if (!(await aiQuotaAvailable(plugin, currentSettings))) return { ok: false, duplicates: [], skipped: "cap" };
+        if (options.signal?.aborted) return { ok: false, duplicates: [], skipped: "error", aborted: true };
         const exported = await exportMdContent(docId);
         const markdown = exported?.content ?? "";
         const titleMatch = markdown.match(/^#\s+(.+)$/m);
@@ -197,13 +205,20 @@ async function enrichClipInner(plugin: Plugin, docId: string, settings: GleanSet
             await appendLog(plugin, docId, "content", "文章正文为空，已跳过");
             return { ok: false, duplicates: [], skipped: "error" };
         }
+        if (options.signal?.aborted) return { ok: false, duplicates: [], skipped: "error", aborted: true };
         currentSettings = activeAiSettings(plugin, settings);
         if (!aiEnabled(currentSettings)) return { ok: false, duplicates: [], skipped: "off" };
         if (!(await aiQuotaAvailable(plugin, currentSettings))) return { ok: false, duplicates: [], skipped: "cap" };
         currentSettings = activeAiSettings(plugin, settings);
         if (!aiEnabled(currentSettings)) return { ok: false, duplicates: [], skipped: "off" };
         const prompt = buildEnrichPrompt(title, plain);
-        const llm = await callLLM(plugin, currentSettings, prompt);
+        const llm = await callLLM(plugin, currentSettings, prompt, {
+            priority: "low",
+            ...(options.signal ? { signal: options.signal } : {}),
+        });
+        if (llm.aborted || options.signal?.aborted) {
+            return { ok: false, duplicates: [], skipped: "error", aborted: true };
+        }
         if (!llm.ok) {
             await appendLog(plugin, docId, "llm", "模型调用失败，已跳过");
             return { ok: false, duplicates: [], skipped: llm.failure ?? "error" };
@@ -219,10 +234,11 @@ async function enrichClipInner(plugin: Plugin, docId: string, settings: GleanSet
         }
         const written = await writeClip(plugin, docId, { summary: parsed.summary, aiTags: parsed.tags }, options);
         const duplicates = currentSettings.ai.dedupOnEnrich
-            ? await findDuplicates(plugin, docId, title || parsed.summary)
+            ? await findDuplicates(plugin, docId, title || parsed.summary, options.signal)
             : [];
         return { ok: true, duplicates, ...(written.indexSyncFailed ? { indexSyncFailed: true } : {}) };
     } catch {
+        if (options.signal?.aborted) return { ok: false, duplicates: [], skipped: "error", aborted: true };
         await appendLog(plugin, docId, "enrich", "富化失败，已跳过");
         return { ok: false, duplicates: [], skipped: "error" };
     }
@@ -248,16 +264,19 @@ async function confirmedSemanticHits(hits: SemanticSearchHit[]): Promise<Duplica
 }
 
 /** 语义查重：嵌入未启用 → 静默返回空；启用 → 语义搜索 + 标题相似过滤。 */
-export async function findDuplicates(plugin: Plugin, docId: string, query: string): Promise<DuplicateWarning[]> {
-    if (!query.trim()) return [];
+export async function findDuplicates(plugin: Plugin, docId: string, query: string, signal?: AbortSignal): Promise<DuplicateWarning[]> {
+    if (!query.trim() || signal?.aborted) return [];
     try {
-        const stat = await embeddingStat();
-        if (!stat?.enabled) return [];
-        const hits = await semanticSearchBlock({ query, types: { d: true }, page: 1, pageSize: 8 });
+        const stat = await embeddingStat({ signal });
+        if (!stat?.enabled || signal?.aborted) return [];
+        const hits = await semanticSearchBlock({ query, types: { d: true }, page: 1, pageSize: 8, signal });
+        if (signal?.aborted) return [];
         const confirmed = await confirmedSemanticHits(hits.filter((hit) => hit.id && hit.id !== docId));
         return confirmed.filter((hit) => isLikelyDuplicate(query, hit.title));
     } catch {
-        await appendLog(plugin, docId, "dedup", "语义查重不可用，已跳过");
+        if (!signal?.aborted) {
+            await appendLog(plugin, docId, "dedup", "语义查重不可用，已跳过");
+        }
         return [];
     }
 }
@@ -293,6 +312,7 @@ export type RelatedReason = "disabled" | "embedding-disabled" | "no-hits" | "err
 export interface RelatedOutcome {
     items: Array<{ id: string; title: string }>;
     reason: RelatedReason;
+    aborted?: boolean;
 }
 
 /**
@@ -303,27 +323,32 @@ export async function findRelatedOutcome(
     docId: string,
     query: string,
     excludeIds: string[] = [],
-    context?: { plugin: Plugin; settings: GleanSettings }
+    context?: { plugin: Plugin; settings: GleanSettings; signal?: AbortSignal }
 ): Promise<RelatedOutcome> {
     if (!context || !query.trim()) return { items: [], reason: "disabled" };
+    if (context.signal?.aborted) return { items: [], reason: "error", aborted: true };
     const enabled = () => {
         const current = activeAiSettings(context.plugin, context.settings);
         return aiEnabled(current) && current.ai.relatedWhileReading;
     };
     if (!enabled()) return { items: [], reason: "disabled" };
     try {
-        const stat = await embeddingStat();
+        const stat = await embeddingStat({ signal: context.signal });
+        if (context.signal?.aborted) return { items: [], reason: "error", aborted: true };
         if (!stat?.enabled) return { items: [], reason: "embedding-disabled" };
         if (!enabled()) return { items: [], reason: "disabled" };
-        const hits = await semanticSearchBlock({ query, types: { d: true }, page: 1, pageSize: 8 });
+        const hits = await semanticSearchBlock({ query, types: { d: true }, page: 1, pageSize: 8, signal: context.signal });
+        if (context.signal?.aborted) return { items: [], reason: "error", aborted: true };
         if (!enabled()) return { items: [], reason: "disabled" };
         if (hits.length === 0) return { items: [], reason: "no-hits" };
         const exclude = new Set([docId, ...excludeIds]);
         const confirmed = await confirmedSemanticHits(hits.filter((hit) => hit.id && !exclude.has(hit.id)));
+        if (context.signal?.aborted) return { items: [], reason: "error", aborted: true };
         return enabled()
             ? { items: confirmed, reason: confirmed.length > 0 ? "ok" : "no-hits" }
             : { items: [], reason: "disabled" };
     } catch {
+        if (context.signal?.aborted) return { items: [], reason: "error", aborted: true };
         return { items: [], reason: "error" };
     }
 }

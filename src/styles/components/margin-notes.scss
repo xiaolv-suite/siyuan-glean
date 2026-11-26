@@ -22,9 +22,7 @@
     pointer-events: auto;
     content-visibility: auto;
     contain-intrinsic-size: 1px 72px;
-    background: color-mix(in srgb, var(--glean-card-surface, var(--glean-card-surface)) 92%, transparent);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: color-mix(in srgb, var(--glean-card-surface, var(--glean-card-surface)) 96%, transparent);
     border: 1px solid var(--glean-border-soft);
     border-radius: var(--glean-radius-md, 12px);
     padding: 8px 10px;

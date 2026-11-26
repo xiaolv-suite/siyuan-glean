@@ -288,25 +288,66 @@ async function kernelPostOnce<T>(route: string, body: Record<string, unknown> | 
             }
         });
     }
-    // 关键优化：在真机浏览器中严禁对 AI 类长请求调用 fetchSyncPost，杜绝全屏 Requesting... 阻塞遮罩
-    const isAi = (route.startsWith("/api/ai/") || route.includes("/ai/chat")) && typeof window !== "undefined";
-    if (isAi && typeof fetch === "function") {
-        const timeout = new Promise<never>((_, reject) => {
-            setTimeout(() => reject(decorateError(`${route} 请求超时（${Math.round(timeoutMs / 1000)}s 无响应）`, route, "timeout")), timeoutMs);
-        });
-        const aiFetch = fetch(route, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(body ?? {}),
-            signal: options.signal,
-        }).then(async (res) => {
-            const text = await res.text();
-            let payload: any;
-            try { payload = JSON.parse(text); } catch { payload = { code: res.ok ? 0 : -1, msg: text, data: text }; }
-            if (payload && payload.code !== 0) throw responseError(route, payload);
-            return (payload.data !== undefined ? payload.data : payload) as T;
-        });
-        return await Promise.race([aiFetch, timeout]);
+    // 关键优化：在真机浏览器中严禁对 AI 类与语义检索类长耗时请求调用 fetchSyncPost，杜绝全屏 Requesting... 阻塞遮罩
+    const isNonBlockingFetch = (
+        route.startsWith("/api/ai/")
+        || route.includes("/ai/chat")
+        || route === "/api/search/semanticSearchBlock"
+    ) && typeof window !== "undefined";
+    if (isNonBlockingFetch && typeof fetch === "function") {
+        const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        let timedOut = false;
+        const onAbort = () => controller?.abort();
+        if (options.signal) {
+            if (options.signal.aborted) throw abortError(route);
+            options.signal.addEventListener("abort", onAbort, { once: true });
+        }
+        if (controller) {
+            timer = setTimeout(() => {
+                timedOut = true;
+                controller.abort();
+            }, timeoutMs);
+        }
+        try {
+            const timeoutPromise = new Promise<never>((_, reject) => {
+                if (!controller) {
+                    timer = setTimeout(() => reject(decorateError(`${route} 请求超时（${Math.round(timeoutMs / 1000)}s 无响应）`, route, "timeout")), timeoutMs);
+                }
+            });
+            const fetchPromise = fetch(route, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body ?? {}),
+                ...(controller ? { signal: controller.signal } : options.signal ? { signal: options.signal } : {}),
+            }).catch((error) => {
+                if (options.signal?.aborted) throw abortError(route);
+                if (timedOut) throw decorateError(`${route} 请求超时（${Math.round(timeoutMs / 1000)}s 无响应）`, route, "timeout");
+                throw decorateError(error, route, "network");
+            }).then(async (res) => {
+                const text = await res.text();
+                if (options.signal?.aborted) throw abortError(route);
+                let payload: unknown;
+                try { payload = JSON.parse(text); } catch {
+                    if (!res.ok) throw decorateError(`${route} HTTP ${res.status}`, route, res.status === 401 || res.status === 403 ? "permission" : "network", { code: res.status });
+                    payload = { code: 0, msg: text, data: text };
+                }
+                if (!payload || typeof payload !== "object") {
+                    throw decorateError(`${route} 返回异常响应`, route, "protocol", { retryable: false });
+                }
+                const record = payload as KernelResponse<T>;
+                if (typeof record.code === "number" && Number.isFinite(record.code)) {
+                    if (record.code !== 0) throw responseError(route, record);
+                    return record.data as T;
+                }
+                if (!res.ok) throw decorateError(`${route} HTTP ${res.status}`, route, res.status === 401 || res.status === 403 ? "permission" : "network", { code: res.status });
+                return payload as T;
+            });
+            return await (controller ? fetchPromise : Promise.race([fetchPromise, timeoutPromise]));
+        } finally {
+            if (timer) clearTimeout(timer);
+            if (options.signal) options.signal.removeEventListener("abort", onAbort);
+        }
     }
 
     if (typeof fetchSyncPost !== "function") throw decorateError("思源内核请求接口不可用", route, "protocol", { retryable: false });
@@ -701,6 +742,7 @@ export async function listQuoteBlocks(rootDocId: string, limit = 200): Promise<B
 export interface CrossDocCommentHit {
     row: BlockRow;
     sourceRootId: string;
+    sourceMissing?: boolean;
 }
 
 /**
@@ -708,9 +750,12 @@ export interface CrossDocCommentHit {
  * 1. 先从源文章块上的 custom-comment-refs 反向收集关联批注块 ID；
  * 2. 再补扫未出现在源文档内的 custom-siyuan-comment 块并解析其 custom-comment-source 归属文档。
  */
-export async function listCrossDocSiyuanComments(rootDocIds: readonly string[]): Promise<CrossDocCommentHit[]> {
+export async function listCrossDocSiyuanComments(
+    rootDocIds: readonly string[],
+    options: { includeOrphans?: boolean } = {},
+): Promise<CrossDocCommentHit[]> {
     const validRoots = [...new Set(rootDocIds)].filter((id) => /^\d{14}-[0-9a-z]{7}$/.test(id));
-    if (validRoots.length === 0) return [];
+    if (validRoots.length === 0 && !options.includeOrphans) return [];
     const rootSet = new Set(validRoots);
 
     // 1. 扫描带有 custom-comment-refs 的源块（按指定文档分批精准检索，避免全库扫描超限遗漏）
@@ -787,6 +832,7 @@ export async function listCrossDocSiyuanComments(rootDocIds: readonly string[]):
     }
 
     // 解析 custom-comment-source 所属文档 root_id
+    const orphanCommentIds = new Set<string>();
     if (unresolvedSources.size > 0) {
         const srcList = [...unresolvedSources];
         const sourceToRoot = new Map<string, string>();
@@ -801,6 +847,9 @@ export async function listCrossDocSiyuanComments(rootDocIds: readonly string[]):
             const resolvedRoot = sourceToRoot.get(srcId);
             if (resolvedRoot && rootSet.has(resolvedRoot)) {
                 commentIdToSourceRoot.set(commentId, resolvedRoot);
+            } else if (options.includeOrphans && !resolvedRoot) {
+                commentIdToSourceRoot.set(commentId, srcId);
+                orphanCommentIds.add(commentId);
             }
         }
     }
@@ -812,16 +861,66 @@ export async function listCrossDocSiyuanComments(rootDocIds: readonly string[]):
         if (rootSet.has(row.root_id)) continue; // 同文档交给 collectHighlights 避免重复
         const ialStr = typeof row.ial === "string" ? row.ial : (row.ial && typeof row.ial === "object" ? JSON.stringify(row.ial) : String(row.ial || ""));
         if (ialStr.includes("custom-siyuan-comment-zone")) continue;
-        hits.push({ row, sourceRootId });
+        hits.push({ row, sourceRootId, ...(orphanCommentIds.has(commentId) ? { sourceMissing: true } : {}) });
     }
     return hits;
 }
 
-/** 在指定文档内按文本片段定位最近的块 ID（供预览态划线/批注反查落点）。 */
-export async function findBlockIdByTextInDoc(docId: string, text: string): Promise<string> {
+export interface FindBlockByTextOptions {
+    contextBefore?: string;
+    contextAfter?: string;
+    occurrenceIndex?: number;
+}
+
+function scoreBlockTextContext(
+    content: string,
+    needle: string,
+    contextBefore: string,
+    contextAfter: string,
+): number {
+    if (!contextBefore && !contextAfter) return 0;
+    let best = 0;
+    let from = 0;
+    while (true) {
+        const idx = content.indexOf(needle, from);
+        if (idx === -1) break;
+        let score = 0;
+        if (contextBefore) {
+            const left = content.slice(Math.max(0, idx - contextBefore.length - 4), idx).trimEnd();
+            for (let len = Math.min(left.length, contextBefore.length); len >= 2; len -= 1) {
+                if (left.endsWith(contextBefore.slice(-len))) {
+                    score += len;
+                    break;
+                }
+            }
+        }
+        if (contextAfter) {
+            const afterStart = idx + needle.length;
+            const right = content.slice(afterStart, afterStart + contextAfter.length + 4).trimStart();
+            for (let len = Math.min(right.length, contextAfter.length); len >= 2; len -= 1) {
+                if (right.startsWith(contextAfter.slice(0, len))) {
+                    score += len;
+                    break;
+                }
+            }
+        }
+        if (score > best) best = score;
+        from = idx + Math.max(1, needle.length);
+    }
+    return best;
+}
+
+/** 在指定文档内按文本片段定位最近的叶子正文块 ID（供预览态划线/批注反查落点）。 */
+export async function findBlockIdByTextInDoc(
+    docId: string,
+    text: string,
+    options: FindBlockByTextOptions = {},
+): Promise<string> {
     if (!/^\d{14}-[0-9a-z]{7}$/.test(docId)) return "";
     const normalized = text.replace(/\u200b/g, "").replace(/\s+/g, " ").trim();
     if (!normalized) return "";
+    const contextBefore = (options.contextBefore ?? "").replace(/\u200b/g, "").replace(/\s+/g, " ").trim().slice(-30);
+    const contextAfter = (options.contextAfter ?? "").replace(/\u200b/g, "").replace(/\s+/g, " ").trim().slice(0, 30);
     const candidates = [
         normalized.slice(0, 36),
         normalized.slice(0, 18),
@@ -830,11 +929,59 @@ export async function findBlockIdByTextInDoc(docId: string, text: string): Promi
     for (const raw of candidates) {
         const snippet = raw.replace(/'/g, "''");
         try {
-            const rows = await querySql<{ id?: unknown }>(
-                `SELECT id FROM blocks WHERE root_id = '${docId}' AND type IN ('p','h','l','i','b','t') AND instr(content, '${snippet}') > 0 ORDER BY sort ASC LIMIT 1`,
+            let rows = await querySql<{ id?: unknown; content?: unknown; type?: unknown }>(
+                `SELECT id, content, type FROM blocks WHERE root_id = '${docId}' AND type IN ('p','h','c','t','m') AND instr(content, '${snippet}') > 0 ORDER BY sort ASC LIMIT 50`,
             );
-            const id = rows?.[0]?.id;
-            if (typeof id === "string" && /^\d{14}-[0-9a-z]{7}$/.test(id)) return id;
+            if (!rows?.length) {
+                rows = await querySql<{ id?: unknown; content?: unknown; type?: unknown }>(
+                    `SELECT id, content, type FROM blocks WHERE root_id = '${docId}' AND type IN ('i','b','l') AND instr(content, '${snippet}') > 0 ORDER BY CASE type WHEN 'i' THEN 0 WHEN 'b' THEN 1 ELSE 2 END ASC, sort ASC LIMIT 20`,
+                );
+            }
+            const validRows = (rows ?? []).filter(
+                (r): r is { id: string; content?: unknown; type?: unknown } =>
+                    typeof r?.id === "string" && /^\d{14}-[0-9a-z]{7}$/.test(r.id),
+            );
+            if (validRows.length === 0) continue;
+            if (validRows.length === 1) return validRows[0].id;
+
+            if (contextBefore || contextAfter) {
+                let bestId = "";
+                let bestScore = 0;
+                let tie = false;
+                for (const row of validRows) {
+                    const rowContent = String(row.content ?? "").replace(/\u200b/g, "").replace(/\s+/g, " ");
+                    const score = scoreBlockTextContext(rowContent, raw, contextBefore, contextAfter);
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestId = row.id;
+                        tie = false;
+                    } else if (score > 0 && score === bestScore) {
+                        tie = true;
+                    }
+                }
+                if (bestScore > 0 && !tie && bestId) return bestId;
+            }
+
+            if (typeof options.occurrenceIndex === "number" && options.occurrenceIndex >= 0) {
+                let remaining = options.occurrenceIndex;
+                for (const row of validRows) {
+                    const rowContent = String(row.content ?? "").replace(/\u200b/g, "").replace(/\s+/g, " ");
+                    let count = 0;
+                    let pos = 0;
+                    while (true) {
+                        const hit = rowContent.indexOf(raw, pos);
+                        if (hit === -1) break;
+                        count += 1;
+                        pos = hit + Math.max(1, raw.length);
+                    }
+                    count = Math.max(1, count);
+                    if (remaining < count) return row.id;
+                    remaining -= count;
+                }
+                return validRows[validRows.length - 1].id;
+            }
+
+            return validRows[0].id;
         } catch {
             /* try shorter candidate */
         }
@@ -879,6 +1026,7 @@ export interface SemanticSearchOptions {
     types?: Record<string, boolean>;
     page?: number;
     pageSize?: number;
+    signal?: AbortSignal;
 }
 
 export interface SemanticSearchHit {
@@ -905,6 +1053,7 @@ export async function semanticSearchBlock(options: SemanticSearchOptions): Promi
     }, {
         requestKey,
         latestKey: requestKey,
+        signal: options.signal,
         retryable: true,
         retry: { attempts: 2, delayMs: 200, maxDelayMs: 400 },
     });
@@ -922,10 +1071,11 @@ export interface EmbeddingStat {
     enabled: boolean;
 }
 
-export async function embeddingStat(): Promise<EmbeddingStat> {
+export async function embeddingStat(options: { signal?: AbortSignal } = {}): Promise<EmbeddingStat> {
     return kernelPost<EmbeddingStat>("/api/ai/embeddingStat", {}, {
         requestKey: "current",
         latestKey: "current",
+        ...(options.signal ? { signal: options.signal } : {}),
         retryable: true,
         retry: { attempts: 2, delayMs: 150, maxDelayMs: 300 },
     });
@@ -1083,4 +1233,19 @@ export async function createDailyNote(notebookId?: string): Promise<string> {
 /** 删除指定块。 */
 export async function deleteBlock(id: string): Promise<void> {
     await kernelPost('/api/block/deleteBlock', { id });
+}
+
+/** 通用内核请求信封适配（供生态共用库 ensureXiaolvDiaryZone 等经 api/ 层转发）。 */
+export async function postKernelEnvelope(
+    route: string,
+    body: Record<string, unknown> = {},
+): Promise<{ code: number; msg: string; data?: any }> {
+    try {
+        const data = await kernelPost<unknown>(route, body);
+        return { code: 0, msg: "", data };
+    } catch (error) {
+        const code = isKernelRequestError(error) && typeof error.code === "number" ? error.code : -1;
+        const msg = error instanceof Error ? error.message : String(error ?? "kernel request failed");
+        return { code, msg, data: null };
+    }
 }

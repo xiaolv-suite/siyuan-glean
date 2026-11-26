@@ -9,6 +9,7 @@ export interface HighlightRoot {
     tags: string[];
     aiTags: string[];
     url: string;
+    sourceMissing?: boolean;
 }
 
 export type AnnotationKind = "glean" | "siyuan-comment" | "native-memo";

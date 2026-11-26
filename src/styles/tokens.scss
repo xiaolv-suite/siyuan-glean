@@ -3,25 +3,36 @@
  * 规范：深松绿+金杏麦珠 Bento 美学 · Epoch 6 / Issue #17 标准
  */
 
-:root {
-    /* 核心品牌色与两色分工体系（操作语义 vs 数据语义） */
-    --lv-brand: #0D9488;
-    --lv-brand-hover: #0F766E;
-    --lv-brand-active: #115E59;
-    --lv-brand-soft: color-mix(in srgb, var(--lv-brand) 12%, transparent);
-
-    /* 操作语义色：统领按钮、选中高亮、侧栏导航与核心交互 */
-    --glean-color-action: var(--lv-brand);
-    --glean-color-action-hover: var(--lv-brand-hover);
-    --glean-color-action-soft: var(--lv-brand-soft);
+:where(
+    .glean-dock-root,
+    .glean-tab-root,
+    .glean-dialog-root,
+    .b3-dialog.glean-dialog-host,
+    .glean-mobile-modal,
+    .glean-mobile-fullscreen-dialog,
+    .glean-reading-context-host,
+    .glean-reading-context,
+    .glean-panel,
+    .glean-reader,
+    .glean-settings,
+    .glean-workbench,
+    .glean-ann-editor-backdrop,
+    .glean-ann-editor,
+    .glean-dialog,
+    .glean-popover,
+    .glean-action-popover__body,
+    .glean-reader-help,
+    .glean-preview-pane
+) {
+    /* 操作语义色：统领按钮、选中高亮、侧栏导航与核心交互（收敛至拾遗自有容器，0 全局 :root 泄露） */
+    --glean-color-action: #0D9488;
+    --glean-color-action-hover: #0F766E;
+    --glean-color-action-soft: color-mix(in srgb, #0D9488 12%, transparent);
 
     /* 数据语义色：从主题色色相顺时针偏移 20°~25° 派生的翡翠青翠，专门负责成绩、连续、热力与成长数据 */
     --glean-color-data: #10B981;
     --glean-color-data-hover: #059669;
     --glean-color-data-soft: color-mix(in srgb, var(--glean-color-data) 12%, transparent);
-
-    /* 点睛品牌色（金杏麦珠） */
-    --lv-accent-wheat: #FB923C;
 
     /* 五态阅读状态主色 */
     --glean-color-status-inbox: #D97706;    /* 沉静琥珀 */
@@ -31,22 +42,22 @@
     --glean-color-status-archived: #64748B; /* 归档石板灰 */
     --glean-color-wechat: #07C160;          /* 微信生态绿 */
 
-    /* 品牌底色关系：同族极浅底托底（饱和度 3.5%、明度 97%）与内容白卡浮起双层结构。
+    /* 品牌底色关系：doc#22 v2 温润纸白画布 (#f6f7f9) 与纯白内容卡片 (#ffffff) 双层呼吸结构。
        固定浅色板，独立于思源宿主主题，避免换主题时界面被污染。 */
-    --glean-app-background: color-mix(in srgb, var(--lv-brand) 3.5%, #ffffff);
+    --glean-app-background: #f6f7f9;
     --glean-card-surface: #ffffff;
-    --glean-card-surface-elevated: color-mix(in srgb, #ffffff 97%, var(--lv-brand-soft));
+    --glean-card-surface-elevated: #f8f9fb;
 
-    /* 重点对比块（视觉重音）：主题色相深色近黑卡片（明度 11%~13%，拒绝死黑），配数据语义色点缀 */
-    --glean-surface-dark-contrast: color-mix(in srgb, var(--lv-brand) 12%, #0B1317);
-    --glean-text-dark-contrast: #F8FAFC;
-    --glean-text-dark-contrast-muted: color-mix(in srgb, var(--glean-text-dark-contrast) 68%, transparent);
+    /* 重点对比块（视觉重音）：doc#22 v2 沉稳石板深色卡片，配数据语义色点缀 */
+    --glean-surface-dark-contrast: #1e293b;
+    --glean-text-dark-contrast: #f8fafc;
+    --glean-text-dark-contrast-muted: #cbd5e1;
 
-    /* 品牌操作主色映射（无刺眼杂乱渐变） */
-    --glean-accent-a: var(--lv-brand);
-    --glean-accent-b: var(--lv-brand-hover);
+    /* 品牌操作主色映射（克制单主色，无刺眼渐变） */
+    --glean-accent-a: #0D9488;
+    --glean-accent-b: #0F766E;
     --glean-grad: var(--glean-color-action);
-    --glean-grad-soft: color-mix(in srgb, var(--glean-color-action) 12%, #ffffff);
+    --glean-grad-soft: color-mix(in srgb, var(--glean-color-action) 8%, #ffffff);
 
     /* 状态与文本映射 */
     --glean-st-inbox: var(--glean-color-status-inbox);
@@ -65,42 +76,73 @@
     --glean-duration-enter: 160ms;
     --glean-duration-exit: 110ms;
 
-    /* 严格数学递减圆角层级：外层 20px -> 卡片 16px -> 内嵌分组 12px -> 控件 8px -> 胶囊 999px */
-    --glean-glass: color-mix(in srgb, #ffffff 88%, transparent);
-    --glean-glass-border: color-mix(in srgb, rgba(15, 23, 42, 0.1) 45%, transparent);
+    /* 柔和细边与克制投影（doc#22 v2） */
+    --glean-glass: color-mix(in srgb, #ffffff 90%, transparent);
+    --glean-glass-border: rgba(15, 23, 42, 0.08);
     --glean-radius-xl: 20px;
     --glean-radius-20: var(--glean-radius-xl);
-    --glean-radius: 16px;
-    --glean-radius-lg: 16px;
-    --glean-radius-md: 12px;
+    --glean-radius: 12px;
+    --glean-radius-lg: 12px;
+    --glean-radius-md: 10px;
     --glean-radius-sm: 8px;
-    --glean-radius-xs: 4px;
+    --glean-radius-xs: 6px;
     --glean-radius-pill: 999px;
     --glean-badge-bg: color-mix(in srgb, #475569 8%, transparent);
 
-    /* 双层复合软投影：统一向下，近距小模糊 + 远距大模糊叠合，拒绝内阴影 */
-    --glean-shadow-card: 0 1px 3px rgba(15, 23, 42, 0.03), 0 8px 20px -4px rgba(15, 23, 42, 0.05);
-    --glean-shadow-card-hover: 0 3px 6px rgba(15, 23, 42, 0.04), 0 12px 26px -4px rgba(15, 23, 42, 0.08);
-    --glean-shadow-float: 0 4px 8px rgba(15, 23, 42, 0.05), 0 16px 36px -6px rgba(15, 23, 42, 0.14);
-    --glean-shadow-control: 0 1px 2px rgba(15, 23, 42, 0.05);
-    --glean-shadow-accent: 0 2px 8px -1px color-mix(in srgb, var(--glean-color-action) 28%, transparent);
-    --glean-shadow-focus: 0 0 0 3px color-mix(in srgb, var(--glean-color-action) 20%, transparent);
-    --glean-focus-ring: 0 0 0 3px color-mix(in srgb, var(--glean-color-action) 20%, transparent);
+    /* 克制柔光微投影：近距极轻落地，去掉厚重污浊阴影 */
+    --glean-shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04);
+    --glean-shadow-card-hover: 0 2px 8px rgba(15, 23, 42, 0.05), 0 1px 2px rgba(15, 23, 42, 0.03);
+    --glean-shadow-float: 0 12px 32px rgba(15, 23, 42, 0.10), 0 2px 8px rgba(15, 23, 42, 0.05);
+    --glean-shadow-control: 0 1px 2px rgba(15, 23, 42, 0.04);
+    --glean-shadow-accent: 0 1px 4px color-mix(in srgb, var(--glean-color-action) 22%, transparent);
+    --glean-shadow-focus: 0 0 0 3px color-mix(in srgb, var(--glean-color-action) 18%, transparent);
+    --glean-focus-ring: 0 0 0 3px color-mix(in srgb, var(--glean-color-action) 18%, transparent);
 }
 
-[data-theme-mode="dark"],
-body.body--dark,
-body.b3-theme-dark {
-    --glean-app-background: #0f1418;
-    --glean-card-surface: #181e24;
-    --glean-card-surface-elevated: #202730;
+:where([data-theme-mode="dark"], [data-theme="dark"], body.body--dark, body.b3-theme-dark, .b3-theme-dark) :where(.glean-dock-root, .glean-tab-root, .glean-dialog-root, .b3-dialog.glean-dialog-host, .glean-mobile-modal, .glean-mobile-fullscreen-dialog, .glean-reading-context-host, .glean-reading-context, .glean-panel, .glean-reader, .glean-settings, .glean-workbench, .glean-ann-editor-backdrop, .glean-ann-editor, .glean-dialog, .glean-popover, .glean-action-popover__body, .glean-reader-help, .glean-preview-pane),
+:where(.glean-dock-root, .glean-tab-root, .glean-dialog-root, .b3-dialog.glean-dialog-host, .glean-mobile-modal, .glean-mobile-fullscreen-dialog, .glean-reading-context-host, .glean-reading-context, .glean-panel, .glean-reader, .glean-settings, .glean-workbench, .glean-ann-editor-backdrop, .glean-ann-editor, .glean-dialog, .glean-popover, .glean-action-popover__body, .glean-reader-help, .glean-preview-pane):where([data-theme-mode="dark"], [data-theme="dark"], .b3-theme-dark) {
+    --glean-app-background: #14161a;
+    --glean-card-surface: #1c1f25;
+    --glean-card-surface-elevated: #23272f;
     --glean-color-action: #14B8A6;
     --glean-color-action-hover: #2DD4BF;
     --glean-color-data: #34D399;
-    --glean-surface-dark-contrast: #0b1114;
-    --glean-shadow-card: 0 2px 8px rgba(0, 0, 0, 0.32), 0 12px 28px -6px rgba(0, 0, 0, 0.45);
-    --glean-shadow-card-hover: 0 4px 10px rgba(0, 0, 0, 0.36), 0 16px 34px -6px rgba(0, 0, 0, 0.58);
-    --glean-shadow-float: 0 4px 12px rgba(0, 0, 0, 0.4), 0 20px 48px -8px rgba(0, 0, 0, 0.6);
+    --glean-surface-dark-contrast: #232a36;
+    --glean-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.24);
+    --glean-shadow-card-hover: 0 2px 10px rgba(0, 0, 0, 0.28);
+    --glean-shadow-float: 0 14px 36px rgba(0, 0, 0, 0.45);
+}
+
+:where(.glean-dock-root, .glean-tab-root, .glean-dialog-root, .b3-dialog.glean-dialog-host, .glean-mobile-modal, .glean-mobile-fullscreen-dialog, .glean-reading-context-host, .glean-reading-context, .glean-panel, .glean-reader, .glean-settings, .glean-workbench, .glean-ann-editor-backdrop, .glean-ann-editor, .glean-dialog, .glean-popover, .glean-action-popover__body, .glean-reader-help, .glean-preview-pane) {
+    --lv-brand: #0D9488;
+    --lv-brand-hover: #0F766E;
+    --lv-brand-active: #115E59;
+    --lv-brand-soft: color-mix(in srgb, var(--lv-brand) 10%, transparent);
+    --lv-accent-wheat: #FB923C;
+    --glean-color-action: var(--lv-brand);
+    --glean-color-action-hover: var(--lv-brand-hover);
+    --glean-color-action-soft: var(--lv-brand-soft);
+    --glean-app-background: #f6f7f9;
+    --glean-card-surface-elevated: #f8f9fb;
+    --glean-surface-dark-contrast: #1e293b;
+    --glean-accent-a: var(--lv-brand);
+    --glean-accent-b: var(--lv-brand-hover);
+}
+
+:where([data-theme-mode="dark"], [data-theme="dark"], body.body--dark, body.b3-theme-dark, .b3-theme-dark) :where(.glean-dock-root, .glean-tab-root, .glean-dialog-root, .b3-dialog.glean-dialog-host, .glean-mobile-modal, .glean-mobile-fullscreen-dialog, .glean-reading-context-host, .glean-reading-context, .glean-panel, .glean-reader, .glean-settings, .glean-workbench, .glean-ann-editor-backdrop, .glean-ann-editor, .glean-dialog, .glean-popover, .glean-action-popover__body, .glean-reader-help, .glean-preview-pane),
+:where(.glean-dock-root, .glean-tab-root, .glean-dialog-root, .b3-dialog.glean-dialog-host, .glean-mobile-modal, .glean-mobile-fullscreen-dialog, .glean-reading-context-host, .glean-reading-context, .glean-panel, .glean-reader, .glean-settings, .glean-workbench, .glean-ann-editor-backdrop, .glean-ann-editor, .glean-dialog, .glean-popover, .glean-action-popover__body, .glean-reader-help, .glean-preview-pane):where([data-theme-mode="dark"], [data-theme="dark"], .b3-theme-dark) {
+    --lv-brand: #14B8A6;
+    --lv-brand-hover: #2DD4BF;
+    --lv-brand-active: #0D9488;
+    --lv-brand-soft: color-mix(in srgb, var(--lv-brand) 13%, transparent);
+    --glean-color-action: var(--lv-brand);
+    --glean-color-action-hover: var(--lv-brand-hover);
+    --glean-color-action-soft: var(--lv-brand-soft);
+    --glean-app-background: #14161a;
+    --glean-card-surface-elevated: #23272f;
+    --glean-surface-dark-contrast: #232a36;
+    --glean-accent-a: var(--lv-brand);
+    --glean-accent-b: var(--lv-brand-hover);
 }
 
 /**
@@ -110,10 +152,27 @@ body.b3-theme-dark {
  * 例外（有意保留宿主变量）：渲染进思源编辑器文档内的划线/批注（--b3-protyle-inline-mark-*）、
  * 字体族（--b3-font-family*）与弹窗外框阴影（--b3-dialog-shadow），它们需要与宿主文档/窗口 chrome 融合。
  */
-.glean-tab-root,
-.glean-dialog-root,
-.glean-panel,
-.glean-mobile-modal {
+:where(
+    .glean-dock-root,
+    .glean-tab-root,
+    .glean-dialog-root,
+    .b3-dialog.glean-dialog-host,
+    .glean-mobile-modal,
+    .glean-mobile-fullscreen-dialog,
+    .glean-reading-context-host,
+    .glean-reading-context,
+    .glean-panel,
+    .glean-reader,
+    .glean-settings,
+    .glean-workbench,
+    .glean-ann-editor-backdrop,
+    .glean-ann-editor,
+    .glean-dialog,
+    .glean-popover,
+    .glean-action-popover__body,
+    .glean-reader-help,
+    .glean-preview-pane
+) {
     --b3-theme-primary: var(--glean-color-action);
     --b3-theme-on-primary: var(--glean-on-action);
     --b3-theme-primary-light: color-mix(in srgb, var(--glean-color-action) 12%, transparent);

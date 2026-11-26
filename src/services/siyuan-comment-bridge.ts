@@ -344,17 +344,33 @@ function findRangeInContainer(container: HTMLElement, needle: string, compactNee
  * 在 .protyle-wysiwyg DOM 内按纯文本精确查找对应的 Range（用于从阅读预览态无缝切到鲸鱼批注）。
  * 建立规范化字符到原始 (Text, offset) 的一一映射，解决换行、零宽字符、跨行内标签与跨块选区匹配问题。
  */
-export function findTextRangeInWysiwyg(wysiwygEl: HTMLElement | null, targetText: string): Range | null {
+export function findTextRangeInWysiwyg(
+    wysiwygEl: HTMLElement | null,
+    targetText: string,
+    preferredBlockId?: string,
+): Range | null {
     if (!wysiwygEl || typeof document === "undefined") return null;
     const needle = targetText.replace(/\u200b/g, "").replace(/\s+/g, " ").trim();
     if (!needle) return null;
     const compactNeedle = needle.replace(/\s+/g, "");
 
+    if (preferredBlockId && /^\d{14}-[0-9a-z]{7}$/.test(preferredBlockId)) {
+        const escaped = typeof CSS !== "undefined" && typeof CSS.escape === "function" ? CSS.escape(preferredBlockId) : preferredBlockId;
+        const preferredBlock = wysiwygEl.querySelector<HTMLElement>(`div[data-node-id="${escaped}"]`);
+        if (preferredBlock && !preferredBlock.closest("[custom-siyuan-comment-zone]")) {
+            const preferredHit = findRangeInContainer(preferredBlock, needle, compactNeedle);
+            if (preferredHit) return preferredHit;
+        }
+    }
+
     const blocks = Array.from(wysiwygEl.querySelectorAll<HTMLElement>("div[data-node-id]"));
+    const matches: Range[] = [];
     for (const block of blocks) {
         if (block.closest("[custom-siyuan-comment-zone]")) continue;
         const hit = findRangeInContainer(block, needle, compactNeedle);
-        if (hit) return hit;
+        if (hit) matches.push(hit);
     }
+    if (matches.length === 1) return matches[0];
+    if (matches.length > 1) return null;
     return findRangeInContainer(wysiwygEl, needle, compactNeedle);
 }

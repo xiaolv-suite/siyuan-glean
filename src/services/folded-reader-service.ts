@@ -113,8 +113,12 @@ export async function enrichFoldNodesWithAi(
     plugin: Plugin,
     settings: GleanSettings,
     nodes: FoldNode[],
-    maxNodes = 12
-): Promise<{ ok: boolean; nodes: FoldNode[]; count: number; error?: string }> {
+    maxNodes = 12,
+    options: { signal?: AbortSignal } = {},
+): Promise<{ ok: boolean; nodes: FoldNode[]; count: number; error?: string; aborted?: boolean }> {
+    if (options.signal?.aborted) {
+        return { ok: false, nodes, count: 0, aborted: true };
+    }
     if (!nodes || nodes.length === 0) {
         return { ok: false, nodes, count: 0, error: "暂无段落节点" };
     }
@@ -147,7 +151,13 @@ ${JSON.stringify(payload, null, 2)}
 ]`;
 
     try {
-        const outcome = await callLLM(plugin, settings, prompt, { priority: "high" });
+        const outcome = await callLLM(plugin, settings, prompt, {
+            priority: "high",
+            ...(options.signal ? { signal: options.signal } : {}),
+        });
+        if (outcome.aborted || options.signal?.aborted) {
+            return { ok: false, nodes, count: 0, aborted: true };
+        }
         if (!outcome.ok || !outcome.text) {
             return { ok: false, nodes, count: 0, error: outcome.failure || "AI 未返回有效内容" };
         }

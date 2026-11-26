@@ -574,8 +574,8 @@ $effect(() => {
         padding: var(--glean-space-3);
         margin: var(--glean-space-2) 0;
         border: 1px solid var(--glean-border-soft);
-        border-radius: var(--glean-radius-lg);
-        background: color-mix(in srgb, var(--glean-card-surface) 84%, transparent);
+        border-radius: var(--glean-radius-lg, 12px);
+        background: var(--glean-card-surface);
         box-shadow: var(--glean-shadow-card);
     }
     .glean-import-progress h3,

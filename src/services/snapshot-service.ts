@@ -6,7 +6,7 @@ import type { Plugin } from "siyuan";
 import { exportDocHtml, putFile } from "../api/assets";
 import { snapshotAssetPath } from "../domain/snapshot";
 import { ATTR, parseClipAttrs } from "../domain/schema";
-import { readClipAttributeSnapshot, writeClip, type WriteClipOptions } from "./clip-store";
+import { readClipAttributeSnapshot, registerAutoSnapshotHook, writeClip, type WriteClipOptions } from "./clip-store";
 
 const snapshotFlights = new WeakMap<object, Map<string, Promise<{ path: string; created: boolean }>>>();
 
@@ -20,6 +20,9 @@ export async function snapshotClip(plugin: Plugin, docId: string, options: Pick<
     try { return await promise; }
     finally { if (flights.get(docId) === promise) flights.delete(docId); }
 }
+
+// 自动向 clip-store 注册快照处理器，打破静态循环依赖
+registerAutoSnapshotHook(snapshotClip);
 
 async function snapshotClipOnce(plugin: Plugin, docId: string, options: Pick<WriteClipOptions, "expectedAttrs">): Promise<{ path: string; created: boolean; indexSyncFailed?: boolean }> {
     const before = await readClipAttributeSnapshot(docId);

@@ -92,10 +92,14 @@
 .glean-fold-reader__verbatim-tag {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
+    line-height: 1;
+    vertical-align: middle;
+    box-sizing: border-box;
     gap: var(--glean-space-1);
     font-size: var(--glean-text-caption);
     font-weight: var(--glean-weight-semibold);
-    padding: var(--glean-space-micro) var(--glean-space-2);
+    padding: 2px var(--glean-space-2);
     border-radius: var(--glean-radius-pill);
     background: color-mix(in srgb, var(--glean-color-data) 12%, var(--glean-card-surface));
     color: var(--glean-st-done-text);

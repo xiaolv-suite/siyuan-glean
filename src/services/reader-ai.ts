@@ -18,6 +18,7 @@ export interface ReaderAiOutcome {
     ok: boolean;
     text?: string;
     skipped?: "off" | "cap" | "error" | AiCallFailure;
+    aborted?: boolean;
 }
 
 export interface ArticleQuestionOutcome {
@@ -25,6 +26,7 @@ export interface ArticleQuestionOutcome {
     result?: ArticleQuestionResult;
     truncated?: boolean;
     skipped?: "off" | "cap" | "error" | "changed" | "invalid" | AiCallFailure;
+    aborted?: boolean;
 }
 
 /**
@@ -107,17 +109,17 @@ export function readerAiEnabled(settings: GleanSettings): boolean {
     return settings.ai.enrichMode !== "off";
 }
 
-export async function readerSummarize(plugin: Plugin, docId: string, settings: GleanSettings): Promise<ReaderAiOutcome> {
+export async function readerSummarize(plugin: Plugin, docId: string, settings: GleanSettings, options: { signal?: AbortSignal } = {}): Promise<ReaderAiOutcome> {
     return readerCall(plugin, docId, settings, "reader-summarize", async () => {
         const markdown = await readReaderMarkdown(plugin, docId);
         const title = markdown.match(/^#\s+(.+)$/m)?.[1]?.trim() ?? "";
         const plain = stripMarkdown(markdown).trim();
         return plain ? buildSummarizePrompt(title, plain) : "";
-    });
+    }, options);
 }
 
-export async function readerTranslate(plugin: Plugin, docId: string, text: string, settings: GleanSettings): Promise<ReaderAiOutcome> {
-    return readerCall(plugin, docId, settings, "reader-translate", () => text.trim() ? buildTranslatePrompt(text) : "");
+export async function readerTranslate(plugin: Plugin, docId: string, text: string, settings: GleanSettings, options: { signal?: AbortSignal } = {}): Promise<ReaderAiOutcome> {
+    return readerCall(plugin, docId, settings, "reader-translate", () => text.trim() ? buildTranslatePrompt(text) : "", options);
 }
 
 export function articleQuestionEnabled(settings: GleanSettings): boolean {
@@ -131,23 +133,27 @@ export async function readerArticleQuestion(
     settings: GleanSettings,
     selectionText = "",
     selectionBlockId = "",
+    options: { signal?: AbortSignal } = {},
 ): Promise<ArticleQuestionOutcome> {
+    if (options.signal?.aborted) return { ok: false, skipped: "error", aborted: true };
     const requestedQuestion = clampArticleQuestion(question);
     if (!requestedQuestion) return { ok: false, skipped: "invalid" };
     const hasSelection = Boolean(selectionText || selectionBlockId);
     if (hasSelection && (!selectionText.trim() || Array.from(selectionText).length > ARTICLE_QUESTION_CONTEXT_MAX_LENGTH || !NODE_ID_PATTERN.test(selectionBlockId))) return { ok: false, skipped: "invalid" };
     if (!articleQuestionEnabled(activeAiSettings(plugin, settings))) return { ok: false, skipped: "off" };
     return enqueueEnrich(async () => {
+        if (options.signal?.aborted) return { ok: false, skipped: "error" as const, aborted: true };
         let before: Awaited<ReturnType<typeof readClipAttributeSnapshot>>;
         try { before = await readClipAttributeSnapshot(docId); } catch { return { ok: false, skipped: "error" as const }; }
         const beforeAttrs = before.attrs;
         const beforeLocation = { box: before.meta.box, hpath: before.meta.hpath };
         const parsedAttrs = parseClipAttrs(beforeAttrs);
-        if (!parsedAttrs.status || parsedAttrs.internal || parsedAttrs.excluded) return { ok: false, skipped: "invalid" as const };
+        if (parsedAttrs.internal || parsedAttrs.excluded) return { ok: false, skipped: "invalid" as const };
         let currentSettings = activeAiSettings(plugin, settings);
         if (!articleQuestionEnabled(currentSettings)) return { ok: false, skipped: "off" as const };
         try {
             if (!(await aiQuotaAvailable(plugin, currentSettings))) return { ok: false, skipped: "cap" as const };
+            if (options.signal?.aborted) return { ok: false, skipped: "error" as const, aborted: true };
             let context = "";
             if (hasSelection) {
                 const markdown = await readReaderMarkdown(plugin, docId);
@@ -159,12 +165,17 @@ export async function readerArticleQuestion(
                 context = stripMarkdown(await readReaderMarkdown(plugin, docId)).trim();
             }
             if (!context) return { ok: false, skipped: "invalid" as const };
+            if (options.signal?.aborted) return { ok: false, skipped: "error" as const, aborted: true };
             // 与选区校验同用码点口径，避免 emoji 选区"未超限却提示已截断"
             const truncated = Array.from(context).length > ARTICLE_QUESTION_CONTEXT_MAX_LENGTH;
             const prompt = buildArticleQuestionPrompt(before.meta.title, context, requestedQuestion, truncated);
             currentSettings = activeAiSettings(plugin, settings);
             if (!articleQuestionEnabled(currentSettings) || !(await aiQuotaAvailable(plugin, currentSettings))) return { ok: false, skipped: articleQuestionEnabled(currentSettings) ? "cap" as const : "off" as const };
-            const llm = await callLLM(plugin, currentSettings, prompt);
+            const llm = await callLLM(plugin, currentSettings, prompt, {
+                priority: "high",
+                ...(options.signal ? { signal: options.signal } : {}),
+            });
+            if (llm.aborted || options.signal?.aborted) return { ok: false, skipped: "error" as const, aborted: true };
             if (!llm.ok) return { ok: false, skipped: llm.failure ?? "error" as const };
             await recordAiUsage(plugin);
             if (hasSelection && !(await selectionBlockBelongsToDoc(selectionBlockId, docId))) return { ok: false, skipped: "changed" as const };
@@ -179,6 +190,7 @@ export async function readerArticleQuestion(
             if (!result) return { ok: false, skipped: "error" as const };
             return { ok: true, result, truncated };
         } catch {
+            if (options.signal?.aborted) return { ok: false, skipped: "error" as const, aborted: true };
             await logAiEvent(plugin, docId, "article-question", "本文问答不可用，已跳过");
             return { ok: false, skipped: "error" as const };
         }
@@ -196,25 +208,36 @@ async function readerCall(
     docId: string,
     settings: GleanSettings,
     stage: string,
-    getPrompt: () => string | Promise<string>
+    getPrompt: () => string | Promise<string>,
+    options: { signal?: AbortSignal } = {},
 ): Promise<ReaderAiOutcome> {
+    if (options.signal?.aborted) return { ok: false, skipped: "error", aborted: true };
     if (!readerAiEnabled(activeAiSettings(plugin, settings))) return { ok: false, skipped: "off" };
     return enqueueEnrich(async () => {
+        if (options.signal?.aborted) return { ok: false, skipped: "error", aborted: true };
         let currentSettings = activeAiSettings(plugin, settings);
         if (!readerAiEnabled(currentSettings)) return { ok: false, skipped: "off" };
         try {
             if (!(await aiQuotaAvailable(plugin, currentSettings))) return { ok: false, skipped: "cap" };
+            if (options.signal?.aborted) return { ok: false, skipped: "error", aborted: true };
             const prompt = await getPrompt();
             if (!prompt) {
                 await logAiEvent(plugin, docId, stage, "输入文本为空，已跳过");
                 return { ok: false, skipped: "error" };
             }
+            if (options.signal?.aborted) return { ok: false, skipped: "error", aborted: true };
             currentSettings = activeAiSettings(plugin, settings);
             if (!readerAiEnabled(currentSettings)) return { ok: false, skipped: "off" };
             if (!(await aiQuotaAvailable(plugin, currentSettings))) return { ok: false, skipped: "cap" };
             currentSettings = activeAiSettings(plugin, settings);
             if (!readerAiEnabled(currentSettings)) return { ok: false, skipped: "off" };
-            const llm = await callLLM(plugin, currentSettings, prompt);
+            const llm = await callLLM(plugin, currentSettings, prompt, {
+                priority: "high",
+                ...(options.signal ? { signal: options.signal } : {}),
+            });
+            if (llm.aborted || options.signal?.aborted) {
+                return { ok: false, skipped: "error", aborted: true };
+            }
             if (!llm.ok) {
                 await logAiEvent(plugin, docId, stage, "模型调用失败，已跳过");
                 return { ok: false, skipped: llm.failure ?? "error" };
@@ -228,6 +251,7 @@ async function readerCall(
             }
             return { ok: true, text };
         } catch {
+            if (options.signal?.aborted) return { ok: false, skipped: "error", aborted: true };
             await logAiEvent(plugin, docId, stage, "阅读 AI 不可用，已跳过");
             return { ok: false, skipped: "error" };
         }

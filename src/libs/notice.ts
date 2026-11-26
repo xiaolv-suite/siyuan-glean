@@ -14,6 +14,10 @@ import {
     lvEcosystem,
     lvLaunchpad,
     lvOmnisearch,
+    createLvAiProgressTracker,
+    mountLvAiThinkingCard,
+    openLvAiWaitOverlay,
+    withLvAiWait,
     type CardNoticeOptions,
     type CapsuleNoticeOptions,
     type SilentNoticeOptions,
@@ -27,10 +31,34 @@ import {
     type LvLaunchpadItem,
     type LvSearchResultItem,
     type LvSearchProvider,
+    type LvAiPresetScenario,
+    type LvAiStageDefinition,
+    type LvAiProgressState,
+    type LvAiProgressTracker,
+    type LvAiThinkingMountOptions,
+    type LvAiThinkingCardHandle,
+    type LvAiWaitOverlayOptions,
+    type LvAiWaitOverlayHandle,
     lvAutomation,
 } from "./lv-notice-kit.ts";
 
-export { lvNotify, withDocLock, lvSurfaceStack, lvTicker, lvAi, lvActivity, lvBackup, lvEcosystem, lvLaunchpad, lvOmnisearch, lvAutomation };
+export {
+    lvNotify,
+    withDocLock,
+    lvSurfaceStack,
+    lvTicker,
+    lvAi,
+    lvActivity,
+    lvBackup,
+    lvEcosystem,
+    lvLaunchpad,
+    lvOmnisearch,
+    lvAutomation,
+    createLvAiProgressTracker,
+    mountLvAiThinkingCard,
+    openLvAiWaitOverlay,
+    withLvAiWait,
+};
 export type {
     CardNoticeOptions,
     CapsuleNoticeOptions,
@@ -45,6 +73,14 @@ export type {
     LvLaunchpadItem,
     LvSearchResultItem,
     LvSearchProvider,
+    LvAiPresetScenario,
+    LvAiStageDefinition,
+    LvAiProgressState,
+    LvAiProgressTracker,
+    LvAiThinkingMountOptions,
+    LvAiThinkingCardHandle,
+    LvAiWaitOverlayOptions,
+    LvAiWaitOverlayHandle,
 };
 
 const PLUGIN_SOURCE = "小驴拾遗";

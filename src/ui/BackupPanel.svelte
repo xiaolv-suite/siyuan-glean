@@ -307,7 +307,7 @@
     .glean-backup h3, .glean-backup p { margin: 0; overflow-wrap: anywhere; }
     .glean-backup h3 { font-size: var(--glean-text-xl); line-height: 1.35; letter-spacing: -0.01em; }
     .glean-backup p { font-size: var(--glean-text-sm); line-height: 1.6; color: var(--glean-ink-2); }
-    .glean-backup__head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--glean-space-3); padding: var(--glean-space-3) var(--glean-space-4); border: 1px solid var(--glean-border-soft); border-radius: var(--glean-radius-lg, 16px); background: var(--glean-grad-soft); box-shadow: var(--glean-shadow-card); }
+    .glean-backup__head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--glean-space-3); padding: var(--glean-space-3) var(--glean-space-4); border: 1px solid var(--glean-border-soft); border-radius: var(--glean-radius-lg, 12px); background: var(--glean-card-surface); box-shadow: var(--glean-shadow-card); }
     .glean-backup__head p { margin-top: var(--glean-space-1); }
     .glean-backup__mode { flex: 0 0 auto; padding: 4px 10px; border: 1px solid color-mix(in srgb, var(--glean-color-action) 24%, var(--glean-border-soft)); border-radius: var(--glean-radius-pill); color: var(--glean-color-action); background: var(--glean-primary-soft); font: 600 var(--glean-text-xs)/1.2 var(--b3-font-family); letter-spacing: .05em; }
     .glean-backup__actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--glean-space-2); }

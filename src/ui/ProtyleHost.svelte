@@ -18,13 +18,13 @@
         host?: HTMLDivElement | null;
         controller?: ProtyleController | null;
         protyleInstance?: unknown;
+        stage?: "loading" | "ready" | "failed";
         className?: string;
         onOpenDocument: () => void;
     }
 
-    let { app, docId, mode, i18n, host = $bindable(null), controller = $bindable(null), protyleInstance = $bindable(null), className = "", onOpenDocument }: Props = $props();
+    let { app, docId, mode, i18n, host = $bindable(null), controller = $bindable(null), protyleInstance = $bindable(null), stage = $bindable<"loading" | "ready" | "failed">("loading"), className = "", onOpenDocument }: Props = $props();
     let attempt = $state(0);
-    let stage = $state<"loading" | "ready" | "failed">("loading");
     let retryButton = $state<HTMLButtonElement | null>(null);
     let hostHadFocus = false;
     let hostFocusOrigin: Element | null = null;
@@ -80,12 +80,24 @@
         return () => { active = false; };
     });
 
+    function hasRenderedBodyContent(element: HTMLElement, currentMode: ProtyleMode): boolean {
+        if (currentMode === "wysiwyg") {
+            return Boolean(element.querySelector(".protyle-wysiwyg:not(.fn__none) [data-node-id]"));
+        }
+        const preview = element.querySelector<HTMLElement>(".protyle-preview:not(.fn__none)");
+        if (!preview) return false;
+        return Boolean(
+            preview.querySelector('.b3-typography [id], .b3-typography > *, [data-node-id]:not([data-type="NodeDocument"])')
+        );
+    }
+
     $effect(() => {
         const element = host;
         const id = docId;
         void attempt;
         if (!element || !id) return;
         let active = true;
+        let readyFallbackTimer: number | null = null;
         stage = "loading";
         const timeout = window.setTimeout(() => {
             if (active && stage === "loading") {
@@ -93,19 +105,27 @@
                 window.clearInterval(readyCheckTimer);
             }
         }, 15000);
-        // 关键自愈守卫：若内核已向容器注入 protyle DOM 内容（如 .protyle-wysiwyg 或 [data-node-id]），立即将 stage 自愈切换为 ready
+        const markReady = () => {
+            if (!active) return;
+            window.clearTimeout(timeout);
+            window.clearInterval(readyCheckTimer);
+            if (readyFallbackTimer !== null) {
+                window.clearTimeout(readyFallbackTimer);
+                readyFallbackTimer = null;
+            }
+            stage = "ready";
+            try {
+                patchWechatImages(element);
+            } catch {}
+        };
+        // 关键自愈守卫：仅在对应视图的实际正文节点（preview 内容节点或 wysiwyg 块）挂载后才置为 ready
         const readyCheckTimer = window.setInterval(() => {
             if (!active) {
                 window.clearInterval(readyCheckTimer);
                 return;
             }
-            if (stage === "loading" && element.querySelector(".protyle-wysiwyg, .protyle-content, [data-node-id]")) {
-                stage = "ready";
-                window.clearTimeout(timeout);
-                window.clearInterval(readyCheckTimer);
-                try {
-                    patchWechatImages(element);
-                } catch {}
+            if (stage === "loading" && hasRenderedBodyContent(element, untrack(() => mode))) {
+                markReady();
             }
         }, 100);
         const current = createProtyleController({
@@ -113,7 +133,7 @@
             mode: untrack(() => mode),
             create: (mount, after) => new Protyle(app, mount, {
                 blockId: id, rootId: id, mode: untrack(() => mode),
-                render: { breadcrumb: false, background: false },
+                render: { breadcrumb: false, background: false, title: false },
                 after,
             }),
             observe: (target, resize) => {
@@ -124,12 +144,18 @@
             },
             onReady: (inst) => {
                 if (active) {
-                    window.clearTimeout(timeout);
-                    window.clearInterval(readyCheckTimer);
-                    stage = "ready";
                     protyleInstance = inst ?? current.getInstance?.() ?? null;
-                    patchWechatImages(element);
                     refreshWhaleDecorationsInProtyle(app, id);
+                    if (hasRenderedBodyContent(element, untrack(() => mode))) {
+                        markReady();
+                    } else if (readyFallbackTimer === null) {
+                        // 空文档保底：若 after 触发后 1.2s 内仍无内容节点（如空文），允许进入 ready
+                        readyFallbackTimer = window.setTimeout(() => {
+                            if (active && stage === "loading") {
+                                markReady();
+                            }
+                        }, 1200);
+                    }
                 }
             },
             onError: (error) => {
@@ -137,6 +163,10 @@
                 if (active) {
                     window.clearTimeout(timeout);
                     window.clearInterval(readyCheckTimer);
+                    if (readyFallbackTimer !== null) {
+                        window.clearTimeout(readyFallbackTimer);
+                        readyFallbackTimer = null;
+                    }
                     stage = "failed";
                 }
             },
@@ -147,7 +177,12 @@
             active = false;
             window.clearTimeout(timeout);
             window.clearInterval(readyCheckTimer);
+            if (readyFallbackTimer !== null) {
+                window.clearTimeout(readyFallbackTimer);
+                readyFallbackTimer = null;
+            }
             current.destroy();
+            try { element?.replaceChildren?.(); } catch {}
             if (controller === current) controller = null;
             protyleInstance = null;
         };

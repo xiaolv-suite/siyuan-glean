@@ -177,10 +177,14 @@ export async function setMetaCalloutSlotAttr(blockId: string): Promise<void> {
     await setBlockAttrs(blockId, { [META_CALLOUT_SLOT_KEY]: META_CALLOUT_SLOT_VALUE });
 }
 
-/** 为日记阅读记录块挂载 custom-glean-reading-doc 属性，由 clip-store 统一封装保障数据主权 */
-export async function setDailyNoteSlotAttr(blockId: string, docId: string): Promise<void> {
+/** 为日记阅读记录块挂载 custom-glean-reading-doc 与统一 LifeLog 属性，由 clip-store 统一封装保障数据主权 */
+export async function setDailyNoteSlotAttr(
+    blockId: string,
+    docId: string,
+    extraAttrs?: Record<string, string>,
+): Promise<void> {
     if (!/^\d{14}-[0-9a-z]{7}$/.test(blockId)) return;
-    await setBlockAttrs(blockId, { [DAILY_NOTE_SLOT_KEY]: docId });
+    await setBlockAttrs(blockId, { ...(extraAttrs ?? {}), [DAILY_NOTE_SLOT_KEY]: docId });
 }
 
 export async function readClipDocument(docId: string, exportOptions: ExportMarkdownOptions = {}): Promise<{ meta: DocMeta; attrs: ClipAttrs; markdown: string }> {
@@ -216,6 +220,21 @@ export interface ReadingClipContext {
     aiTags?: string[];
     time?: string;
     favorite?: boolean;
+    readonly?: boolean;
+}
+
+export function isDocReadonlyByAttrs(ial: Record<string, string | null | undefined> | null | undefined): boolean {
+    return ial?.["custom-sy-readonly"] === "true" || ial?.["custom-siyuan-readonly"] === "true";
+}
+
+export async function isDocumentReadonly(docId: string): Promise<boolean> {
+    if (!/^\d{14}-[0-9a-z]{7}$/.test(docId)) return false;
+    try {
+        const ial = await getBlockAttrs(docId);
+        return isDocReadonlyByAttrs(ial);
+    } catch {
+        return false;
+    }
 }
 
 /** 编辑器上下文只读当前根块属性；旧索引不能冒充正在阅读的状态。 */
@@ -244,6 +263,7 @@ export async function readClipContext(docId: string): Promise<ReadingClipContext
         aiTags: attrs.aiTags ?? [],
         time: attrs.time,
         favorite: Boolean(attrs.favorite),
+        readonly: isDocReadonlyByAttrs(ial),
     };
 }
 
@@ -675,6 +695,18 @@ export function writeClip(
     return withDocLock(docId, () => withClipEditQueue(plugin, docId, (write) => write(patch, options)));
 }
 
+export type AutoSnapshotHook = (
+    plugin: Plugin,
+    docId: string,
+    options?: Pick<WriteClipOptions, "expectedAttrs">,
+) => Promise<{ path: string; created: boolean; indexSyncFailed?: boolean }>;
+
+let autoSnapshotHook: AutoSnapshotHook | null = null;
+
+export function registerAutoSnapshotHook(hook: AutoSnapshotHook | null): void {
+    autoSnapshotHook = hook;
+}
+
 /** 收录（三入口共用）：首次收录补缺失字段；已带有效状态时幂等跳过。 */
 export async function captureClip(
     plugin: Plugin,
@@ -745,10 +777,9 @@ export async function captureClip(
     // article. Defer it until the index has converged; otherwise a successful
     // attribute write followed by a failed index save would create an asset that
     // the current index cannot reliably expose or reconcile.
-    if (!result.indexSyncFailed && await automaticSnapshotEnabled(plugin) && !result.attrs.snapshot) {
+    if (!result.indexSyncFailed && await automaticSnapshotEnabled(plugin) && !result.attrs.snapshot && autoSnapshotHook) {
         try {
-            const { snapshotClip } = await import("./snapshot-service");
-            const snapshot = await snapshotClip(plugin, docId, { expectedAttrs: { [ATTR.snapshot]: ial[ATTR.snapshot] ?? null } });
+            const snapshot = await autoSnapshotHook(plugin, docId, { expectedAttrs: { [ATTR.snapshot]: ial[ATTR.snapshot] ?? null } });
             const { path } = snapshot;
             result.attrs.snapshot = path;
             if (snapshot.indexSyncFailed) result.indexSyncFailed = true;

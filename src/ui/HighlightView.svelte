@@ -17,7 +17,7 @@ import {
     highlightDocumentTitle, listDocHighlights, listLibraryHighlights, prepareHighlightExport, saveHighlightDraft,
     setAnnotationTag, updateHighlightMemo, type HighlightExportSession, type HighlightItem, type HighlightSaveReason,
 } from "../services/highlights";
-import { getWhaleBridgeStatus, loadWhaleCustomTags, openWhaleCommentEditor } from "../services/siyuan-comment-bridge";
+import { getWhaleBridgeStatus, loadWhaleCustomTags, openWhaleCommentEditor, refreshWhaleDecorationsInProtyle } from "../services/siyuan-comment-bridge";
 import { findRelatedOutcome, type RelatedReason } from "../services/enrich-service";
 import { makeQuoteCardPreview } from "./flashcard-dialog";
 import { openQuoteCardDialog } from "./quote-card-dialog";
@@ -34,6 +34,7 @@ import ActionPopover from "./ActionPopover.svelte";
 import { formatBibTeX, formatGBT7714, formatCitation, citationSuccessKey, type CitationFormat, type CitationItem } from "../domain/citation";
 import { buildHighlightFlashcardPayload } from "../domain/highlight-pipeline";
 import { dispatchHighlightToFlashcard } from "../services/highlight-pipeline-service";
+import AiThinkingCard from "./AiThinkingCard.svelte";
 
 interface Props { facade: GleanFacade }
 let { facade }: Props = $props();
@@ -92,6 +93,8 @@ let expandedAiTags = $state<Record<string, boolean>>({});
 let rootEl = $state<HTMLElement | null>(null);
 let generation = 0;
 let relatedGeneration = 0;
+let relatedAbort = $state.raw<AbortController | null>(null);
+let relatedCancelled = $state(false);
 let loadedContext = "";
 let tagAliasGeneration = 0;
 let allGroupsOpen = $state(true);
@@ -145,14 +148,23 @@ $effect(() => {
         whaleStatus = getWhaleBridgeStatus(facade.pluginInstance.app);
         void loadWhaleCustomTags(facade.pluginInstance.app, true).then((tags) => { if (active) whaleCustomTags = tags; });
     };
+    const onDataChanged = () => {
+        if (scope === "library" || Boolean(currentDocId)) {
+            void loadHighlights(scope, scope === "current" ? currentDocId : "", facade.settings);
+        }
+    };
     document.addEventListener("glean:tag-aliases-changed", syncTagAliases);
+    document.addEventListener("glean:data-changed", onDataChanged);
     window.addEventListener("siyuan-comment-updated", onWhaleUpdated);
     window.addEventListener("siyuan-comment-pin-updated", onWhaleUpdated);
     window.addEventListener("siyuan-comment-settings-updated", onWhaleSettings);
     return () => {
         active = false;
         tagAliasGeneration += 1;
+        relatedAbort?.abort();
+        relatedAbort = null;
         document.removeEventListener("glean:tag-aliases-changed", syncTagAliases);
+        document.removeEventListener("glean:data-changed", onDataChanged);
         window.removeEventListener("siyuan-comment-updated", onWhaleUpdated);
         window.removeEventListener("siyuan-comment-pin-updated", onWhaleUpdated);
         window.removeEventListener("siyuan-comment-settings-updated", onWhaleSettings);
@@ -164,12 +176,19 @@ $effect(() => {
     const docId = targetScope === "current" ? currentDocId : "";
     const settings = facade.settings;
     untrack(() => void loadHighlights(targetScope, docId, settings));
-    return () => { generation += 1; };
+    return () => {
+        generation += 1;
+        relatedAbort?.abort();
+        relatedAbort = null;
+    };
 });
 
-async function loadHighlights(targetScope: "current" | "library", docId: string, settings: GleanSettings) {
+async function loadHighlights(targetScope: "current" | "library", docId: string, settings: GleanSettings, retryAttempt = 0) {
     const request = ++generation;
     relatedGeneration += 1;
+    relatedAbort?.abort();
+    relatedAbort = null;
+    relatedCancelled = false;
     relatedLoading = false;
     related = [];
     relatedReason = "disabled";
@@ -211,6 +230,10 @@ async function loadHighlights(targetScope: "current" | "library", docId: string,
         }
         if (request !== generation) return;
         items = next;
+        if (editingAnnotation) {
+            const refreshed = next.find((entry) => entry.id === editingAnnotation!.id);
+            if (refreshed) editingAnnotation = refreshed;
+        }
         selected = retainHighlightSelection(next, selected);
         docTitle = title;
         if (targetScope === "current") {
@@ -218,9 +241,9 @@ async function loadHighlights(targetScope: "current" | "library", docId: string,
         }
     } catch (error) {
         if (request === generation) {
-            const msg = String((error as { cause?: unknown })?.cause ?? error);
-            if (msg.includes("已过期")) {
-                void loadHighlights(targetScope, docId, settings);
+            const msg = `${error instanceof Error ? error.message : String(error)} ${String((error as { cause?: unknown })?.cause ?? "")}`;
+            if (msg.includes("已过期") && retryAttempt < 1) {
+                void loadHighlights(targetScope, docId, settings, retryAttempt + 1);
                 return;
             }
             console.warn("[glean] 摘录加载失败:", error);
@@ -231,22 +254,36 @@ async function loadHighlights(targetScope: "current" | "library", docId: string,
     }
 }
 
+function cancelRelated(): void {
+    if (!relatedLoading) return;
+    relatedGeneration += 1;
+    relatedAbort?.abort();
+    relatedAbort = null;
+    relatedLoading = false;
+    relatedCancelled = true;
+}
+
 async function loadRelated(docId: string, query: string, settings: GleanSettings, listRequest: number): Promise<void> {
     const request = ++relatedGeneration;
+    relatedAbort?.abort();
+    const controller = new AbortController();
+    relatedAbort = controller;
+    relatedCancelled = false;
     related = [];
     relatedReason = null;
     relatedLoading = true;
     try {
-        const outcome = await findRelatedOutcome(docId, query, [], { plugin: facade.pluginInstance, settings });
-        if (request !== relatedGeneration || listRequest !== generation) return;
+        const outcome = await findRelatedOutcome(docId, query, [], { plugin: facade.pluginInstance, settings, signal: controller.signal });
+        if (controller.signal.aborted || outcome.aborted || request !== relatedGeneration || listRequest !== generation) return;
         related = outcome.items;
         relatedReason = outcome.reason;
     } catch {
-        if (request === relatedGeneration && listRequest === generation) {
+        if (!controller.signal.aborted && request === relatedGeneration && listRequest === generation) {
             related = [];
             relatedReason = "error";
         }
     } finally {
+        if (relatedAbort === controller) relatedAbort = null;
         if (request === relatedGeneration && listRequest === generation) relatedLoading = false;
     }
 }
@@ -300,6 +337,8 @@ async function submitEditMemo(item: HighlightItem): Promise<void> {
         items = items.map((entry) => entry.id === item.id ? { ...entry, memo: saved || undefined } : entry);
         editingMemoId = "";
         editingMemoDraft = "";
+        if (item.annotationKind === "siyuan-comment") refreshWhaleDecorationsInProtyle(facade.pluginInstance.app, item.rootId);
+        facade.notifyDataChanged();
         showMessage(t(i18n, "highlight.memoSaved"), 2000);
     } catch (error) {
         console.warn("[glean] 摘录墙保存想法失败:", error);
@@ -315,6 +354,8 @@ async function applyTag(item: HighlightItem, nextTag: string): Promise<void> {
         await setAnnotationTag(item, resolved, facade.pluginInstance.app);
         items = items.map((entry) => entry.id === item.id ? { ...entry, annotationTag: resolved || undefined } : entry);
         tagPickerId = "";
+        if (item.annotationKind === "siyuan-comment") refreshWhaleDecorationsInProtyle(facade.pluginInstance.app, item.rootId);
+        facade.notifyDataChanged();
         showMessage(t(i18n, "highlight.tagUpdated"), 1800);
     } catch (error) {
         console.warn("[glean] 摘录墙更新标记失败:", error);
@@ -330,6 +371,8 @@ async function submitReply(item: HighlightItem): Promise<void> {
         items = items.map((entry) => entry.id === item.id ? { ...entry, replies: nextReplies } : entry);
         replyDraft = "";
         replyingId = "";
+        if (item.annotationKind === "siyuan-comment") refreshWhaleDecorationsInProtyle(facade.pluginInstance.app, item.rootId);
+        facade.notifyDataChanged();
         showMessage(t(i18n, "highlight.replyAdded"), 2000);
     } catch (error) {
         console.warn("[glean] 摘录墙追加追记失败:", error);
@@ -339,8 +382,8 @@ async function submitReply(item: HighlightItem): Promise<void> {
     }
 }
 
-async function handleDelete(item: HighlightItem): Promise<void> {
-    if (confirmDeleteId !== item.id) {
+async function handleDelete(item: HighlightItem, immediate = false): Promise<void> {
+    if (!immediate && !item.sourceMissing && confirmDeleteId !== item.id) {
         confirmDeleteId = item.id;
         window.setTimeout(() => { if (confirmDeleteId === item.id) confirmDeleteId = ""; }, 3200);
         return;
@@ -443,10 +486,12 @@ async function exportColorCardsZettelkasten(): Promise<void> {
         lines.push(`## ${colorTitle} (${groupItems.length})\n`);
         for (const item of groupItems) {
             const docTitle = item.title || t(i18n, "panel.untitled");
-            lines.push(`### 💡 ${item.text.slice(0, 30)}...`);
-            lines.push(`> ${item.text}`);
-            if (item.memo) {
-                lines.push(`\n**${t(i18n, "highlight.memoThought")}:** ${item.memo}`);
+            lines.push(`### 💡 ${item.text.replace(/\r?\n/g, " ").slice(0, 30)}...`);
+            lines.push(item.text.split(/\r?\n/).map((l) => `> ${l}`).join("\n"));
+            if (item.memo?.trim()) {
+                const memoLines = item.memo.trim().split(/\r?\n/);
+                lines.push("");
+                lines.push(memoLines.map((l, idx) => idx === 0 ? `> **${t(i18n, "highlight.memoThought")}:** ${l}` : `> ${l}`).join("\n"));
             }
             if (item.rootId) {
                 lines.push(`\n- 来源：((${item.rootId} '《${docTitle}》'))`);
@@ -935,8 +980,8 @@ function focusHighlightRow(id: string): void {
 <div class="glean-panel glean-highlights" tabindex="-1" bind:this={rootEl} aria-busy={loading || exportBusy} aria-labelledby={titleId}>
     <div class="glean-highlights__head">
         <div class:glean-sr-only={facade.isMobile}>
-            <h2 id={titleId} class="glean-highlights__title">{t(i18n, "highlight.title")}</h2>
-            <p class="glean-highlights__subtitle">{scope === "current" ? t(i18n, "highlight.current") : t(i18n, "highlight.allLibrary")}</p>
+            <h2 id={titleId} class="glean-highlights__title">{scope === "current" ? t(i18n, "highlight.title") : t(i18n, "highlight.allLibrary")}</h2>
+            <p class="glean-highlights__subtitle">{scope === "current" ? (docTitle || t(i18n, "highlight.current")) : t(i18n, "highlight.emptyHint")}</p>
         </div>
         <div class="glean-highlights__tools glean-highlights__tools--scope" role="group" aria-label={t(i18n, "highlight.title")}>
             <button aria-pressed={scope === "current"} disabled={exportBusy} onclick={() => scope = "current"}>{t(i18n, "highlight.current")}</button>
@@ -1088,7 +1133,7 @@ function focusHighlightRow(id: string): void {
         {#if hasFilters}
             <div class="glean-empty glean-highlights__empty" role="status"><div class="glean-empty__hint">{t(i18n, "library.noMatch")}</div><button class="glean-btn glean-btn--ghost" onclick={clearFilters}>{t(i18n, "library.clearFilters")}</button></div>
         {:else}
-            <div class="glean-empty glean-highlights__empty"><div class="glean-empty__art"><svg aria-hidden="true"><use href="#iconGleanWheat" /></svg></div><div class="glean-empty__title">{t(i18n, "highlight.empty")}</div><div class="glean-empty__hint">{t(i18n, "highlight.emptyHint")}</div></div>
+            <div class="glean-empty glean-highlights__empty"><div class="glean-empty__art"><svg aria-hidden="true"><use href="#iconGleanWheat" /></svg></div><div class="glean-empty__title">{t(i18n, scope === "library" ? "highlight.allLibraryEmpty" : "highlight.empty")}</div><div class="glean-empty__hint">{t(i18n, scope === "library" ? "highlight.allLibraryEmptyHint" : "highlight.emptyHint")}</div></div>
         {/if}
     {/if}
     {#if !loadError}
@@ -1096,7 +1141,7 @@ function focusHighlightRow(id: string): void {
             <div class="glean-highlights__items">
                 {#each visible.items as item (item.id)}
                     {@const tagInfo = resolveAnnotationTagDisplay(item.annotationTag, whaleCustomTags)}
-                    <article class="glean-highlights__item glean-highlights__item--color-{item.color || 'yellow'}" data-glean-highlight-id={item.id} class:glean-highlights__item--cursor={cursorId === item.id} aria-current={cursorId === item.id ? "true" : undefined} aria-busy={cardingKey === item.id}>
+                    <article class="glean-highlights__item glean-highlights__item--color-{item.color || 'yellow'}" data-glean-highlight-id={item.id} class:glean-highlights__item--cursor={cursorId === item.id} class:glean-highlights__item--checked={selected.includes(item.id)} aria-current={cursorId === item.id ? "true" : undefined} aria-busy={cardingKey === item.id}>
                         <div class="glean-highlights__item-head">
                             <span class="glean-reader__highlight-dot glean-reader__highlight-dot--{item.color || 'yellow'}" style={item.customColor ? `background:${item.customColor}` : undefined} aria-hidden="true"></span>
                             <span class="glean-highlights__item-label">{t(i18n, "highlight.quoteTag")}</span>
@@ -1110,6 +1155,9 @@ function focusHighlightRow(id: string): void {
                             {:else if item.annotationKind === "native-memo"}
                                 <span class="glean-annotation-kind" title={t(i18n, "highlight.kindMemoHint")}>{t(i18n, "highlight.kindMemo")}</span>
                             {/if}
+                            {#if item.sourceMissing}
+                                <span class="glean-annotation-kind glean-annotation-kind--deleted">{t(i18n, "highlight.sourceDeleted")}</span>
+                            {/if}
                             <span class="glean-highlights__item-index">{(visible.page - 1) * highlightPageSize + visible.items.indexOf(item) + 1}</span>
                         </div>
                         <label class="glean-highlights__quote"><input type="checkbox" checked={selected.includes(item.id)} disabled={exportBusy} onchange={() => toggle(item.id)} aria-label={`${t(i18n, "highlight.quoteTag")} ${(visible.page - 1) * highlightPageSize + visible.items.indexOf(item) + 1}: ${item.text.slice(0, 120)}`} /><span>{item.text}</span></label>
@@ -1121,6 +1169,7 @@ function focusHighlightRow(id: string): void {
                                     bind:value={editingMemoDraft}
                                     placeholder={t(i18n, "highlight.memoPlaceholderEdit")}
                                     onkeydown={(e) => {
+                                        if (e.isComposing || e.keyCode === 229) return;
                                         if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); void submitEditMemo(item); }
                                         if (e.key === "Escape") { e.preventDefault(); editingMemoId = ""; }
                                     }}
@@ -1170,6 +1219,7 @@ function focusHighlightRow(id: string): void {
                                     bind:value={replyDraft}
                                     placeholder={t(i18n, "highlight.replyPlaceholder")}
                                     onkeydown={(e) => {
+                                        if (e.isComposing || e.keyCode === 229) return;
                                         if (e.key === "Enter") { e.preventDefault(); void submitReply(item); }
                                         if (e.key === "Escape") { e.preventDefault(); replyingId = ""; }
                                     }}
@@ -1180,17 +1230,24 @@ function focusHighlightRow(id: string): void {
                                 </div>
                             </div>
                         {/if}
-                        <p class="glean-highlights__meta" title={item.title || t(i18n, "panel.untitled")}>
-                            {item.title || t(i18n, "panel.untitled")} {item.site ? ` · ${item.site}` : ""}
+                        <p class="glean-highlights__meta" title={item.sourceMissing ? t(i18n, "highlight.sourceDeleted") : (item.title || t(i18n, "panel.untitled"))}>
+                            {item.sourceMissing ? (item.title ? `${item.title}（${t(i18n, "highlight.sourceDeleted")}）` : t(i18n, "highlight.sourceDeleted")) : (item.title || t(i18n, "panel.untitled"))} {item.site ? ` · ${item.site}` : ""}
                             {#if formatHighlightTime(item.id)}<span class="glean-highlights__time"> · {formatHighlightTime(item.id)}</span>{/if}
                         </p>
                         {#if item.tags?.length}<p class="glean-highlights__meta glean-highlights__tags"><span>{t(i18n, "library.filterTag")}</span>{#each (expandedTags[item.id] ? item.tags : item.tags.slice(0, 3)) as value}<span class="glean-highlights__tag">{value}</span>{/each}{#if (item.tags?.length ?? 0) > 3 && !expandedTags[item.id]}<button type="button" class="glean-highlights__tag glean-highlights__tag--more" onclick={() => expandedTags[item.id] = true}>+{(item.tags?.length ?? 0) - 3}</button>{/if}</p>{/if}
                         {#if item.aiTags?.length}<p class="glean-highlights__meta glean-highlights__tags glean-highlights__tags--ai"><span>{t(i18n, "library.filterAiTag")}</span>{#each (expandedAiTags[item.id] ? item.aiTags : item.aiTags.slice(0, 3)) as value}<span class="glean-highlights__tag">{value}</span>{/each}{#if (item.aiTags?.length ?? 0) > 3 && !expandedAiTags[item.id]}<button type="button" class="glean-highlights__tag glean-highlights__tag--more" onclick={() => expandedAiTags[item.id] = true}>+{(item.aiTags?.length ?? 0) - 3}</button>{/if}</p>{/if}
                         <div class="glean-highlights__tools glean-highlights__tools--card">
-                            <button type="button" onclick={() => openDoc(item.rootId, item.sourceBlockId || item.id)}>
-                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanExternal" /></svg>
-                                <span>{t(i18n, "highlight.original")}</span>
-                            </button>
+                            {#if item.sourceMissing}
+                                <button type="button" class="glean-btn--danger-soft" onclick={() => void handleDelete(item, true)} title={t(i18n, "highlight.cleanDeadCard")}>
+                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanTrash" /></svg>
+                                    <span>{t(i18n, "highlight.cleanDeadCard")}</span>
+                                </button>
+                            {:else}
+                                <button type="button" onclick={() => openDoc(item.rootId, item.sourceBlockId || item.id)}>
+                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanExternal" /></svg>
+                                    <span>{t(i18n, "highlight.original")}</span>
+                                </button>
+                            {/if}
                             <button type="button" class="glean-highlights__edit-btn" onclick={() => { editingAnnotation = item; }} title={t(i18n, "annotationEditor.openEditor")}>
                                 <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanEdit" /></svg>
                                 <span>{t(i18n, "highlight.editMemo")}</span>
@@ -1278,6 +1335,7 @@ function focusHighlightRow(id: string): void {
         {:else}
             <div class="glean-highlights__article-groups">
                 {#each articleGroups as group (group.rootId)}
+                    {@const groupSourceMissing = group.items.some((entry) => entry.sourceMissing)}
                     <div class="glean-highlights__article-group">
                         <div class="glean-highlights__article-header">
                             <button
@@ -1286,14 +1344,16 @@ function focusHighlightRow(id: string): void {
                                 aria-expanded={isGroupOpen(group.rootId)}
                                 onclick={() => toggleGroupOpen(group.rootId)}
                             >
-                                <span class="glean-highlights__article-title" title={group.title || t(i18n, "panel.untitled")}>
-                                    {group.title || t(i18n, "panel.untitled")}
+                                <span class="glean-highlights__article-title" title={groupSourceMissing ? t(i18n, "highlight.sourceDeleted") : (group.title || t(i18n, "panel.untitled"))}>
+                                    {groupSourceMissing ? (group.title ? `${group.title}（${t(i18n, "highlight.sourceDeleted")}）` : t(i18n, "highlight.sourceDeleted")) : (group.title || t(i18n, "panel.untitled"))}
                                 </span>
                                 {#if group.site}<span class="glean-highlights__article-site"> · {group.site}</span>{/if}
                                 <span class="glean-chip">{t(i18n, "highlight.groupCount", { n: group.items.length })}</span>
                             </button>
                             <div class="glean-highlights__article-actions" role="group" aria-label={t(i18n, "library.moreActions")}>
-                                <button type="button" class="glean-btn glean-btn--ghost" onclick={(e) => { e.stopPropagation(); openDoc(group.rootId); }}>{t(i18n, "action.openDoc")}</button>
+                                {#if !groupSourceMissing}
+                                    <button type="button" class="glean-btn glean-btn--ghost" onclick={(e) => { e.stopPropagation(); openDoc(group.rootId); }}>{t(i18n, "action.openDoc")}</button>
+                                {/if}
                                 <button type="button" class="glean-btn glean-btn--ghost" disabled={exportBusy} onclick={(e) => { e.stopPropagation(); void copyArticleQuotes(group); }} title={t(i18n, "highlight.copyArticleQuotes")}>
                                     <svg class="glean-icon" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
                                     {t(i18n, "highlight.copyArticleQuotes")}
@@ -1312,7 +1372,7 @@ function focusHighlightRow(id: string): void {
                         <div class="glean-highlights__items glean-highlights__items--grouped">
                             {#each group.items as item, itemIndex (item.id)}
                                 {@const tagInfo = resolveAnnotationTagDisplay(item.annotationTag, whaleCustomTags)}
-                                <article class="glean-highlights__item glean-highlights__item--color-{item.color || 'yellow'}" data-glean-highlight-id={item.id} class:glean-highlights__item--cursor={cursorId === item.id} aria-current={cursorId === item.id ? "true" : undefined} aria-busy={cardingKey === item.id}>
+                                <article class="glean-highlights__item glean-highlights__item--color-{item.color || 'yellow'}" data-glean-highlight-id={item.id} class:glean-highlights__item--cursor={cursorId === item.id} class:glean-highlights__item--checked={selected.includes(item.id)} aria-current={cursorId === item.id ? "true" : undefined} aria-busy={cardingKey === item.id}>
                                     <div class="glean-highlights__item-head">
                                         <span class="glean-reader__highlight-dot glean-reader__highlight-dot--{item.color || 'yellow'}" style={item.customColor ? `background:${item.customColor}` : undefined} aria-hidden="true"></span>
                                         <span class="glean-highlights__item-label">{t(i18n, "highlight.quoteTag")}</span>
@@ -1326,6 +1386,9 @@ function focusHighlightRow(id: string): void {
                                         {:else if item.annotationKind === "native-memo"}
                                             <span class="glean-annotation-kind" title={t(i18n, "highlight.kindMemoHint")}>{t(i18n, "highlight.kindMemo")}</span>
                                         {/if}
+                                        {#if item.sourceMissing}
+                                            <span class="glean-annotation-kind glean-annotation-kind--deleted">{t(i18n, "highlight.sourceDeleted")}</span>
+                                        {/if}
                                         <span class="glean-highlights__item-index">{itemIndex + 1}</span>
                                     </div>
                                     <label class="glean-highlights__quote"><input type="checkbox" checked={selected.includes(item.id)} disabled={exportBusy} onchange={() => toggle(item.id)} aria-label={`${t(i18n, "highlight.quoteTag")} ${itemIndex + 1}: ${item.text.slice(0, 120)}`} /><span>{item.text}</span></label>
@@ -1337,6 +1400,7 @@ function focusHighlightRow(id: string): void {
                                                 bind:value={editingMemoDraft}
                                                 placeholder={t(i18n, "highlight.memoPlaceholderEdit")}
                                                 onkeydown={(e) => {
+                                                    if (e.isComposing || e.keyCode === 229) return;
                                                     if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); void submitEditMemo(item); }
                                                     if (e.key === "Escape") { e.preventDefault(); editingMemoId = ""; }
                                                 }}
@@ -1386,6 +1450,7 @@ function focusHighlightRow(id: string): void {
                                                 bind:value={replyDraft}
                                                 placeholder={t(i18n, "highlight.replyPlaceholder")}
                                                 onkeydown={(e) => {
+                                                    if (e.isComposing || e.keyCode === 229) return;
                                                     if (e.key === "Enter") { e.preventDefault(); void submitReply(item); }
                                                     if (e.key === "Escape") { e.preventDefault(); replyingId = ""; }
                                                 }}
@@ -1398,10 +1463,17 @@ function focusHighlightRow(id: string): void {
                                     {/if}
                                     {#if formatHighlightTime(item.id)}<p class="glean-highlights__meta"><span class="glean-highlights__time">{formatHighlightTime(item.id)}</span></p>{/if}
                                     <div class="glean-highlights__tools glean-highlights__tools--card">
-                                        <button type="button" onclick={() => openDoc(group.rootId, item.sourceBlockId || item.id)}>
-                                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanExternal" /></svg>
-                                            <span>{t(i18n, "highlight.original")}</span>
-                                        </button>
+                                        {#if item.sourceMissing}
+                                            <button type="button" class="glean-btn--danger-soft" onclick={() => void handleDelete(item, true)} title={t(i18n, "highlight.cleanDeadCard")}>
+                                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanTrash" /></svg>
+                                                <span>{t(i18n, "highlight.cleanDeadCard")}</span>
+                                            </button>
+                                        {:else}
+                                            <button type="button" onclick={() => openDoc(group.rootId, item.sourceBlockId || item.id)}>
+                                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanExternal" /></svg>
+                                                <span>{t(i18n, "highlight.original")}</span>
+                                            </button>
+                                        {/if}
                                         <button type="button" class="glean-highlights__edit-btn" onclick={() => { editingAnnotation = item; }} title={t(i18n, "annotationEditor.openEditor")}>
                                             <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanEdit" /></svg>
                                             <span>{t(i18n, "highlight.editMemo")}</span>
@@ -1489,7 +1561,19 @@ function focusHighlightRow(id: string): void {
         <section class="glean-highlights__related" aria-labelledby={relatedTitleId} aria-busy={relatedLoading}>
             <div class="glean-sect" id={relatedTitleId}>✨ {t(i18n, "ai.relatedTitle")}</div>
             {#if relatedLoading}
-                <p class="glean-highlights__related-state" role="status" aria-live="polite">{t(i18n, "reader.relatedLoading")}</p>
+                <AiThinkingCard
+                    scenario="doc-judge"
+                    title={t(i18n, "ai.relatedTitle")}
+                    subtitle={t(i18n, "reader.relatedLoading")}
+                    compact
+                    signal={relatedAbort?.signal}
+                    onCancel={cancelRelated}
+                />
+            {:else if relatedCancelled}
+                <div class="glean-highlights__related-error" role="status">
+                    <p>{t(i18n, "reader.relatedCancelled")}</p>
+                    <button class="glean-btn glean-btn--ghost" disabled={relatedLoading} onclick={retryRelated}>{t(i18n, "reader.relatedRetry")}</button>
+                </div>
             {:else if relatedReason === "ok" && related.length}
                 {#each related as item (item.id)}<button class="glean-rel" onclick={() => openDoc(item.id)}><span class="glean-rel__t">{item.title}</span><svg class="glean-rel__go glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArrowRight" /></svg></button>{/each}
                 <div class="glean-highlights__meta">AI · {t(i18n, "ai.actionsPreview")}</div>
@@ -1543,6 +1627,8 @@ function focusHighlightRow(id: string): void {
         onClose={() => { editingAnnotation = null; }}
         onUpdated={(next) => {
             items = items.map((entry) => entry.id === next.id ? next : entry);
+            if (next.annotationKind === "siyuan-comment") refreshWhaleDecorationsInProtyle(facade.pluginInstance.app, next.rootId);
+            facade.notifyDataChanged();
         }}
         onDeleted={(id) => {
             items = items.filter((entry) => entry.id !== id);
@@ -1597,17 +1683,17 @@ function focusHighlightRow(id: string): void {
         max-width: 100%;
         gap: 4px;
         padding: 4px;
-        border: 0;
-        border-radius: 12px;
+        border: 1px solid var(--glean-border-soft);
+        border-radius: 10px;
         background: var(--glean-inset-surface);
         box-shadow: none;
     }
 
     .glean-highlights__tools--scope button {
-        min-height: 34px;
-        padding: 6px 12px;
+        min-height: 32px;
+        padding: 5px 12px;
         border: 0;
-        border-radius: 9px;
+        border-radius: 7px;
         background: transparent;
         font-size: 12px;
     }
@@ -1615,15 +1701,16 @@ function focusHighlightRow(id: string): void {
     .glean-highlights__tools--scope button[aria-pressed="true"] {
         background: var(--glean-card-surface);
         color: var(--glean-accent-b);
-        box-shadow: none;
+        box-shadow: var(--glean-shadow-control);
     }
 
     .glean-highlights__filters {
         gap: 12px;
         padding: 16px;
-        border-radius: 16px;
+        border: 1px solid var(--glean-border-soft);
+        border-radius: 12px;
         background: var(--glean-card-surface);
-        box-shadow: none;
+        box-shadow: var(--glean-shadow-card);
         align-items: end;
     }
 
@@ -1699,7 +1786,7 @@ function focusHighlightRow(id: string): void {
         display: none;
     }
 
-    .glean-highlights__item:has(input:checked) {
+    .glean-highlights__item--checked {
         background: var(--glean-selection-surface);
     }
 

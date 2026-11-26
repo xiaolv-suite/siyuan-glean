@@ -203,12 +203,20 @@ export function renderStructuredOutlineMarkdown(tree: HighlightOutlineTree): str
             lines.push(quote);
 
             if (hl.memo && hl.memo.trim()) {
-                lines.push(`> 💭 *思考批注：${hl.memo.trim()}*`);
+                const memoLines = hl.memo.trim().split(/\r?\n/);
+                lines.push(`> 💭 *思考批注：${memoLines[0]}*`);
+                for (const ml of memoLines.slice(1)) {
+                    lines.push(`> ${ml}`);
+                }
             }
 
             if (hl.replies && hl.replies.length > 0) {
                 for (const reply of hl.replies) {
-                    lines.push(`> 💬 *追评：${reply.md.trim()}*`);
+                    const replyLines = reply.md.trim().split(/\r?\n/);
+                    lines.push(`> 💬 *追评：${replyLines[0]}*`);
+                    for (const rl of replyLines.slice(1)) {
+                        lines.push(`> ${rl}`);
+                    }
                 }
             }
 

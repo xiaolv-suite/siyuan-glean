@@ -12,6 +12,7 @@
         cancelFlashcardSession, confirmFlashcard, createFlashcardSession, draftQuestionCard, questionCardEnabled,
     } from "../services/flashcard-service";
     import type { GleanFacade } from "../types";
+    import AiThinkingCard from "./AiThinkingCard.svelte";
 
     interface Props { facade: GleanFacade; source: FlashcardSource; onClose?: () => void; registerCloseGuard?: (guard: () => boolean) => () => void }
     let { facade, source, onClose, registerCloseGuard }: Props = $props();
@@ -22,6 +23,8 @@
     let back = $state(session.draft.back);
     let settings = $state.raw(untrack(() => facade.settings));
     let busy = $state(false);
+    let aiDrafting = $state(false);
+    let aiAbort = $state.raw<AbortController | null>(null);
     let confirming = $state(false);
     let saveState = $state(session.state);
     let message = $state("");
@@ -39,18 +42,32 @@
         document.addEventListener("glean:data-changed", refreshSettings);
         return () => {
             disposed = true;
+            aiAbort?.abort();
+            aiAbort = null;
             cancelFlashcardSession(session);
             document.removeEventListener("glean:data-changed", refreshSettings);
         };
     });
 
+    function cancelQuestionDraft(): void {
+        if (!aiDrafting) return;
+        aiAbort?.abort();
+        aiAbort = null;
+        aiDrafting = false;
+        busy = confirming;
+        message = t(i18n, "flashcard.save.cancelled");
+    }
+
     async function questionDraft(): Promise<void> {
         if (busy || locked) return;
+        const controller = new AbortController();
+        aiAbort = controller;
+        aiDrafting = true;
         busy = true;
         message = "";
         try {
-            const outcome = await draftQuestionCard(facade.pluginInstance, session, facade.settings);
-            if (disposed) return;
+            const outcome = await draftQuestionCard(facade.pluginInstance, session, facade.settings, { signal: controller.signal });
+            if (disposed || controller.signal.aborted) return;
             if (outcome.ok) {
                 front = session.draft.front;
                 back = session.draft.back;
@@ -60,7 +77,11 @@
                 message = t(i18n, aiFailureKey(reason) ?? (reason === "sourceChanged" || reason === "readFailed" || reason === "cancelled" || reason === "busy" ? `flashcard.save.${reason}` : `flashcard.ai.${reason}`));
             }
         } finally {
-            if (!disposed) busy = false;
+            if (aiAbort === controller) aiAbort = null;
+            if (!disposed) {
+                aiDrafting = false;
+                busy = confirming;
+            }
         }
     }
 
@@ -90,10 +111,16 @@
             }
         }
     }
-    $effect(() => registerCloseGuard?.(() => !busy));
+    $effect(() => registerCloseGuard?.(() => !confirming));
     $effect(() => {
         if (!rootEl) return;
         return installEscapeHandler(rootEl, (event) => {
+            if (aiDrafting) {
+                event.preventDefault();
+                event.stopPropagation();
+                cancelQuestionDraft();
+                return true;
+            }
             if (busy) return true;
             event.preventDefault();
             event.stopPropagation();
@@ -137,7 +164,17 @@
     <p class="glean-flashcard__hint">
         {aiOn ? t(i18n, "flashcard.aiPrivacy", { n: FLASHCARD_AI_QUOTE_LIMIT, channel }) : t(i18n, "flashcard.aiOff")}
     </p>
-    <div class="glean-flashcard__status {confirming || busy ? "glean-flashcard__status--busy" : message ? "glean-flashcard__status--message" : ""}" role="status" aria-live="polite" aria-atomic="true">{confirming ? t(i18n, "flashcard.saving") : busy ? t(i18n, "panel.loading") : message}</div>
+    {#if aiDrafting}
+        <AiThinkingCard
+            scenario="question-gen"
+            title={t(i18n, "flashcard.aiDraft")}
+            compact
+            signal={aiAbort?.signal}
+            onCancel={cancelQuestionDraft}
+        />
+    {:else}
+        <div class="glean-flashcard__status {confirming || busy ? "glean-flashcard__status--busy" : message ? "glean-flashcard__status--message" : ""}" role="status" aria-live="polite" aria-atomic="true">{confirming ? t(i18n, "flashcard.saving") : busy ? t(i18n, "panel.loading") : message}</div>
+    {/if}
     <div class="glean-flashcard__actions glean-flashcard__actions--footer">
         {#if aiOn}
             <button class="glean-btn glean-btn--ghost" disabled={busy || locked} onclick={() => void questionDraft()}>{t(i18n, "flashcard.aiDraft")}</button>
@@ -166,7 +203,7 @@
         overflow: auto;
         color: var(--glean-ink);
     }
-    .glean-flashcard__head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--glean-space-3); padding: var(--glean-space-3) var(--glean-space-4); border: 1px solid var(--glean-border-soft); border-radius: var(--glean-radius-lg, 16px); background: var(--glean-grad-soft); box-shadow: var(--glean-shadow-card); }
+    .glean-flashcard__head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--glean-space-3); padding: var(--glean-space-3) var(--glean-space-4); border: 1px solid var(--glean-border-soft); border-radius: var(--glean-radius-lg, 12px); background: var(--glean-card-surface); box-shadow: var(--glean-shadow-card); }
     .glean-flashcard__head h3 { margin: 0; font-size: var(--glean-text-xl); line-height: 1.35; }
     .glean-flashcard__head .glean-flashcard__hint { margin-top: var(--glean-space-1); }
     .glean-flashcard__mode { flex: 0 0 auto; padding: 4px 10px; border: 1px solid color-mix(in srgb, var(--glean-color-action) 24%, var(--glean-border-soft)); border-radius: var(--glean-radius-pill); color: var(--glean-color-action); background: var(--glean-primary-soft); font: 600 var(--glean-text-xs)/1.2 var(--b3-font-family); letter-spacing: .05em; }

@@ -14,6 +14,12 @@ export interface CreateSliceDocsResult {
     errors: string[];
 }
 
+const sliceDocCheckpoints = new Map<string, string>();
+
+export function clearSliceDocCheckpointsForTest(): void {
+    sliceDocCheckpoints.clear();
+}
+
 /**
  * 将长文渐进切片方案在思源中物化为子文档（实体切片）
  * 遵循 Issue #17 统领指令第 4 条与 D-0001 数据主权铁律。
@@ -55,12 +61,20 @@ export async function createSliceSubDocuments(
             const parentPrefix = parentHpath === "/" ? "" : parentHpath.replace(/\/+$/, "");
             const targetPath = `${parentPrefix}/${safeSliceTitle}`;
             const markdown = formatSliceMarkdown(slice, context.title, context.id, context.url);
+            const checkpointKey = `${context.id}::${box}::${targetPath}`;
+            let docId = sliceDocCheckpoints.get(checkpointKey) ?? "";
+            let docNewlyCreated = false;
 
             try {
-                const docId = await createDocWithMd(box, targetPath, markdown);
                 if (!/^\d{14}-[0-9a-z]{7}$/.test(docId)) {
-                    throw new Error("创建切片子文档返回的 ID 非法");
+                    docId = await createDocWithMd(box, targetPath, markdown);
+                    if (!/^\d{14}-[0-9a-z]{7}$/.test(docId)) {
+                        throw new Error("创建切片子文档返回的 ID 非法");
+                    }
+                    sliceDocCheckpoints.set(checkpointKey, docId);
+                    docNewlyCreated = true;
                 }
+                createdDocIds.push(docId);
 
                 // 继承长文来源与作者信息，进入稍后读队列
                 const sliceAiTags = ["渐进切片"];
@@ -84,11 +98,14 @@ export async function createSliceSubDocuments(
                     },
                     { forceStatus: true }
                 );
-
-                createdDocIds.push(docId);
+                sliceDocCheckpoints.delete(checkpointKey);
             } catch (error) {
                 console.warn("[glean] 创建切片子文档失败:", slice.title, error);
-                errors.push(`${slice.title}: ${error instanceof Error ? error.message : "创建失败"}`);
+                if (docNewlyCreated && /^\d{14}-[0-9a-z]{7}$/.test(docId)) {
+                    errors.push(`${slice.title} (文档已创建 ${docId}，属性写入待补齐): ${error instanceof Error ? error.message : "属性写入失败"}`);
+                } else {
+                    errors.push(`${slice.title}: ${error instanceof Error ? error.message : "创建失败"}`);
+                }
             }
         }
 

@@ -134,9 +134,26 @@
     onMount(() => {
         mounted = true;
         void load();
-        const onSelect = () => {
+        let selectTimer: number | null = null;
+        const applySelection = () => {
+            selectTimer = null;
             const selection = window.getSelection();
             excerpt = selectionBelongsToHost(host, selection) ? excerptFromSelection(host, selection) : null;
+        };
+        const onSelect = () => {
+            if (!host) return;
+            const selection = window.getSelection();
+            const anchorNode = selection?.anchorNode ?? null;
+            const inHost = Boolean(anchorNode && host.contains(anchorNode));
+            if (!inHost && excerpt === null) {
+                if (selectTimer !== null) {
+                    window.clearTimeout(selectTimer);
+                    selectTimer = null;
+                }
+                return;
+            }
+            if (selectTimer !== null) window.clearTimeout(selectTimer);
+            selectTimer = window.setTimeout(applySelection, 120);
         };
         const onData = () => { void load(); };
         document.addEventListener("selectionchange", onSelect);
@@ -144,6 +161,10 @@
         return () => {
             mounted = false;
             requests.invalidate();
+            if (selectTimer !== null) {
+                window.clearTimeout(selectTimer);
+                selectTimer = null;
+            }
             document.removeEventListener("selectionchange", onSelect);
             document.removeEventListener("glean:data-changed", onData);
         };

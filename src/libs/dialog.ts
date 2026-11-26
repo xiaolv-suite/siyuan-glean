@@ -122,6 +122,8 @@ export const simpleDialog = (args: {
     const isMobileFullscreenDialog = Boolean(args.containerClass?.split(/\s+/).includes("glean-mobile-fullscreen-dialog"));
     const isFullscreen = isMobileFullscreenDialog || args.width === "100vw" || args.height === "100dvh" || (isMobileFrontend() && (args.width === "100%" || !args.width));
     const modalRoot = dialog.element.querySelector<HTMLElement>(".b3-dialog__container") ?? dialog.element;
+    dialog.element.classList?.add("glean-dialog-host");
+    modalRoot.classList?.add("glean-dialog-container");
     if (isMobileFullscreenDialog) {
         modalRoot.classList.add("glean-dialog--fullscreen");
         const header = dialog.element.querySelector<HTMLElement>(".b3-dialog__header");

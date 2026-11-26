@@ -39,7 +39,7 @@ export interface FormattingDraftLabels {
     source: string;
 }
 
-export type FormattingAiReason = "off" | "cap" | "tooLong" | "invalid" | "error" | "busy" | AiCallFailure;
+export type FormattingAiReason = "off" | "cap" | "tooLong" | "invalid" | "error" | "busy" | "cancelled" | AiCallFailure;
 export type FormattingSaveReason = "changed" | "readFailed" | "markFailed" | "createUnknown" | "empty" | "busy" | "invalid";
 
 async function readSource(docId: string): Promise<FormattingSource> {
@@ -59,7 +59,13 @@ export function formattingAiEnabled(settings: GleanSettings): boolean {
     return settings.ai.enrichMode !== "off" && settings.ai.formattingEnabled === true;
 }
 
-export async function planAiFormatting(plugin: Plugin, session: FormattingSession, settings: GleanSettings): Promise<{ ok: boolean; reason?: FormattingAiReason }> {
+export async function planAiFormatting(
+    plugin: Plugin,
+    session: FormattingSession,
+    settings: GleanSettings,
+    options: { signal?: AbortSignal } = {},
+): Promise<{ ok: boolean; reason?: FormattingAiReason }> {
+    if (options.signal?.aborted) return { ok: false, reason: "cancelled" };
     if (!formattingAiEnabled(activeAiSettings(plugin, settings))) return { ok: false, reason: "off" };
     if (session.busy || session.state !== "ready") return { ok: false, reason: "busy" };
     const prompt = buildFormattingPrompt(session.analysis);
@@ -67,17 +73,24 @@ export async function planAiFormatting(plugin: Plugin, session: FormattingSessio
     session.busy = true;
     try {
         return await enqueueEnrich(async () => {
+            if (options.signal?.aborted) return { ok: false, reason: "cancelled" as const };
             let currentSettings = activeAiSettings(plugin, settings);
             if (!formattingAiEnabled(currentSettings)) return { ok: false, reason: "off" as const };
             if (!(await aiQuotaAvailable(plugin, currentSettings))) return { ok: false, reason: "cap" };
+            if (options.signal?.aborted) return { ok: false, reason: "cancelled" as const };
             currentSettings = activeAiSettings(plugin, settings);
             if (!formattingAiEnabled(currentSettings)) return { ok: false, reason: "off" as const };
-            const outcome = await callLLM(plugin, currentSettings, prompt);
+            const outcome = await callLLM(plugin, currentSettings, prompt, {
+                priority: "high",
+                ...(options.signal ? { signal: options.signal } : {}),
+            });
+            if (outcome.aborted || options.signal?.aborted) return { ok: false, reason: "cancelled" as const };
             if (!outcome.ok) {
                 await logAiEvent(plugin, session.source.id, "formatting-call", "Model call failed");
                 return { ok: false, reason: outcome.failure ?? "error" };
             }
             await recordAiUsage(plugin);
+            if (options.signal?.aborted) return { ok: false, reason: "cancelled" as const };
             if (!formattingAiEnabled(activeAiSettings(plugin, settings))) return { ok: false, reason: "off" as const };
             const plan = parseFormattingPlan(String(outcome.text ?? ""), session.analysis);
             if (!plan) {

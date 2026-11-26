@@ -718,9 +718,10 @@ $effect(() => {
         gap: 10px;
         padding: 16px;
         border: 1px solid var(--glean-border-soft);
-        border-radius: 6px;
+        border-radius: var(--glean-radius-lg, 12px);
         background: var(--glean-card-surface);
         color: var(--glean-ink-2);
+        box-shadow: var(--glean-shadow-card);
     }
 
     .glean-confirm h3,

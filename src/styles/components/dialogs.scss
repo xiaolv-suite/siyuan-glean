@@ -138,16 +138,16 @@
         flex: 1 1 120px;
         min-width: 0;
         min-height: 58px;
-        border-radius: var(--glean-radius-lg, 16px);
+        border-radius: var(--glean-radius-lg, 12px);
         padding: var(--glean-space-2-5) var(--glean-space-3);
-        background: var(--glean-card-surface, var(--glean-card-surface));
+        background: var(--glean-card-surface);
         border: 1px solid var(--glean-border-soft);
         box-shadow: var(--glean-shadow-card);
         transition: transform var(--glean-duration-fast) var(--glean-ease-enter), box-shadow var(--glean-duration-fast) var(--glean-ease-enter), border-color var(--glean-duration-fast) var(--glean-ease-enter);
 
         &:hover {
             transform: translateY(-1px);
-            border-color: color-mix(in srgb, var(--glean-color-action) 35%, var(--glean-border-soft));
+            border-color: var(--glean-line-strong, var(--glean-border-soft));
             box-shadow: var(--glean-shadow-card-hover);
         }
 

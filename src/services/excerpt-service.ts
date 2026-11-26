@@ -48,8 +48,117 @@ export function selectionBelongsToHost(host: Element | null, selection: Selectio
     }
 }
 
+function hasPreviewOrDocContainerClass(el: Element): boolean {
+    const classList = (el as Element & { classList?: { contains?: (token: string) => boolean } }).classList;
+    if (typeof classList?.contains === "function") {
+        if (classList.contains("protyle-preview") || classList.contains("b3-typography") || classList.contains("protyle-wysiwyg")) {
+            return true;
+        }
+    }
+    const cls = el.getAttribute("class") ?? "";
+    return /\b(?:protyle-preview|b3-typography|protyle-wysiwyg)\b/.test(cls);
+}
+
+function isDocumentRootNode(el: Element, docId?: string | null): boolean {
+    if (el.getAttribute("data-type") === "NodeDocument") return true;
+    const nodeId = el.getAttribute("data-node-id") ?? "";
+    const idAttr = el.getAttribute("id") ?? "";
+    if (docId && (nodeId === docId || idAttr === docId)) return true;
+    return hasPreviewOrDocContainerClass(el);
+}
+
+function isInPreviewTypography(el: Element | null, host: Element): boolean {
+    let cur = el;
+    while (cur && cur !== host) {
+        if (typeof cur.closest === "function") {
+            try {
+                if (cur.closest(".protyle-preview, .b3-typography")) return true;
+            } catch {
+                // ignore mock closest implementations
+            }
+        }
+        const cls = cur.getAttribute("class") ?? "";
+        if (/\b(?:protyle-preview|b3-typography)\b/.test(cls)) return true;
+        cur = cur.parentElement;
+    }
+    return false;
+}
+
+function isListItemNode(el: Element): boolean {
+    if (el.getAttribute("data-type") === "NodeListItem") return true;
+    return typeof (el as { tagName?: unknown }).tagName === "string"
+        && (el as { tagName: string }).tagName.toUpperCase() === "LI";
+}
+
+function resolveSelectionBlockId(host: Element, anchorNode: Node, docId?: string | null): string {
+    let current: Element | null = anchorNode.nodeType === 1 ? (anchorNode as Element) : anchorNode.parentElement;
+    const inPreview = isInPreviewTypography(current, host);
+    while (current && current !== host && host.contains(current)) {
+        if (!isDocumentRootNode(current, docId) && !isListItemNode(current)) {
+            const nodeId = current.getAttribute("data-node-id") ?? "";
+            if (BLOCK_ID_PATTERN.test(nodeId) && nodeId !== docId) {
+                return nodeId;
+            }
+            if (inPreview) {
+                const idAttr = current.getAttribute("id") ?? "";
+                if (BLOCK_ID_PATTERN.test(idAttr) && idAttr !== docId) {
+                    return idAttr;
+                }
+            }
+        }
+        current = current.parentElement;
+    }
+    return "";
+}
+
+/** 从选区 Range 提取上下文与出现次序，辅助长文重复文本块反查消除歧义。 */
+export function extractSelectionSearchContext(
+    host: Element | null,
+    range: Range | null,
+    selectedText: string,
+): { contextBefore?: string; contextAfter?: string; occurrenceIndex?: number } {
+    if (!host || !range || typeof document === "undefined") return {};
+    try {
+        const container = host.querySelector<HTMLElement>(".protyle-preview:not(.fn__none) .b3-typography")
+            ?? host.querySelector<HTMLElement>(".protyle-preview:not(.fn__none)")
+            ?? host.querySelector<HTMLElement>(".protyle-wysiwyg:not(.fn__none)")
+            ?? host;
+        if (!container.contains(range.startContainer) || !container.contains(range.endContainer)) {
+            return {};
+        }
+        const beforeRange = document.createRange();
+        beforeRange.selectNodeContents(container);
+        beforeRange.setEnd(range.startContainer, range.startOffset);
+        const beforeNorm = beforeRange.toString().replace(/\u200b/g, "").replace(/\s+/g, " ");
+
+        const afterRange = document.createRange();
+        afterRange.selectNodeContents(container);
+        afterRange.setStart(range.endContainer, range.endOffset);
+        const afterNorm = afterRange.toString().replace(/\u200b/g, "").replace(/\s+/g, " ");
+
+        const needle = selectedText.replace(/\u200b/g, "").replace(/\s+/g, " ").trim();
+        let occurrenceIndex = 0;
+        if (needle.length >= 2) {
+            let pos = 0;
+            while (true) {
+                const hit = beforeNorm.indexOf(needle, pos);
+                if (hit === -1) break;
+                occurrenceIndex += 1;
+                pos = hit + needle.length;
+            }
+        }
+        return {
+            contextBefore: beforeNorm.slice(-30).trim() || undefined,
+            contextAfter: afterNorm.slice(0, 30).trim() || undefined,
+            occurrenceIndex,
+        };
+    } catch {
+        return {};
+    }
+}
+
 /** 从 DOM 选区提取摘录：仅当完整选区落在宿主元素内；无文本返回 null。 */
-export function excerptFromSelection(host: Element | null, selection: Selection | null): ExcerptSelection | null {
+export function excerptFromSelection(host: Element | null, selection: Selection | null, docId?: string | null): ExcerptSelection | null {
     if (!host || !selection) return null;
     try {
         if (selection.isCollapsed !== false) return null;
@@ -67,17 +176,39 @@ export function excerptFromSelection(host: Element | null, selection: Selection 
         }
         const text = clampExcerpt(selection.toString());
         if (!text) return null;
-        const anchor = anchorNode.nodeType === 1 ? (anchorNode as Element) : anchorNode.parentElement;
-        const blockEl = anchor?.closest("[data-node-id]");
-        const blockId = blockEl && blockEl !== host && host.contains(blockEl) ? blockEl.getAttribute("data-node-id") ?? "" : "";
-        return { text, blockId: BLOCK_ID_PATTERN.test(blockId) ? blockId : "" };
+        const blockId = resolveSelectionBlockId(host, anchorNode, docId);
+        return { text, blockId };
     } catch {
         return null;
     }
 }
 
+async function resolveSafeInsertAnchor(blockId: string): Promise<string> {
+    let currentId = blockId;
+    for (let depth = 0; depth < 4; depth += 1) {
+        try {
+            const rows = await querySql<{ id?: unknown; type?: unknown; parent_id?: unknown }>(
+                `SELECT id, type, parent_id FROM blocks WHERE id = '${currentId}' LIMIT 1`,
+            );
+            const row = rows?.[0];
+            if (!row || row.type !== "i") return currentId;
+            const parentId = typeof row.parent_id === "string" ? row.parent_id : "";
+            if (!BLOCK_ID_PATTERN.test(parentId)) return currentId;
+            currentId = parentId;
+        } catch {
+            return currentId;
+        }
+    }
+    return currentId;
+}
+
 /** 摘录为引述块：插在所选块之后；支持附加个人思考批注（memo）；返回引述块 ID（通过 withDocLock 串行保护）。 */
-export async function insertQuoteExcerpt(blockId: string, text: string, memo?: string): Promise<string> {
+export async function insertQuoteExcerpt(
+    blockId: string,
+    text: string,
+    memo?: string,
+    options?: { normalizeListAnchor?: boolean },
+): Promise<string> {
     if (typeof blockId !== "string" || !BLOCK_ID_PATTERN.test(blockId)) throw new Error("摘录块 ID 无效");
     return withDocLock(blockId, async () => {
         const rawQuote = clampExcerpt(text).slice(0, EXCERPT_MAX_LENGTH);
@@ -85,7 +216,8 @@ export async function insertQuoteExcerpt(blockId: string, text: string, memo?: s
         const fullText = trimmedMemo ? `${rawQuote}\n\n💡 ${trimmedMemo}` : rawQuote;
         const dom = buildQuoteBlockDom(fullText, escapeDomText);
         if (!dom) throw new Error("摘录内容为空");
-        const newQuoteBlockId = await insertBlockAfter(blockId, dom);
+        const anchorId = options?.normalizeListAnchor ? await resolveSafeInsertAnchor(blockId) : blockId;
+        const newQuoteBlockId = await insertBlockAfter(anchorId, dom);
         return newQuoteBlockId;
     });
 }

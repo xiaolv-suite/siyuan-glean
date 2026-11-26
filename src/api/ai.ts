@@ -7,8 +7,10 @@
 import { kernelPost } from "./client";
 
 /** 调用用户已配置的模型。msg 为完整 prompt；失败抛错由上层降级。 */
-export async function chatGPT(msg: string): Promise<string> {
-    return kernelPost<string>("/api/ai/chatGPT", { msg });
+export async function chatGPT(msg: string, options: { signal?: AbortSignal } = {}): Promise<string> {
+    return kernelPost<string>("/api/ai/chatGPT", { msg }, {
+        ...(options.signal ? { signal: options.signal } : {}),
+    });
 }
 
 export interface AIEditorAction {

@@ -159,13 +159,27 @@ export async function runDailyAutoBackup(
 
     try {
         const content = await exportLibraryBackup(plugin, settings);
+        const parsedBackup = JSON.parse(content) as { documents?: unknown[] };
+        const documentCount = Array.isArray(parsedBackup.documents) ? parsedBackup.documents.length : 0;
         const filename = `daily-backup-${today}.json`;
         await plugin.saveData(filename, content);
-        const nextSnapshots = [
-            { date: today, filename, count: Object.keys(settings).length, createdAt: new Date().toISOString() },
-            ...snapshots,
-        ].slice(0, 7);
+        const allSnapshots = [
+            { date: today, filename, count: documentCount, createdAt: new Date().toISOString() },
+            ...snapshots.filter((s) => s.filename !== filename),
+        ];
+        const nextSnapshots = allSnapshots.slice(0, 7);
+        const evictedSnapshots = allSnapshots.slice(7);
         await plugin.saveData("daily-backup-index.json", { snapshots: nextSnapshots });
+        const retainedFilenames = new Set(nextSnapshots.map((s) => s.filename));
+        for (const evicted of evictedSnapshots) {
+            if (evicted?.filename && !retainedFilenames.has(evicted.filename) && typeof plugin.removeData === "function") {
+                try {
+                    await plugin.removeData(evicted.filename);
+                } catch (removeErr) {
+                    console.warn(`[glean] 清理过期自动备份文件失败 (${evicted.filename}):`, removeErr);
+                }
+            }
+        }
         console.debug(`[LvGlean] 每日自动本地备份已完成（${filename}）`);
         return { ok: true, filename };
     } catch (error) {

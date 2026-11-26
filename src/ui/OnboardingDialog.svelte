@@ -52,6 +52,7 @@ onMount(() => {
     let active = true;
     void loadUiPrefs(facade.pluginInstance).then((prefs) => {
         if (!active || disposed || completed) return;
+        doneBeforeOpen = Boolean(prefs.onboardingDone);
         // 手动重新打开引导时，从第 1 步开始浏览，绝不自动关闭
         if (prefs.onboardingDone && !progressTouched) {
             step = 1;
@@ -136,11 +137,13 @@ async function moveTo(nextStep: OnboardingStep): Promise<void> {
     requestedStep = nextStep;
     progressTouched = true;
     try {
-        await saveUiPrefs(facade.pluginInstance, {
-            onboardingDone: false,
-            onboardingStep: nextStep,
-            onboardingInterrupted: false,
-        });
+        if (!doneBeforeOpen) {
+            await saveUiPrefs(facade.pluginInstance, {
+                onboardingDone: false,
+                onboardingStep: nextStep,
+                onboardingInterrupted: false,
+            });
+        }
         actionFailed = false;
         step = nextStep;
     } catch (error) {
@@ -177,11 +180,13 @@ async function next(): Promise<void> {
         if (disposed || completed) return;
         requestedStep = 3;
         progressTouched = true;
-        await saveUiPrefs(facade.pluginInstance, {
-            onboardingDone: false,
-            onboardingStep: 3,
-            onboardingInterrupted: false,
-        });
+        if (!doneBeforeOpen) {
+            await saveUiPrefs(facade.pluginInstance, {
+                onboardingDone: false,
+                onboardingStep: 3,
+                onboardingInterrupted: false,
+            });
+        }
         step = 3;
         actionFailed = false;
     } catch (error) {

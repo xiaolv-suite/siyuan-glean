@@ -7,9 +7,16 @@ export const EXCERPT_MAX_LENGTH = 4000;
 export const ARTICLE_QUESTION_MAX_LENGTH = 1000;
 export const ARTICLE_QUESTION_CONTEXT_MAX_LENGTH = 16000;
 
-/** 选区文本规范化：压缩空白并截断；空串表示无可摘录内容。 */
+/** 选区文本规范化：保留必要换行并压缩行内空白后截断；空串表示无可摘录内容。 */
 export function clampExcerpt(text: string): string {
-    return String(text ?? "").replace(/\s+/g, " ").trim().slice(0, EXCERPT_MAX_LENGTH);
+    const normalized = String(text ?? "")
+        .replace(/\r\n?/g, "\n")
+        .split("\n")
+        .map((line) => line.replace(/[^\S\n]+/g, " ").trim())
+        .join("\n")
+        .replace(/\n{3,}/g, "\n\n")
+        .trim();
+    return normalized.slice(0, EXCERPT_MAX_LENGTH);
 }
 
 /** 多行选区 → 引述块内的段落序列；空行跳过。 */

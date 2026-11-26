@@ -16,10 +16,11 @@ export async function suggestClipAuthor(
     plugin: Plugin,
     docId: string,
     settings: GleanSettings | (() => GleanSettings),
-    options: { expectedAuthor: string; isCurrent?: () => boolean },
+    options: { expectedAuthor: string; isCurrent?: () => boolean; signal?: AbortSignal },
 ): Promise<AuthorSuggestionOutcome> {
     const currentSettings = () => activeAiSettings(plugin, typeof settings === "function" ? settings() : settings);
     const stopped = (): AuthorSuggestionOutcome | null => {
+        if (options.signal?.aborted) return { ok: false, reason: "cancelled" };
         if (options.isCurrent && !options.isCurrent()) return { ok: false, reason: "cancelled" };
         return authorSuggestionEnabled(currentSettings()) ? null : { ok: false, reason: "off" };
     };
@@ -50,7 +51,11 @@ export async function suggestClipAuthor(
             const beforeCall = stopped();
             if (beforeCall) return beforeCall;
             if (!finalQuotaAvailable) return { ok: false, reason: "cap" };
-            const outcome = await callLLM(plugin, currentSettings(), prompt);
+            const outcome = await callLLM(plugin, currentSettings(), prompt, {
+                priority: "high",
+                ...(options.signal ? { signal: options.signal } : {}),
+            });
+            if (outcome.aborted || options.signal?.aborted) return { ok: false, reason: "cancelled" };
             if (!outcome.ok) {
                 await logAiEvent(plugin, docId, "author-suggestion-call", "Author suggestion model unavailable");
                 return { ok: false, reason: outcome.failure ?? "error" };

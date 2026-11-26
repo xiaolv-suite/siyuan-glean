@@ -7,6 +7,7 @@
         type FoldLevel,
         type FoldNode,
     } from "../domain/folded-reader.ts";
+    import AiThinkingCard from "./AiThinkingCard.svelte";
 
     interface Props {
         nodes: FoldNode[];
@@ -15,10 +16,12 @@
         loading?: boolean;
         aiBusy?: boolean;
         aiEnriched?: boolean;
+        aiSignal?: AbortSignal;
         onLevelChange?: (level: FoldLevel) => void;
         onJumpToBlock?: (blockId: string) => void;
         onToggleNode?: (nodeId: string) => void;
         onRunAiEnrich?: () => Promise<void>;
+        onCancelAiEnrich?: () => void;
     }
 
     let {
@@ -28,10 +31,12 @@
         loading = false,
         aiBusy = false,
         aiEnriched = false,
+        aiSignal,
         onLevelChange,
         onJumpToBlock,
         onToggleNode,
         onRunAiEnrich,
+        onCancelAiEnrich,
     }: Props = $props();
 
     let currentLevel = $state<FoldLevel>(2);
@@ -193,6 +198,17 @@
             </div>
         </div>
     </header>
+
+    {#if aiBusy}
+        <AiThinkingCard
+            scenario="general"
+            title="✨ AI 智能分层"
+            subtitle="正在提炼全文段落的论点支撑、单行要旨与核心概念…"
+            compact
+            signal={aiSignal}
+            onCancel={onCancelAiEnrich}
+        />
+    {/if}
 
     {#if loading}
         <div class="glean-fold-reader__loading" role="status">

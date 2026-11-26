@@ -1,7 +1,7 @@
 import type { App, Plugin } from "siyuan";
 import {
     createDocWithMd, deleteBlock, findBlockIdByTextInDoc, getBlockAttrs, getBlockKramdown, getHighlightBlocks, listCrossDocSiyuanComments,
-    listHighlightBlocks, listHighlightDocuments, newNodeId, querySql, updateBlock, type BlockRow,
+    listHighlightBlocks, listHighlightDocuments, newNodeId, querySql, updateBlock, type BlockRow, type FindBlockByTextOptions,
 } from "../api/client";
 import {
     cleanHighlightText, highlightColor, highlightMarker, isHighlightId, parseIalAttr, parseSiyuanCommentReplies,
@@ -55,6 +55,7 @@ async function readRoots(
     ids: readonly string[],
     requireClipAttrs = true,
     fallbackClips?: Record<string, { title?: string; box?: string; hpath?: string }>,
+    options: { allowMissingRoots?: boolean } = {},
 ): Promise<Map<string, QualifiedRoot>> {
     if (ids.some((id) => !isHighlightId(id))) throw new HighlightExportError("invalid");
     const roots = new Map<string, QualifiedRoot>();
@@ -69,6 +70,23 @@ async function readRoots(
             const hpath = docRow?.hpath || fallback?.hpath || "";
             const title = docRow?.content || fallback?.title || "";
             const ial = attributes.get(id);
+            if (!docRow && !ial && options.allowMissingRoots) {
+                roots.set(id, {
+                    root: {
+                        id,
+                        title,
+                        box,
+                        hpath,
+                        site: "",
+                        tags: [],
+                        aiTags: [],
+                        url: "",
+                        sourceMissing: true,
+                    },
+                    qualified: true,
+                });
+                continue;
+            }
             if (!box || !hpath || (requireClipAttrs && !ial)) throw new HighlightExportError("readFailed");
             const attrs = parseClipAttrs(ial ?? {});
             roots.set(id, {
@@ -84,6 +102,34 @@ interface ToHighlightOptions {
     allowCrossDoc?: boolean;
 }
 
+function splitTrailingBlockquoteMemo(rawMarkdown: string): { body: string; memo: string } | null {
+    const normalized = String(rawMarkdown ?? "").replace(/\r\n?/g, "\n").trim();
+    if (!normalized) return null;
+    const match = /^(?:([\s\S]*?)(?:\n(?:>\s*\n)*>\s*💡[ \t]*([\s\S]+))|([\s\S]*?)(?:\n+\s*💡[ \t]*([\s\S]+)))$/.exec(normalized);
+    if (!match) return null;
+    const body = (match[1] ?? match[3] ?? "").trim();
+    const rawMemo = (match[2] ?? match[4] ?? "").trim();
+    if (!body || !rawMemo) return null;
+    const cleanMemo = rawMemo
+        .split("\n")
+        .map((line) => line.replace(/^>\s?/, "").trim())
+        .filter(Boolean)
+        .join("\n");
+    if (!cleanMemo) return null;
+    return { body, memo: cleanMemo };
+}
+
+function stripTrailingMemoFromContent(quoteText: string, memo: string): string {
+    const trimmedMemo = memo.trim();
+    if (!trimmedMemo) return quoteText;
+    const compactMemo = trimmedMemo.replace(/\s+/g, " ");
+    const escapedFull = trimmedMemo.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&");
+    const escapedCompact = compactMemo.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&");
+    const stripped = quoteText
+        .replace(new RegExp(`(?:\\s*💡\\s*(?:${escapedFull}|${escapedCompact}))\\s*$`), "")
+        .trim();
+    return stripped || quoteText;
+}
 function mapWhaleColorToChipColor(styleColor: string, customColor: string): string {
     if (styleColor === "red" || styleColor === "blue" || styleColor === "green" || styleColor === "yellow") {
         return styleColor;
@@ -107,7 +153,7 @@ function toHighlight(row: BlockRow, root: HighlightRoot, options: ToHighlightOpt
     if (!isHighlightId(row.id) || typeof row.content !== "string" || typeof row.markdown !== "string") {
         throw new HighlightExportError("readFailed");
     }
-    if (!options.allowCrossDoc && (row.root_id !== root.id || row.box !== root.box)) {
+    if (!options.allowCrossDoc && (row.root_id !== root.id || (!root.sourceMissing && row.box !== root.box) || (root.sourceMissing && root.box && row.box !== root.box))) {
         throw new HighlightExportError("readFailed");
     }
 
@@ -192,12 +238,17 @@ function toHighlight(row: BlockRow, root: HighlightRoot, options: ToHighlightOpt
         const gleanReplies = parseSiyuanCommentReplies(parseIalAttr(ial, "custom-clip-hl-replies"));
         if (gleanReplies.length > 0) replies = gleanReplies;
     } else {
-        const memoSplit = quoteText.split(/(?:\r?\n)+\s*💡\s*/);
-        if (memoSplit.length > 1) {
-            quoteText = memoSplit[0].trim();
-            memoText = memoSplit.slice(1).join("\n").trim();
+        const mdMemo = splitTrailingBlockquoteMemo(row.markdown);
+        const contentMemoMatch = quoteText.split(/(?:\r?\n)+\s*💡\s*/);
+        if (mdMemo) {
+            memoText = mdMemo.memo;
+            quoteText = stripTrailingMemoFromContent(quoteText, mdMemo.memo);
+        } else if (contentMemoMatch.length > 1) {
+            quoteText = contentMemoMatch[0].trim();
+            memoText = contentMemoMatch.slice(1).join("\n").trim();
         } else if (ialMemo) {
             memoText = ialMemo;
+            quoteText = stripTrailingMemoFromContent(quoteText, ialMemo);
         }
         const gleanTag = parseIalAttr(ial, "custom-clip-hl-tag");
         if (gleanTag) annotationTag = gleanTag;
@@ -233,7 +284,10 @@ function toHighlight(row: BlockRow, root: HighlightRoot, options: ToHighlightOpt
     };
 }
 
-async function collectHighlights(roots: Map<string, QualifiedRoot>): Promise<HighlightItem[]> {
+async function collectHighlights(
+    roots: Map<string, QualifiedRoot>,
+    options: { includeOrphanCrossDoc?: boolean } = {},
+): Promise<HighlightItem[]> {
     const ids = [...roots.keys()].sort();
     const items: HighlightItem[] = [];
     const seenIds = new Set<string>();
@@ -263,11 +317,23 @@ async function collectHighlights(roots: Map<string, QualifiedRoot>): Promise<Hig
 
     // 合并跨文档放置的鲸鱼快速批注（今日日记、指定目标文档、子文档）
     try {
-        const crossDocHits = await listCrossDocSiyuanComments(ids);
+        const crossDocHits = await listCrossDocSiyuanComments(ids, { includeOrphans: options.includeOrphanCrossDoc });
         for (const hit of crossDocHits) {
+            if (seenIds.has(hit.row.id)) continue;
             const rootEntry = roots.get(hit.sourceRootId);
-            if (!rootEntry || seenIds.has(hit.row.id)) continue;
-            const item = toHighlight(hit.row, rootEntry.root, { allowCrossDoc: true });
+            const targetRoot: HighlightRoot | null = rootEntry?.root ?? (hit.sourceMissing ? {
+                id: hit.sourceRootId,
+                title: "",
+                box: hit.row.box || "",
+                hpath: "",
+                site: "",
+                tags: [],
+                aiTags: [],
+                url: "",
+                sourceMissing: true,
+            } : null);
+            if (!targetRoot) continue;
+            const item = toHighlight(hit.row, targetRoot, { allowCrossDoc: true });
             if (item) {
                 seenIds.add(item.id);
                 items.push(item);
@@ -357,9 +423,9 @@ export async function listDocHighlights(rootDocId: string): Promise<HighlightIte
 export async function listLibraryHighlights(plugin: Plugin, settings: GleanSettings): Promise<HighlightItem[]> {
     const index = await reconcileIndex(plugin, settings);
     const ids = Object.values(index.clips).filter((entry) => CLIP_STATUSES.some((status) => status === entry.status)).map((entry) => entry.id);
-    const roots = await readRoots([...new Set(ids)], true, index.clips);
+    const roots = await readRoots([...new Set(ids)], true, index.clips, { allowMissingRoots: true });
     for (const [id, value] of roots) if (!value.qualified) roots.delete(id);
-    return collectHighlights(roots);
+    return collectHighlights(roots, { includeOrphanCrossDoc: true });
 }
 
 function snapshot(item: HighlightItem): string {
@@ -521,8 +587,12 @@ export async function createArticleHighlightsDoc(
 }
 
 /** 预览态等无法直接拿到 data-node-id 时，按正文片段反查所在块 ID。 */
-export async function resolveExcerptBlockId(docId: string, text: string): Promise<string> {
-    return findBlockIdByTextInDoc(docId, text);
+export async function resolveExcerptBlockId(
+    docId: string,
+    text: string,
+    options?: FindBlockByTextOptions,
+): Promise<string> {
+    return findBlockIdByTextInDoc(docId, text, options);
 }
 
 /** 更新批注想法（支持拾遗引述块 💡 批注、原生 memo 属性块与鲸鱼批注正文）。 */
@@ -549,10 +619,8 @@ export async function updateHighlightMemo(item: HighlightItem, nextMemoRaw: stri
                 const kram = await getBlockKramdown(targetId);
                 if (kram) {
                     const cleanKram = kram.replace(/\{:[^}]*\}\s*$/g, "").trim();
-                    const parts = cleanKram.split(/(?:\r?\n)+\s*💡\s*/);
-                    if (parts.length > 0 && parts[0]) {
-                        quoteMarkdown = parts[0].trim();
-                    }
+                    const split = splitTrailingBlockquoteMemo(cleanKram);
+                    quoteMarkdown = split ? split.body : cleanKram;
                 }
             } catch {
                 // 异常时回退到内存缓存的 markdown
@@ -560,10 +628,8 @@ export async function updateHighlightMemo(item: HighlightItem, nextMemoRaw: stri
 
             if (!quoteMarkdown && item.markdown) {
                 const cleanItemMd = item.markdown.replace(/\{:[^}]*\}\s*$/g, "").trim();
-                const parts = cleanItemMd.split(/(?:\r?\n)+\s*💡\s*/);
-                if (parts.length > 0 && parts[0]) {
-                    quoteMarkdown = parts[0].trim();
-                }
+                const split = splitTrailingBlockquoteMemo(cleanItemMd);
+                quoteMarkdown = split ? split.body : cleanItemMd;
             }
 
             if (!quoteMarkdown) {
@@ -686,6 +752,11 @@ export async function removeAnnotationReply(
     return nextList;
 }
 
+function isMissingBlockError(error: unknown): boolean {
+    const msg = error instanceof Error ? error.message : String(error ?? "");
+    return /not found|does not exist|不存在|未找到|deleted|nil|null/i.test(msg);
+}
+
 /** 删除或取消高亮批注。 */
 export async function deleteAnnotation(
     item: HighlightItem,
@@ -708,23 +779,35 @@ export async function deleteAnnotation(
                 /* 源块可能已被删除 */
             }
         }
-        await deleteBlock(targetId);
+        try {
+            await deleteBlock(targetId);
+        } catch (err) {
+            if (!item.sourceMissing && !isMissingBlockError(err)) throw err;
+        }
         notifyWhaleCommentUpdated();
         return;
     }
 
     if (mode === "unmark" || item.source?.type !== "b") {
-        await writeAnnotationAttrs(targetId, {
-            "custom-clip-highlight": null,
-            "custom-clip-hl-color": null,
-            "custom-clip-hl-tag": null,
-            "custom-clip-hl-replies": null,
-            "custom-lv-glean-highlight": null,
-            "custom-clip-unmarked": mode === "unmark" ? "true" : null,
-            ...(item.annotationKind === "native-memo" ? { memo: null } : {}),
-        });
+        try {
+            await writeAnnotationAttrs(targetId, {
+                "custom-clip-highlight": null,
+                "custom-clip-hl-color": null,
+                "custom-clip-hl-tag": null,
+                "custom-clip-hl-replies": null,
+                "custom-lv-glean-highlight": null,
+                "custom-clip-unmarked": mode === "unmark" ? "true" : null,
+                ...(item.annotationKind === "native-memo" ? { memo: null } : {}),
+            });
+        } catch (err) {
+            if (!item.sourceMissing && !isMissingBlockError(err)) throw err;
+        }
         return;
     }
-    await deleteBlock(targetId);
+    try {
+        await deleteBlock(targetId);
+    } catch (err) {
+        if (!item.sourceMissing && !isMissingBlockError(err)) throw err;
+    }
 }
 

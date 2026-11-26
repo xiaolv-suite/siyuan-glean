@@ -7,7 +7,7 @@
 import { normalizeAuthor } from "./author.ts";
 import { parseReadingPosition, serializeReadingPosition, type ReadingPosition } from "./reading-position.ts";
 
-export const PLUGIN_VERSION = "1.4.11" as const;
+export const PLUGIN_VERSION = "1.4.12" as const;
 
 export const CLIP_STATUSES = ["inbox", "later", "reading", "done", "archived"] as const;
 export type ClipStatus = (typeof CLIP_STATUSES)[number];
@@ -16,6 +16,7 @@ export const CLIP_SOURCES = [
     "web-clipper",
     "inbox",
     "manual",
+    "drag",
     "migration",
     "import-pocket",
     "import-omnivore",

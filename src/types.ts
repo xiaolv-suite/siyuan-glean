@@ -4,6 +4,11 @@ import type { GleanSettings } from "./services/settings";
 import type { I18nBundle } from "./libs/i18n";
 import type { RecentReadingEntry } from "./domain/recent-reading";
 
+export type { IGleanContext, GleanContextOptions } from "./core/context";
+export { createGleanContext } from "./core/context";
+export type { IDisposerRegistry, DisposerFunction, DisposerLike } from "./core/disposer";
+export { DisposerRegistry } from "./core/disposer";
+
 export interface GleanFacade {
     /** 插件实例（saveData / openTab 需要）；组件不得反向 import 壳文件 */
     readonly pluginInstance: Plugin;
@@ -28,6 +33,10 @@ export interface GleanFacade {
     addCurrentDocToLibrary(): Promise<void>;
     /** 打开工作台面板（移动端全屏/桌面端页签） */
     openPanel(targetView?: string): void;
+    /** 打开工作台（openPanel 门面别名） */
+    openWorkbench?(targetView?: string): void;
+    /** 切换 Dock 窄侧栏 */
+    toggleDockSidebar?(): void;
     /** 工作台弹出为独立浮窗 */
     openWorkbenchPopup(initialPreviewId?: string): void;
     /** 全局漫游盲盒（随机抽选一篇文章重温） */

@@ -11,6 +11,7 @@
     import { activeAiSettings } from "../services/enrich-service";
     import { DEFAULT_SETTINGS, type GleanSettings } from "../services/settings";
     import { ensurePersonSafely, getBridgeSafely, searchPersonSafely, type ContactsPerson } from "../libs/ecosystem-bridge-kit";
+    import AiThinkingCard from "./AiThinkingCard.svelte";
 
     interface Props { facade: GleanFacade; docId: string; onSaved?: () => void | Promise<void> }
     let { facade, docId, onSaved }: Props = $props();
@@ -31,6 +32,7 @@
     let suggestionAdopted = $state(false);
     let suggestionDocId = "";
     let suggestionExpectedAuthor = "";
+    let suggestionAbort = $state.raw<AbortController | null>(null);
     let input = $state<HTMLInputElement | null>(null);
     let trigger = $state<HTMLButtonElement | null>(null);
     let rootEl = $state<HTMLDivElement | null>(null);
@@ -162,6 +164,8 @@
     }
 
     function clearSuggestion(): void {
+        suggestionAbort?.abort();
+        suggestionAbort = null;
         suggestionRequests.invalidate();
         suggesting = false;
         suggestion = null;
@@ -180,10 +184,12 @@
         const expectedAuthor = snapshot.raw;
         const isCurrent = suggestionRequests.begin();
         const active = () => mounted && editing && isCurrent() && docId === id;
+        const controller = new AbortController();
+        suggestionAbort = controller;
         suggesting = true;
         try {
-            const outcome = await suggestClipAuthor(facade.pluginInstance, id, () => facade.settings, { expectedAuthor, isCurrent: active });
-            if (!active()) return;
+            const outcome = await suggestClipAuthor(facade.pluginInstance, id, () => facade.settings, { expectedAuthor, isCurrent: active, signal: controller.signal });
+            if (!active() || controller.signal.aborted) return;
             settings = activeAiSettings(facade.pluginInstance, facade.settings);
             if (!authorSuggestionEnabled(settings)) { clearSuggestion(); return; }
             if (outcome.ok) {
@@ -195,8 +201,9 @@
                 if (outcome.reason === "changed") needsReload = true;
             }
         } catch {
-            if (active()) suggestionMessage = "author.suggestion.error";
+            if (active() && !controller.signal.aborted) suggestionMessage = "author.suggestion.error";
         } finally {
+            if (suggestionAbort === controller) suggestionAbort = null;
             if (active()) suggesting = false;
         }
     }
@@ -272,7 +279,16 @@
             {#if snapshot && aiOn}
                 <button type="button" class="glean-btn glean-btn--ghost" disabled={busy || suggesting || needsReload} onclick={() => void suggest()}>{t(i18n, "author.suggestion.request")}</button>
             {/if}
-            {#if suggesting}<p class="glean-author-editor__status glean-author-editor__status--busy" role="status"><span class="glean-author-editor__status-dot" aria-hidden="true"></span>{t(i18n, "author.suggestion.loading")}</p>{/if}
+            {#if suggesting}
+                <AiThinkingCard
+                    scenario="general"
+                    title={t(i18n, "author.suggestion.request")}
+                    subtitle={t(i18n, "author.suggestion.loading")}
+                    compact
+                    signal={suggestionAbort?.signal}
+                    onCancel={clearSuggestion}
+                />
+            {/if}
             {#if suggestionMessage}<p class="glean-author-editor__status" role="status">{t(i18n, suggestionMessage)}</p>{/if}
             {#if suggestion && aiOn}
                 <section class="glean-author-editor__suggestion" aria-labelledby={`glean-author-editor-suggestion-title-${docId}`}>

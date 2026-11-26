@@ -1,3 +1,5 @@
+import type { IDisposerRegistry } from "../core/disposer";
+
 export type ProtyleMode = "preview" | "wysiwyg";
 
 export interface ProtyleInstance {
@@ -13,13 +15,14 @@ export interface ProtyleController {
     getInstance?: () => ProtyleInstance | null;
 }
 
-interface ControllerOptions {
+export interface ControllerOptions {
     host: HTMLElement;
     mode: ProtyleMode;
     create: (mount: HTMLElement, ready: (instance: ProtyleInstance) => void) => ProtyleInstance;
     observe?: (host: HTMLElement, resize: () => void) => () => void;
     onReady?: (instance?: any) => void;
     onError?: (error: unknown) => void;
+    disposer?: IDisposerRegistry;
 }
 
 export function createProtyleController(options: ControllerOptions): ProtyleController {
@@ -55,10 +58,15 @@ export function createProtyleController(options: ControllerOptions): ProtyleCont
             disconnect();
             try { instance?.destroy(); } catch (error) { options.onError?.(error); }
             destroyedInstance = instance;
+            try { mount.replaceChildren?.(); } catch {}
             mount.remove();
             instance = null;
         },
     };
+
+    if (options.disposer) {
+        options.disposer.add(() => controller.destroy());
+    }
 
     try {
         instance = options.create(mount, (current) => {

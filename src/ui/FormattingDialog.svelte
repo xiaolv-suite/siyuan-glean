@@ -9,6 +9,7 @@
     import { formattingAiEnabled, loadFormattingSession, planAiFormatting, saveFormattingDraft, type FormattingSession } from "../services/formatting-service";
     import type { GleanFacade } from "../types";
     import { DEFAULT_SETTINGS, type GleanSettings } from "../services/settings";
+    import AiThinkingCard from "./AiThinkingCard.svelte";
 
     interface Props {
         facade: GleanFacade;
@@ -24,6 +25,8 @@
     let plan = $state<FormattingPlan>({ headings: [], cleanup: [] });
     let selected = $state<string[]>([]);
     let busy = $state(false);
+    let aiFormatting = $state(false);
+    let aiAbort = $state.raw<AbortController | null>(null);
     let loading = $state(true);
     let message = $state("");
     let draftId = $state("");
@@ -43,6 +46,8 @@
         void reload();
         return () => {
             disposed = true;
+            aiAbort?.abort();
+            aiAbort = null;
             document.removeEventListener("glean:data-changed", refreshSettings);
         };
     });
@@ -77,13 +82,25 @@
         message = "";
     }
 
+    function cancelFormatAi(): void {
+        if (!aiFormatting) return;
+        aiAbort?.abort();
+        aiAbort = null;
+        aiFormatting = false;
+        busy = false;
+        message = t(i18n, "formatting.ai.cancelled");
+    }
+
     async function formatAi(): Promise<void> {
         if (!session || busy || locked) return;
+        const controller = new AbortController();
+        aiAbort = controller;
         busy = true;
+        aiFormatting = true;
         message = "";
         try {
-            const outcome = await planAiFormatting(facade.pluginInstance, session, facade.settings);
-            if (disposed) return;
+            const outcome = await planAiFormatting(facade.pluginInstance, session, facade.settings, { signal: controller.signal });
+            if (disposed || controller.signal.aborted) return;
             if (outcome.ok) {
                 plan = session.plan;
                 const nextCandidates = formattingCandidates(session.analysis, session.plan);
@@ -93,7 +110,13 @@
                 message = t(i18n, aiFailureKey(outcome.reason) ?? `formatting.ai.${outcome.reason ?? "error"}`);
             }
         } finally {
-            if (!disposed) busy = false;
+            if (aiAbort === controller) {
+                aiAbort = null;
+                if (!disposed) {
+                    aiFormatting = false;
+                    busy = false;
+                }
+            }
         }
     }
 
@@ -127,7 +150,11 @@
 
     function handleKeydown(event: KeyboardEvent): void {
         if (event.repeat) return;
-        if (event.key === "Escape" && !busy) {
+        if (event.key === "Escape" && aiFormatting) {
+            event.preventDefault();
+            event.stopPropagation();
+            cancelFormatAi();
+        } else if (event.key === "Escape" && !busy) {
             event.preventDefault();
             event.stopPropagation();
             onClose?.();
@@ -178,7 +205,17 @@
     <p class="glean-formatting__hint">
         {aiOn ? t(i18n, "formatting.aiPrivacy", { channel: settings.ai.channel === "custom" ? settings.ai.customModel || t(i18n, "settings.channelCustom") : t(i18n, "settings.channelSiyuan") }) : t(i18n, "formatting.aiOff")}
     </p>
-    <div class="glean-formatting__status {loading || busy ? "glean-formatting__status--busy" : message ? "glean-formatting__status--message" : ""}" role="status" aria-live="polite" aria-atomic="true">{loading || busy ? t(i18n, "panel.loading") : message}</div>
+    {#if aiFormatting}
+        <AiThinkingCard
+            scenario="transform"
+            title={t(i18n, "formatting.ai")}
+            compact
+            signal={aiAbort?.signal}
+            onCancel={cancelFormatAi}
+        />
+    {:else}
+        <div class="glean-formatting__status {loading || busy ? "glean-formatting__status--busy" : message ? "glean-formatting__status--message" : ""}" role="status" aria-live="polite" aria-atomic="true">{loading || busy ? t(i18n, "panel.loading") : message}</div>
+    {/if}
     {#if session}
         {#if session.analysis.encodingWarnings}
             <p class="glean-formatting__warning">{t(i18n, "formatting.encoding", { n: session.analysis.encodingWarnings })}</p>
@@ -187,7 +224,7 @@
             <legend>{t(i18n, "formatting.candidates", { n: candidates.length })}</legend>
             <p class="glean-formatting__hint">{t(i18n, "formatting.candidateHint")}</p>
             {#each candidates as candidate (candidate.id)}
-                <label class="glean-formatting__candidate">
+                <label class="glean-formatting__candidate" class:glean-formatting__candidate--checked={selected.includes(candidate.id)}>
                     <input type="checkbox" checked={selected.includes(candidate.id)} onchange={() => toggle(candidate.id)} />
                     <span>
                         <span class="glean-formatting__reason">{candidate.reasons.map((reason) => t(i18n, `formatting.reason.${reason}`)).join(" · ")}</span>
@@ -224,7 +261,7 @@
 <style>
     .glean-formatting__wechat-badge { margin-left: auto; }
     .glean-formatting { width: 100%; min-width: 0; padding: var(--glean-space-4); box-sizing: border-box; overflow: auto; color: var(--glean-ink); }
-    .glean-formatting__head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--glean-space-3); margin-bottom: var(--glean-space-3); padding: var(--glean-space-3) var(--glean-space-4); border: 1px solid var(--glean-border-soft); border-radius: var(--glean-radius-lg, 16px); background: var(--glean-grad-soft); box-shadow: var(--glean-shadow-card); }
+    .glean-formatting__head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--glean-space-3); margin-bottom: var(--glean-space-3); padding: var(--glean-space-3) var(--glean-space-4); border: 1px solid var(--glean-border-soft); border-radius: var(--glean-radius-lg, 12px); background: var(--glean-card-surface); box-shadow: var(--glean-shadow-card); }
     .glean-formatting__head h3 { margin: 0; font-size: var(--glean-text-xl); line-height: 1.35; }
     .glean-formatting__head .glean-formatting__hint { margin: var(--glean-space-1) 0 0; }
     .glean-formatting__mode { flex: 0 0 auto; padding: 4px 10px; border: 1px solid color-mix(in srgb, var(--glean-color-action) 24%, var(--glean-border-soft)); border-radius: var(--glean-radius-pill); color: var(--glean-color-action); background: var(--glean-primary-soft); font: 600 var(--glean-text-xs)/1.2 var(--b3-font-family); letter-spacing: .05em; }

@@ -53,6 +53,7 @@
                 const msg = t(i18n, "docSlicing.createdSuccess", { count: result.createdCount });
                 showMessage(result.failedCount > 0 ? `${msg} (${result.errors[0]})` : msg, 3500);
                 facade.notifyDataChanged();
+                creating = false;
                 onClose?.();
             } else {
                 showMessage(result.errors[0] || t(i18n, "msg.actionFailed"), 3500);
