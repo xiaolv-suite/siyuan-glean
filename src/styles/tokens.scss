@@ -1,0 +1,238 @@
+/**
+ * 小驴拾遗设计令牌系统（Design Tokens）
+ * 规范：深松绿+金杏麦珠 Bento 美学 · Epoch 6 / Issue #17 标准
+ */
+
+:where(
+    .glean-dock-root,
+    .glean-tab-root,
+    .glean-dialog-root,
+    .b3-dialog.glean-dialog-host,
+    .glean-mobile-modal,
+    .glean-mobile-fullscreen-dialog,
+    .glean-reading-context-host,
+    .glean-reading-context,
+    .glean-panel,
+    .glean-reader,
+    .glean-settings,
+    .glean-workbench,
+    .glean-ann-editor-backdrop,
+    .glean-ann-editor,
+    .glean-dialog,
+    .glean-popover,
+    .glean-action-popover__body,
+    .glean-reader-help,
+    .glean-preview-pane
+) {
+    /* 操作语义色：统领强调点缀、选中高亮、侧栏导航与焦点光圈（Graphite-Mist 靛蓝，0 全局 :root 泄露） */
+    --glean-color-action: #5B6AD0;
+    --glean-color-action-hover: #4756BC;
+    --glean-color-action-soft: #EEF0FD;
+
+    /* 数据语义色：Graphite-Mist 清新松绿，专门负责成绩、连续、热力与成长数据 */
+    --glean-color-data: #2A7A56;
+    --glean-color-data-hover: #1F5F42;
+    --glean-color-data-soft: #EDF7F2;
+
+    /* 五态阅读状态主色 */
+    --glean-color-status-inbox: #D97706;    /* 沉静琥珀 */
+    --glean-color-status-later: #2563EB;    /* 专注湖蓝 */
+    --glean-color-status-reading: #7C3AED;  /* 研读紫罗兰 */
+    --glean-color-status-done: #059669;     /* 读毕翡翠绿 */
+    --glean-color-status-archived: #64748B; /* 归档石板灰 */
+    --glean-color-wechat: #07C160;          /* 微信生态绿 */
+
+    /* 风格 A · 石墨清雾（Graphite-Mist）语义令牌：浅色默认 */
+    --glean-gm-canvas: #F7F8FA;
+    --glean-gm-surface: #FFFFFF;
+    --glean-gm-rail: #FAFBFD;
+    --glean-gm-subtle: #F1F3F7;
+    --glean-gm-hover: #F5F7FA;
+    --glean-gm-line: #E8EBF0;
+    --glean-gm-line2: #D6DCE6;
+    --glean-gm-fg: #16181D;
+    --glean-gm-fg2: #4A505E;
+    --glean-gm-muted: #5A6275;
+    --glean-gm-faint: #A1A8B8;
+    --glean-gm-primary-bg: #1E2430;
+    --glean-gm-primary-fg: #FFFFFF;
+    --glean-gm-primary-hover: #2C3445;
+    --glean-gm-accent: #5B6AD0;
+    --glean-gm-accent-ink: #4756BC;
+    --glean-gm-accent-wash: #EEF0FD;
+    --glean-gm-accent-line: #D7DCF9;
+    --glean-gm-fresh: #2A7A56;
+    --glean-gm-fresh-wash: #EDF7F2;
+    --glean-gm-fresh-line: #CBE6D9;
+
+    /* 品牌底色关系：石墨清雾极浅冷雾底 (#F7F8FA) 与纯白内容画布 (#FFFFFF) */
+    --glean-app-background: #F7F8FA;
+    --glean-card-surface: #FFFFFF;
+    --glean-card-surface-elevated: #FAFBFD;
+
+    /* 重点对比块（视觉重音）：doc#22 v2 沉稳石板深色卡片，配数据语义色点缀 */
+    --glean-surface-dark-contrast: #1e293b;
+    --glean-text-dark-contrast: #f8fafc;
+    --glean-text-dark-contrast-muted: #cbd5e1;
+
+    /* 品牌操作主色映射（石墨清雾主按钮 + 靛蓝点缀，无刺眼渐变） */
+    --glean-accent-a: #5B6AD0;
+    --glean-accent-b: #4756BC;
+    --glean-grad: var(--glean-gm-primary-bg);
+    --glean-grad-soft: var(--glean-gm-accent-wash);
+
+    /* 状态与文本映射 */
+    --glean-st-inbox: var(--glean-color-status-inbox);
+    --glean-st-later: var(--glean-color-status-later);
+    --glean-st-reading: var(--glean-color-status-reading);
+    --glean-st-done: var(--glean-color-status-done);
+    --glean-st-arch: var(--glean-color-status-archived);
+
+    /* 动效不对称缓动曲线：进入偏快偏缓出，退出干脆利落 */
+    --glean-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --glean-ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+    --glean-ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+    --glean-ease-exit: cubic-bezier(0.4, 0, 1, 1);
+    --glean-motion-fast: 140ms;
+    --glean-motion-normal: 220ms;
+    --glean-duration-enter: 160ms;
+    --glean-duration-exit: 110ms;
+
+    /* 柔和细边与克制投影（doc#22 v2） */
+    --glean-glass: color-mix(in srgb, #ffffff 90%, transparent);
+    --glean-glass-border: rgba(15, 23, 42, 0.08);
+    --glean-radius-xl: 20px;
+    --glean-radius-20: var(--glean-radius-xl);
+    --glean-radius: 12px;
+    --glean-radius-lg: 12px;
+    --glean-radius-md: 10px;
+    --glean-radius-sm: 8px;
+    --glean-radius-xs: 6px;
+    --glean-radius-pill: 999px;
+    --glean-badge-bg: color-mix(in srgb, #475569 8%, transparent);
+
+    /* 扁平极简：去厚重阴影，1px 极细边线承载层级 */
+    --glean-shadow-card: none;
+    --glean-shadow-card-hover: none;
+    --glean-shadow-float: 0 8px 24px rgba(16, 18, 23, 0.08);
+    --glean-shadow-control: none;
+    --glean-shadow-accent: 0 1px 4px color-mix(in srgb, var(--glean-color-action) 22%, transparent);
+    --glean-shadow-focus: 0 0 0 3px color-mix(in srgb, var(--glean-color-action) 18%, transparent);
+    --glean-focus-ring: 0 0 0 3px color-mix(in srgb, var(--glean-color-action) 18%, transparent);
+}
+
+:where([data-theme-mode="dark"], [data-theme="dark"], body.body--dark, body.b3-theme-dark, .b3-theme-dark) :where(.glean-dock-root, .glean-tab-root, .glean-dialog-root, .b3-dialog.glean-dialog-host, .glean-mobile-modal, .glean-mobile-fullscreen-dialog, .glean-reading-context-host, .glean-reading-context, .glean-panel, .glean-reader, .glean-settings, .glean-workbench, .glean-ann-editor-backdrop, .glean-ann-editor, .glean-dialog, .glean-popover, .glean-action-popover__body, .glean-reader-help, .glean-preview-pane),
+:where(.glean-dock-root, .glean-tab-root, .glean-dialog-root, .b3-dialog.glean-dialog-host, .glean-mobile-modal, .glean-mobile-fullscreen-dialog, .glean-reading-context-host, .glean-reading-context, .glean-panel, .glean-reader, .glean-settings, .glean-workbench, .glean-ann-editor-backdrop, .glean-ann-editor, .glean-dialog, .glean-popover, .glean-action-popover__body, .glean-reader-help, .glean-preview-pane):where([data-theme-mode="dark"], [data-theme="dark"], .b3-theme-dark) {
+    --glean-gm-canvas: #14161B;
+    --glean-gm-surface: #1C1F26;
+    --glean-gm-rail: #181B22;
+    --glean-gm-subtle: #1F242E;
+    --glean-gm-hover: #252A35;
+    --glean-gm-line: #252A35;
+    --glean-gm-line2: #323846;
+    --glean-gm-fg: #EEF0F4;
+    --glean-gm-fg2: #B9C0CE;
+    --glean-gm-muted: #848C9E;
+    --glean-gm-faint: #5B6273;
+    --glean-gm-primary-bg: #EEF0F4;
+    --glean-gm-primary-fg: #14171D;
+    --glean-gm-primary-hover: #FFFFFF;
+    --glean-gm-accent: #8492EA;
+    --glean-gm-accent-ink: #9AA6F0;
+    --glean-gm-accent-wash: rgba(91, 106, 208, 0.16);
+    --glean-gm-accent-line: rgba(132, 146, 234, 0.30);
+    --glean-gm-fresh: #55BD8D;
+    --glean-gm-fresh-wash: rgba(85, 189, 141, 0.14);
+    --glean-gm-fresh-line: rgba(85, 189, 141, 0.28);
+
+    --glean-app-background: #14161B;
+    --glean-card-surface: #1C1F26;
+    --glean-card-surface-elevated: #181B22;
+    --glean-color-action: #8492EA;
+    --glean-color-action-hover: #9AA6F0;
+    --glean-color-data: #55BD8D;
+    --glean-surface-dark-contrast: #14161B;
+    --glean-shadow-card: none;
+    --glean-shadow-card-hover: none;
+    --glean-shadow-float: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
+:where(.glean-dock-root, .glean-tab-root, .glean-dialog-root, .b3-dialog.glean-dialog-host, .glean-mobile-modal, .glean-mobile-fullscreen-dialog, .glean-reading-context-host, .glean-reading-context, .glean-panel, .glean-reader, .glean-settings, .glean-workbench, .glean-ann-editor-backdrop, .glean-ann-editor, .glean-dialog, .glean-popover, .glean-action-popover__body, .glean-reader-help, .glean-preview-pane) {
+    --lv-brand: var(--glean-gm-accent, #5B6AD0);
+    --lv-brand-hover: var(--glean-gm-accent-ink, #4756BC);
+    --lv-brand-active: #3F4DA8;
+    --lv-brand-soft: var(--glean-gm-accent-wash, #EEF0FD);
+    --lv-accent-wheat: #FB923C;
+    --glean-color-action: var(--lv-brand);
+    --glean-color-action-hover: var(--lv-brand-hover);
+    --glean-color-action-soft: var(--lv-brand-soft);
+    --glean-on-action: var(--glean-gm-primary-fg, #FFFFFF);
+    --glean-app-background: #F7F8FA;
+    --glean-card-surface-elevated: #FAFBFD;
+    --glean-surface-dark-contrast: #1E2430;
+    --glean-accent-a: var(--lv-brand);
+    --glean-accent-b: var(--lv-brand-hover);
+}
+
+:where([data-theme-mode="dark"], [data-theme="dark"], body.body--dark, body.b3-theme-dark, .b3-theme-dark) :where(.glean-dock-root, .glean-tab-root, .glean-dialog-root, .b3-dialog.glean-dialog-host, .glean-mobile-modal, .glean-mobile-fullscreen-dialog, .glean-reading-context-host, .glean-reading-context, .glean-panel, .glean-reader, .glean-settings, .glean-workbench, .glean-ann-editor-backdrop, .glean-ann-editor, .glean-dialog, .glean-popover, .glean-action-popover__body, .glean-reader-help, .glean-preview-pane),
+:where(.glean-dock-root, .glean-tab-root, .glean-dialog-root, .b3-dialog.glean-dialog-host, .glean-mobile-modal, .glean-mobile-fullscreen-dialog, .glean-reading-context-host, .glean-reading-context, .glean-panel, .glean-reader, .glean-settings, .glean-workbench, .glean-ann-editor-backdrop, .glean-ann-editor, .glean-dialog, .glean-popover, .glean-action-popover__body, .glean-reader-help, .glean-preview-pane):where([data-theme-mode="dark"], [data-theme="dark"], .b3-theme-dark) {
+    --lv-brand: var(--glean-gm-accent, #8492EA);
+    --lv-brand-hover: var(--glean-gm-accent-ink, #9AA6F0);
+    --lv-brand-active: #5B6AD0;
+    --lv-brand-soft: var(--glean-gm-accent-wash, rgba(91, 106, 208, 0.16));
+    --glean-color-action: var(--lv-brand);
+    --glean-color-action-hover: var(--lv-brand-hover);
+    --glean-color-action-soft: var(--lv-brand-soft);
+    --glean-on-action: var(--glean-gm-primary-fg, #14171D);
+    --glean-app-background: #14161B;
+    --glean-card-surface-elevated: #181B22;
+    --glean-surface-dark-contrast: #14161B;
+    --glean-accent-a: var(--lv-brand);
+    --glean-accent-b: var(--lv-brand-hover);
+}
+
+/**
+ * 插件作用域宿主变量别名（颜色独立性）
+ * 组件内遗留的 var(--b3-*) 颜色引用，在拾遗自有根容器内解析到上方固定色板，
+ * 思源宿主切换主题不再影响插件界面；别名仅作用于插件 DOM 子树，不污染宿主全局。
+ * 例外（有意保留宿主变量）：渲染进思源编辑器文档内的划线/批注（--b3-protyle-inline-mark-*）、
+ * 字体族（--b3-font-family*）与弹窗外框阴影（--b3-dialog-shadow），它们需要与宿主文档/窗口 chrome 融合。
+ */
+:where(
+    .glean-dock-root,
+    .glean-tab-root,
+    .glean-dialog-root,
+    .b3-dialog.glean-dialog-host,
+    .glean-mobile-modal,
+    .glean-mobile-fullscreen-dialog,
+    .glean-reading-context-host,
+    .glean-reading-context,
+    .glean-panel,
+    .glean-reader,
+    .glean-settings,
+    .glean-workbench,
+    .glean-ann-editor-backdrop,
+    .glean-ann-editor,
+    .glean-dialog,
+    .glean-popover,
+    .glean-action-popover__body,
+    .glean-reader-help,
+    .glean-preview-pane
+) {
+    --b3-theme-primary: var(--glean-color-action);
+    --b3-theme-on-primary: var(--glean-on-action);
+    --b3-theme-primary-light: color-mix(in srgb, var(--glean-color-action) 12%, transparent);
+    --b3-theme-background: var(--glean-app-background);
+    --b3-theme-background-light: var(--glean-app-background);
+    --b3-theme-surface: var(--glean-card-surface);
+    --b3-theme-surface-light: var(--glean-card-surface-elevated);
+    --b3-theme-surface-lighter: color-mix(in srgb, var(--glean-ink) 6%, var(--glean-card-surface));
+    --b3-theme-on-background: var(--glean-ink);
+    --b3-theme-on-surface: var(--glean-ink-2);
+    --b3-theme-on-surface-light: var(--glean-ink-3);
+    --b3-border-color: var(--glean-line);
+    --b3-theme-error: var(--glean-danger);
+    --b3-theme-on-error: var(--glean-on-danger, #ffffff);
+    --b3-theme-success: var(--glean-ok);
+    --b3-list-hover: color-mix(in srgb, var(--glean-color-action) 8%, var(--glean-card-surface));
+}

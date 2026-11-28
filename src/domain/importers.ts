@@ -1,0 +1,504 @@
+/**
+ * 外部服务迁移导入解析器（T-1501）：Pocket HTML/CSV、Omnivore JSON、wallabag JSON。
+ * 纯函数层：字符串进出，零依赖；解析必须防御性（外部导出格式随版本漂移），坏行跳过不抛错。
+ * 状态映射（平静原则）：unread→inbox / read→done / archive→archived；未知状态→inbox。
+ */
+import { normalizeUrl } from "./url.ts";
+
+export type ImportFormat = "pocket-html" | "pocket-csv" | "omnivore-json" | "wallabag-json";
+
+export interface ImportedItem {
+    title: string;
+    url: string;
+    site: string;
+    /** 原服务收藏时间（思源格式 YYYYMMDDHHmmss）；解析不出为空串 */
+    time: string;
+    /** 原服务标记已读时间（仅 Pocket time_read 提供）；空串 = 未知（D-0028） */
+    doneTime: string;
+    tags: string[];
+    status: "inbox" | "done" | "archived";
+    /** 外部导入高亮/划线引述列表（BL-42） */
+    highlights?: string[];
+}
+
+export interface ParseResult {
+    format: ImportFormat;
+    items: ImportedItem[];
+    /** 文件内重复/无效被丢弃的行数 */
+    dropped: number;
+}
+
+/** 来源文件诊断；与库内查重、导入执行和恢复检查点分开。 */
+export type ImportSourceIssue = "empty" | "unrecognized" | "invalid" | "no-items";
+
+export interface ImportSourceResult extends Omit<ParseResult, "format"> {
+    format: ImportFormat | null;
+    issue: ImportSourceIssue | null;
+}
+
+/* ---------- 格式探测 ---------- */
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return Boolean(value && typeof value === "object" && !Array.isArray(value));
+}
+
+function detectJsonFormat(parsed: unknown): ImportFormat | null {
+    if (Array.isArray(parsed)) {
+        if (parsed.some((row) => isRecord(row) && ("originalArticleUrl" in row || ("url" in row && "state" in row)))) return "omnivore-json";
+    }
+    if (isRecord(parsed) && Array.isArray(parsed.entries)) {
+        // entries 是 wallabag 的明确容器；空数组仍可诊断为未找到有效链接。
+        if (parsed.entries.length === 0 || parsed.entries.some((row) => isRecord(row) && ("url" in row || "is_archived" in row))) return "wallabag-json";
+    }
+    return null;
+}
+
+export function detectFormat(raw: string): ImportFormat | null {
+    const text = raw.trim();
+    if (/^</i.test(text)) {
+        if (/pocket/i.test(text.slice(0, 500)) || /time_added=/i.test(text)) return "pocket-html";
+        if (/<html|<ul|<li/i.test(text.slice(0, 500))) return "pocket-html";
+        return null;
+    }
+    if (text.startsWith("[") || text.startsWith("{")) {
+        let parsed: unknown;
+        try {
+            parsed = JSON.parse(text);
+        } catch {
+            return null;
+        }
+        return detectJsonFormat(parsed);
+    }
+    // CSV：首行含 time_added 即 Pocket CSV
+    const firstLine = text.split(/\r?\n/)[0]?.toLowerCase() ?? "";
+    if (firstLine.includes("time_added") && firstLine.includes("url")) return "pocket-csv";
+    return null;
+}
+
+/* ---------- 公共工具 ---------- */
+
+function siteFromUrl(rawUrl: string): string {
+    try {
+        return new URL(rawUrl).hostname.replace(/^www\./, "");
+    } catch {
+        return "";
+    }
+}
+
+function hasInvalidCalendarDate(value: string): boolean {
+    const match = /^\s*(\d{4})[-/](\d{1,2})[-/](\d{1,2})(?=$|[Tt\s])/.exec(value);
+    if (!match) return false;
+    const year = Number(match[1]);
+    const month = Number(match[2]);
+    const day = Number(match[3]);
+    const leapYear = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+    const daysInMonth = [31, leapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1];
+    return year < 1 || month < 1 || month > 12 || day < 1 || day > (daysInMonth ?? 0);
+}
+
+/** unix 秒/毫秒 / ISO 8601 → YYYYMMDDHHmmss；解析不出或年份落在 1-9999 之外为空串（防负数/巨值产生垃圾年份）。 */
+export function toSiyuanTime(value: unknown): string {
+    if (typeof value !== "string" && typeof value !== "number") return "";
+    if (typeof value === "string" && hasInvalidCalendarDate(value)) return "";
+    const num = typeof value === "number" ? value : /^\d{10}$|^\d{13}$/.test(value.trim()) ? Number(value) : Date.parse(value);
+    if (typeof num !== "number" || !Number.isFinite(num)) return "";
+    const date = new Date(num < 10_000_000_000 ? num * 1000 : num);
+    if (Number.isNaN(date.getTime()) || date.getFullYear() < 1 || date.getFullYear() > 9999) return "";
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}`;
+}
+
+function normalizeStatus(value: unknown): ImportedItem["status"] {
+    const text = String(value ?? "").toLowerCase();
+    if (text === "read" || text === "1") return "done";
+    if (text === "archive" || text === "archived") return "archived";
+    return "inbox";
+}
+
+function stripPocketHtmlTags(value: string): string {
+    let output = "";
+    let inTag = false;
+    let quote = "";
+    for (let index = 0; index < value.length; index += 1) {
+        const char = value[index];
+        if (!inTag) {
+            if (char === "<") {
+                const next = value[index + 1] ?? "";
+                if (/[A-Za-z/!?]/.test(next)) {
+                    inTag = true;
+                    quote = "";
+                } else {
+                    output += "&lt;";
+                }
+            } else if (char === ">") {
+                output += "&gt;";
+            } else {
+                output += char;
+            }
+            continue;
+        }
+        if (quote) {
+            if (char === quote) quote = "";
+        } else if (char === '"' || char === "'") {
+            quote = char;
+        } else if (char === ">") {
+            inTag = false;
+        }
+    }
+    return output.replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function dedupe(items: ImportedItem[]): { items: ImportedItem[]; dropped: number } {
+    const seen = new Set<string>();
+    const kept: ImportedItem[] = [];
+    let dropped = 0;
+    for (const item of items) {
+        const key = normalizeUrl(item.url);
+        if (!key || seen.has(key)) {
+            dropped += 1;
+            continue;
+        }
+        seen.add(key);
+        kept.push(item);
+    }
+    return { items: kept, dropped };
+}
+
+/* ---------- Pocket HTML ---------- */
+
+/** 大小写不敏感地找 from 之后下一个锚点开标签 "<a"（后随空白或 >）的位置。 */
+function nearestAnchorStart(raw: string, from: number): number {
+    let at = from;
+    while ((at = raw.indexOf("<", at)) !== -1) {
+        const next = raw[at + 1];
+        if (next === "a" || next === "A") {
+            const after = raw.charCodeAt(at + 2);
+            if (after === 32 || after === 9 || after === 10 || after === 13 || after === 62) return at;
+        }
+        at += 1;
+    }
+    return -1;
+}
+
+/** 大小写不敏感地找 from 之后下一个 "</a>" 的位置。 */
+function nearestCloseAnchor(raw: string, from: number): number {
+    let at = from;
+    while ((at = raw.indexOf("</", at)) !== -1) {
+        if ((raw[at + 2] === "a" || raw[at + 2] === "A") && raw[at + 3] === ">") return at;
+        at += 1;
+    }
+    return -1;
+}
+
+const MAX_IMPORT_FIELD = 8 * 1024;
+const MAX_IMPORT_TEXT = 512;
+const MAX_IMPORT_TAGS = 20;
+
+/** 截断外部字段：title/site 等纯文本上限 512，url 上限 8KB（正常远小于此，防巨型属性写入文档 IAL）。 */
+function capText(value: string, max = MAX_IMPORT_TEXT): string {
+    const text = value.trim();
+    return [...text].length > max ? [...text].slice(0, max).join("") : text;
+}
+
+function capTags(tags: string[]): string[] {
+    return tags
+        .slice(0, MAX_IMPORT_TAGS)
+        .map((tag) => capText(tag, 64))
+        .filter(Boolean);
+}
+
+export function parsePocketHtml(raw: string): ParseResult {
+    const items: ImportedItem[] = [];
+    let dropped = 0;
+    // 用 indexOf 状态机逐个 <a>…</a> 切片：全局正则的惰性匹配在"存在未闭合 <a>"时
+    // 每个开标签都要扫到文件尾（O(n²)，32MiB 输入可冻结主线程数小时）
+    let cursor = 0;
+    while (cursor < raw.length) {
+        // 在 raw 上直接扫描（toLowerCase 对个别码点变长，与 raw 混用索引会静默错切）
+        const openStart = nearestAnchorStart(raw, cursor);
+        if (openStart < 0) break;
+        // <a 后必须是空白或属性结束符，避免命中 <abbr> 等标签
+        const afterOpen = raw.charCodeAt(openStart + 2);
+        if (!(afterOpen === 32 || afterOpen === 9 || afterOpen === 10 || afterOpen === 13 || afterOpen === 62)) {
+            cursor = openStart + 2;
+            continue;
+        }
+        const tagEnd = raw.indexOf(">", openStart + 2);
+        if (tagEnd < 0) break;
+        const closeStart = nearestCloseAnchor(raw, tagEnd + 1);
+        if (closeStart < 0) break; // 未闭合锚点：其后内容按无锚点处理，扫描结束
+        const attrs = raw.slice(openStart + 2, tagEnd);
+        const inner = raw.slice(tagEnd + 1, closeStart);
+        cursor = closeStart + 4;
+        const hrefMatch = /href="([^"]+)"|href='([^']+)'/i.exec(attrs);
+        const href = (hrefMatch?.[1] ?? hrefMatch?.[2] ?? "").trim();
+        if (!href) {
+            dropped += 1;
+            continue;
+        }
+        const timeAdded = /time_added="([^"]*)"/i.exec(attrs)?.[1] ?? "";
+        const timeRead = /time_read="([^"]*)"/i.exec(attrs)?.[1] ?? "";
+        const tags = /tags="([^"]*)"/i.exec(attrs)?.[1] ?? "";
+        const title = stripPocketHtmlTags(inner);
+        items.push({
+            title: capText(title),
+            url: capText(href, MAX_IMPORT_FIELD),
+            site: capText(siteFromUrl(href)),
+            time: toSiyuanTime(timeAdded),
+            doneTime: toSiyuanTime(timeRead),
+            tags: capTags(tags.split(",").map((tag) => tag.trim())),
+            status: "inbox",
+        });
+    }
+    const deduped = dedupe(items);
+    return { format: "pocket-html", items: deduped.items, dropped: deduped.dropped + dropped };
+}
+
+/* ---------- Pocket CSV ---------- */
+
+export function parsePocketCsv(raw: string): ParseResult {
+    const rows = parseCsv(raw);
+    if (rows.length === 0) return { format: "pocket-csv", items: [], dropped: 0 };
+    const header = rows[0].map((cell) => cell.trim().toLowerCase());
+    const idx = (name: string) => header.indexOf(name);
+    const iTitle = idx("title");
+    const iUrl = idx("url");
+    const iTime = idx("time_added");
+    const iRead = idx("time_read");
+    const iStatus = idx("status");
+    const iTags = idx("tags");
+    const items: ImportedItem[] = [];
+    for (let i = 1; i < rows.length; i += 1) {
+        const row = rows[i];
+        // 外部导出的行可能比表头短（缺列）；防御性取值，缺字段按空串处理。
+        const cell = (index: number) => (index >= 0 ? row[index] ?? "" : "");
+        const url = cell(iUrl).trim();
+        if (!url) continue;
+        items.push({
+            title: capText(cell(iTitle)),
+            url: capText(url, MAX_IMPORT_FIELD),
+            site: capText(siteFromUrl(url)),
+            time: toSiyuanTime(cell(iTime)),
+            doneTime: toSiyuanTime(cell(iRead)),
+            tags: capTags(cell(iTags)
+                .split(",")
+                .map((tag) => tag.trim().replace(/^#/, ""))),
+            status: normalizeStatus(cell(iStatus)),
+        });
+    }
+    const deduped = dedupe(items);
+    return { format: "pocket-csv", items: deduped.items, dropped: deduped.dropped };
+}
+
+/** 最小 CSV 解析：支持双引号包裹与转义引号("")，不支持多行单元格；行数上限防巨型输入耗尽内存。 */
+const MAX_CSV_ROWS = 2_000_000;
+
+export function parseCsv(raw: string): string[][] {
+    const rows: string[][] = [];
+    let row: string[] = [];
+    let cell = "";
+    let inQuotes = false;
+    for (let i = 0; i < raw.length; i += 1) {
+        const ch = raw[i];
+        if (inQuotes) {
+            if (ch === '"') {
+                if (raw[i + 1] === '"') {
+                    cell += '"';
+                    i += 1;
+                } else {
+                    inQuotes = false;
+                }
+            } else {
+                cell += ch;
+            }
+            continue;
+        }
+        if (ch === '"') {
+            inQuotes = true;
+        } else if (ch === ",") {
+            row.push(cell);
+            cell = "";
+        } else if (ch === "\n" || ch === "\r") {
+            if (ch === "\r" && raw[i + 1] === "\n") i += 1;
+            row.push(cell);
+            cell = "";
+            if (row.length > 1 || row[0] !== "") rows.push(row);
+            row = [];
+            if (rows.length > MAX_CSV_ROWS) return rows; // 超限静默截断：32MiB 输入下极难触达
+        } else {
+            cell += ch;
+        }
+    }
+    row.push(cell);
+    if (row.length > 1 || row[0] !== "") rows.push(row);
+    return rows;
+}
+
+/* ---------- Omnivore JSON ---------- */
+
+interface OmnivorePage {
+    title?: unknown;
+    slug?: unknown;
+    siteName?: unknown;
+    originalArticleUrl?: unknown;
+    url?: unknown;
+    savedAt?: unknown;
+    labels?: unknown;
+    state?: unknown;
+    isArchived?: unknown;
+    highlights?: unknown;
+}
+
+export function parseOmnivoreJson(raw: string): ParseResult {
+    let parsed: unknown;
+    try {
+        parsed = JSON.parse(raw);
+    } catch {
+        return { format: "omnivore-json", items: [], dropped: 0 };
+    }
+    if (!Array.isArray(parsed)) return { format: "omnivore-json", items: [], dropped: 0 };
+    const items: ImportedItem[] = [];
+    for (const page of parsed as OmnivorePage[]) {
+        if (!page || typeof page !== "object") continue;
+        const url = String(page.originalArticleUrl ?? page.url ?? "");
+        if (!url) continue;
+        const labels = Array.isArray(page.labels)
+            ? (page.labels as Array<{ name?: unknown }>).map((label) => String(label?.name ?? "")).filter(Boolean)
+            : [];
+        const rawHighlights = Array.isArray(page.highlights)
+            ? (page.highlights as Array<{ quote?: unknown; text?: unknown; annotation?: unknown }>)
+                .map((h) => String(h?.quote ?? h?.text ?? h?.annotation ?? "").trim())
+                .filter(Boolean)
+            : [];
+        // Omnivore 导出的归档语义有两种载体：wallabag 风格 isArchived 布尔，或 state 字符串（如 "ARCHIVED"）
+        const state = String(page.state ?? "").toUpperCase();
+        const archived = page.isArchived === true || state.includes("ARCHIVED");
+        items.push({
+            title: capText(String(page.title ?? "")),
+            url: capText(url, MAX_IMPORT_FIELD),
+            site: capText(String(page.siteName ?? "")) || capText(siteFromUrl(url)),
+            time: toSiyuanTime(page.savedAt),
+            doneTime: "",
+            tags: capTags(labels),
+            status: archived ? "archived" : "inbox",
+            highlights: rawHighlights.length > 0 ? rawHighlights : undefined,
+        });
+    }
+    const deduped = dedupe(items);
+    return { format: "omnivore-json", items: deduped.items, dropped: deduped.dropped };
+}
+
+/* ---------- wallabag JSON ---------- */
+
+interface WallabagEntry {
+    title?: unknown;
+    url?: unknown;
+    domain_name?: unknown;
+    created_at?: unknown;
+    tags?: unknown;
+    is_archived?: unknown;
+    is_read?: unknown;
+}
+
+export function parseWallabagJson(raw: string): ParseResult {
+    let parsed: unknown;
+    try {
+        parsed = JSON.parse(raw);
+    } catch {
+        return { format: "wallabag-json", items: [], dropped: 0 };
+    }
+    const entries = Array.isArray(parsed)
+        ? (parsed as WallabagEntry[])
+        : Array.isArray((parsed as Record<string, unknown>)?.entries)
+          ? ((parsed as Record<string, unknown>).entries as WallabagEntry[])
+          : [];
+    const items: ImportedItem[] = [];
+    for (const entry of entries) {
+        if (!entry || typeof entry !== "object") continue;
+        const url = String(entry.url ?? "");
+        if (!url) continue;
+        const tags = Array.isArray(entry.tags)
+            ? (entry.tags as Array<{ label?: unknown }>).map((tag) => String(tag?.label ?? "")).filter(Boolean)
+            : [];
+        const archived = entry.is_archived === 1 || entry.is_archived === true;
+        const read = entry.is_read === 1 || entry.is_read === true;
+        items.push({
+            title: capText(String(entry.title ?? "")),
+            url: capText(url, MAX_IMPORT_FIELD),
+            site: capText(String(entry.domain_name ?? "")) || capText(siteFromUrl(url)),
+            time: toSiyuanTime(entry.created_at),
+            doneTime: "",
+            tags: capTags(tags),
+            status: archived ? "archived" : read ? "done" : "inbox",
+        });
+    }
+    const deduped = dedupe(items);
+    return { format: "wallabag-json", items: deduped.items, dropped: deduped.dropped };
+}
+
+/* ---------- 统一入口 ---------- */
+
+function importCsvHeader(raw: string): string[] {
+    let inQuotes = false;
+    for (let index = 0; index < raw.length; index += 1) {
+        const char = raw[index];
+        if (char === '"') {
+            if (inQuotes && raw[index + 1] === '"') index += 1;
+            else inQuotes = !inQuotes;
+        } else if (!inQuotes && (char === "\r" || char === "\n")) {
+            return parseCsv(raw.slice(0, index))[0] ?? [];
+        }
+    }
+    return parseCsv(raw)[0] ?? [];
+}
+
+export function parseImport(raw: string, format: ImportFormat | "auto"): ImportSourceResult {
+    const text = raw.trim();
+    if (!text) return { format: format === "auto" ? null : format, items: [], dropped: 0, issue: "empty" };
+    // 自动探测与结构检查共用一次 JSON 解码，避免在大导出文件上额外解码一遍。
+    const needsJson = format === "omnivore-json" || format === "wallabag-json" || (format === "auto" && (text.startsWith("[") || text.startsWith("{")));
+    let jsonValue: unknown;
+    let jsonValid = false;
+    if (needsJson) {
+        try { jsonValue = JSON.parse(text); jsonValid = true; } catch { /* 显式格式报 invalid，自动模式报 unrecognized。 */ }
+    }
+    const resolved = format === "auto" ? needsJson ? jsonValid ? detectJsonFormat(jsonValue) : null : detectFormat(text) : format;
+    if (!resolved) return { format: null, items: [], dropped: 0, issue: "unrecognized" };
+
+    let validStructure = true;
+    if (resolved === "omnivore-json") validStructure = jsonValid && Array.isArray(jsonValue);
+    else if (resolved === "wallabag-json") validStructure = jsonValid && (Array.isArray(jsonValue) || (isRecord(jsonValue) && Array.isArray(jsonValue.entries)));
+    else if (resolved === "pocket-csv") {
+        const header = importCsvHeader(text).map((cell) => cell.trim().toLowerCase());
+        validStructure = header.includes("url");
+    } else {
+        validStructure = /<(?:!doctype\s+html|\/?[a-z][a-z0-9:-]*)(?:\s[^<>]*|\/?)>/i.test(text);
+    }
+    if (!validStructure) return { format: resolved, items: [], dropped: 0, issue: "invalid" };
+
+    let parsed: ParseResult;
+    switch (resolved) {
+        case "pocket-html": parsed = parsePocketHtml(text); break;
+        case "pocket-csv": parsed = parsePocketCsv(text); break;
+        case "omnivore-json": parsed = parseOmnivoreJson(text); break;
+        case "wallabag-json": parsed = parseWallabagJson(text); break;
+    }
+    return { ...parsed, issue: parsed.items.length === 0 ? "no-items" : null };
+}
+
+/* ---------- 目标路径（T-1988） ---------- */
+
+/**
+ * 导入目标文件夹规范化（T-1988）：反斜杠归一为斜杠后拆段，
+ * 丢弃空段、`.` 与 `..`（不允许越出所选笔记本），逐段清理文件名非法字符。
+ * 返回不含首尾斜杠的段路径；输入没有任何有效段时返回 fallback。
+ */
+export function normalizeImportFolder(raw: string, fallback = "导入"): string {
+    const segments = String(raw ?? "")
+        .replace(/\\/g, "/")
+        .split("/")
+        .map((segment) => segment.replace(/[/\\:<>|?*"~]/g, " ").replace(/\s+/g, " ").trim())
+        .filter((segment) => segment.length > 0 && segment !== "." && segment !== "..");
+    if (segments.length === 0) return fallback;
+    return segments.join("/");
+}
