@@ -15,6 +15,8 @@ import { makeQuoteCardPreview } from "../ui/flashcard-dialog.ts";
 import { simpleDialog, svelteDialog } from "../libs/dialog.ts";
 import ArchiveDialog from "../ui/ArchiveDialog.svelte";
 import RestoreDialog from "../ui/RestoreDialog.svelte";
+import UnregisterDialog from "../ui/UnregisterDialog.svelte";
+import UnregisteredDocsDialog from "../ui/UnregisteredDocsDialog.svelte";
 import { docUnderHostKind } from "../services/lifecycle-service.ts";
 
 export type ReaderActionsHost = GleanFacade & {
@@ -250,6 +252,36 @@ export class ReaderActionsCoordinator {
             width: "min(440px, 94vw)",
             height: "auto",
             callback: () => { this.openDialogDocIds.delete(docId); },
+        });
+    }
+
+    private unregisteredListOpen = false;
+
+    openUnregisterDialog(docId: string): void {
+        if (!docId || this.openDialogDocIds.has(docId)) return;
+        this.openDialogDocIds.add(docId);
+        svelteDialog({
+            title: t(this.plugin.i18n, "unregister.title"),
+            closeLabel: t(this.plugin.i18n, "action.close"),
+            component: UnregisterDialog,
+            props: { facade: this.plugin as never, docId },
+            width: "min(460px, 94vw)",
+            height: "auto",
+            callback: () => { this.openDialogDocIds.delete(docId); },
+        });
+    }
+
+    openUnregisteredDocsDialog(): void {
+        if (this.unregisteredListOpen) return;
+        this.unregisteredListOpen = true;
+        svelteDialog({
+            title: t(this.plugin.i18n, "unregister.listTitle"),
+            closeLabel: t(this.plugin.i18n, "action.close"),
+            component: UnregisteredDocsDialog,
+            props: { facade: this.plugin as never },
+            width: "min(620px, 94vw)",
+            height: "auto",
+            callback: () => { this.unregisteredListOpen = false; },
         });
     }
 

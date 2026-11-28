@@ -56,6 +56,8 @@ export interface HighlightItem extends HighlightRoot {
     groupMasterId?: string;
     annotationKind?: AnnotationKind;
     annotationTag?: AnnotationTag | string;
+    /** 源高亮块是否已通过生态桥真实创建闪卡（custom-lv-glean-carded="true"）。 */
+    carded?: boolean;
     source: { content: string; markdown: string; type: string; highlight: string };
 }
 

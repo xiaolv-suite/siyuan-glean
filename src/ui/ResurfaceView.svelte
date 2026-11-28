@@ -3,6 +3,7 @@
  * 重浮是纯投影：输入是父级刚对账过的索引（T-1710），本组件不再另读缓存。 */
 import { openTab } from "siyuan";
 import { showMessage } from "../libs/notice";
+import { installEscapeHandler } from "../libs/modal-focus";
 import { onDestroy, tick } from "svelte";
 import type { GleanFacade } from "../types";
 import { t } from "../libs/i18n";
@@ -580,10 +581,34 @@ function reasonText(reason: SurfaceReason): string {
 }
 
 function hasBlockingOverlay(): boolean {
+    if (panelRoot?.querySelector(":popover-open")) return true;
     if (typeof document === "undefined") return false;
     const overlays = document.querySelectorAll<HTMLElement>(".b3-menu, .b3-dialog, dialog[open], [role='dialog'][aria-modal='true'], .glean-dialog");
-    return Array.from(overlays).some((element) => element.getClientRects().length > 0);
+    return Array.from(overlays).some((element) => element.getClientRects().length > 0 && !(panelRoot && element.contains(panelRoot)));
 }
+
+$effect(() => {
+    const root = panelRoot;
+    if (!root) return;
+    return installEscapeHandler(root, () => {
+        if (hasBlockingOverlay()) return false;
+        if (undoNotice && undoingId !== undoNotice.id) {
+            void dismissUndo();
+            return true;
+        }
+        if (replacementNotice) {
+            replacementNotice = null;
+            return true;
+        }
+        if (cursorId) {
+            const previous = cursorId;
+            cursorId = "";
+            focusCard(previous);
+            return true;
+        }
+        return false;
+    });
+});
 
 function onWindowKeyDown(event: KeyboardEvent): void {
     if (event.defaultPrevented || event.isComposing || event.keyCode === 229 || event.repeat) return;

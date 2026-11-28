@@ -10,6 +10,7 @@ import { lvLaunchpad, lvActivity } from "../libs/notice.ts";
 import { createCardSafely } from "../libs/ecosystem-bridge-kit.ts";
 import { extractDeliveryKey } from "../domain/extract-delivery.ts";
 import { formatFlashcardMarkdown, type HighlightFlashcardPayload } from "../domain/highlight-pipeline.ts";
+import { markHighlightCarded } from "./clip-store.ts";
 
 export interface PipelineDispatchResult {
     success: boolean;
@@ -26,6 +27,11 @@ export async function dispatchHighlightToFlashcard(
         tags: payload.tags, sourceBlockId: payload.sourceBlockId, deckName: payload.sourceTitle,
         requestId: extractDeliveryKey("", payload.sourceBlockId, payload.front + "\n" + payload.back) });
     if (receipt.ok && receipt.createdBlockID) {
+        try {
+            await markHighlightCarded(payload.sourceBlockId);
+        } catch {
+            // 持久化属性失败不阻断已成功派发的闪卡回执
+        }
         lvLaunchpad?.haptic?.(10);
         lvActivity?.record?.({ source: "拾遗", category: "clip", title: `高亮转闪卡: ${payload.sourceTitle}`, linkBlockId: receipt.createdBlockID });
         showMessage(t(i18n, "pipeline.cardCreatedSuccess"), 2500);

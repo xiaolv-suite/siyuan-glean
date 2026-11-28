@@ -4,7 +4,9 @@
 // 下 .glean-highlights__items { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr)); }，
 // .glean-highlights__empty { width: min(100%, 720px); align-self: center; }。
 import { tick, untrack } from "svelte";
+import { SvelteSet } from "svelte/reactivity";
 import { showMessage } from "../libs/notice";
+import { installEscapeHandler } from "../libs/modal-focus";
 import type { GleanFacade } from "../types";
 import { t } from "../libs/i18n";
 import {
@@ -33,6 +35,7 @@ import { openRoamingDialog } from "./roaming-dialog";
 import ActionPopover from "./ActionPopover.svelte";
 import { formatBibTeX, formatGBT7714, formatCitation, citationSuccessKey, type CitationFormat, type CitationItem } from "../domain/citation";
 import { buildHighlightFlashcardPayload } from "../domain/highlight-pipeline";
+import { markHighlightCarded } from "../services/clip-store";
 import { dispatchHighlightToFlashcard } from "../services/highlight-pipeline-service";
 import AiThinkingCard from "./AiThinkingCard.svelte";
 
@@ -47,8 +50,12 @@ const currentDocId = $derived(facade.currentDocId());
 const hasCardsInstalled = $derived(typeof window !== "undefined" && Boolean(getBridgeSafely("cards")));
 const hasExamInstalled = $derived(typeof window !== "undefined" && Boolean(getBridgeSafely("exam")));
 const hasCommonInstalled = $derived(typeof window !== "undefined" && Boolean(getBridgeSafely("common")));
-let scope = $state<"current" | "library">(untrack(() => facade.currentDocId() ? "current" : "library"));
+let scope = $state<"current" | "library">("library");
 let viewMode = $state<"timeline" | "article">("timeline");
+let cardStatusFilter = $state<"all" | "pending" | "carded">("all");
+let filterDrawerOpen = $state(false);
+let batchCarding = $state(false);
+let batchSelectMode = $state(false);
 let items = $state<HighlightItem[]>([]);
 let loading = $state(true);
 let loadError = $state("");
@@ -99,7 +106,7 @@ let loadedContext = "";
 let tagAliasGeneration = 0;
 let allGroupsOpen = $state(true);
 let groupOpenMap = $state<Record<string, boolean>>({});
-let enrolledFlashcardIds = $state(new Set<string>());
+const enrolledFlashcardIds = new SvelteSet<string>();
 let cardingPipelineId = $state("");
 
 function isGroupOpen(rootId: string): boolean {
@@ -113,7 +120,14 @@ function toggleGroupOpen(rootId: string): void {
 const facets = $derived(highlightFacets(items));
 const availableColors = $derived(Array.from(new Set(items.map((i) => i.color || "yellow"))).sort());
 const availableKinds = $derived(highlightAnnotationKinds(items));
-const filtered = $derived(filterHighlights(items, { search, site, tag, aiTag, color, annotationTag, annotationKind, sort, direction }));
+const baseFiltered = $derived(filterHighlights(items, { search, site, tag, aiTag, color, annotationTag, annotationKind, sort, direction }));
+const filtered = $derived.by(() => {
+    if (cardStatusFilter === "all") return baseFiltered;
+    if (cardStatusFilter === "carded") return baseFiltered.filter((it) => enrolledFlashcardIds.has(it.id) || Boolean(it.carded));
+    return baseFiltered.filter((it) => !enrolledFlashcardIds.has(it.id) && !it.carded);
+});
+const cardedCount = $derived(items.filter((it) => enrolledFlashcardIds.has(it.id) || Boolean(it.carded)).length);
+const pendingCardCount = $derived(Math.max(0, items.length - cardedCount));
 const articleGroups = $derived(groupHighlightsByArticle(filtered));
 const highlightPageSize = 20;
 const visible = $derived(pageHighlights(filtered, page, highlightPageSize));
@@ -230,6 +244,9 @@ async function loadHighlights(targetScope: "current" | "library", docId: string,
         }
         if (request !== generation) return;
         items = next;
+        for (const entry of next) {
+            if (entry.carded) enrolledFlashcardIds.add(entry.id);
+        }
         if (editingAnnotation) {
             const refreshed = next.find((entry) => entry.id === editingAnnotation!.id);
             if (refreshed) editingAnnotation = refreshed;
@@ -390,7 +407,7 @@ async function handleDelete(item: HighlightItem, immediate = false): Promise<voi
     }
     confirmDeleteId = "";
     try {
-        await deleteAnnotation(item, item.source?.type === "b" ? "delete-block" : "unmark");
+        await deleteAnnotation(item, item.source?.type === "b" && item.annotationKind !== "native-memo" ? "delete-block" : "unmark");
         items = items.filter((entry) => entry.id !== item.id);
         selected = selected.filter((id) => id !== item.id);
         showMessage(t(i18n, "highlight.deleted"), 2000);
@@ -568,6 +585,10 @@ async function pushToCards(item: HighlightItem): Promise<void> {
         });
         if (res.ok) {
             enrolledFlashcardIds.add(item.id);
+            void markHighlightCarded(item.id).catch(() => undefined);
+            if (item.sourceBlockId && item.sourceBlockId !== item.id) {
+                void markHighlightCarded(item.sourceBlockId).catch(() => undefined);
+            }
             showMessage(t(i18n, "reader.extractedToCards"), 2500);
         } else {
             void card(item);
@@ -823,8 +844,59 @@ async function createDocFromArticleQuotes(group: ArticleHighlightGroup): Promise
     }
 }
 
+async function batchMakeFlashcards(): Promise<void> {
+    if (batchCarding || exportBusy) return;
+    const uncarded = filtered.filter((it) => !enrolledFlashcardIds.has(it.id) && !it.carded);
+    if (uncarded.length === 0) {
+        showMessage(t(i18n, "highlight.batchCardedEmpty"), 2400);
+        return;
+    }
+    batchCarding = true;
+    let count = 0;
+    try {
+        for (const item of uncarded) {
+            const payload = buildHighlightFlashcardPayload({
+                highlightText: item.text,
+                contextText: item.source?.content || item.source?.markdown || item.text,
+                sourceBlockId: item.sourceBlockId || item.id,
+                sourceTitle: item.title || "",
+                docTags: item.tags || [],
+            });
+            const res = await dispatchHighlightToFlashcard(facade, payload);
+            if (res.success && res.mode === "automated") {
+                enrolledFlashcardIds.add(item.id);
+                count += 1;
+                if (item.id !== payload.sourceBlockId) {
+                    void markHighlightCarded(item.id).catch(() => undefined);
+                }
+            } else if (res.success) {
+                break;
+            }
+        }
+        if (count > 0) {
+            showMessage(t(i18n, "highlight.batchCardedResult", { n: count }), 2800);
+        }
+    } catch (err) {
+        console.warn("[glean] 批量制卡失败:", err);
+        showMessage(t(i18n, "msg.actionFailed"), 2500);
+    } finally {
+        batchCarding = false;
+    }
+}
+
+async function copyFilteredHighlights(): Promise<void> {
+    const targets = selected.length > 0 ? items.filter((it) => selected.includes(it.id)) : filtered;
+    if (targets.length === 0) return;
+    try {
+        await copyHighlights(items, targets.map((it) => it.id), labels, (text) => navigator.clipboard.writeText(text));
+        showMessage(t(i18n, "highlight.copied"), 2200);
+    } catch {
+        showMessage(t(i18n, "msg.actionFailed"), 2200);
+    }
+}
+
 async function makeFlashcardFromHighlight(item: HighlightItem): Promise<void> {
-    if (cardingPipelineId || exportBusy) return;
+    if (batchCarding || cardingPipelineId || exportBusy) return;
     cardingPipelineId = item.id;
     try {
         const payload = buildHighlightFlashcardPayload({
@@ -835,8 +907,11 @@ async function makeFlashcardFromHighlight(item: HighlightItem): Promise<void> {
             docTags: item.tags || [],
         });
         const res = await dispatchHighlightToFlashcard(facade, payload);
-        if (res.success) {
+        if (res.success && res.mode === "automated") {
             enrolledFlashcardIds.add(item.id);
+            if (item.id !== payload.sourceBlockId) {
+                void markHighlightCarded(item.id).catch(() => undefined);
+            }
         }
     } catch (err) {
         console.warn("[glean] 高亮制卡失败:", err);
@@ -847,10 +922,57 @@ async function makeFlashcardFromHighlight(item: HighlightItem): Promise<void> {
 }
 
 function hasBlockingOverlay(): boolean {
+    if (rootEl?.querySelector(":popover-open")) return true;
     if (typeof document === "undefined") return false;
     const overlays = document.querySelectorAll<HTMLElement>(".b3-menu, .b3-dialog, dialog[open], [role='dialog'][aria-modal='true'], .glean-dialog");
-    return Array.from(overlays).some((element) => element.getClientRects().length > 0);
+    return Array.from(overlays).some((element) => element.getClientRects().length > 0 && !(rootEl && element.contains(rootEl)));
 }
+
+$effect(() => {
+    const root = rootEl;
+    if (!root) return;
+    return installEscapeHandler(root, () => {
+        if (hasBlockingOverlay()) return false;
+        if (editingMemoId) {
+            editingMemoId = "";
+            return true;
+        }
+        if (replyingId) {
+            replyingId = "";
+            return true;
+        }
+        if (tagPickerId) {
+            tagPickerId = "";
+            return true;
+        }
+        if (search) {
+            search = "";
+            page = 1;
+            return true;
+        }
+        if (searchInputEl && document.activeElement === searchInputEl) {
+            searchInputEl.blur();
+            return true;
+        }
+        if (filterDrawerOpen) {
+            filterDrawerOpen = false;
+            return true;
+        }
+        if (session && !exportBusy) {
+            session = null;
+            exportError = "";
+            exportStatus = "";
+            return true;
+        }
+        if (cursorId) {
+            const previous = cursorId;
+            cursorId = "";
+            focusHighlightRow(previous);
+            return true;
+        }
+        return false;
+    });
+});
 
 function onWindowKeyDown(event: KeyboardEvent): void {
     if (event.defaultPrevented || event.isComposing || event.keyCode === 229 || event.repeat) return;
@@ -977,96 +1099,119 @@ function focusHighlightRow(id: string): void {
 
 <svelte:window onkeydown={onWindowKeyDown} />
 
-<div class="glean-panel glean-highlights" tabindex="-1" bind:this={rootEl} aria-busy={loading || exportBusy} aria-labelledby={titleId}>
+<div class="glean-panel glean-highlights glean-gm-highlights" class:glean-panel--mobile={facade.isMobile} tabindex="-1" bind:this={rootEl} aria-busy={loading || exportBusy || batchCarding} aria-labelledby={titleId}>
     <div class="glean-highlights__head">
         <div class:glean-sr-only={facade.isMobile}>
-            <h2 id={titleId} class="glean-highlights__title">{scope === "current" ? t(i18n, "highlight.title") : t(i18n, "highlight.allLibrary")}</h2>
-            <p class="glean-highlights__subtitle">{scope === "current" ? (docTitle || t(i18n, "highlight.current")) : t(i18n, "highlight.emptyHint")}</p>
+            <h2 id={titleId} class="glean-highlights__title">{scope === "current" ? t(i18n, "highlight.title") : t(i18n, "highlight.wallTitle")}</h2>
+            <p class="glean-highlights__subtitle">{scope === "current" ? (docTitle || t(i18n, "highlight.current")) : t(i18n, "highlight.wallDesc")}</p>
         </div>
-        <div class="glean-highlights__tools glean-highlights__tools--scope" role="group" aria-label={t(i18n, "highlight.title")}>
-            <button aria-pressed={scope === "current"} disabled={exportBusy} onclick={() => scope = "current"}>{t(i18n, "highlight.current")}</button>
-            <button aria-pressed={scope === "library"} disabled={exportBusy} onclick={() => scope = "library"}>{t(i18n, "highlight.allLibrary")}</button>
-            <button aria-pressed={viewMode === "timeline"} disabled={exportBusy} onclick={() => viewMode = "timeline"}>{t(i18n, "highlight.viewTimeline")}</button>
-            <button aria-pressed={viewMode === "article"} disabled={exportBusy} onclick={() => viewMode = "article"}>{t(i18n, "highlight.viewArticle")}</button>
-            {#if viewMode === "article" && articleGroups.length > 0}
-                <button
-                    type="button"
-                    class="glean-highlights__fold-toggle"
-                    disabled={exportBusy}
-                    onclick={() => { allGroupsOpen = !allGroupsOpen; groupOpenMap = {}; }}
-                    title={t(i18n, allGroupsOpen ? "highlight.collapseAll" : "highlight.expandAll")}
-                    aria-label={t(i18n, allGroupsOpen ? "highlight.collapseAll" : "highlight.expandAll")}
-                >
-                    <svg class="glean-icon glean-icon--xs" aria-hidden="true">
-                        <use href={allGroupsOpen ? "#iconGleanCollapseAll" : "#iconGleanExpandAll"} />
-                    </svg>
-                </button>
-            {/if}
-            <button class="glean-highlights__refresh" disabled={loading || exportBusy} onclick={refresh}>{t(i18n, "action.refresh")}</button>
-            <button type="button" class="glean-highlights__roam" title={t(i18n, "roaming.buttonHint")} onclick={() => void triggerRoaming()}>
-                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanRefresh" /></svg>
-                <span>{t(i18n, "roaming.button")}</span>
+        <div class="glean-gm-header-right">
+            <button type="button" class="glean-btn glean-gm-btn" disabled={loading || exportBusy || filtered.length === 0} onclick={() => void copyFilteredHighlights()}>
+                {t(i18n, "highlight.copyFiltered")}
             </button>
+            <button type="button" class="glean-btn glean-gm-btn glean-gm-btn--primary" disabled={loading || exportBusy || batchCarding || pendingCardCount === 0} onclick={() => void batchMakeFlashcards()}>
+                {t(i18n, "highlight.batchMakeFlashcard")}
+            </button>
+            <ActionPopover label={t(i18n, "library.moreActions")} compact>
+                <button type="button" class="glean-btn glean-btn--ghost" aria-pressed={scope === "library"} onclick={() => (scope = "library")}>{t(i18n, "highlight.allLibrary")}{scope === "library" ? " ✓" : ""}</button>
+                <button type="button" class="glean-btn glean-btn--ghost" aria-pressed={scope === "current"} onclick={() => (scope = "current")}>{t(i18n, "highlight.current")}{scope === "current" ? " ✓" : ""}</button>
+                <div class="glean-gm-popover-sep"></div>
+                <button type="button" class="glean-btn glean-btn--ghost" aria-pressed={viewMode === "timeline"} onclick={() => (viewMode = "timeline")}>{t(i18n, "highlight.viewTimeline")}{viewMode === "timeline" ? " ✓" : ""}</button>
+                <button type="button" class="glean-btn glean-btn--ghost" aria-pressed={viewMode === "article"} onclick={() => (viewMode = "article")}>{t(i18n, "highlight.viewArticle")}{viewMode === "article" ? " ✓" : ""}</button>
+                {#if viewMode === "article" && articleGroups.length > 0}
+                    <button type="button" class="glean-btn glean-btn--ghost" onclick={() => { allGroupsOpen = !allGroupsOpen; groupOpenMap = {}; }}>
+                        {t(i18n, allGroupsOpen ? "highlight.collapseAll" : "highlight.expandAll")}
+                    </button>
+                {/if}
+                <div class="glean-gm-popover-sep"></div>
+                <button type="button" class="glean-btn glean-btn--ghost glean-highlights__refresh" disabled={loading || exportBusy} onclick={refresh}>{t(i18n, "action.refresh")}</button>
+                <button type="button" class="glean-btn glean-btn--ghost glean-highlights__roam" onclick={() => void triggerRoaming()}>{t(i18n, "roaming.button")}</button>
+                <button type="button" class="glean-btn glean-btn--ghost" aria-pressed={batchSelectMode} onclick={() => { batchSelectMode = !batchSelectMode; }}>{t(i18n, "highlight.selectPage")}{batchSelectMode ? " ✓" : ""}</button>
+            </ActionPopover>
         </div>
     </div>
 
-    <div class="glean-stat-strip" role="region" aria-label={t(i18n, "highlight.title")}>
+    <!-- 1px 细线 3 格摘要带 -->
+    <div class="glean-stat-strip glean-gm-metric-strip" role="region" aria-label={t(i18n, "highlight.title")}>
         <div class="glean-stat-strip__item">
+            <span class="glean-stat-strip__lbl">{t(i18n, "highlight.statTotal")}</span>
             <span class="glean-stat-strip__val">{items.length}</span>
-            <span class="glean-stat-strip__lbl">{t(i18n, "highlight.title")}</span>
-        </div>
-        <div class="glean-stat-strip__divider" aria-hidden="true"></div>
-        <div class="glean-stat-strip__item">
-            <span class="glean-stat-strip__val">{articleGroups.length}</span>
-            <span class="glean-stat-strip__lbl">{t(i18n, "highlight.viewArticle")}</span>
         </div>
         <div class="glean-stat-strip__divider" aria-hidden="true"></div>
         <div class="glean-stat-strip__item glean-stat-strip__item--done">
-            <span class="glean-stat-strip__val">{selected.length}</span>
-            <span class="glean-stat-strip__lbl">{t(i18n, "action.selected")}</span>
+            <span class="glean-stat-strip__lbl">{t(i18n, "highlight.statCarded")}</span>
+            <span class="glean-stat-strip__val">{cardedCount}</span>
+        </div>
+        <div class="glean-stat-strip__divider" aria-hidden="true"></div>
+        <div class="glean-stat-strip__item">
+            <span class="glean-stat-strip__lbl">{t(i18n, "highlight.statPending")}</span>
+            <span class="glean-stat-strip__val">{pendingCardCount}</span>
         </div>
     </div>
 
-    <details class="glean-saved-views-fold glean-highlights__filters-fold" class:glean-filters-fold--active={Boolean(search || site || tag || aiTag || color || annotationKind || annotationTag || sort !== "id" || direction !== "desc")}>
-        <summary class="glean-saved-views-fold__summary">
-            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSearch" /></svg>
-            <span>{t(i18n, "action.search")} / {t(i18n, "library.filters")}{#if search || site || tag || aiTag || color || annotationKind || annotationTag || sort !== "id"} ({t(i18n, "library.activeFilters")}){/if}</span>
-            {#if search || site || tag || aiTag || color || annotationKind || annotationTag || sort !== "id" || direction !== "desc"}
-                <span class="glean-badge glean-badge--match">{t(i18n, "highlight.filteredBadge")}</span>
+    <!-- 单行检索 + 制卡状态筛选 + 高级筛选抽屉开关 -->
+    <div class="glean-gm-filter-bar">
+        <div class="glean-search glean-gm-search-field">
+            <svg class="glean-search__icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#iconGleanSearch" /></svg>
+            <input
+                bind:this={searchInputEl}
+                type="search"
+                bind:value={search}
+                oninput={() => page = 1}
+                onkeydown={(event) => {
+                    if (event.isComposing || event.keyCode === 229) return;
+                    if (event.key === "Escape" && search) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        search = "";
+                        page = 1;
+                    } else if (event.key === "Escape") {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        searchInputEl?.blur();
+                    }
+                }}
+                placeholder={t(i18n, "highlight.searchPlaceholder")}
+                aria-label={t(i18n, "action.search")}
+            />
+            {#if search}
+                <button type="button" class="glean-highlights__search-clear" onclick={() => { search = ""; page = 1; searchInputEl?.focus(); }} title={t(i18n, "library.clearFilters")} aria-label={t(i18n, "library.clearFilters")}>
+                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanClose" /></svg>
+                </button>
             {/if}
-        </summary>
-        <div class="glean-highlights__filters" role="search" aria-label={t(i18n, "action.search")}>
-            <div class="glean-highlights__search-wrap">
-                <input bind:this={searchInputEl} type="search" bind:value={search} oninput={() => page = 1} onkeydown={(event) => { if (event.key === "Escape" && search) { event.stopPropagation(); search = ""; page = 1; } }} placeholder={t(i18n, "highlight.searchPlaceholder")} aria-label={t(i18n, "action.search")} />
-                {#if search}
-                    <button
-                        type="button"
-                        class="glean-highlights__search-clear"
-                        onclick={() => { search = ""; page = 1; searchInputEl?.focus(); }}
-                        title={t(i18n, "library.clearFilters")}
-                        aria-label={t(i18n, "library.clearFilters")}
-                    >
-                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanClose" /></svg>
-                    </button>
-                {/if}
-            </div>
-            <label>{t(i18n, "library.filterSite")}<select bind:value={site} onchange={() => page = 1}><option value="">{t(i18n, "action.filterAll")}</option>{#each facets.sites as value}<option value={value}>{value}</option>{/each}</select></label>
-            <label>{t(i18n, "library.filterTag")}<select bind:value={tag} onchange={() => page = 1}><option value="">{t(i18n, "action.filterAll")}</option>{#each facets.tags as value}<option value={value}>{displayTagAlias(tagAliases, value)}</option>{/each}</select></label>
-            <label>{t(i18n, "library.filterAiTag")}<select bind:value={aiTag} onchange={() => page = 1}><option value="">{t(i18n, "action.filterAll")}</option>{#each facets.aiTags as value}<option value={value}>{value}</option>{/each}</select></label>
-            {#if availableKinds.length > 1 || availableKinds.includes("siyuan-comment")}
-                <label>{t(i18n, "highlight.filterKind")}<select bind:value={annotationKind} onchange={() => page = 1}><option value="">{t(i18n, "action.filterAll")}</option><option value="glean">{t(i18n, "highlight.kindGlean")}</option><option value="siyuan-comment">{t(i18n, "highlight.kindWhale")}</option><option value="native-memo">{t(i18n, "highlight.kindMemo")}</option></select></label>
-            {/if}
-            {#if facets.annotationTags.length > 0}
-                <label>{t(i18n, "highlight.filterAnnotationTag")}<select bind:value={annotationTag} onchange={() => page = 1}><option value="">{t(i18n, "action.filterAll")}</option>{#each facets.annotationTags as val}{@const tagInfo = resolveAnnotationTagDisplay(val, whaleCustomTags)}<option value={val}>{tagInfo ? `${tagInfo.icon} ${tagInfo.label}` : val}</option>{/each}</select></label>
-            {/if}
-            {#if availableColors.length > 1}
-                <label>{t(i18n, "reader.filterByColor")}<select bind:value={color} onchange={() => page = 1}><option value="">{t(i18n, "action.filterAll")}</option>{#each availableColors as c}<option value={c}>{t(i18n, `reader.color.${c}`)}</option>{/each}</select></label>
-            {/if}
-            <label>{t(i18n, "library.sort")}<select bind:value={sort} onchange={() => page = 1}><option value="id">{t(i18n, "action.sortTime")}</option><option value="title">{t(i18n, "library.sortTitle")}</option><option value="site">{t(i18n, "library.filterSite")}</option></select></label>
-            <button class="glean-filter-dir" aria-pressed={direction === "asc"} aria-label={`${t(i18n, "library.toggleDirection")}: ${t(i18n, direction === "asc" ? "library.directionAscending" : "library.directionDescending")}`} title={`${t(i18n, "library.toggleDirection")}: ${t(i18n, direction === "asc" ? "library.directionAscending" : "library.directionDescending")}`} onclick={() => { direction = direction === "asc" ? "desc" : "asc"; page = 1; }}><span class="glean-filter-dir__icon" aria-hidden="true"><svg class="glean-icon glean-icon--xs"><use href={direction === "asc" ? "#iconGleanArrowUp" : "#iconGleanArrowDown"} /></svg></span><span class="glean-filter-dir__label">{t(i18n, "library.toggleDirection")}</span></button>
-            <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm" onclick={clearFilters}>{t(i18n, "library.clearFilters")}</button>
         </div>
-    </details>
+        <div class="glean-gm-seg" role="group" aria-label={t(i18n, "highlight.title")}>
+            <button type="button" class="glean-gm-seg-btn" class:is-active={cardStatusFilter === "all"} aria-pressed={cardStatusFilter === "all"} onclick={() => { cardStatusFilter = "all"; page = 1; }}>{t(i18n, "highlight.filterAllStatus")}</button>
+            <button type="button" class="glean-gm-seg-btn" class:is-active={cardStatusFilter === "pending"} aria-pressed={cardStatusFilter === "pending"} onclick={() => { cardStatusFilter = "pending"; page = 1; }}>{t(i18n, "highlight.filterPending")}</button>
+            <button type="button" class="glean-gm-seg-btn" class:is-active={cardStatusFilter === "carded"} aria-pressed={cardStatusFilter === "carded"} onclick={() => { cardStatusFilter = "carded"; page = 1; }}>{t(i18n, "highlight.filterCarded")}</button>
+        </div>
+        <button type="button" class="glean-btn glean-gm-btn" class:glean-gm-btn--accent={filterDrawerOpen || hasFilters} aria-expanded={filterDrawerOpen} onclick={() => { filterDrawerOpen = !filterDrawerOpen; }}>
+            <span>{t(i18n, "library.filterButton")} ▾</span>
+        </button>
+    </div>
+
+    {#if filterDrawerOpen}
+        <div class="glean-gm-filter-drawer">
+            <div class="glean-highlights__filters" role="search" aria-label={t(i18n, "action.search")}>
+                <label>{t(i18n, "library.filterSite")}<select bind:value={site} onchange={() => page = 1}><option value="">{t(i18n, "action.filterAll")}</option>{#each facets.sites as value}<option value={value}>{value}</option>{/each}</select></label>
+                <label>{t(i18n, "library.filterTag")}<select bind:value={tag} onchange={() => page = 1}><option value="">{t(i18n, "action.filterAll")}</option>{#each facets.tags as value}<option value={value}>{displayTagAlias(tagAliases, value)}</option>{/each}</select></label>
+                <label>{t(i18n, "library.filterAiTag")}<select bind:value={aiTag} onchange={() => page = 1}><option value="">{t(i18n, "action.filterAll")}</option>{#each facets.aiTags as value}<option value={value}>{value}</option>{/each}</select></label>
+                {#if availableKinds.length > 1 || availableKinds.includes("siyuan-comment")}
+                    <label>{t(i18n, "highlight.filterKind")}<select bind:value={annotationKind} onchange={() => page = 1}><option value="">{t(i18n, "action.filterAll")}</option><option value="glean">{t(i18n, "highlight.kindGlean")}</option><option value="siyuan-comment">{t(i18n, "highlight.kindWhale")}</option><option value="native-memo">{t(i18n, "highlight.kindMemo")}</option></select></label>
+                {/if}
+                {#if facets.annotationTags.length > 0}
+                    <label>{t(i18n, "highlight.filterAnnotationTag")}<select bind:value={annotationTag} onchange={() => page = 1}><option value="">{t(i18n, "action.filterAll")}</option>{#each facets.annotationTags as val}{@const tagInfo = resolveAnnotationTagDisplay(val, whaleCustomTags)}<option value={val}>{tagInfo ? `${tagInfo.icon} ${tagInfo.label}` : val}</option>{/each}</select></label>
+                {/if}
+                {#if availableColors.length > 1}
+                    <label>{t(i18n, "reader.filterByColor")}<select bind:value={color} onchange={() => page = 1}><option value="">{t(i18n, "action.filterAll")}</option>{#each availableColors as c}<option value={c}>{t(i18n, `reader.color.${c}`)}</option>{/each}</select></label>
+                {/if}
+                <label>{t(i18n, "library.sort")}<select bind:value={sort} onchange={() => page = 1}><option value="id">{t(i18n, "action.sortTime")}</option><option value="title">{t(i18n, "library.sortTitle")}</option><option value="site">{t(i18n, "library.filterSite")}</option></select></label>
+                <button class="glean-filter-dir" aria-pressed={direction === "asc"} aria-label={`${t(i18n, "library.toggleDirection")}: ${t(i18n, direction === "asc" ? "library.directionAscending" : "library.directionDescending")}`} title={`${t(i18n, "library.toggleDirection")}: ${t(i18n, direction === "asc" ? "library.directionAscending" : "library.directionDescending")}`} onclick={() => { direction = direction === "asc" ? "desc" : "asc"; page = 1; }}><span class="glean-filter-dir__icon" aria-hidden="true"><svg class="glean-icon glean-icon--xs"><use href={direction === "asc" ? "#iconGleanArrowUp" : "#iconGleanArrowDown"} /></svg></span><span class="glean-filter-dir__label">{t(i18n, "library.toggleDirection")}</span></button>
+                <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm" onclick={clearFilters}>{t(i18n, "library.clearFilters")}</button>
+            </div>
+        </div>
+    {/if}
+
     {#if loading && items.length === 0}
         <div class="glean-highlights__loading" role="status" aria-live="polite" aria-label={t(i18n, "panel.loading")}>
             {#each [0, 1, 2] as placeholder (placeholder)}
@@ -1079,6 +1224,7 @@ function focusHighlightRow(id: string): void {
     {#if loadError}
         <div class="glean-highlights__error" role="alert"><p>{loadError}</p><button type="button" class="glean-btn glean-btn--ghost glean-btn--sm" disabled={loading} onclick={refresh}>{t(i18n, "action.retry")}</button></div>
     {/if}
+    {#if batchSelectMode || selected.length > 0}
     <div class="glean-highlights__tools glean-highlights__tools--selection" class:glean-highlights__tools--has-selection={selected.length > 0}>
         <div class="glean-highlights__selection-actions" role="group" aria-label={t(i18n, "action.selected")}>
             <span class="glean-highlights__selection-count" aria-live="polite" aria-atomic="true">{t(i18n, "action.selected")} {selected.length}</span>
@@ -1107,6 +1253,7 @@ function focusHighlightRow(id: string): void {
             </details>
         </div>
     </div>
+    {/if}
     {#if exportError}
         <div class="glean-highlights__error" role="alert">
             <p>{exportError}</p>
@@ -1171,7 +1318,7 @@ function focusHighlightRow(id: string): void {
                                     onkeydown={(e) => {
                                         if (e.isComposing || e.keyCode === 229) return;
                                         if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); void submitEditMemo(item); }
-                                        if (e.key === "Escape") { e.preventDefault(); editingMemoId = ""; }
+                                        if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); editingMemoId = ""; }
                                     }}
                                 ></textarea>
                                 <div class="glean-annotation-inline-edit__actions">
@@ -1221,7 +1368,7 @@ function focusHighlightRow(id: string): void {
                                     onkeydown={(e) => {
                                         if (e.isComposing || e.keyCode === 229) return;
                                         if (e.key === "Enter") { e.preventDefault(); void submitReply(item); }
-                                        if (e.key === "Escape") { e.preventDefault(); replyingId = ""; }
+                                        if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); replyingId = ""; }
                                     }}
                                 />
                                 <div class="glean-annotation-inline-edit__actions">
@@ -1236,91 +1383,75 @@ function focusHighlightRow(id: string): void {
                         </p>
                         {#if item.tags?.length}<p class="glean-highlights__meta glean-highlights__tags"><span>{t(i18n, "library.filterTag")}</span>{#each (expandedTags[item.id] ? item.tags : item.tags.slice(0, 3)) as value}<span class="glean-highlights__tag">{value}</span>{/each}{#if (item.tags?.length ?? 0) > 3 && !expandedTags[item.id]}<button type="button" class="glean-highlights__tag glean-highlights__tag--more" onclick={() => expandedTags[item.id] = true}>+{(item.tags?.length ?? 0) - 3}</button>{/if}</p>{/if}
                         {#if item.aiTags?.length}<p class="glean-highlights__meta glean-highlights__tags glean-highlights__tags--ai"><span>{t(i18n, "library.filterAiTag")}</span>{#each (expandedAiTags[item.id] ? item.aiTags : item.aiTags.slice(0, 3)) as value}<span class="glean-highlights__tag">{value}</span>{/each}{#if (item.aiTags?.length ?? 0) > 3 && !expandedAiTags[item.id]}<button type="button" class="glean-highlights__tag glean-highlights__tag--more" onclick={() => expandedAiTags[item.id] = true}>+{(item.aiTags?.length ?? 0) - 3}</button>{/if}</p>{/if}
-                        <div class="glean-highlights__tools glean-highlights__tools--card">
-                            {#if item.sourceMissing}
-                                <button type="button" class="glean-btn--danger-soft" onclick={() => void handleDelete(item, true)} title={t(i18n, "highlight.cleanDeadCard")}>
-                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanTrash" /></svg>
-                                    <span>{t(i18n, "highlight.cleanDeadCard")}</span>
+                        <div class="glean-highlights__tools glean-highlights__tools--card glean-gm-hl-foot">
+                            <div class="glean-gm-hl-foot-left">
+                                {#if item.sourceMissing}
+                                    <button type="button" class="glean-btn--danger-soft" onclick={() => void handleDelete(item, true)} title={t(i18n, "highlight.cleanDeadCard")}>
+                                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanTrash" /></svg>
+                                        <span>{t(i18n, "highlight.cleanDeadCard")}</span>
+                                    </button>
+                                {:else}
+                                    <button type="button" class="glean-btn glean-btn--ghost glean-btn--xs" onclick={() => openDoc(item.rootId, item.sourceBlockId || item.id)}>
+                                        <span>{t(i18n, "highlight.jumpBack")}</span>
+                                    </button>
+                                {/if}
+                                <button type="button" class="glean-btn glean-btn--ghost glean-btn--xs" aria-busy={copyingId === item.id} disabled={Boolean(copyingId)} onclick={() => void copyQuote(item)}>
+                                    <span>{t(i18n, "reader.copy")}</span>
                                 </button>
-                            {:else}
-                                <button type="button" onclick={() => openDoc(item.rootId, item.sourceBlockId || item.id)}>
-                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanExternal" /></svg>
-                                    <span>{t(i18n, "highlight.original")}</span>
-                                </button>
-                            {/if}
-                            <button type="button" class="glean-highlights__edit-btn" onclick={() => { editingAnnotation = item; }} title={t(i18n, "annotationEditor.openEditor")}>
-                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanEdit" /></svg>
-                                <span>{t(i18n, "highlight.editMemo")}</span>
-                            </button>
-                            <button type="button" onclick={() => { tagPickerId = tagPickerId === item.id ? "" : item.id; replyingId = ""; }} title={t(i18n, "highlight.filterAnnotationTag")} aria-label={t(i18n, "highlight.filterAnnotationTag")}>
-                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanTag" /></svg>
-                            </button>
-                            <button type="button" onclick={() => { replyingId = replyingId === item.id ? "" : item.id; replyDraft = ""; tagPickerId = ""; }} title={t(i18n, "highlight.addReply")} aria-label={t(i18n, "highlight.addReply")}>
-                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanComment" /></svg>
-                            </button>
-                            {#if item.annotationKind === "siyuan-comment" && whaleStatus.installed}
-                                <button type="button" onclick={(e) => openWhaleCommentEditor(facade.pluginInstance.app, item.commentBlockId || item.id, e.currentTarget as HTMLElement)} title={t(i18n, "highlight.whaleEdit")}>🐋</button>
-                            {/if}
-                            <button type="button" onclick={() => quoteCard(item)} title={t(i18n, "quoteCard.action")} aria-label={t(i18n, "quoteCard.action")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg> <span>{t(i18n, "quoteCard.action")}</span></button>
-                            <button type="button" aria-busy={copyingId === item.id} disabled={Boolean(copyingId)} onclick={() => void copyQuote(item)} title={t(i18n, "highlight.copyShare")}>
-                                <svg class="glean-icon" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
-                                {t(i18n, "highlight.copyShare")}
-                            </button>
+                                <ActionPopover label={t(i18n, "library.moreActions")} compact>
+                                    <button type="button" class="glean-btn glean-btn--ghost glean-highlights__edit-btn" onclick={() => { editingAnnotation = item; }} title={t(i18n, "annotationEditor.openEditor")}>
+                                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanEdit" /></svg>
+                                        <span>{t(i18n, "highlight.editMemo")}</span>
+                                    </button>
+                                    <button type="button" class="glean-btn glean-btn--ghost" onclick={() => { tagPickerId = tagPickerId === item.id ? "" : item.id; replyingId = ""; }}>
+                                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanTag" /></svg>
+                                        <span>{t(i18n, "highlight.filterAnnotationTag")}</span>
+                                    </button>
+                                    <button type="button" class="glean-btn glean-btn--ghost" onclick={() => { replyingId = replyingId === item.id ? "" : item.id; replyDraft = ""; tagPickerId = ""; }}>
+                                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanComment" /></svg>
+                                        <span>{t(i18n, "highlight.addReply")}</span>
+                                    </button>
+                                    {#if item.annotationKind === "siyuan-comment" && whaleStatus.installed}
+                                        <button type="button" class="glean-btn glean-btn--ghost" onclick={(e) => openWhaleCommentEditor(facade.pluginInstance.app, item.commentBlockId || item.id, e.currentTarget as HTMLElement)}>🐋 {t(i18n, "highlight.whaleEdit")}</button>
+                                    {/if}
+                                    <button type="button" class="glean-btn glean-btn--ghost" onclick={() => quoteCard(item)}>
+                                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg>
+                                        <span>{t(i18n, "quoteCard.action")}</span>
+                                    </button>
+                                    <div class="glean-gm-popover-sep"></div>
+                                    <button type="button" class="glean-btn glean-btn--ghost" onclick={() => openDoc(item.rootId)}>{t(i18n, "action.openDoc")}</button>
+                                    {#if item.commentDocId}
+                                        <button type="button" class="glean-btn glean-btn--ghost" onclick={() => openDoc(item.commentDocId!, item.commentBlockId || item.id)}>{t(i18n, "highlight.jumpToComment")}</button>
+                                    {/if}
+                                    <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyQuoteBlockRef(item)}><span>{t(i18n, "action.copyBlockRef")}</span></button>
+                                    <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyQuoteCitation(item, "gbt")}><span>{t(i18n, "citation.copyGBT")}</span></button>
+                                    <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyQuoteCitation(item, "bibtex")}><span>BibTeX</span></button>
+                                    <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyQuoteCitation(item, "apa")}><span>APA</span></button>
+                                    <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyQuoteCitation(item, "mla")}><span>MLA</span></button>
+                                    {#if hasCardsInstalled}
+                                        <button type="button" class="glean-btn glean-btn--ghost" aria-busy={cardingKey === item.id} disabled={Boolean(cardingKey)} onclick={() => void pushToCards(item)}><span>{t(i18n, "quoteCard.pushToCards")}</span></button>
+                                    {/if}
+                                    {#if hasCommonInstalled}
+                                        <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void saveToCommon(item)}><span>{t(i18n, "quoteCard.saveToCommon")}</span></button>
+                                    {/if}
+                                    <button type="button" class="glean-btn glean-btn--ghost" class:glean-ghost-btn={!hasCardsInstalled} aria-busy={cardingKey === item.id} disabled={Boolean(cardingKey)} onclick={() => void card(item)}><span>{t(i18n, "flashcard.make")}</span></button>
+                                    <button type="button" class="glean-btn glean-btn--ghost" class:glean-ghost-btn={!hasExamInstalled} disabled={exportBusy} onclick={() => void exam(item)}><span>{t(i18n, "reader.examMake")}</span></button>
+                                    <div class="glean-gm-popover-sep"></div>
+                                    <button type="button" class="glean-btn glean-btn--ghost" data-keep-popover-open={confirmDeleteId !== item.id && !item.sourceMissing ? "true" : undefined} onclick={() => void handleDelete(item)}>{t(i18n, confirmDeleteId === item.id ? "highlight.deleteConfirm" : "highlight.deleteAnnotation")}</button>
+                                </ActionPopover>
+                            </div>
                             <button
                                 type="button"
-                                class="glean-highlights__pipeline-btn"
+                                class="glean-btn glean-btn--xs glean-highlights__pipeline-btn glean-gm-btn--accent"
                                 class:glean-highlights__pipeline-btn--enrolled={enrolledFlashcardIds.has(item.id)}
-                                disabled={Boolean(cardingPipelineId) || exportBusy}
+                                class:glean-gm-btn--fresh={enrolledFlashcardIds.has(item.id)}
+                                disabled={batchCarding || Boolean(cardingPipelineId) || exportBusy || enrolledFlashcardIds.has(item.id)}
                                 onclick={() => void makeFlashcardFromHighlight(item)}
                                 title={enrolledFlashcardIds.has(item.id) ? t(i18n, "pipeline.cardCreatedBadge") : t(i18n, "pipeline.makeFlashcard")}
                                 aria-label={enrolledFlashcardIds.has(item.id) ? t(i18n, "pipeline.cardCreatedBadge") : t(i18n, "pipeline.makeFlashcard")}
                             >
-                                <svg class="glean-icon glean-icon--xs" aria-hidden="true">
-                                    <use href={enrolledFlashcardIds.has(item.id) ? "#iconGleanCheck" : "#iconGleanCard"} />
-                                </svg>
-                                <span>{enrolledFlashcardIds.has(item.id) ? t(i18n, "pipeline.cardCreatedBadge") : t(i18n, "pipeline.makeFlashcard")}</span>
+                                <span>{enrolledFlashcardIds.has(item.id) ? t(i18n, "pipeline.cardCreatedBadge") : `+ ${t(i18n, "pipeline.makeFlashcard")}`}</span>
                             </button>
-                            <ActionPopover label={t(i18n, "library.moreActions")} compact>
-                                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => openDoc(item.rootId)}>{t(i18n, "action.openDoc")}</button>
-                                {#if item.commentDocId}
-                                    <button type="button" class="glean-btn glean-btn--ghost" onclick={() => openDoc(item.commentDocId!, item.commentBlockId || item.id)}>{t(i18n, "highlight.jumpToComment")}</button>
-                                {/if}
-                                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void handleDelete(item)}>{t(i18n, confirmDeleteId === item.id ? "highlight.deleteConfirm" : "highlight.deleteAnnotation")}</button>
-                                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyQuoteBlockRef(item)} title={t(i18n, "action.copyBlockRef")} aria-label={t(i18n, "action.copyBlockRef")}>
-                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
-                                    <span>{t(i18n, "action.copyBlockRef")}</span>
-                                </button>
-                                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyQuoteCitation(item, "gbt")} title={t(i18n, "citation.copyGBT")} aria-label={t(i18n, "citation.copyGBT")}>
-                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg>
-                                    <span>{t(i18n, "citation.copyGBT")}</span>
-                                </button>
-                                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyQuoteCitation(item, "bibtex")} title={t(i18n, "citation.copyBibTeX")} aria-label={t(i18n, "citation.copyBibTeX")}>
-                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArchive" /></svg>
-                                    <span>BibTeX</span>
-                                </button>
-                                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyQuoteCitation(item, "apa")} title={t(i18n, "citation.copyAPA")} aria-label={t(i18n, "citation.copyAPA")}>
-                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanLocal" /></svg>
-                                    <span>APA</span>
-                                </button>
-                                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyQuoteCitation(item, "mla")} title={t(i18n, "citation.copyMLA")} aria-label={t(i18n, "citation.copyMLA")}>
-                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg>
-                                    <span>MLA</span>
-                                </button>
-                                {#if hasCardsInstalled}
-                                    <button type="button" class="glean-btn glean-btn--ghost" aria-busy={cardingKey === item.id} disabled={Boolean(cardingKey)} onclick={() => void pushToCards(item)} title={t(i18n, "quoteCard.pushToCards")} aria-label={t(i18n, "quoteCard.pushToCards")}>
-                                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg>
-                                        <span>{t(i18n, "quoteCard.pushToCards")}</span>
-                                    </button>
-                                {/if}
-                                {#if hasCommonInstalled}
-                                    <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void saveToCommon(item)} title={t(i18n, "quoteCard.saveToCommon")} aria-label={t(i18n, "quoteCard.saveToCommon")}>
-                                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanBookmark" /></svg>
-                                        <span>{t(i18n, "quoteCard.saveToCommon")}</span>
-                                    </button>
-                                {/if}
-                                <button type="button" class="glean-btn glean-btn--ghost" class:glean-ghost-btn={!hasCardsInstalled} aria-busy={cardingKey === item.id} disabled={Boolean(cardingKey)} onclick={() => void card(item)} title={t(i18n, "flashcard.make")} aria-label={hasCardsInstalled ? t(i18n, "flashcard.make") : t(i18n, "reader.cardGhostHint")}><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanCard" /></svg><span>{t(i18n, "flashcard.make")}</span></button>
-                                <button type="button" class="glean-btn glean-btn--ghost" class:glean-ghost-btn={!hasExamInstalled} disabled={exportBusy} onclick={() => void exam(item)} title={hasExamInstalled ? t(i18n, "reader.examMake") : t(i18n, "reader.examGhostHint")} aria-label={t(i18n, "reader.examMake")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanEdit" /></svg> <span>{t(i18n, "reader.examMake")}</span></button>
-                            </ActionPopover>
                         </div>
                     </article>
                 {/each}
@@ -1402,7 +1533,7 @@ function focusHighlightRow(id: string): void {
                                                 onkeydown={(e) => {
                                                     if (e.isComposing || e.keyCode === 229) return;
                                                     if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); void submitEditMemo(item); }
-                                                    if (e.key === "Escape") { e.preventDefault(); editingMemoId = ""; }
+                                                    if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); editingMemoId = ""; }
                                                 }}
                                             ></textarea>
                                             <div class="glean-annotation-inline-edit__actions">
@@ -1452,7 +1583,7 @@ function focusHighlightRow(id: string): void {
                                                 onkeydown={(e) => {
                                                     if (e.isComposing || e.keyCode === 229) return;
                                                     if (e.key === "Enter") { e.preventDefault(); void submitReply(item); }
-                                                    if (e.key === "Escape") { e.preventDefault(); replyingId = ""; }
+                                                    if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); replyingId = ""; }
                                                 }}
                                             />
                                             <div class="glean-annotation-inline-edit__actions">
@@ -1462,91 +1593,61 @@ function focusHighlightRow(id: string): void {
                                         </div>
                                     {/if}
                                     {#if formatHighlightTime(item.id)}<p class="glean-highlights__meta"><span class="glean-highlights__time">{formatHighlightTime(item.id)}</span></p>{/if}
-                                    <div class="glean-highlights__tools glean-highlights__tools--card">
-                                        {#if item.sourceMissing}
-                                            <button type="button" class="glean-btn--danger-soft" onclick={() => void handleDelete(item, true)} title={t(i18n, "highlight.cleanDeadCard")}>
-                                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanTrash" /></svg>
-                                                <span>{t(i18n, "highlight.cleanDeadCard")}</span>
+                                    <div class="glean-highlights__tools glean-highlights__tools--card glean-gm-hl-foot">
+                                        <div class="glean-gm-hl-foot-left">
+                                            {#if item.sourceMissing}
+                                                <button type="button" class="glean-btn--danger-soft" onclick={() => void handleDelete(item, true)} title={t(i18n, "highlight.cleanDeadCard")}>
+                                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanTrash" /></svg>
+                                                    <span>{t(i18n, "highlight.cleanDeadCard")}</span>
+                                                </button>
+                                            {:else}
+                                                <button type="button" class="glean-btn glean-btn--ghost glean-btn--xs" onclick={() => openDoc(group.rootId, item.sourceBlockId || item.id)}>
+                                                    <span>{t(i18n, "highlight.jumpBack")}</span>
+                                                </button>
+                                            {/if}
+                                            <button type="button" class="glean-btn glean-btn--ghost glean-btn--xs" aria-busy={copyingId === item.id} disabled={Boolean(copyingId)} onclick={() => void copyQuote(item)}>
+                                                <span>{t(i18n, "reader.copy")}</span>
                                             </button>
-                                        {:else}
-                                            <button type="button" onclick={() => openDoc(group.rootId, item.sourceBlockId || item.id)}>
-                                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanExternal" /></svg>
-                                                <span>{t(i18n, "highlight.original")}</span>
-                                            </button>
-                                        {/if}
-                                        <button type="button" class="glean-highlights__edit-btn" onclick={() => { editingAnnotation = item; }} title={t(i18n, "annotationEditor.openEditor")}>
-                                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanEdit" /></svg>
-                                            <span>{t(i18n, "highlight.editMemo")}</span>
-                                        </button>
-                                        <button type="button" onclick={() => { tagPickerId = tagPickerId === item.id ? "" : item.id; replyingId = ""; }} title={t(i18n, "highlight.filterAnnotationTag")} aria-label={t(i18n, "highlight.filterAnnotationTag")}>
-                                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanTag" /></svg>
-                                        </button>
-                                        <button type="button" onclick={() => { replyingId = replyingId === item.id ? "" : item.id; replyDraft = ""; tagPickerId = ""; }} title={t(i18n, "highlight.addReply")} aria-label={t(i18n, "highlight.addReply")}>
-                                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanComment" /></svg>
-                                        </button>
-                                        {#if item.annotationKind === "siyuan-comment" && whaleStatus.installed}
-                                            <button type="button" onclick={(e) => openWhaleCommentEditor(facade.pluginInstance.app, item.commentBlockId || item.id, e.currentTarget as HTMLElement)} title={t(i18n, "highlight.whaleEdit")}>🐋</button>
-                                        {/if}
-                                        <button type="button" onclick={() => quoteCard(item)} title={t(i18n, "quoteCard.action")} aria-label={t(i18n, "quoteCard.action")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg> <span>{t(i18n, "quoteCard.action")}</span></button>
-                                        <button type="button" aria-busy={copyingId === item.id} disabled={Boolean(copyingId)} onclick={() => void copyQuote(item)} title={t(i18n, "highlight.copyShare")}>
-                                            <svg class="glean-icon" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
-                                            {t(i18n, "highlight.copyShare")}
-                                        </button>
+                                            <ActionPopover label={t(i18n, "library.moreActions")} compact>
+                                                <button type="button" class="glean-btn glean-btn--ghost glean-highlights__edit-btn" onclick={() => { editingAnnotation = item; }}><span>{t(i18n, "highlight.editMemo")}</span></button>
+                                                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => { tagPickerId = tagPickerId === item.id ? "" : item.id; replyingId = ""; }}><span>{t(i18n, "highlight.filterAnnotationTag")}</span></button>
+                                                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => { replyingId = replyingId === item.id ? "" : item.id; replyDraft = ""; tagPickerId = ""; }}><span>{t(i18n, "highlight.addReply")}</span></button>
+                                                {#if item.annotationKind === "siyuan-comment" && whaleStatus.installed}
+                                                    <button type="button" class="glean-btn glean-btn--ghost" onclick={(e) => openWhaleCommentEditor(facade.pluginInstance.app, item.commentBlockId || item.id, e.currentTarget as HTMLElement)}>🐋 {t(i18n, "highlight.whaleEdit")}</button>
+                                                {/if}
+                                                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => quoteCard(item)}><span>{t(i18n, "quoteCard.action")}</span></button>
+                                                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => openDoc(item.rootId)}>{t(i18n, "action.openDoc")}</button>
+                                                {#if item.commentDocId}
+                                                    <button type="button" class="glean-btn glean-btn--ghost" onclick={() => openDoc(item.commentDocId!, item.commentBlockId || item.id)}>{t(i18n, "highlight.jumpToComment")}</button>
+                                                {/if}
+                                                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyQuoteBlockRef(item)}><span>{t(i18n, "action.copyBlockRef")}</span></button>
+                                                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyQuoteCitation(item, "gbt")}><span>{t(i18n, "citation.copyGBT")}</span></button>
+                                                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyQuoteCitation(item, "bibtex")}><span>BibTeX</span></button>
+                                                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyQuoteCitation(item, "apa")}><span>APA</span></button>
+                                                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyQuoteCitation(item, "mla")}><span>MLA</span></button>
+                                                {#if hasCardsInstalled}
+                                                    <button type="button" class="glean-btn glean-btn--ghost" aria-busy={cardingKey === item.id} disabled={Boolean(cardingKey)} onclick={() => void pushToCards(item)}><span>{t(i18n, "quoteCard.pushToCards")}</span></button>
+                                                {/if}
+                                                {#if hasCommonInstalled}
+                                                    <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void saveToCommon(item)}><span>{t(i18n, "quoteCard.saveToCommon")}</span></button>
+                                                {/if}
+                                                <button type="button" class="glean-btn glean-btn--ghost" class:glean-ghost-btn={!hasCardsInstalled} aria-busy={cardingKey === item.id} disabled={Boolean(cardingKey)} onclick={() => void card(item)}><span>{t(i18n, "flashcard.make")}</span></button>
+                                                <button type="button" class="glean-btn glean-btn--ghost" class:glean-ghost-btn={!hasExamInstalled} disabled={exportBusy} onclick={() => void exam(item)}><span>{t(i18n, "reader.examMake")}</span></button>
+                                                <button type="button" class="glean-btn glean-btn--ghost" data-keep-popover-open={confirmDeleteId !== item.id && !item.sourceMissing ? "true" : undefined} onclick={() => void handleDelete(item)}>{t(i18n, confirmDeleteId === item.id ? "highlight.deleteConfirm" : "highlight.deleteAnnotation")}</button>
+                                            </ActionPopover>
+                                        </div>
                                         <button
                                             type="button"
-                                            class="glean-highlights__pipeline-btn"
+                                            class="glean-btn glean-btn--xs glean-highlights__pipeline-btn glean-gm-btn--accent"
                                             class:glean-highlights__pipeline-btn--enrolled={enrolledFlashcardIds.has(item.id)}
-                                            disabled={Boolean(cardingPipelineId) || exportBusy}
+                                            class:glean-gm-btn--fresh={enrolledFlashcardIds.has(item.id)}
+                                            disabled={batchCarding || Boolean(cardingPipelineId) || exportBusy || enrolledFlashcardIds.has(item.id)}
                                             onclick={() => void makeFlashcardFromHighlight(item)}
                                             title={enrolledFlashcardIds.has(item.id) ? t(i18n, "pipeline.cardCreatedBadge") : t(i18n, "pipeline.makeFlashcard")}
                                             aria-label={enrolledFlashcardIds.has(item.id) ? t(i18n, "pipeline.cardCreatedBadge") : t(i18n, "pipeline.makeFlashcard")}
                                         >
-                                            <svg class="glean-icon glean-icon--xs" aria-hidden="true">
-                                                <use href={enrolledFlashcardIds.has(item.id) ? "#iconGleanCheck" : "#iconGleanCard"} />
-                                            </svg>
-                                            <span>{enrolledFlashcardIds.has(item.id) ? t(i18n, "pipeline.cardCreatedBadge") : t(i18n, "pipeline.makeFlashcard")}</span>
+                                            <span>{enrolledFlashcardIds.has(item.id) ? t(i18n, "pipeline.cardCreatedBadge") : `+ ${t(i18n, "pipeline.makeFlashcard")}`}</span>
                                         </button>
-                                        <ActionPopover label={t(i18n, "library.moreActions")} compact>
-                                            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => openDoc(item.rootId)}>{t(i18n, "action.openDoc")}</button>
-                                            {#if item.commentDocId}
-                                                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => openDoc(item.commentDocId!, item.commentBlockId || item.id)}>{t(i18n, "highlight.jumpToComment")}</button>
-                                            {/if}
-                                            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void handleDelete(item)}>{t(i18n, confirmDeleteId === item.id ? "highlight.deleteConfirm" : "highlight.deleteAnnotation")}</button>
-                                            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyQuoteBlockRef(item)} title={t(i18n, "action.copyBlockRef")} aria-label={t(i18n, "action.copyBlockRef")}>
-                                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg>
-                                                <span>{t(i18n, "action.copyBlockRef")}</span>
-                                            </button>
-                                            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyQuoteCitation(item, "gbt")} title={t(i18n, "citation.copyGBT")} aria-label={t(i18n, "citation.copyGBT")}>
-                                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg>
-                                                <span>{t(i18n, "citation.copyGBT")}</span>
-                                            </button>
-                                            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyQuoteCitation(item, "bibtex")} title={t(i18n, "citation.copyBibTeX")} aria-label={t(i18n, "citation.copyBibTeX")}>
-                                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArchive" /></svg>
-                                                <span>BibTeX</span>
-                                            </button>
-                                            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyQuoteCitation(item, "apa")} title={t(i18n, "citation.copyAPA")} aria-label={t(i18n, "citation.copyAPA")}>
-                                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanLocal" /></svg>
-                                                <span>APA</span>
-                                            </button>
-                                            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyQuoteCitation(item, "mla")} title={t(i18n, "citation.copyMLA")} aria-label={t(i18n, "citation.copyMLA")}>
-                                                <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg>
-                                                <span>MLA</span>
-                                            </button>
-                                            {#if hasCardsInstalled}
-                                                <button type="button" class="glean-btn glean-btn--ghost" aria-busy={cardingKey === item.id} disabled={Boolean(cardingKey)} onclick={() => void pushToCards(item)} title={t(i18n, "quoteCard.pushToCards")} aria-label={t(i18n, "quoteCard.pushToCards")}>
-                                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg>
-                                                    <span>{t(i18n, "quoteCard.pushToCards")}</span>
-                                                </button>
-                                            {/if}
-                                            {#if hasCommonInstalled}
-                                                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void saveToCommon(item)} title={t(i18n, "quoteCard.saveToCommon")} aria-label={t(i18n, "quoteCard.saveToCommon")}>
-                                                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanBookmark" /></svg>
-                                                    <span>{t(i18n, "quoteCard.saveToCommon")}</span>
-                                                </button>
-                                            {/if}
-                                            <button type="button" class="glean-btn glean-btn--ghost" class:glean-ghost-btn={!hasCardsInstalled} aria-busy={cardingKey === item.id} disabled={Boolean(cardingKey)} onclick={() => void card(item)} title={t(i18n, "flashcard.make")} aria-label={hasCardsInstalled ? t(i18n, "flashcard.make") : t(i18n, "reader.cardGhostHint")}><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanCard" /></svg><span>{t(i18n, "flashcard.make")}</span></button>
-                                            <button type="button" class="glean-btn glean-btn--ghost" class:glean-ghost-btn={!hasExamInstalled} disabled={exportBusy} onclick={() => void exam(item)} title={hasExamInstalled ? t(i18n, "reader.examMake") : t(i18n, "reader.examGhostHint")} aria-label={t(i18n, "reader.examMake")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanEdit" /></svg> <span>{t(i18n, "reader.examMake")}</span></button>
-                                        </ActionPopover>
                                     </div>
                                 </article>
                             {/each}
@@ -1665,10 +1766,10 @@ function focusHighlightRow(id: string): void {
     }
 
     .glean-highlights__title {
-        font-size: 26px;
-        font-weight: 700;
+        font-size: 20px;
+        font-weight: 650;
         line-height: 1.35;
-        letter-spacing: 0;
+        letter-spacing: -0.015em;
     }
 
     .glean-highlights__subtitle {
@@ -1698,12 +1799,6 @@ function focusHighlightRow(id: string): void {
         font-size: 12px;
     }
 
-    .glean-highlights__tools--scope button[aria-pressed="true"] {
-        background: var(--glean-card-surface);
-        color: var(--glean-accent-b);
-        box-shadow: var(--glean-shadow-control);
-    }
-
     .glean-highlights__filters {
         gap: 12px;
         padding: 16px;
@@ -1729,12 +1824,6 @@ function focusHighlightRow(id: string): void {
         padding-inline: 12px;
         font-size: 13px;
         box-shadow: none;
-    }
-
-    .glean-highlights__filters input[type="search"] {
-        flex-basis: 240px;
-        min-width: 0;
-        background: var(--glean-inset-surface);
     }
 
     .glean-highlights__filters select {
@@ -1772,6 +1861,8 @@ function focusHighlightRow(id: string): void {
     .glean-highlights__item {
         display: flex;
         flex-direction: column;
+        height: 100%;
+        box-sizing: border-box;
         transition: border-color 160ms var(--glean-ease-out), background-color 160ms var(--glean-ease-out);
     }
 
@@ -1834,7 +1925,7 @@ function focusHighlightRow(id: string): void {
     }
 
     .glean-highlights__item > .glean-highlights__tools--card {
-        margin-top: 12px;
+        margin-top: auto;
     }
 
     .glean-highlights__preview h3 {
@@ -1869,7 +1960,7 @@ function focusHighlightRow(id: string): void {
         .glean-highlights__items {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
-            align-items: start;
+            align-items: stretch;
         }
 
         .glean-highlights__empty {
@@ -1885,7 +1976,7 @@ function focusHighlightRow(id: string): void {
         }
 
         .glean-highlights__title {
-            font-size: 24px;
+            font-size: 20px;
         }
 
         .glean-highlights__tools--scope {
@@ -1899,11 +1990,6 @@ function focusHighlightRow(id: string): void {
         .glean-highlights__filters {
             padding: 16px;
             gap: 12px;
-        }
-
-        .glean-highlights__filters input[type="search"] {
-            flex: 1 1 100%;
-            width: 100%;
         }
 
         .glean-highlights__item,

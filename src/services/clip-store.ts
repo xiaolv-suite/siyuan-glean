@@ -122,6 +122,12 @@ export async function markGleanHighlight(blockId: string, color?: string): Promi
     await setBlockAttrs(blockId, patch);
 }
 
+/** 标记高亮/引述块已通过生态桥真实创建闪卡（custom-lv-glean-carded="true"），严禁修改前台编辑器 DOM。 */
+export async function markHighlightCarded(blockId: string): Promise<void> {
+    if (!/^\d{14}-[0-9a-z]{7}$/.test(blockId)) return;
+    await setBlockAttrs(blockId, { [ATTR.gleanCarded]: "true" });
+}
+
 /** 统一封装批注块扩展属性写入（tags / memo / replies / whale 双向写回），遵守 clip-store 单点属性写边界。 */
 export async function writeAnnotationAttrs(blockId: string, attrs: Record<string, string | null>): Promise<void> {
     if (!/^\d{14}-[0-9a-z]{7}$/.test(blockId)) return;
@@ -345,10 +351,11 @@ export async function findClipUrlConflict(url: string, exceptDocId?: string, plu
             ids.forEach((id) => seen.add(id));
             const canonical = canonicalUrlKey(url);
             for (const pair of attrs) {
+                if (pair.attrs[ATTR.unregistered]?.toLowerCase() === "true" && !pair.attrs[ATTR.status]) continue;
                 const targetUrl = pair.attrs[ATTR.url] || "";
                 if (normalizeUrl(targetUrl) !== key && (!canonical || canonicalUrlKey(targetUrl) !== canonical)) continue;
                 const meta = await fetchDocMeta(pair.id);
-                if (!meta.box || !meta.hpath) throw new Error("URL 冲突文档元数据不可用");
+                if (!meta.box || !meta.hpath) continue;
                 return meta;
             }
         }
@@ -368,6 +375,7 @@ export async function findClipUrlConflict(url: string, exceptDocId?: string, plu
         const canonical = canonicalUrlKey(url);
         for (const pair of attrs) {
             if (pair.id === exceptDocId) continue;
+            if (pair.attrs[ATTR.unregistered]?.toLowerCase() === "true" && !pair.attrs[ATTR.status]) continue;
             const targetUrl = pair.attrs[ATTR.url] || "";
             if (normalizeUrl(targetUrl) === key || (canonical && canonicalUrlKey(targetUrl) === canonical)) {
                 const row = docs.find((item) => item.id === pair.id);
@@ -735,14 +743,18 @@ export async function captureClip(
     const ial = await getBlockAttrs(docId);
     const current = parseClipAttrs(ial);
     if (current.status) {
-        if (options.clearExcluded && current.excluded) {
-            const restored = await writeClip(plugin, docId, { excluded: false });
+        if ((options.clearExcluded && current.excluded) || current.unregistered) {
+            const patch: ClipPatch = {};
+            if (options.clearExcluded && current.excluded) patch.excluded = false;
+            if (current.unregistered) patch.unregistered = null;
+            const restored = await writeClip(plugin, docId, patch);
+            knownUnregisteredDocIds.delete(docId);
             return { captured: false, attrs: restored.attrs, indexSyncFailed: restored.indexSyncFailed };
         }
         return { captured: false, attrs: current };
     }
     const defaults = captureDefaults();
-    const patch: Partial<ClipAttrs> = {};
+    const patch: ClipPatch = {};
     const metadata = inspectClipMarkdown(options.markdown ?? "", { url: ial[ATTR.url] || options.url, contentType: options.contentType });
     const effectiveUrl = ial[ATTR.url] || options.url || metadata.url;
     if (effectiveUrl && !options.allowDuplicate) {
@@ -769,10 +781,12 @@ export async function captureClip(
     if (!ial[ATTR.minutes] && metadata.minutes > 0) patch.minutes = metadata.minutes;
     if (options.doneTime && !ial[ATTR.doneTime]) patch.doneTime = options.doneTime;
     if (options.clearExcluded && current.excluded) patch.excluded = false;
+    if (current.unregistered) patch.unregistered = null;
     const observedKeys = new Set([ATTR.status, ATTR.url, ...Object.keys(serializePatch(patch))]);
     const expectedAttrs = Object.fromEntries([...observedKeys].map((key) => [key, ial[key] ?? null]));
     Object.assign(expectedAttrs, options.expectedAttrs ?? {});
     const result = await writeClip(plugin, docId, patch, { forceStatus: true, expectedAttrs, expectedLocation: options.expectedLocation });
+    knownUnregisteredDocIds.delete(docId);
     // A snapshot is a derived asset whose path is indexed from the just-written
     // article. Defer it until the index has converged; otherwise a successful
     // attribute write followed by a failed index save would create an asset that
@@ -798,6 +812,170 @@ export async function captureDocument(
 ): Promise<{ captured: boolean; attrs: ClipAttrs; conflict?: DocMeta; indexSyncFailed?: boolean }> {
     const markdown = (await exportMdContent(docId))?.content ?? "";
     return captureClip(plugin, docId, { ...options, clearExcluded: true, markdown });
+}
+
+const knownUnregisteredDocIds = new Set<string>();
+
+export interface UnregisterClipInfo {
+    id: string;
+    title: string;
+    hpath: string;
+    box: string;
+    status?: ClipStatus;
+    url: string;
+    words: number;
+    minutes: number;
+    readMinutes: number;
+    hasReadingProgress: boolean;
+    snapshot: string;
+}
+
+export interface UnregisterClipResult {
+    unregistered: boolean;
+    attrs: ClipAttrs;
+    indexSyncFailed?: boolean;
+}
+
+export interface UnregisteredDocEntry {
+    id: string;
+    title: string;
+    hpath: string;
+    box: string;
+    updated: string;
+    url: string;
+    site: string;
+    author: string;
+    contentType: string;
+    words: number;
+    minutes: number;
+    readMinutes: number;
+    hasReadingProgress: boolean;
+}
+
+/** 读取移出拾遗库前的确认摘要；不改写任何属性或正文。 */
+export async function buildUnregisterClipInfo(docId: string): Promise<UnregisterClipInfo | null> {
+    if (!docId) return null;
+    const [meta, ial] = await Promise.all([fetchDocMeta(docId), getBlockAttrs(docId)]);
+    if (!meta.box || !meta.hpath) return null;
+    const attrs = parseClipAttrs(ial);
+    return {
+        id: docId,
+        title: meta.title || "",
+        hpath: meta.hpath,
+        box: meta.box,
+        status: attrs.status,
+        url: attrs.url ?? "",
+        words: attrs.words ?? 0,
+        minutes: attrs.minutes ?? 0,
+        readMinutes: attrs.readMinutes ?? 0,
+        hasReadingProgress: Boolean(attrs.readingPosition || attrs.readingPos || attrs.readPoint || (attrs.readMinutes ?? 0) > 0),
+        snapshot: attrs.snapshot ?? "",
+    };
+}
+
+/**
+ * 安全无损「移出拾遗库（保留原文档）」：
+ * - 同一文档锁与索引锁内读回根块 IAL，仅清除 custom-clip-status（传 null）并按 allowCandidate 写 custom-clip-unregistered；
+ * - 绝不删除或移动思源文档，绝不篡改正文、来源、阅读进度、断点、时长、高亮、快照或已建闪卡；
+ * - 同步经 applyAttrsToIndex() 从 glean-index.json.clips 与内存 knownClipDocIds 移除。
+ */
+export async function unregisterClip(
+    plugin: Plugin,
+    docId: string,
+    options: { allowCandidate?: boolean } = {},
+): Promise<UnregisterClipResult> {
+    return withDocLock(docId, () => withClipEditQueue(plugin, docId, async (write) => {
+        const ial = await getBlockAttrs(docId);
+        const current = parseClipAttrs(ial);
+        if (current.internal) throw new ClipRestoreError("internal");
+        const allowCandidate = options.allowCandidate === true;
+        if (!current.status && (allowCandidate ? !current.unregistered : current.unregistered === true)) {
+            if (allowCandidate) knownUnregisteredDocIds.delete(docId);
+            else knownUnregisteredDocIds.add(docId);
+            return { unregistered: false, attrs: current };
+        }
+        const patch: ClipPatch = {
+            status: null,
+            unregistered: allowCandidate ? null : true,
+        };
+        const expectedAttrs: Record<string, string | null> = {
+            [ATTR.status]: ial[ATTR.status] ?? null,
+            [ATTR.unregistered]: ial[ATTR.unregistered] ?? null,
+        };
+        const result = await write(patch, { forceStatus: true, expectedAttrs });
+        if (allowCandidate) knownUnregisteredDocIds.delete(docId);
+        else knownUnregisteredDocIds.add(docId);
+        return {
+            unregistered: true,
+            attrs: result.attrs,
+            indexSyncFailed: result.indexSyncFailed,
+        };
+    }));
+}
+
+/** 查询当前带有 custom-clip-unregistered=true 且尚未重新入库的原文档列表（含 SQL 滞后补查）。 */
+export async function listUnregisteredDocs(limit = 500, offset = 0): Promise<UnregisteredDocEntry[]> {
+    const safeLimit = positiveInt(limit, 500);
+    const safeOffset = positiveInt(offset, 0);
+    const sqlRows = await querySql<DocRow>(
+        `SELECT id, content, hpath, box, updated, tag FROM blocks
+         WHERE type = 'd' AND ial LIKE '%${ATTR.unregistered}%'
+         ORDER BY updated DESC, id DESC LIMIT ${safeLimit} OFFSET ${safeOffset}`
+    );
+    const byId = new Map<string, DocRow>();
+    for (const row of sqlRows) {
+        if (row?.id) byId.set(row.id, row);
+    }
+    if (safeOffset === 0 && knownUnregisteredDocIds.size > 0) {
+        const missingIds = [...knownUnregisteredDocIds].filter((id) => !byId.has(id));
+        const standardIds = missingIds.filter((id) => /^\d{14}-[0-9a-z]{7}$/.test(id));
+        if (standardIds.length > 0) {
+            const extraRows = await listDocsByIds(standardIds);
+            for (const row of extraRows) byId.set(row.id, row);
+        }
+        for (const id of missingIds) {
+            if (!/^\d{14}-[0-9a-z]{7}$/.test(id)) {
+                const meta = await fetchDocMeta(id).catch(() => null);
+                if (meta && meta.box && meta.hpath) {
+                    byId.set(id, { id: meta.id, content: meta.title, hpath: meta.hpath, box: meta.box, updated: meta.updated });
+                }
+            }
+        }
+    }
+    const ids = [...byId.keys()];
+    if (ids.length === 0) return [];
+    const pairs = await batchReadClipAttrs(ids);
+    const attrsById = new Map(pairs.map((pair) => [pair.id, pair.attrs]));
+    const entries: UnregisteredDocEntry[] = [];
+    for (const row of byId.values()) {
+        const ial = attrsById.get(row.id);
+        if (!ial) {
+            knownUnregisteredDocIds.delete(row.id);
+            continue;
+        }
+        const attrs = parseClipAttrs(ial);
+        if (!attrs.unregistered || attrs.status || attrs.internal) {
+            knownUnregisteredDocIds.delete(row.id);
+            continue;
+        }
+        knownUnregisteredDocIds.add(row.id);
+        entries.push({
+            id: row.id,
+            title: row.content || "",
+            hpath: row.hpath || "",
+            box: row.box || "",
+            updated: row.updated || "",
+            url: attrs.url ?? "",
+            site: attrs.site ?? "",
+            author: attrs.author ?? "",
+            contentType: attrs.contentType ?? "",
+            words: attrs.words ?? 0,
+            minutes: attrs.minutes ?? 0,
+            readMinutes: attrs.readMinutes ?? 0,
+            hasReadingProgress: Boolean(attrs.readingPosition || attrs.readingPos || attrs.readPoint || (attrs.readMinutes ?? 0) > 0),
+        });
+    }
+    return entries.sort((a, b) => String(b.updated || "").localeCompare(String(a.updated || "")) || String(b.id).localeCompare(String(a.id)));
 }
 
 /** 批量改状态（T-1103）。逐篇写，保证每篇的索引同步；返回成功篇数。 */
@@ -1041,7 +1219,7 @@ async function indexFromRows(rows: DocRow[], attrPairs: Awaited<ReturnType<typeo
         let markdown = "";
         // For an unconfirmed document with no URL or exact tag, the official
         // clipper template in the first lines is the only remaining evidence.
-        if (!ial[ATTR.status] && !ial[ATTR.url] && !probe.url && !probe.internal && !probe.excluded) {
+        if (!ial[ATTR.status] && !ial[ATTR.url] && !probe.url && !probe.internal && !probe.excluded && !probe.unregistered) {
             try {
                 markdown = (await exportMdContent(row.id))?.content ?? "";
             } catch (error) {
@@ -1231,4 +1409,64 @@ export async function rebuildIndex(plugin: Plugin, settings: GleanSettings): Pro
     const index = await indexFromScopes(scopes);
     if (!isCurrentReconcile(plugin, generation)) throw new Error("Index rebuild superseded");
     return saveScannedIndex(plugin, settings, scopes, index, generation);
+}
+
+/** 从 URL 快速创建并收录文章到「待分拣」队列（保留底层契约与重复检测）。 */
+export async function captureUrlToTriage(
+    plugin: Plugin,
+    settings: GleanSettings,
+    rawUrl: string,
+    customTitle?: string,
+): Promise<{
+    ok: boolean;
+    docId?: string;
+    title?: string;
+    conflict?: DocMeta;
+    errorKey?: string;
+}> {
+    const normalized = normalizeUrl(rawUrl);
+    if (!normalized) return { ok: false, errorKey: "msg.candidateInvalidUrl" };
+
+    const preConflict = await findClipUrlConflict(normalized, undefined, plugin).catch(() => null);
+    if (preConflict) return { ok: false, conflict: preConflict };
+
+    const { listNotebooks, createDocWithMd, removeDoc, deleteBlock } = await import("../api/client");
+    const openNbs = await listNotebooks().catch(() => []);
+    const hubNb = openNbs.find((n) => /^(🐴\s*)?小驴(生态|空间|笔记本)/.test(n.name?.trim() || ""));
+    const targetNotebook = settings.anchorNotebooks[0] || hubNb?.id || openNbs[0]?.id || "";
+    if (!targetNotebook) return { ok: false, errorKey: "capture.noAnchorNotebook" };
+
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}-${String(now.getHours()).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}`;
+    const safeCustom = (customTitle ?? "").replace(/[/\\:<>|?*"~\p{Cc}\p{Cf}\r\n]+/gu, " ").trim();
+    const fallbackTitle = `${siteFromUrl(normalized) || "网页"} ${dateStr}`;
+    const title = safeCustom || fallbackTitle;
+    const rootPrefix = settings.rootPath
+        ? settings.rootPath.trim().replace(/\/+$/, "")
+        : targetNotebook === hubNb?.id
+          ? "/04-小驴拾遗"
+          : "";
+    const md = `[来源链接](${normalized})\n\n> 收录于「待分拣」`;
+    const docId = await createDocWithMd(targetNotebook, `${rootPrefix}/剪藏/${title}`, md);
+    if (!docId) return { ok: false, errorKey: "msg.captureFailed" };
+
+    const captured = await captureDocument(plugin, docId, {
+        src: "manual",
+        url: normalized,
+        status: "inbox",
+        contentType: "link",
+    });
+    if (captured.conflict) {
+        if (!captured.attrs?.status && docId !== captured.conflict.id) {
+            try {
+                const rows = await querySql<{ box?: string; path?: string }>(
+                    `SELECT box, path FROM blocks WHERE id = '${docId}' AND type = 'd' LIMIT 1`,
+                ).catch(() => []);
+                if (rows?.[0]?.box && rows?.[0]?.path) await removeDoc(rows[0].box, rows[0].path);
+                else await deleteBlock(docId);
+            } catch {}
+        }
+        return { ok: false, conflict: captured.conflict };
+    }
+    return { ok: true, docId, title };
 }

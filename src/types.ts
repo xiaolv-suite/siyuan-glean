@@ -29,6 +29,10 @@ export interface GleanFacade {
     openArchiveDialog(docId: string): void;
     /** 从归档/回收宿主恢复文章的策略对话框 */
     openRestoreDialog(docId: string): void;
+    /** 安全移出拾遗库确认对话框（保留思源原文档、高亮与闪卡） */
+    openUnregisterDialog?(docId: string): void;
+    /** 打开已移出拾遗库的文档列表与一键重新入库对话框 */
+    openUnregisteredDocsDialog?(): void;
     /** 将当前活动文档手动收录到读库；复用既有命令收录链路。 */
     addCurrentDocToLibrary(): Promise<void>;
     /** 打开工作台面板（移动端全屏/桌面端页签） */

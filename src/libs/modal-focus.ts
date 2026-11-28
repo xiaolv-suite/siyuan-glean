@@ -73,6 +73,50 @@ function externalOverlay(root: HTMLElement): boolean {
     return Boolean(menu && active && menu.contains(active) && visible(menu));
 }
 
+export function consumeModalEscape(container: HTMLElement): "consume" | "external" | false {
+    if (!container.isConnected || !visible(container)) return false;
+    if (externalOverlay(container)) return "external";
+    const openPopover = container.querySelector<HTMLElement>(":popover-open");
+    if (openPopover) {
+        if (typeof (openPopover as HTMLElement & { hidePopover?: () => void }).hidePopover === "function") {
+            try {
+                (openPopover as HTMLElement & { hidePopover: () => void }).hidePopover();
+            } catch { /* ignore */ }
+        }
+        return "consume";
+    }
+    const active = typeof document !== "undefined" ? document.activeElement : null;
+    const isNode = typeof Node !== "undefined" ? active instanceof Node : Boolean(active);
+    const target = isNode && active && container.contains(active as Node) ? active : container;
+    let defaultPrevented = false;
+    let stopped = false;
+    const syntheticEvent = {
+        key: "Escape",
+        target,
+        defaultPrevented: false,
+        isComposing: false,
+        keyCode: 27,
+        repeat: false,
+        preventDefault() {
+            defaultPrevented = true;
+            syntheticEvent.defaultPrevented = true;
+        },
+        stopPropagation() {
+            stopped = true;
+        },
+        stopImmediatePropagation() {
+            stopped = true;
+        },
+    };
+    if (dispatchEscape(syntheticEvent as unknown as KeyboardEvent, container) || defaultPrevented || stopped) {
+        return "consume";
+    }
+    if (container.querySelector("[aria-busy='true']")) {
+        return "consume";
+    }
+    return false;
+}
+
 export function installModalFocus(root: HTMLElement, options: ModalFocusOptions): () => void {
     const activeElement = document.activeElement;
     const previousFocus = options.returnFocus === undefined

@@ -12,11 +12,11 @@ import { t } from "../libs/i18n";
 import { aiFailureKey } from "../libs/ai-feedback";
 import { displaySiteName, type ClipStatus } from "../domain/schema";
 import { normalizeUrl } from "../domain/url";
-import { batchSetStatusDetailed, captureDocument, findClipUrlConflict, reconcileIndex, writeClip, type StatusWriteResult } from "../services/clip-store";
+import { batchSetStatusDetailed, captureDocument, captureUrlToTriage, findClipUrlConflict, listUnregisteredDocs, reconcileIndex, writeClip, type StatusWriteResult } from "../services/clip-store";
 import { autoEnrich, enrichClip } from "../services/enrich-service";
 import { snapshotClip } from "../services/snapshot-service";
 import { exportArticleMarkdown, exportSelectedClipsCsv } from "../services/library-export-service";
-import { filterAndSortLibrary, libraryFacets, matchLibraryReason, resolveReadingTimeTier, type LibraryItem, type LibraryMatchTarget, type LibrarySortDirection, type LibrarySortKey, type ReadingTimeTier } from "../domain/library-view.ts";
+import { filterAndSortLibrary, libraryFacets, matchLibraryReason, type LibraryItem, type LibraryMatchTarget, type LibrarySortDirection, type LibrarySortKey, type ReadingTimeTier } from "../domain/library-view.ts";
 import { loadIndex, type ClipIndexEntry, type CandidateEntry, type GleanIndex } from "../services/index-store";
 import StatsView from "./StatsView.svelte";
 import HighlightView from "./HighlightView.svelte";
@@ -32,7 +32,7 @@ import ActionPopover from "./ActionPopover.svelte";
 import AuthorEditor from "./AuthorEditor.svelte";
 import AiBatchPanel from "./AiBatchPanel.svelte";
 import { libraryFilterChips, removeLibraryFilter, type FilterChipKey } from "../domain/library-filter-chips.ts";
-import { nextPreviewId, normalizePreviewRatio, previewRatioFromPointer } from "../domain/workbench-preview.ts";
+import { nextPreviewId, normalizePreviewRatio } from "../domain/workbench-preview.ts";
 import InboxSection from "./InboxSection.svelte";
 import ResurfaceView from "./ResurfaceView.svelte";
 import { archiveStaleCandidates, setSurfacePinned } from "../services/resurface-service";
@@ -41,7 +41,7 @@ import { deleteSavedViewPref, deleteTagAliasPref, loadUiPrefs, saveLastViewPref,
 import { ageDays, todayStamp } from "../domain/resurface.ts";
 import { recordReadingDone } from "../services/checkin-bridge";
 import { hasSourceAction, openTargetForCarrier, resolveCarrier, sourceUrlForCarrier } from "../domain/carrier";
-import { isWechatUrl, displayWechatAuthor, isWechatSeriesTag } from "../domain/wechat";
+import { isWechatUrl, displayWechatAuthor } from "../domain/wechat";
 import { calculateSnapshotHealth } from "../domain/snapshot-health";
 import { pickRoamingArticle } from "../domain/roaming";
 import { openRoamingDialog } from "./roaming-dialog";
@@ -53,8 +53,6 @@ import ClipStatusActions from "./ClipStatusActions.svelte";
 import { installMobileViewportVars } from "../libs/mobile-viewport";
 import { installEscapeHandler, installModalFocus } from "../libs/modal-focus";
 import { createRefreshQueue } from "../libs/refresh-queue";
-import { THEME_PALETTES, type ThemePaletteId } from "../domain/theme-palette";
-import { applyThemePaletteToDom } from "../libs/theme-palette-controller";
 import { kernelErrorKind, querySql } from "../api/client";
 import { applySavedView, createSavedView, deleteSavedView, displayTagAlias, governanceCueMuted, localDateStamp, setDefaultSavedView, normalizeTagAliases, SMART_VIEW_PRESETS, instantiateSmartViewPreset, type GovernanceCueKey, type GovernanceMuted, type SavedView, type TagAlias } from "../domain/ui-prefs";
 
@@ -91,8 +89,6 @@ let { facade, initialPreviewId = "", initialView = "", tabId = "", onClose }: Pr
 const i18n = $derived(facade.i18n);
 let currentTime = $state(new Date());
 let dayRefreshTimer: number | null = null;
-let paletteMenuOpen = $state(false);
-let currentThemePalette = $state<ThemePaletteId>("teal");
 
 function scheduleDayRefresh(): void {
     if (typeof window === "undefined") return;
@@ -112,21 +108,45 @@ function syncDayClock(): void {
 }
 
 type PanelView = "resurface" | "library" | "stats" | "highlights";
+type NavBucket = "triage" | "list" | "archived";
+type ListSubFilter = "active" | "reading" | "later" | "done";
 
 function resolveInitialPanelView(raw?: string): PanelView | null {
     if (raw === "resurface" || raw === "library" || raw === "stats" || raw === "highlights") return raw;
+    if (raw === "triage" || raw === "list" || raw === "archived") return "library";
     if (raw === "home") return "resurface";
     return null;
 }
 
 const explicitInitialView = untrack(() => resolveInitialPanelView(initialView));
-let view = $state<PanelView>(explicitInitialView ?? "resurface");
+const explicitInitialBucket = untrack<NavBucket>(() => {
+    if (initialView === "triage") return "triage";
+    if (initialView === "archived") return "archived";
+    return "list";
+});
+let view = $state<PanelView>(explicitInitialView ?? "library");
+let navBucket = $state<NavBucket>(explicitInitialBucket);
+let listSubFilter = $state<ListSubFilter>("active");
+let filterDrawerOpen = $state(false);
+let facetRailOpen = $state(false);
+let fullPreviewMode = $state(false);
+let batchMode = $state(false);
+let governanceToolsOpen = $state(false);
+let kbdHelpOpen = $state(false);
+let captureModalOpen = $state(false);
+let captureUrlInput = $state("");
+let captureTitleInput = $state("");
+let captureUrlBusy = $state(false);
+let captureModalEl = $state<HTMLElement | null>(null);
+let captureReturnFocus: HTMLElement | null = null;
+let disposeCaptureFocus = () => {};
 let loading = $state(true);
 let quickCaptureBusy = $state(false);
 let loadError = $state(false);
 let offline = $state(false);
 let index = $state<GleanIndex>({ version: 1, updatedAt: "", clips: {}, candidates: {} });
-let activeQueue = $state<ClipStatus>("inbox");
+let unregisteredCount = $state(0);
+let activeQueue = $state<ClipStatus>(explicitInitialBucket === "triage" ? "inbox" : explicitInitialBucket === "archived" ? "archived" : "later");
 let keyword = $state("");
 let wechatScanning = $state(false);
 let wechatScanProgressText = $state("");
@@ -276,8 +296,6 @@ let previewPrefsTouched = false;
 let previewSplit = $state<HTMLDivElement | null>(null);
 let previewDialog = $state<HTMLDivElement | null>(null);
 let previewReturnFocus: HTMLElement | null = null;
-let draggingPointer: number | null = null;
-let dragStartRatio = normalizePreviewRatio(undefined);
 onMount(() => {
     const cleanupViewport = installMobileViewportVars(rootEl, facade.isMobile);
     scheduleDayRefresh();
@@ -289,18 +307,17 @@ onMount(() => {
     const onTagAliasesChanged = () => {
         void loadUiPrefs(facade.pluginInstance).then((prefs) => {
             tagAliases = prefs.tagAliases;
-            currentThemePalette = prefs.themePalette || "teal";
         }).catch(() => undefined);
     };
     void loadUiPrefs(facade.pluginInstance).then((prefs) => {
         tagAliases = prefs.tagAliases;
-        currentThemePalette = prefs.themePalette || "teal";
     }).catch(() => undefined);
     document.addEventListener("glean:tag-aliases-changed", onTagAliasesChanged);
     const cleanup = () => {
         disposed = true;
         focusGeneration += 1;
         disposeTagAliasFocus();
+        disposeCaptureFocus();
         if (dayRefreshTimer !== null) window.clearTimeout(dayRefreshTimer);
         dayRefreshTimer = null;
         if (focusFlashTimer !== null) window.clearTimeout(focusFlashTimer);
@@ -394,6 +411,115 @@ async function quickCapture(): Promise<void> {
     }
 }
 
+function openCaptureModal(): void {
+    captureUrlInput = "";
+    captureTitleInput = "";
+    captureReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    captureModalOpen = true;
+    void tick().then(() => {
+        if (!captureModalOpen || !captureModalEl) return;
+        disposeCaptureFocus = installModalFocus(captureModalEl, {
+            onClose: closeCaptureModal,
+            returnFocus: captureReturnFocus,
+        });
+    });
+}
+
+function closeCaptureModal(): void {
+    captureModalOpen = false;
+    const dispose = disposeCaptureFocus;
+    disposeCaptureFocus = () => {};
+    dispose();
+    captureReturnFocus = null;
+}
+
+async function captureCurrentAndClose(): Promise<void> {
+    await quickCapture();
+    closeCaptureModal();
+    await reload();
+}
+
+async function submitCaptureUrl(): Promise<void> {
+    if (captureUrlBusy) return;
+    const url = captureUrlInput.trim();
+    if (!normalizeUrl(url)) {
+        showNotice(t(i18n, "msg.candidateInvalidUrl"), 3000, "warn");
+        return;
+    }
+    captureUrlBusy = true;
+    try {
+        const res = await captureUrlToTriage(facade.pluginInstance, facade.settings, url, captureTitleInput.trim());
+        if (res.conflict) {
+            const confTitle = res.conflict.title || res.conflict.hpath || "";
+            showNotice(confTitle ? t(i18n, "inbox.duplicateSameSource", { title: confTitle }) : t(i18n, "inbox.duplicateSameUrl"), 3500, "warn");
+            return;
+        }
+        if (!res.ok) {
+            showNotice(t(i18n, res.errorKey || "msg.captureFailed"), 3500, "error");
+            return;
+        }
+        lvActivity.record({
+            source: "拾遗",
+            category: "clip",
+            title: t(i18n, "capture.activityClipTitle", { title: res.title || url }),
+            linkBlockId: res.docId,
+        });
+        notifyClipSuccess({
+            docId: res.docId!,
+            title: res.title,
+            openAction: () => facade.openReadingDocument(res.docId!),
+        });
+        facade.notifyDataChanged();
+        closeCaptureModal();
+        openBucket("triage");
+        await reload();
+    } catch (error) {
+        console.warn("[glean] 网页收录失败:", error);
+        showNotice(t(i18n, "msg.captureFailed"), 3500, "error");
+    } finally {
+        captureUrlBusy = false;
+    }
+}
+
+function openBucket(bucket: NavBucket, sub?: ListSubFilter): void {
+    markPrefsInteraction();
+    view = "library";
+    navBucket = bucket;
+    fullPreviewMode = false;
+    if (bucket === "triage") {
+        activeQueue = "inbox";
+    } else if (bucket === "archived") {
+        activeQueue = "archived";
+    } else {
+        const nextSub = sub ?? listSubFilter;
+        listSubFilter = nextSub;
+        activeQueue = nextSub === "reading" ? "reading" : nextSub === "done" ? "done" : "later";
+    }
+    railBadgeDebouncer.flush();
+    authorTimeline = false;
+    selectedAuthor = "";
+    selectedSite = "";
+    selectedTag = "";
+    selectedAiTag = "";
+    selectedSource = "";
+    selectedTimeSource = "";
+    selectedContentType = "";
+    selectedReadingTimeTier = "all";
+    keyword = "";
+}
+
+function selectReadingListSub(sub: ListSubFilter): void {
+    markPrefsInteraction();
+    listSubFilter = sub;
+    activeQueue = sub === "reading" ? "reading" : sub === "done" ? "done" : "later";
+    authorTimeline = false;
+}
+
+function openStatsAndTools(sub: "stats" | "resurface" = "stats"): void {
+    markPrefsInteraction();
+    view = sub === "resurface" ? "resurface" : "stats";
+}
+
 function closeMobileMore(returnFocus = false) {
     mobileMoreOpen = false;
     if (returnFocus) {
@@ -437,15 +563,27 @@ const views: { key: PanelView; labelKey: string }[] = [
     { key: "highlights", labelKey: "view.highlights" },
 ];
 
-type MobileNavKey = "home" | "library" | "highlights" | "settings";
+type MobileNavKey = "triage" | "list" | "highlights" | "archived";
 const mobileNavItems: { key: MobileNavKey; labelKey: string }[] = [
-    { key: "home", labelKey: "mobile.navHome" },
-    { key: "library", labelKey: "mobile.navLibrary" },
-    { key: "highlights", labelKey: "mobile.navHighlights" },
-    { key: "settings", labelKey: "mobile.navSettings" },
+    { key: "triage", labelKey: "nav.triage" },
+    { key: "list", labelKey: "nav.readingList" },
+    { key: "highlights", labelKey: "nav.highlights" },
+    { key: "archived", labelKey: "nav.archived" },
 ];
-const mobileActive = $derived<MobileNavKey | null>(view === "library" ? "library" : view === "highlights" ? "highlights" : view === "resurface" ? "home" : null);
-const mobileTitleKey = $derived(views.find((item) => item.key === view)?.labelKey ?? "view.resurface");
+const mobileActive = $derived<MobileNavKey | null>(
+    view === "highlights" ? "highlights" : view === "library" ? navBucket : null
+);
+const mobileTitleKey = $derived(
+    view === "highlights"
+        ? "nav.highlights"
+        : view === "stats" || view === "resurface"
+          ? "nav.statsAndTools"
+          : navBucket === "triage"
+            ? "nav.triage"
+            : navBucket === "archived"
+              ? "nav.archived"
+              : "nav.readingList"
+);
 
 type MobileTaskState = "loading" | "error" | "offline" | "ready";
 const mobileTaskState = $derived<MobileTaskState>(loading ? "loading" : offline ? "offline" : loadError ? "error" : "ready");
@@ -464,27 +602,22 @@ function closeMobileHost() {
 }
 
 function mobileBack() {
-    if (view === "resurface") {
+    if (view === "library" && navBucket === "list") {
         closeMobileHost();
         return;
     }
-    view = "resurface";
+    openBucket("list");
     mobileMoreOpen = false;
-    markPrefsInteraction();
 }
 
 function selectMobileNav(key: MobileNavKey) {
     markPrefsInteraction();
     mobileMoreOpen = false;
-    if (key === "settings") {
-        facade.openSettings();
+    if (key === "highlights") {
+        view = "highlights";
         return;
     }
-    if (key === "home") {
-        view = "resurface";
-        return;
-    }
-    view = key;
+    openBucket(key);
 }
 
 function selectMobileView(nextView: PanelView): void {
@@ -534,13 +667,14 @@ const libraryItems = $derived.by<LibraryItem[]>(() => [
         minutes: entry.minutes,
         priority: entry.priority,
         rating: entry.rating,
+        favorite: entry.favorite,
     })),
     ...Object.values(index.candidates).map((entry) => ({ kind: "candidate" as const, ...entry })),
 ]);
 
-const rawFacets = $derived.by(() => libraryFacets(libraryItems, activeQueue === "inbox"));
+const rawFacets = $derived.by(() => libraryFacets(libraryItems, navBucket === "triage"));
 let debouncedFacets = $state.raw<ReturnType<typeof libraryFacets>>(
-    untrack(() => libraryFacets(libraryItems, activeQueue === "inbox")),
+    untrack(() => libraryFacets(libraryItems, navBucket === "triage")),
 );
 
 const railBadgeDebouncer = createRailBadgeDebouncer<ReturnType<typeof libraryFacets>>({
@@ -559,8 +693,24 @@ $effect(() => {
 
 const facets = $derived(debouncedFacets);
 
+const effectiveStatusFilter = $derived<ClipStatus | readonly ClipStatus[] | "all">(
+    authorTimeline
+        ? "all"
+        : navBucket === "triage"
+          ? "inbox"
+          : navBucket === "archived"
+            ? "archived"
+            : listSubFilter === "reading"
+              ? "reading"
+              : listSubFilter === "later"
+                ? "later"
+                : listSubFilter === "done"
+                  ? "done"
+                  : ["later", "reading"]
+);
+
 const activeFilter = $derived({
-    status: authorTimeline ? "all" as const : activeQueue,
+    status: effectiveStatusFilter,
     site: selectedSite,
     author: selectedAuthor,
     tag: selectedTag,
@@ -573,7 +723,7 @@ const activeFilter = $derived({
     keyword,
     sortBy,
     direction: sortDirection,
-    includeCandidates: !authorTimeline && activeQueue === "inbox",
+    includeCandidates: !authorTimeline && navBucket === "triage",
 });
 
 const rows = $derived.by<Row[]>(() => {
@@ -720,6 +870,9 @@ const governanceCueCount = $derived(
 );
 let governanceExpanded = $state(false);
 const governanceDetailsVisible = $derived(governanceCueCount <= 1 || governanceExpanded);
+const hasGovernanceTools = $derived(
+    currentViewWechatWithoutAuthor.length > 0 || stalePool.length > 0 || facade.settings.cloudInboxEnabled || governanceCueCount > 0,
+);
 
 async function muteGovernanceCue(key: GovernanceCueKey): Promise<void> {
     const next = { ...governanceMuted, [key]: localDateStamp() };
@@ -797,35 +950,17 @@ function facetLabel(value: string, kind: "timeSource" | "contentType"): string {
 }
 
 function selectQueue(queue: QueueKey): void {
-    markPrefsInteraction();
-    activeQueue = queue;
-    railBadgeDebouncer.flush();
-    authorTimeline = false;
-    selectedAuthor = "";
-    selectedSite = "";
-    selectedTag = "";
-    selectedAiTag = "";
-    selectedSource = "";
-    selectedTimeSource = "";
-    selectedContentType = "";
-    selectedReadingTimeTier = "all";
-    keyword = "";
+    if (queue === "inbox") {
+        openBucket("triage");
+    } else if (queue === "archived") {
+        openBucket("archived");
+    } else if (queue === "reading" || queue === "later" || queue === "done") {
+        openBucket("list", queue);
+    }
 }
 
 function openCandidateQueue(): void {
-    markPrefsInteraction();
-    view = "library";
-    activeQueue = "inbox";
-    authorTimeline = false;
-    selectedAuthor = "";
-    selectedSite = "";
-    selectedTag = "";
-    selectedAiTag = "";
-    selectedSource = "";
-    selectedTimeSource = "";
-    selectedContentType = "";
-    selectedReadingTimeTier = "all";
-    keyword = "";
+    openBucket("triage");
     searchOpen = false;
     if (isTabCanvas) layoutMode = "list";
 }
@@ -833,6 +968,7 @@ function openCandidateQueue(): void {
 function openLibrarySearchFromHome(): void {
     markPrefsInteraction();
     view = "library";
+    navBucket = "list";
     clearFilters();
     authorTimeline = true;
     searchOpen = true;
@@ -919,16 +1055,6 @@ function handleSiteClick(entry: ClipIndexEntry): void {
             selectSite("mp.weixin.qq.com");
         }
     }
-}
-
-function selectTag(value: string): void {
-    markPrefsInteraction();
-    selectedTag = selectedTag === value ? "" : value;
-}
-
-function selectAiTag(value: string): void {
-    markPrefsInteraction();
-    selectedAiTag = selectedAiTag === value ? "" : value;
 }
 
 function triggerRoamingRead(): void {
@@ -1239,10 +1365,21 @@ async function markGroupArticlesDone(group: RailGroupKey, value: string): Promis
         return;
     }
     const ids = targetClips.map((c) => c.id);
-    const res = await batchSetStatusDetailed(facade.pluginInstance, ids, "done");
+    let res: StatusWriteResult;
+    try {
+        res = await batchSetStatusDetailed(facade.pluginInstance, ids, "done");
+    } catch (error) {
+        console.warn("[glean] 分组标记已读失败:", error);
+        showMessage(writeFailureMessage(error, offline ? "msg.offlineRetry" : "msg.statusFailed"), 3500);
+        return;
+    }
     showMessage(t(i18n, "railMenu.markDoneResult", { n: res.succeeded.length }), 3000);
-    facade.notifyDataChanged();
-    await reload();
+    if (res.ok > 0) facade.notifyDataChanged();
+    try {
+        await reload();
+    } catch (error) {
+        console.warn("[glean] 分组标记已读后刷新失败:", error);
+    }
 }
 
 function selectDisplayedArticles(): void {
@@ -1689,18 +1826,6 @@ function statusDotClass(status: string): string {
     return `glean-dot glean-dot--${status}`;
 }
 
-function staleText(time: string): string | null {
-    const days = staleDays(time);
-    return days === null ? null : t(i18n, "panel.staleDays", { n: days });
-}
-
-function staleDays(time: string): number | null {
-    if (!/^\d{14}$/.test(time)) return null;
-    const t = new Date(Number(time.slice(0, 4)), Number(time.slice(4, 6)) - 1, Number(time.slice(6, 8))).getTime();
-    const days = Math.floor((Date.now() - t) / 86_400_000);
-    return days >= 14 ? days : null;
-}
-
 const reload = createRefreshQueue(async () => {
     if (!index.updatedAt) loading = true;
     try {
@@ -1711,6 +1836,9 @@ const reload = createRefreshQueue(async () => {
         }
         index = await reconcileIndex(facade.pluginInstance, facade.settings);
         loadError = false;
+        void listUnregisteredDocs().then((list) => {
+            if (!disposed) unregisteredCount = list.length;
+        }).catch(() => undefined);
     } catch (error) {
         console.warn("[glean] 读库对账失败:", error);
         loadError = true;
@@ -1751,9 +1879,11 @@ async function restorePreferences(): Promise<void> {
     try {
         const prefs = await loadUiPrefs(facade.pluginInstance);
         const valid = views.some((item) => item.key === prefs.lastView);
-        // 返回读库定位优先于异步恢复的上次视图，避免把 library 切回旧视图。
+        // 返回读库定位优先于异步恢复的上次视图，避免把 library 切回旧视图；旧版 resurface 默认收敛到阅读清单。
         applyingPrefs = true;
-        if (!prefsUserTouched && valid && !focusRequested) view = prefs.lastView as PanelView;
+        if (!prefsUserTouched && valid && !focusRequested && prefs.lastView !== "resurface") {
+            view = prefs.lastView as PanelView;
+        }
         savedViews = prefs.savedViews;
         tagAliases = prefs.tagAliases;
         defaultSavedViewId = prefs.defaultSavedViewId;
@@ -1816,7 +1946,18 @@ function applySavedViewState(id: string, source = savedViews): void {
     const filter = selected.filter;
     applyingPrefs = true;
     layoutMode = selected.layout;
-    if (filter.status && filter.status !== "all") activeQueue = filter.status;
+    if (filter.status && filter.status !== "all" && !Array.isArray(filter.status)) {
+        const singleStatus = filter.status as ClipStatus;
+        activeQueue = singleStatus;
+        if (singleStatus === "inbox") {
+            navBucket = "triage";
+        } else if (singleStatus === "archived") {
+            navBucket = "archived";
+        } else {
+            navBucket = "list";
+            listSubFilter = singleStatus === "reading" ? "reading" : singleStatus === "done" ? "done" : "later";
+        }
+    }
     selectedSite = filter.site ?? "";
     selectedAuthor = filter.author ?? "";
     authorTimeline = filter.status === "all";
@@ -2028,16 +2169,6 @@ async function toggleAccordion(): Promise<void> {
         railAccordion: nextAccordion,
         libraryRailGroups: nextGroups,
     });
-}
-
-async function toggleRailCollapsed(): Promise<void> {
-    const next = !railCollapsed;
-    railCollapsed = next;
-    try {
-        await saveUiPrefs(facade.pluginInstance, { railCollapsed: next });
-    } catch (error) {
-        console.debug("[glean] 分面侧栏折叠偏好保存失败:", error);
-    }
 }
 
 async function collapseAllGroups(): Promise<void> {
@@ -2412,20 +2543,6 @@ function statusFailureKey(kind: string): string {
     return "msg.statusFailure.generic";
 }
 
-function clipType(entry: ClipIndexEntry): string {
-    return t(i18n, `clip.type.${resolveCarrier(entry.contentType)}`);
-}
-
-function timeSource(entry: ClipIndexEntry): string {
-    return t(i18n, `clip.timeSource.${entry.timeSource || "unknown"}`);
-}
-
-function lengthLabel(entry: ClipIndexEntry): string {
-    if (entry.contentType === "link") return clipType(entry);
-    if (entry.words <= 0) return t(i18n, "clip.lengthUnknown");
-    return `${t(i18n, "panel.words", { n: entry.words })} · ${t(i18n, "panel.minutes", { n: entry.minutes })}`;
-}
-
 /** 手动 AI 富化（卡上 ✨，非阻塞标准思考卡 + 可取消，静默降级） */
 async function enrich(entry: ClipIndexEntry) {
     if (enrichingId) return;
@@ -2473,9 +2590,10 @@ async function enrich(entry: ClipIndexEntry) {
 async function setStatus(entry: ClipIndexEntry, status: ClipStatus) {
     if (statusActionId) return false;
     statusActionId = entry.id;
+    let ok = 0;
     try {
         const result = await batchSetStatusDetailed(facade.pluginInstance, [entry.id], status);
-        const ok = result.ok;
+        ok = result.ok;
         if (ok === 1 && status === "done" && facade.settings.integration.checkinEnabled && facade.settings.integration.checkinItemId) {
             void recordReadingDone(facade.settings.integration.checkinItemId, entry.id, entry.title);
         }
@@ -2485,15 +2603,20 @@ async function setStatus(entry: ClipIndexEntry, status: ClipStatus) {
             : t(i18n, result.indexSyncFailed.length ? "msg.statusIndexPending" : result.ok === 1 ? "msg.statusChanged" : "msg.statusFailed");
         showMessage(message, 3500);
         if (ok === 1) facade.notifyDataChanged();
-        await reload();
-        return ok === 1;
     } catch (error) {
         console.warn("[glean] 状态变更失败:", error);
         showMessage(writeFailureMessage(error, offline ? "msg.offlineRetry" : "msg.statusFailed"), 3500);
+        statusActionId = "";
         return false;
+    }
+    try {
+        await reload();
+    } catch (error) {
+        console.warn("[glean] 状态变更后刷新失败:", error);
     } finally {
         statusActionId = "";
     }
+    return ok === 1;
 }
 
 async function startReading(entry: ClipIndexEntry) {
@@ -2550,11 +2673,15 @@ async function applySelectedStatus(status: ClipStatus) {
     try {
         result = await batchSetStatusDetailed(facade.pluginInstance, ids, status);
         if (result.ok > 0) facade.notifyDataChanged();
-        await reload();
     } catch (error) {
         console.warn("[glean] 批量状态变更失败:", error);
         showMessage(writeFailureMessage(error, offline ? "msg.offlineRetry" : "msg.statusFailed"), 3500);
         return;
+    }
+    try {
+        await reload();
+    } catch (error) {
+        console.warn("[glean] 批量状态变更后刷新失败:", error);
     }
     if (status === "done" && result.ok > 0 && facade.settings.integration.checkinEnabled && facade.settings.integration.checkinItemId) {
         const completed = result.succeeded
@@ -2594,18 +2721,6 @@ function matchBadge(item: LibraryMatchTarget): string | null {
     }
 }
 
-async function selectThemePalette(id: ThemePaletteId): Promise<void> {
-    currentThemePalette = id;
-    applyThemePaletteToDom(null, id);
-    paletteMenuOpen = false;
-    try {
-        await saveUiPrefs(facade.pluginInstance, { themePalette: id });
-        facade.notifyDataChanged();
-    } catch (error) {
-        console.warn("[glean] 保存主题色彩失败:", error);
-    }
-}
-
 function openDoc(docId: string) {
     facade.openReadingDocument(docId);
 }
@@ -2642,11 +2757,13 @@ function selectPreview(id: string): void {
     previewReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     previewRevision += 1;
     previewId = id;
+    fullPreviewMode = false;
 }
 
 function closePreview(): void {
     previewRevision += 1;
     previewId = "";
+    fullPreviewMode = false;
     const target = previewReturnFocus;
     previewReturnFocus = null;
     void tick().then(() => {
@@ -2682,43 +2799,6 @@ function togglePreview(): void {
     if (!previewEnabled) closePreview();
     void savePreviewPrefs({ workbenchPreviewEnabled: previewEnabled });
     showNotice(previewEnabled ? "已开启双栏阅读预览" : "已恢复单栏纯净列表", 2000, "info");
-}
-
-function resizePreview(event: PointerEvent): void {
-    if (draggingPointer !== event.pointerId || !previewSplit) return;
-    const rect = previewSplit.getBoundingClientRect();
-    const railWidth = previewSplit.querySelector(".glean-rail")?.getBoundingClientRect().width ?? 0;
-    const ratio = previewRatioFromPointer(event.clientX, rect.right, rect.width - railWidth);
-    if (ratio !== null) previewRatio = ratio;
-}
-
-function startPreviewResize(event: PointerEvent): void {
-    if (event.button !== 0 || draggingPointer !== null) return;
-    event.preventDefault();
-    const separator = event.currentTarget as HTMLElement;
-    separator.focus({ preventScroll: true });
-    separator.setPointerCapture(event.pointerId);
-    draggingPointer = event.pointerId;
-    dragStartRatio = previewRatio;
-    previewPrefsTouched = true;
-}
-
-function finishPreviewResize(event: PointerEvent, cancel = false): void {
-    if (draggingPointer !== event.pointerId) return;
-    draggingPointer = null;
-    if (cancel) previewRatio = dragStartRatio;
-    else void savePreviewPrefs({ workbenchPreviewRatio: previewRatio });
-    const separator = event.currentTarget as HTMLElement;
-    if (separator.hasPointerCapture(event.pointerId)) separator.releasePointerCapture(event.pointerId);
-}
-
-function previewResizeKey(event: KeyboardEvent): void {
-    if (event.defaultPrevented || event.isComposing || event.keyCode === 229 || event.ctrlKey || event.altKey || event.metaKey) return;
-    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
-    event.preventDefault();
-    event.stopPropagation();
-    previewRatio = normalizePreviewRatio(event.key === "Home" ? 0.25 : event.key === "End" ? 0.65 : previewRatio + (event.key === "ArrowLeft" ? 0.02 : -0.02));
-    void savePreviewPrefs({ workbenchPreviewRatio: previewRatio });
 }
 
 $effect(() => {
@@ -2818,13 +2898,13 @@ function keyboardContext(event: KeyboardEvent): LibraryKeyboardContext {
     };
 }
 
-/** 宿主菜单、插件弹层或已展开的操作浮层打开时，不接管字母键。 */
+/** 宿主菜单、插件弹层或已展开的操作浮层打开时，不接管字母键（忽略包裹自身的弹窗宿主）。 */
 function hasBlockingOverlay(): boolean {
     if (rootEl?.querySelector(":popover-open")) return true;
     if (typeof document === "undefined") return false;
     // 任何可见的菜单/模态层都优先：包括插件自己的别名与预览对话框。
     const overlays = document.querySelectorAll<HTMLElement>(".b3-menu, .b3-dialog, dialog[open], [role='dialog'][aria-modal='true']");
-    return Array.from(overlays).some((element) => element.getClientRects().length > 0);
+    return Array.from(overlays).some((element) => element.getClientRects().length > 0 && !(rootEl && element.contains(rootEl)));
 }
 
 function focusKeyboardRow(id: string): void {
@@ -2846,7 +2926,67 @@ function setKeyboardCursor(id: string): void {
 function cursorAfterRemoval(id: string): string {
     const index = keyboardIds.indexOf(id);
     if (index < 0) return "";
-    return keyboardIds[Math.min(index, keyboardIds.length - 1)] ?? "";
+    const remaining = keyboardIds.filter((itemId) => itemId !== id);
+    if (remaining.length === 0) return "";
+    return remaining[Math.min(index, remaining.length - 1)] ?? "";
+}
+
+async function toggleEntryFavorite(entry: ClipIndexEntry): Promise<void> {
+    if (statusActionId) {
+        showMessage(t(i18n, "msg.statusBusy"), 2500);
+        return;
+    }
+    statusActionId = entry.id;
+    const currentClip = index.clips[entry.id];
+    const nextFav = !(currentClip?.favorite ?? entry.favorite);
+    try {
+        await writeClip(facade.pluginInstance, entry.id, { favorite: nextFav }, { force: true });
+        showMessage(t(i18n, nextFav ? "roaming.favoriteAdded" : "roaming.favoriteRemoved"), 2000);
+        facade.notifyDataChanged();
+    } catch {
+        showMessage(t(i18n, "msg.actionFailed"), 2000);
+        statusActionId = "";
+        return;
+    }
+    try {
+        await reload();
+    } catch (error) {
+        console.warn("[glean] 收藏变更后刷新失败:", error);
+    } finally {
+        statusActionId = "";
+    }
+}
+
+async function recognizeSingleWechatAuthor(entry: ClipIndexEntry): Promise<void> {
+    if (statusActionId) {
+        showMessage(t(i18n, "msg.statusBusy"), 2500);
+        return;
+    }
+    statusActionId = entry.id;
+    let res: string | null = null;
+    try {
+        res = await scanAndFillWechatAuthor(facade.pluginInstance, entry.id, { url: entry.url, site: entry.site });
+        markWechatAttempted([entry.id]);
+    } catch (error) {
+        console.warn("[glean] 公众号作者识别失败:", error);
+        showMessage(t(i18n, "msg.actionFailed"), 2500);
+        statusActionId = "";
+        return;
+    }
+    if (res) {
+        facade.notifyDataChanged();
+        try {
+            await reload();
+        } catch (error) {
+            console.warn("[glean] 公众号作者识别后刷新失败:", error);
+        } finally {
+            statusActionId = "";
+        }
+        showMessage(t(i18n, "wechat.authorRecognized", { name: res }), 2500);
+    } else {
+        statusActionId = "";
+        showMessage(t(i18n, "wechat.authorNotFound"), 2500);
+    }
 }
 
 async function copyEntryBlockRef(entry: { id: string; title?: string }): Promise<void> {
@@ -3003,26 +3143,12 @@ async function runKeyboardAction(action: LibraryKeyboardAction): Promise<void> {
             }
             break;
         }
-        case "toggleFavorite": {
-            if (statusActionId) {
-                showMessage(t(i18n, "msg.statusBusy"), 2500);
-                break;
-            }
-            statusActionId = entry.id;
-            const currentClip = index.clips[entry.id];
-            const nextFav = !(currentClip?.favorite ?? entry.favorite);
-            try {
-                await writeClip(facade.pluginInstance, entry.id, { favorite: nextFav }, { force: true });
-                showMessage(t(i18n, nextFav ? "roaming.favoriteAdded" : "roaming.favoriteRemoved"), 2000);
-                facade.notifyDataChanged();
-                await reload();
-            } catch {
-                showMessage(t(i18n, "msg.actionFailed"), 2000);
-            } finally {
-                statusActionId = "";
-            }
+        case "togglePin":
+            await toggleSurfacePin(entry);
             break;
-        }
+        case "toggleFavorite":
+            await toggleEntryFavorite(entry);
+            break;
         case "copyCitation":
             await copyEntryCitation(entry, "gbt");
             break;
@@ -3033,37 +3159,60 @@ async function runKeyboardAction(action: LibraryKeyboardAction): Promise<void> {
 }
 
 $effect(() => {
-    if (!paletteMenuOpen) return;
-    const onPointerDown = (event: PointerEvent) => {
-        const target = event.target instanceof Element ? event.target : null;
-        if (target?.closest(".glean-palette-quick-wrap")) return;
-        paletteMenuOpen = false;
-    };
-    const onKeyDown = (event: KeyboardEvent) => {
-        if (event.key === "Escape" && !event.defaultPrevented) {
-            event.preventDefault();
-            event.stopPropagation();
-            paletteMenuOpen = false;
-        }
-    };
-    document.addEventListener("pointerdown", onPointerDown, true);
-    document.addEventListener("keydown", onKeyDown, true);
-    return () => {
-        document.removeEventListener("pointerdown", onPointerDown, true);
-        document.removeEventListener("keydown", onKeyDown, true);
-    };
-});
-
-$effect(() => {
     const onSwitchView = (event: Event) => {
         const nextView = (event as CustomEvent<{ view?: string }>).detail?.view;
-        if (nextView && views.some((item) => item.key === nextView)) {
+        if (!nextView) return;
+        if (nextView === "triage" || nextView === "list" || nextView === "archived") {
+            openBucket(nextView);
+            return;
+        }
+        if (nextView === "resurface") {
+            openStatsAndTools("resurface");
+            return;
+        }
+        if (nextView === "stats") {
+            openStatsAndTools("stats");
+            return;
+        }
+        if (views.some((item) => item.key === nextView)) {
             markPrefsInteraction();
             view = nextView as PanelView;
         }
     };
     document.addEventListener("glean:switch-view", onSwitchView);
     return () => document.removeEventListener("glean:switch-view", onSwitchView);
+});
+
+const triageCount = $derived(queueStats.counts.inbox + candidateCount);
+const readingListCount = $derived(queueStats.counts.later + queueStats.counts.reading);
+const archivedCount = $derived(queueStats.counts.archived);
+const doneCount = $derived(queueStats.counts.done);
+
+function entryProgressPct(entry: ClipIndexEntry): number {
+    if (entry.status === "done" || entry.status === "archived") return 100;
+    if (entry.readPoint) return 45;
+    if (entry.status === "reading") return 20;
+    return 0;
+}
+
+function entryDateLabel(entry: ClipIndexEntry): string {
+    const raw = entry.updated || entry.time || "";
+    if (/^\d{14}$/.test(raw)) {
+        return `${raw.slice(4, 6)}/${raw.slice(6, 8)}`;
+    }
+    return "";
+}
+
+$effect(() => {
+    if (!focusRequested) return;
+    if (activeQueue === "inbox") {
+        navBucket = "triage";
+    } else if (activeQueue === "archived") {
+        navBucket = "archived";
+    } else {
+        navBucket = "list";
+        listSubFilter = activeQueue === "reading" ? "reading" : activeQueue === "done" ? "done" : "later";
+    }
 });
 
 $effect(() => {
@@ -3101,6 +3250,64 @@ $effect(() => {
     };
     root.addEventListener("keydown", onKeyDown);
     return () => root.removeEventListener("keydown", onKeyDown);
+});
+
+$effect(() => {
+    const root = rootEl;
+    if (!root) return;
+    return installEscapeHandler(root, () => {
+        if (tagAliasManagerOpen) {
+            closeTagAliasManager();
+            return true;
+        }
+        if (captureModalOpen) {
+            closeCaptureModal();
+            return true;
+        }
+        if (hasBlockingOverlay()) return false;
+        if (kbdHelpOpen) {
+            kbdHelpOpen = false;
+            return true;
+        }
+        if (view === "library") {
+            if (editingCandidateId) {
+                editingCandidateId = "";
+                return true;
+            }
+            if (searchInput && document.activeElement === searchInput) {
+                if (keyword) {
+                    markPrefsInteraction();
+                    keyword = "";
+                    return true;
+                }
+                if (searchOpen) {
+                    closeSearch();
+                    return true;
+                }
+                searchInput.blur();
+                return true;
+            }
+            if (searchOpen) {
+                closeSearch();
+                return true;
+            }
+            if (filterDrawerOpen) {
+                filterDrawerOpen = false;
+                return true;
+            }
+            if (selection.size > 0) {
+                clearSelection();
+                return true;
+            }
+            if (keyboardCursorId) {
+                const id = keyboardCursorId;
+                keyboardCursorId = "";
+                focusKeyboardRow(id);
+                return true;
+            }
+        }
+        return false;
+    });
 });
 
 // 切换队列、筛选、布局或视图后，光标只在仍可见时保留。
@@ -3184,15 +3391,6 @@ async function setRating(entry: ClipIndexEntry, value: number) {
     }
 }
 
-function carrierClass(entry: ClipIndexEntry): string {
-    return `glean-carrier-badge glean-carrier-badge--${resolveCarrier(entry.contentType)}`;
-}
-
-/** 全文已收录但正文长度未记录或记录为 0：提示"待核"，不在这里断言缺失（T-1727）。 */
-function bodyPending(entry: ClipIndexEntry): boolean {
-    return resolveCarrier(entry.contentType) === "fulltext" && entry.words <= 0;
-}
-
 /** 来源列的兜底文案：本地文档本无来源，显示"本地笔记"而不是"未知来源"（T-3314 用户走查反馈）。 */
 function sourceFallback(entry: ClipIndexEntry): string {
     return resolveCarrier(entry.contentType) === "local" ? t(i18n, "clip.sourceLocal") : t(i18n, "panel.unknownSite");
@@ -3211,8 +3409,13 @@ function siteItemLabel(val: string): string {
     return isWechatUrl(val) || val === "mp.weixin.qq.com" ? t(i18n, "wechat.name") : displaySiteName(val);
 }
 
-function carrierLabel(entry: ClipIndexEntry): string {
-    return clipType(entry);
+function primaryActionLabel(entry: ClipIndexEntry): string {
+    if (openTargetForCarrier(entry.contentType, entry.url) === "source") {
+        return t(i18n, "action.openSourceLink");
+    }
+    if (entry.status === "reading") return t(i18n, "action.continueReading");
+    if (entry.status === "done") return t(i18n, "action.readAgain");
+    return t(i18n, "action.startReading");
 }
 
 function openAsset(path: string) {
@@ -3247,15 +3450,6 @@ async function takeSnapshot(entry: ClipIndexEntry) {
     } finally {
         snappingId = "";
     }
-}
-
-function metaLine(entry: Row): string {
-    const parts: string[] = [];
-    if (entry.kind === "clip") {
-        if (entry.minutes > 0) parts.push(t(i18n, "panel.minutes", { n: entry.minutes }));
-        if (!facade.isMobile) parts.push(timeSource(entry));
-    }
-    return parts.join(" · ");
 }
 
 let externalDragDepth = $state(0);
@@ -3391,56 +3585,131 @@ $effect(() => {
             <div class="glean-dropzone-overlay__desc">{t(i18n, "dropzone.desc")}</div>
         </div>
     {/if}
-<div class="glean-panel glean-panel--shell" class:glean-panel--mobile={facade.isMobile} bind:this={rootEl} oninput={markPrefsInteraction} onchange={markPrefsInteraction} aria-busy={loading}>
-    {#if !facade.isMobile}
-        <aside class="glean-workbench-rail" aria-label={t(i18n, "view.resurface")}>
+<div class="glean-panel glean-panel--shell glean-gm-shell" class:glean-panel--mobile={facade.isMobile} bind:this={rootEl} oninput={markPrefsInteraction} onchange={markPrefsInteraction} aria-busy={loading}>
+    {#if !facade.isMobile && isTabCanvas}
+        <aside class="glean-workbench-rail glean-gm-rail" aria-label={t(i18n, "nav.sectionFlow")}>
             <div class="glean-workbench-rail__brand">
-                <span class="glean-workbench-rail__mark" aria-hidden="true"><svg><use href="#iconGleanWheat" /></svg></span>
-                <span class="glean-workbench-rail__name">{t(i18n, "pluginName")}</span>
+                <span class="glean-workbench-rail__mark glean-gm-mark" aria-hidden="true">拾</span>
+                <div class="glean-gm-brand-text">
+                    <span class="glean-workbench-rail__name">{t(i18n, "pluginName")}</span>
+                    <small class="glean-gm-brand-sub">{t(i18n, "nav.tagline")}</small>
+                </div>
             </div>
-            <button type="button" class="glean-workbench-rail__capture glean-btn glean-btn--pri" aria-busy={quickCaptureBusy} disabled={quickCaptureBusy} onclick={() => void quickCapture()}>
-                <svg aria-hidden="true"><use href="#iconGleanPlus" /></svg>
-                <span>{t(i18n, "action.quickCapture")}</span>
+            <button type="button" class="glean-workbench-rail__capture glean-gm-primary-btn" aria-busy={quickCaptureBusy || captureUrlBusy} onclick={openCaptureModal}>
+                <svg viewBox="0 0 24 24" class="glean-gm-svg" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                <span>{t(i18n, "nav.captureArticle")}</span>
             </button>
-            <nav class="glean-workbench-rail__nav" aria-label={t(i18n, "view.resurface")}>
-                {#each views as item (item.key)}
-                    <button type="button" class="glean-workbench-rail__item" class:glean-workbench-rail__item--on={view === item.key} aria-current={view === item.key ? "page" : undefined} onclick={() => { markPrefsInteraction(); view = item.key; }}>
-                        {#if item.key === "resurface"}<svg aria-hidden="true"><use href="#iconGleanWheat" /></svg>
-                        {:else if item.key === "library"}<svg aria-hidden="true"><use href="#iconGleanCard" /></svg>
-                        {:else if item.key === "stats"}<svg aria-hidden="true"><use href="#iconGleanNews" /></svg>
-                        {:else}<svg aria-hidden="true"><use href="#iconGleanSpark" /></svg>{/if}
-                        <span>{t(i18n, item.labelKey)}</span>
-                    </button>
-                {/each}
+            <div class="glean-gm-rail-sec">{t(i18n, "nav.sectionFlow")}</div>
+            <nav class="glean-workbench-rail__nav" aria-label={t(i18n, "nav.sectionFlow")}>
+                <button
+                    type="button"
+                    class="glean-workbench-rail__item glean-gm-rail-item"
+                    class:glean-workbench-rail__item--on={view === "library" && navBucket === "triage"}
+                    aria-current={view === "library" && navBucket === "triage" ? "page" : undefined}
+                    onclick={() => openBucket("triage")}
+                >
+                    <span class="glean-gm-rail-main">
+                        <svg viewBox="0 0 24 24" class="glean-gm-svg" aria-hidden="true"><path d="M4 13h4l2 3h4l2-3h4"/><path d="M5 13V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v7l-1.5 6a2 2 0 0 1-2 1.5h-7a2 2 0 0 1-2-1.5L5 13Z"/></svg>
+                        <span>{t(i18n, "nav.triage")}</span>
+                    </span>
+                    <span class="glean-gm-rail-count">{triageCount}</span>
+                </button>
+                <button
+                    type="button"
+                    class="glean-workbench-rail__item glean-gm-rail-item"
+                    class:glean-workbench-rail__item--on={view === "library" && navBucket === "list"}
+                    aria-current={view === "library" && navBucket === "list" ? "page" : undefined}
+                    onclick={() => openBucket("list")}
+                >
+                    <span class="glean-gm-rail-main">
+                        <svg viewBox="0 0 24 24" class="glean-gm-svg" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+                        <span>{t(i18n, "nav.readingList")}</span>
+                    </span>
+                    <span class="glean-gm-rail-count">{readingListCount}</span>
+                </button>
+                <button
+                    type="button"
+                    class="glean-workbench-rail__item glean-gm-rail-item"
+                    class:glean-workbench-rail__item--on={view === "highlights"}
+                    aria-current={view === "highlights" ? "page" : undefined}
+                    onclick={() => { markPrefsInteraction(); view = "highlights"; }}
+                >
+                    <span class="glean-gm-rail-main">
+                        <svg viewBox="0 0 24 24" class="glean-gm-svg" aria-hidden="true"><path d="m14.5 4.5 5 5L8 21H3v-5L14.5 4.5Z"/><path d="m12 7 5 5"/></svg>
+                        <span>{t(i18n, "nav.highlights")}</span>
+                    </span>
+                </button>
+                <button
+                    type="button"
+                    class="glean-workbench-rail__item glean-gm-rail-item"
+                    class:glean-workbench-rail__item--on={view === "library" && navBucket === "archived"}
+                    aria-current={view === "library" && navBucket === "archived" ? "page" : undefined}
+                    onclick={() => openBucket("archived")}
+                >
+                    <span class="glean-gm-rail-main">
+                        <svg viewBox="0 0 24 24" class="glean-gm-svg" aria-hidden="true"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg>
+                        <span>{t(i18n, "nav.archived")}</span>
+                    </span>
+                    <span class="glean-gm-rail-count">{archivedCount}</span>
+                </button>
             </nav>
             <div class="glean-workbench-rail__spacer"></div>
-            <button type="button" class="glean-workbench-rail__item" onclick={() => facade.openSettings()}>
-                <svg aria-hidden="true"><use href="#iconGleanGear" /></svg><span>{t(i18n, "panel.settings")}</span>
-            </button>
-            <div class="glean-workbench-rail__hint">{t(i18n, "resurface.calmNote")}</div>
+            <div class="glean-gm-rail-foot">
+                <button
+                    type="button"
+                    class="glean-workbench-rail__item glean-gm-rail-item"
+                    title={t(i18n, "unregister.entryDesc")}
+                    onclick={() => facade.openUnregisteredDocsDialog?.()}
+                >
+                    <span class="glean-gm-rail-main">
+                        <svg viewBox="0 0 24 24" class="glean-gm-svg glean-gm-svg--sm" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+                        <span>{t(i18n, "unregister.entryButton")}</span>
+                    </span>
+                    {#if unregisteredCount > 0}<span class="glean-gm-rail-count">{unregisteredCount}</span>{/if}
+                </button>
+                <button
+                    type="button"
+                    class="glean-workbench-rail__item glean-gm-rail-item"
+                    class:glean-workbench-rail__item--on={view === "stats" || view === "resurface"}
+                    aria-current={view === "stats" || view === "resurface" ? "page" : undefined}
+                    onclick={() => openStatsAndTools("stats")}
+                >
+                    <span class="glean-gm-rail-main">
+                        <svg viewBox="0 0 24 24" class="glean-gm-svg glean-gm-svg--sm" aria-hidden="true"><path d="M3 3v18h18"/><path d="m7 14 4-4 3 3 5-6"/></svg>
+                        <span>{t(i18n, "nav.statsAndTools")}</span>
+                    </span>
+                </button>
+                <button type="button" class="glean-workbench-rail__item glean-gm-rail-item" onclick={() => facade.openSettings()}>
+                    <span class="glean-gm-rail-main">
+                        <svg viewBox="0 0 24 24" class="glean-gm-svg glean-gm-svg--sm" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>
+                        <span>{t(i18n, "panel.settings")}</span>
+                    </span>
+                </button>
+            </div>
         </aside>
     {/if}
-    <div class="glean-panel__body">
+    <div class="glean-panel__body glean-gm-body">
+    {#if facade.isMobile || !isTabCanvas}
     <header class="glean-panel__head">
         {#if facade.isMobile}
             <div class="glean-mobile-topbar">
                 <button
                     type="button"
                     class="glean-mobile-topbar__back"
-                    class:glean-mobile-topbar__back--home={view === "resurface"}
-                    title={t(i18n, view === "resurface" ? "action.close" : "mobile.back")}
-                    aria-label={t(i18n, view === "resurface" ? "action.close" : "mobile.back")}
+                    class:glean-mobile-topbar__back--home={view === "library" && navBucket === "list"}
+                    title={t(i18n, view === "library" && navBucket === "list" ? "action.close" : "mobile.back")}
+                    aria-label={t(i18n, view === "library" && navBucket === "list" ? "action.close" : "mobile.back")}
                     onclick={() => mobileBack()}
                 >
-                    {#if view === "resurface"}
-                        <span class="glean-mobile-topbar__mark" aria-hidden="true"><svg><use href="#iconGleanWheat" /></svg></span>
+                    {#if view === "library" && navBucket === "list"}
+                        <span class="glean-mobile-topbar__mark" aria-hidden="true">拾</span>
                     {:else}
                         <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#iconGleanArrowLeft" /></svg>
                     {/if}
                 </button>
                 <div class="glean-mobile-topbar__copy">
                     <h1 class="glean-mobile-topbar__title">{t(i18n, mobileTitleKey)}</h1>
-                    <span class="glean-mobile-topbar__sub">{view === "resurface" ? `${t(i18n, "resurface.subtitle", { n: resurfaceCount })} · ${t(i18n, "resurface.completionStreak", { n: completionStreak })}` : t(i18n, "panel.libraryCount", { n: totalClips })}</span>
+                    <span class="glean-mobile-topbar__sub">{t(i18n, "panel.libraryCount", { n: totalClips })}</span>
                 </div>
                 {#if !(view === "resurface" && loadError && !index.updatedAt)}
                 <span
@@ -3463,6 +3732,7 @@ $effect(() => {
                     </span>
                 </span>
                 {/if}
+                <button type="button" class="glean-btn glean-btn--pri glean-btn--xs glean-gm-mobile-cap-btn" onclick={openCaptureModal}>+ {t(i18n, "nav.captureArticle")}</button>
                 {#if view === "library"}
                     <button
                         type="button"
@@ -3507,9 +3777,19 @@ $effect(() => {
                                 <svg class="glean-mobile-more__icon" aria-hidden="true"><use href="#iconGleanRefresh" /></svg>
                                 {t(i18n, "roaming.button")}
                             </button>
+                            {#if hasGovernanceTools}
+                                <button type="button" class="glean-mobile-more__item" role="menuitem" onclick={() => { closeMobileMore(true); governanceToolsOpen = !governanceToolsOpen; if (governanceToolsOpen && view !== "library") view = "library"; }}>
+                                    <svg class="glean-mobile-more__icon" aria-hidden="true"><use href="#iconGleanInbox" /></svg>
+                                    {t(i18n, governanceToolsOpen ? "panel.governanceCollapse" : "panel.governanceExpand")}
+                                </button>
+                            {/if}
                             <button type="button" class="glean-mobile-more__item" role="menuitem" aria-current={view === "stats" ? "page" : undefined} onclick={() => { closeMobileMore(true); selectMobileView("stats"); }}>
                                 <svg class="glean-mobile-more__icon" aria-hidden="true"><use href="#iconGleanNews" /></svg>
-                                {t(i18n, "view.stats")}
+                                {t(i18n, "nav.statsAndTools")}
+                            </button>
+                            <button type="button" class="glean-mobile-more__item" role="menuitem" onclick={() => { closeMobileMore(); facade.openUnregisteredDocsDialog?.(); }}>
+                                <svg class="glean-mobile-more__icon" aria-hidden="true"><use href="#iconGleanArchive" /></svg>
+                                {t(i18n, "unregister.entryButton")}{#if unregisteredCount > 0} ({unregisteredCount}){/if}
                             </button>
                             <button type="button" class="glean-mobile-more__item" role="menuitem" onclick={() => { closeMobileMore(); facade.openOnboarding(); }}>
                                 <svg class="glean-mobile-more__icon" aria-hidden="true"><use href="#iconGleanWheat" /></svg>
@@ -3547,94 +3827,49 @@ $effect(() => {
             </div>
         {:else}
             <div class="glean-brand">
-                <div class="glean-brand__mark" data-rail-dup="true"><svg><use href="#iconGleanWheat" /></svg></div>
+                <div class="glean-brand__mark glean-gm-mark">拾</div>
                 <div>
-                    <div class="glean-brand__name">{isTabCanvas ? t(i18n, views.find((v) => v.key === view)?.labelKey ?? "pluginName") : t(i18n, "pluginName")}</div>
+                    <div class="glean-brand__name">{t(i18n, "pluginName")}</div>
                     <div class="glean-brand__sub">{headerSubtitle}</div>
                 </div>
                 <div class="glean-head-actions">
-                    {#if isTabCanvas && (view === "resurface" || view === "library")}
-                        <button
-                            type="button"
-                            class="glean-icon-btn glean-head-action glean-head-action--primary"
-                            title={t(i18n, view === "resurface" ? "action.quickCapture" : "action.addToInbox")}
-                            aria-label={t(i18n, view === "resurface" ? "action.quickCapture" : "action.addToInbox")}
-                            aria-busy={quickCaptureBusy}
-                            disabled={quickCaptureBusy}
-                            onclick={() => void quickCapture()}
-                        >
-                            <svg aria-hidden="true"><use href="#iconGleanPlus" /></svg>
-                            <span class="glean-head-action__label">{t(i18n, view === "resurface" ? "action.quickCapture" : "action.addToInbox")}</span>
-                        </button>
-                    {/if}
-                    <button type="button" class="glean-icon-btn glean-head-action" title={t(i18n, "panel.popup")} aria-label={t(i18n, "panel.popup")} onclick={() => openPopup()}>
-                        <svg aria-hidden="true"><use href="#iconGleanPopup" /></svg>
-                        <span class="glean-head-action__label">{t(i18n, "panel.popupShort")}</span>
-                    </button>
-                    <button type="button" class="glean-icon-btn glean-head-action" title={t(i18n, "panel.migrate")} aria-label={t(i18n, "panel.migrate")} onclick={() => facade.openMigrate()}>
-                        <svg aria-hidden="true"><use href="#iconGleanRefresh" /></svg>
-                        <span class="glean-head-action__label">{t(i18n, "panel.migrateShort")}</span>
-                    </button>
-                    <button type="button" class="glean-icon-btn glean-head-action" data-rail-dup="true" title={t(i18n, "panel.settings")} aria-label={t(i18n, "panel.settings")} onclick={() => facade.openSettings()}>
-                        <svg aria-hidden="true"><use href="#iconGleanGear" /></svg>
-                        <span class="glean-head-action__label">{t(i18n, "panel.settings")}</span>
-                    </button>
-                </div>
-                <div class="glean-palette-quick-wrap">
                     <button
                         type="button"
-                        class="glean-icon-btn glean-head-action"
-                        title={t(i18n, "settings.themePalette")}
-                        aria-label={t(i18n, "settings.themePalette")}
-                        aria-expanded={paletteMenuOpen}
-                        aria-haspopup="menu"
-                        onclick={() => { paletteMenuOpen = !paletteMenuOpen; }}
+                        class="glean-icon-btn glean-head-action glean-head-action--primary"
+                        title={t(i18n, "nav.captureArticle")}
+                        aria-label={t(i18n, "nav.captureArticle")}
+                        onclick={openCaptureModal}
                     >
-                        <span class="glean-head-palette-dot"></span>
+                        <svg aria-hidden="true"><use href="#iconGleanPlus" /></svg>
                     </button>
-                    {#if paletteMenuOpen}
-                        <div class="glean-palette-quick-menu" role="menu">
-                            {#each THEME_PALETTES as p}
-                                <button
-                                    type="button"
-                                    role="menuitemradio"
-                                    aria-checked={currentThemePalette === p.id}
-                                    class="glean-palette-quick-item"
-                                    class:glean-palette-quick-item--active={currentThemePalette === p.id}
-                                    title={t(i18n, p.nameKey)}
-                                    onclick={() => void selectThemePalette(p.id)}
-                                >
-                                    <span class="glean-palette-dot-mini" style="background: {p.brand};"></span>
-                                    <span>{t(i18n, p.nameKey)}</span>
-                                </button>
-                            {/each}
-                        </div>
-                    {/if}
+                    <button type="button" class="glean-icon-btn glean-head-action" title={t(i18n, "panel.popup")} aria-label={t(i18n, "panel.popup")} onclick={() => openPopup()}>
+                        <svg aria-hidden="true"><use href="#iconGleanPopup" /></svg>
+                    </button>
+                    <ActionPopover label={t(i18n, "library.moreActions")} compact>
+                        <button type="button" class="glean-btn glean-btn--ghost" onclick={() => facade.openUnregisteredDocsDialog?.()}>{t(i18n, "unregister.entryButton")}{#if unregisteredCount > 0} ({unregisteredCount}){/if}</button>
+                        <button type="button" class="glean-btn glean-btn--ghost" onclick={() => openStatsAndTools("stats")}>{t(i18n, "nav.statsAndTools")}</button>
+                        <button type="button" class="glean-btn glean-btn--ghost" onclick={triggerRoamingRead}>{t(i18n, "roaming.button")}</button>
+                        {#if hasGovernanceTools}
+                            <button type="button" class="glean-btn glean-btn--ghost" aria-pressed={governanceToolsOpen} onclick={() => { governanceToolsOpen = !governanceToolsOpen; if (governanceToolsOpen && view !== "library") view = "library"; }}>
+                                {t(i18n, governanceToolsOpen ? "panel.governanceCollapse" : "panel.governanceExpand")}
+                            </button>
+                        {/if}
+                        <button type="button" class="glean-btn glean-btn--ghost" onclick={() => facade.openMigrate()}>{t(i18n, "panel.migrate")}</button>
+                        <button type="button" class="glean-btn glean-btn--ghost" onclick={() => facade.openImport()}>{t(i18n, "import.title")}</button>
+                        <button type="button" class="glean-btn glean-btn--ghost" onclick={() => facade.openSettings()}>{t(i18n, "panel.settings")}</button>
+                    </ActionPopover>
                 </div>
             </div>
-        {/if}
-
-        {#if !facade.isMobile}
-            <div class="glean-views glean-views--with-roam">
-                {#each views as item (item.key)}
-                    <button
-                        class="glean-views__btn"
-                        class:glean-views__btn--on={view === item.key}
-                        aria-pressed={view === item.key}
-                        onclick={() => { markPrefsInteraction(); view = item.key; }}
-                    >{t(i18n, item.labelKey)}</button>
-                {/each}
-                <button
-                    type="button"
-                    class="glean-views__btn glean-views__btn--roam"
-                    title={t(i18n, "roaming.buttonHint")}
-                    onclick={triggerRoamingRead}
-                ><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanRefresh" /></svg> <span>{t(i18n, "roaming.button")}</span></button>
+            <div class="glean-views glean-gm-dock-nav">
+                <button class="glean-views__btn" class:glean-views__btn--on={view === "library" && navBucket === "triage"} aria-pressed={view === "library" && navBucket === "triage"} onclick={() => openBucket("triage")}>{t(i18n, "nav.triage")} ({triageCount})</button>
+                <button class="glean-views__btn" class:glean-views__btn--on={view === "library" && navBucket === "list"} aria-pressed={view === "library" && navBucket === "list"} onclick={() => openBucket("list")}>{t(i18n, "nav.readingList")} ({readingListCount})</button>
+                <button class="glean-views__btn" class:glean-views__btn--on={view === "highlights"} aria-pressed={view === "highlights"} onclick={() => { markPrefsInteraction(); view = "highlights"; }}>{t(i18n, "nav.highlights")}</button>
+                <button class="glean-views__btn" class:glean-views__btn--on={view === "library" && navBucket === "archived"} aria-pressed={view === "library" && navBucket === "archived"} onclick={() => openBucket("archived")}>{t(i18n, "nav.archived")}</button>
             </div>
         {/if}
 
-        {#if view === "library"}
-            {#if (!facade.isMobile && isTabCanvas) || searchOpen}
+        {#if view === "library" && (facade.isMobile || !isTabCanvas)}
+            {#if searchOpen}
                 <div class="glean-search">
                     <svg class="glean-search__icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#iconGleanSearch" /></svg>
                     <input
@@ -3654,15 +3889,13 @@ $effect(() => {
                             onclick={() => { markPrefsInteraction(); keyword = ""; searchInput?.focus(); }}
                         ><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanClose" /></svg></button>
                     {/if}
-                    {#if !isTabCanvas || facade.isMobile}
-                        <button
-                            type="button"
-                            class="glean-search__close"
-                            title={t(i18n, "panel.searchClose")}
-                            aria-label={t(i18n, "panel.searchClose")}
-                            onclick={closeSearch}
-                        ><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanClose" /></svg></button>
-                    {/if}
+                    <button
+                        type="button"
+                        class="glean-search__close"
+                        title={t(i18n, "panel.searchClose")}
+                        aria-label={t(i18n, "panel.searchClose")}
+                        onclick={closeSearch}
+                    ><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanClose" /></svg></button>
                 </div>
             {:else if !facade.isMobile}
                 <button
@@ -3677,6 +3910,7 @@ $effect(() => {
             {/if}
         {/if}
     </header>
+    {/if}
 
     {#if loadError && (view !== "resurface" || !!index.updatedAt)}
         <div class="glean-load-error" role="alert" aria-live="assertive">
@@ -3707,58 +3941,163 @@ $effect(() => {
     {/if}
 
     {#if view === "library"}
-        {#if !facade.isMobile && facade.settings.cloudInboxEnabled}
-            <InboxSection {facade} onMutated={() => void reload()} />
-        {/if}
         <AiBatchPanel {facade} bind:open={aiBatchOpen} docIds={aiBatchIds} />
 
-        <div class="glean-queues-row">
-            <nav class="glean-queues" aria-label={t(i18n, "view.library")}>
-                {#each queues as queue (queue)}
+        {#if !facade.isMobile && isTabCanvas}
+            <header class="glean-gm-lib-header">
+                <div class="glean-gm-lib-title-group">
+                    <h2 class="glean-gm-heading">
+                        {navBucket === "triage" ? t(i18n, "nav.triage") : navBucket === "archived" ? t(i18n, "nav.archived") : t(i18n, "nav.readingList")}
+                    </h2>
+                    <p class="glean-gm-subheading">
+                        {navBucket === "triage" ? t(i18n, "library.triageDesc") : navBucket === "archived" ? t(i18n, "library.archivedDesc") : t(i18n, "library.readingListDesc")}
+                    </p>
+                </div>
+                <div class="glean-gm-header-right">
+                    {#if navBucket === "list"}
+                        <div class="glean-gm-seg" role="group" aria-label={t(i18n, "nav.readingList")}>
+                            <button type="button" class="glean-gm-seg-btn" class:is-active={!authorTimeline && listSubFilter === "active"} aria-pressed={!authorTimeline && listSubFilter === "active"} onclick={() => selectReadingListSub("active")}>{t(i18n, "library.bucketAllUnread")} ({readingListCount})</button>
+                            <button type="button" class="glean-gm-seg-btn" class:is-active={!authorTimeline && listSubFilter === "reading"} aria-pressed={!authorTimeline && listSubFilter === "reading"} onclick={() => selectReadingListSub("reading")}>{t(i18n, "library.bucketReading")} ({queueStats.counts.reading})</button>
+                            <button type="button" class="glean-gm-seg-btn" class:is-active={!authorTimeline && listSubFilter === "later"} aria-pressed={!authorTimeline && listSubFilter === "later"} onclick={() => selectReadingListSub("later")}>{t(i18n, "library.bucketLater")} ({queueStats.counts.later})</button>
+                            <button type="button" class="glean-gm-seg-btn" class:is-active={!authorTimeline && listSubFilter === "done"} aria-pressed={!authorTimeline && listSubFilter === "done"} onclick={() => selectReadingListSub("done")}>{t(i18n, "library.bucketDone")} ({doneCount})</button>
+                        </div>
+                    {/if}
+                    <ActionPopover label={t(i18n, "library.moreActions")} compact>
+                        <button type="button" class="glean-btn glean-btn--ghost" onclick={() => { markPrefsInteraction(); layoutMode = layoutMode === "list" ? "kanban" : "list"; }}>
+                            {layoutMode === "list" ? t(i18n, "view.modeKanban") : t(i18n, "view.modeList")}
+                        </button>
+                        <button type="button" class="glean-btn glean-btn--ghost" aria-pressed={previewEnabled} onclick={togglePreview}>
+                            {t(i18n, "preview.enabled")}{previewEnabled ? " ✓" : ""}
+                        </button>
+                        {#if layoutMode === "list"}
+                            <button type="button" class="glean-btn glean-btn--ghost" aria-pressed={facetRailOpen} onclick={() => { facetRailOpen = !facetRailOpen; }}>
+                                {t(i18n, "rail.title")}{facetRailOpen ? " ✓" : ""}
+                            </button>
+                        {/if}
+                        <button type="button" class="glean-btn glean-btn--ghost" aria-pressed={batchMode} onclick={() => { batchMode = !batchMode; }}>
+                            {t(i18n, "library.batchActions")}{batchMode ? " ✓" : ""}
+                        </button>
+                        <button type="button" class="glean-btn glean-btn--ghost" onclick={openTagAliasManager}>{t(i18n, "library.tagAliasManage")}</button>
+                        <button type="button" class="glean-btn glean-btn--ghost" onclick={triggerRoamingRead}>{t(i18n, "roaming.button")}</button>
+                        {#if hasGovernanceTools}
+                            <button type="button" class="glean-btn glean-btn--ghost" aria-pressed={governanceToolsOpen} onclick={() => { governanceToolsOpen = !governanceToolsOpen; }}>
+                                {t(i18n, governanceToolsOpen ? "panel.governanceCollapse" : "panel.governanceExpand")}
+                            </button>
+                        {/if}
+                        <button type="button" class="glean-btn glean-btn--ghost" aria-pressed={kbdHelpOpen} onclick={() => { kbdHelpOpen = !kbdHelpOpen; }}>
+                            {t(i18n, "reader.shortcuts")} (?)
+                        </button>
+                        <button type="button" class="glean-btn glean-btn--ghost" onclick={() => openPopup()}>{t(i18n, "panel.popup")}</button>
+                        <button type="button" class="glean-btn glean-btn--ghost" onclick={() => facade.openMigrate()}>{t(i18n, "panel.migrate")}</button>
+                        <button type="button" class="glean-btn glean-btn--ghost" onclick={() => facade.openImport()}>{t(i18n, "import.title")}</button>
+                    </ActionPopover>
+                </div>
+            </header>
+
+            <!-- 单行极简搜索与筛选条 -->
+            <div class="glean-gm-filter-bar">
+                <div class="glean-search glean-gm-search-field">
+                    <svg class="glean-search__icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#iconGleanSearch" /></svg>
+                    <input
+                        bind:this={searchInput}
+                        type="text"
+                        aria-label={t(i18n, "panel.searchPlaceholder")}
+                        placeholder={t(i18n, "panel.searchPlaceholder")}
+                        bind:value={keyword}
+                        onkeydown={(event) => {
+                            if (event.isComposing || event.keyCode === 229) return;
+                            if (event.key === "Escape") {
+                                event.preventDefault();
+                                event.stopPropagation();
+                                if (keyword) {
+                                    markPrefsInteraction();
+                                    keyword = "";
+                                } else {
+                                    searchInput?.blur();
+                                }
+                            }
+                        }}
+                    />
+                    {#if keyword}
+                        <button
+                            type="button"
+                            class="glean-search__clear"
+                            title={t(i18n, "panel.searchClear")}
+                            aria-label={t(i18n, "panel.searchClear")}
+                            onclick={() => { markPrefsInteraction(); keyword = ""; searchInput?.focus(); }}
+                        ><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanClose" /></svg></button>
+                    {/if}
+                </div>
+                <div class="glean-gm-filter-controls">
+                    <select class="b3-select glean-gm-select" aria-label={t(i18n, "library.filterSite")} bind:value={selectedSite}>
+                        <option value="">{t(i18n, "library.filterSite")}</option>
+                        {#each facets.sites as facet (facet.value)}<option value={facet.value}>{siteItemLabel(facet.value)} · {facet.count}</option>{/each}
+                        {#if selectedSite && !facets.sites.some((facet) => facet.value === selectedSite)}<option value={selectedSite}>{siteItemLabel(selectedSite)}</option>{/if}
+                    </select>
+                    <select class="b3-select glean-gm-select" aria-label={t(i18n, "library.sort")} bind:value={sortBy}>
+                        <option value="time">{t(i18n, "action.sortTime")}</option>
+                        <option value="updated">{t(i18n, "library.sortUpdated")}</option>
+                        <option value="words">{t(i18n, "action.sortWords")}</option>
+                        <option value="priority">{t(i18n, "action.sortPriority")}</option>
+                        <option value="rating">{t(i18n, "library.sortRating")}</option>
+                        <option value="title">{t(i18n, "library.sortTitle")}</option>
+                    </select>
                     <button
-                        class="glean-q"
-                        class:glean-q--on={!authorTimeline && activeQueue === queue}
-                        aria-pressed={!authorTimeline && activeQueue === queue}
-                        onclick={() => selectQueue(queue)}
+                        type="button"
+                        class="glean-filter-dir glean-gm-icon-btn"
+                        class:glean-filter-dir--active={sortDirection === "asc"}
+                        aria-label={`${t(i18n, "library.toggleDirection")}: ${t(i18n, sortDirection === "asc" ? "library.directionAscending" : "library.directionDescending")}`}
+                        aria-pressed={sortDirection === "asc"}
+                        title={`${t(i18n, "library.toggleDirection")}: ${t(i18n, sortDirection === "asc" ? "library.directionAscending" : "library.directionDescending")}`}
+                        onclick={() => (sortDirection = sortDirection === "desc" ? "asc" : "desc")}
                     >
-                        {queueLabel(queue)}
-                        <span class="glean-q__n">{queueCount(queue)}</span>
+                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href={sortDirection === "desc" ? "#iconGleanArrowDown" : "#iconGleanArrowUp"} /></svg>
                     </button>
-                {/each}
-            </nav>
+                    <button
+                        type="button"
+                        class="glean-btn glean-gm-btn"
+                        class:glean-gm-btn--accent={filterDrawerOpen || activeFilterCount > 0}
+                        aria-expanded={filterDrawerOpen}
+                        onclick={() => { filterDrawerOpen = !filterDrawerOpen; }}
+                    >
+                        <span>{t(i18n, "library.filterButton")} ▾</span>
+                        {#if activeFilterCount > 0}<span class="glean-gm-count-dot">{activeFilterCount}</span>{/if}
+                    </button>
+                </div>
+            </div>
 
-            {#if !facade.isMobile && isTabCanvas}
-                <details class="glean-kbdhint-fold">
-                    <summary class="glean-kbdhint-fold__summary"><kbd>?</kbd> <span>{t(i18n, "reader.shortcuts")}</span></summary>
-                    <div class="glean-kbdhint" class:glean-kbdhint--active={Boolean(keyboardEntry)}>
-                        <span class="glean-kbdhint__keys" aria-hidden="true">
-                            <kbd>J</kbd><kbd>K</kbd> {t(i18n, "library.keyboardMove")}
-                            <kbd>Enter</kbd> {t(i18n, "library.keyboardView")}
-                            <kbd>O</kbd> {t(i18n, "library.keyboardSource")}
-                            <kbd>R</kbd> {t(i18n, "library.keyboardRead")}
-                            <kbd>A</kbd> {t(i18n, "library.keyboardLater")}
-                            <kbd>E</kbd> {t(i18n, "library.keyboardArchive")}
-                            <kbd>X</kbd> {t(i18n, "library.keyboardSelect")}
-                            <kbd>S</kbd> {t(i18n, "library.keyboardSelectDisplayed")}
-                            <kbd>F</kbd> {selection.size > 0 ? t(i18n, "library.keyboardKeepFiltered") : t(i18n, "roaming.favoriteAction")}
-                            <kbd>C</kbd> {selection.size > 0 ? t(i18n, "library.keyboardClearSelection") : t(i18n, "citation.copyGBT")}
-                            <kbd>Shift+C</kbd> BibTeX
-                            <kbd>P</kbd><kbd>1-5</kbd> {t(i18n, "library.keyboardPriority")}
-                            <kbd>M</kbd> {t(i18n, "library.keyboardRating")}
-                            <kbd>Y</kbd> {t(i18n, "action.copyBlockRef")}
-                            <kbd>B</kbd> {t(i18n, "roaming.button")}
-                            <kbd>/</kbd> {t(i18n, "action.search")}
-                            <kbd>Esc</kbd> {t(i18n, "library.keyboardExit")}
-                        </span>
+            {#if filterDrawerOpen}
+                <div class="glean-gm-filter-drawer" role="region" aria-label={t(i18n, "library.filters")}>
+                    <LibraryFilters {i18n} {facets} {tagAliases} onManageTagAliases={openTagAliasManager} bind:site={selectedSite} bind:author={selectedAuthor} bind:tag={selectedTag} bind:aiTag={selectedAiTag} bind:source={selectedSource} bind:timeSource={selectedTimeSource} bind:contentType={selectedContentType} bind:readingTimeTier={selectedReadingTimeTier} bind:favoriteOnly={selectedFavoriteOnly} bind:sortBy bind:direction={sortDirection} {hasFilters} onClear={clearUserFilters} {sourceLabel} {facetLabel} />
+                    <div class="glean-saved-views glean-gm-saved-views" aria-label={t(i18n, "library.savedViews")}>
+                        <select class="b3-select" aria-label={t(i18n, "library.savedViews")} value={savedViewId} onchange={(event) => applySavedViewState((event.currentTarget as HTMLSelectElement).value)}>
+                            <option value="">{t(i18n, "library.savedViews")}</option>
+                            {#each savedViews as saved (saved.id)}<option value={saved.id}>{saved.name}</option>{/each}
+                        </select>
+                        <input class="b3-text-field" maxlength="40" value={savedViewName} placeholder={t(i18n, "library.savedViewName")} aria-label={t(i18n, "library.savedViewName")} oninput={(event) => (savedViewName = (event.currentTarget as HTMLInputElement).value)} onkeydown={(event) => { if (event.key === "Enter" && !event.isComposing) { event.preventDefault(); saveCurrentView(); } }} />
+                        <button class="glean-btn" disabled={!savedViewName.trim() || savedViews.length >= 20} onclick={saveCurrentView}>{t(i18n, "library.savedViewSave")}</button>
+                        <button class="glean-btn glean-btn--ghost" disabled={!savedViewId} onclick={makeDefaultSavedView}>{t(i18n, "library.savedViewDefault")}</button>
+                        <button class="glean-btn glean-btn--ghost" disabled={!savedViewId} onclick={removeSavedView}>{t(i18n, "library.savedViewDelete")}</button>
+                        <select class="b3-select glean-saved-views__smart" aria-label={t(i18n, "library.smartPresets")} value="" disabled={savedViews.length >= 20} onchange={(event) => { const key = (event.currentTarget as HTMLSelectElement).value; if (key) void createSmartPresetView(key); (event.currentTarget as HTMLSelectElement).value = ""; }}>
+                            <option value="" disabled selected>{t(i18n, "library.smartPresets")}</option>
+                            {#each SMART_VIEW_PRESETS as preset (preset.key)}
+                                <option value={preset.key}>+ {t(i18n, preset.nameKey)}</option>
+                            {/each}
+                        </select>
                     </div>
-                </details>
-                <span class="glean-sr-only" role="status" aria-live="polite">
-                    {keyboardEntry ? t(i18n, "library.keyboardCursor", { title: keyboardEntry.title || t(i18n, "panel.untitled") }) : ""}
-                </span>
+                </div>
             {/if}
-        </div>
-
-        {#if facade.isMobile}
+        {:else if facade.isMobile}
+            {#if navBucket === "list"}
+                <div class="glean-gm-mobile-subbar">
+                    <div class="glean-gm-seg" role="group" aria-label={t(i18n, "nav.readingList")}>
+                        <button type="button" class="glean-gm-seg-btn" class:is-active={!authorTimeline && listSubFilter === "active"} onclick={() => selectReadingListSub("active")}>{t(i18n, "library.bucketAllUnread")} ({readingListCount})</button>
+                        <button type="button" class="glean-gm-seg-btn" class:is-active={!authorTimeline && listSubFilter === "reading"} onclick={() => selectReadingListSub("reading")}>{t(i18n, "library.bucketReading")} ({queueStats.counts.reading})</button>
+                        <button type="button" class="glean-gm-seg-btn" class:is-active={!authorTimeline && listSubFilter === "later"} onclick={() => selectReadingListSub("later")}>{t(i18n, "library.bucketLater")} ({queueStats.counts.later})</button>
+                        <button type="button" class="glean-gm-seg-btn" class:is-active={!authorTimeline && listSubFilter === "done"} onclick={() => selectReadingListSub("done")}>{t(i18n, "library.bucketDone")} ({doneCount})</button>
+                    </div>
+                </div>
+            {/if}
             <div class="glean-mobile-filter-summary">
                 <button
                     type="button"
@@ -3776,7 +4115,18 @@ $effect(() => {
                 </button>
                 <span class="glean-mobile-filter-results" role="status" aria-live="polite">{t(i18n, "library.resultCount", { n: rows.length })}</span>
             </div>
-        {:else if !isTabCanvas}
+        {:else}
+            <!-- Dock 窄侧栏模式：补齐待读子状态切换条与简洁筛选折叠条 -->
+            {#if navBucket === "list"}
+                <div class="glean-gm-dock-subbar">
+                    <div class="glean-gm-seg" role="group" aria-label={t(i18n, "nav.readingList")}>
+                        <button type="button" class="glean-gm-seg-btn" class:is-active={!authorTimeline && listSubFilter === "active"} aria-pressed={!authorTimeline && listSubFilter === "active"} onclick={() => selectReadingListSub("active")}>{t(i18n, "library.bucketAllUnread")} ({readingListCount})</button>
+                        <button type="button" class="glean-gm-seg-btn" class:is-active={!authorTimeline && listSubFilter === "reading"} aria-pressed={!authorTimeline && listSubFilter === "reading"} onclick={() => selectReadingListSub("reading")}>{t(i18n, "library.bucketReading")} ({queueStats.counts.reading})</button>
+                        <button type="button" class="glean-gm-seg-btn" class:is-active={!authorTimeline && listSubFilter === "later"} aria-pressed={!authorTimeline && listSubFilter === "later"} onclick={() => selectReadingListSub("later")}>{t(i18n, "library.bucketLater")} ({queueStats.counts.later})</button>
+                        <button type="button" class="glean-gm-seg-btn" class:is-active={!authorTimeline && listSubFilter === "done"} aria-pressed={!authorTimeline && listSubFilter === "done"} onclick={() => selectReadingListSub("done")}>{t(i18n, "library.bucketDone")} ({doneCount})</button>
+                    </div>
+                </div>
+            {/if}
             <details class="glean-saved-views-fold glean-filters-fold" class:glean-filters-fold--active={hasFilters}>
                 <summary class="glean-saved-views-fold__summary">
                     <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSearch" /></svg>
@@ -3791,74 +4141,6 @@ $effect(() => {
             </details>
         {/if}
 
-        {#if !facade.isMobile && isTabCanvas}
-            <div class="glean-libbar">
-                {#if layoutMode === "list" && railCollapsed}
-                    <button
-                        type="button"
-                        class="glean-icon-btn glean-icon-btn--sm"
-                        title={t(i18n, "rail.expandRail")}
-                        aria-label={t(i18n, "rail.expandRail")}
-                        onclick={toggleRailCollapsed}
-                    >
-                        <svg aria-hidden="true"><use href="#iconGleanArrowRight" /></svg>
-                    </button>
-                {/if}
-                <div class="glean-seg">
-                    <button
-                        class="glean-seg__btn"
-                        class:glean-seg__btn--on={layoutMode === "list"}
-                        aria-pressed={layoutMode === "list"}
-                        onclick={() => { markPrefsInteraction(); layoutMode = "list"; }}
-                    ><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg> <span>{t(i18n, "view.modeList")}</span></button>
-                    <button
-                        class="glean-seg__btn"
-                        class:glean-seg__btn--on={layoutMode === "kanban"}
-                        aria-pressed={layoutMode === "kanban"}
-                        onclick={() => { markPrefsInteraction(); layoutMode = "kanban"; }}
-                    ><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg> <span>{t(i18n, "view.modeKanban")}</span></button>
-                </div>
-                <div class="glean-libbar__spacer"></div>
-                <button
-                    type="button"
-                    class="glean-btn glean-btn--ghost glean-libbar__fav-btn"
-                    class:glean-btn--active={selectedFavoriteOnly}
-                    aria-pressed={selectedFavoriteOnly}
-                    onclick={() => { markPrefsInteraction(); selectedFavoriteOnly = !selectedFavoriteOnly; }}
-                    title="{t(i18n, 'roaming.favoriteOnlyHint')} (Alt+F)"
-                >
-                    <svg class="glean-icon glean-icon--xs" class:glean-icon--fav={selectedFavoriteOnly} aria-hidden="true"><use href={selectedFavoriteOnly ? "#iconGleanHeart" : "#iconGleanHeartOutline"} /></svg> <span>{t(i18n, "roaming.favoriteOnly")}</span>
-                </button>
-                <button class="glean-btn glean-btn--ghost" aria-pressed={previewEnabled} onclick={togglePreview}>{t(i18n, "preview.enabled")}</button>
-                <LibraryFilters {i18n} {facets} {tagAliases} onManageTagAliases={openTagAliasManager} bind:site={selectedSite} bind:author={selectedAuthor} bind:tag={selectedTag} bind:aiTag={selectedAiTag} bind:source={selectedSource} bind:timeSource={selectedTimeSource} bind:contentType={selectedContentType} bind:readingTimeTier={selectedReadingTimeTier} bind:favoriteOnly={selectedFavoriteOnly} bind:sortBy bind:direction={sortDirection} {hasFilters} onClear={clearUserFilters} {sourceLabel} {facetLabel} />
-            </div>
-        {/if}
-
-        {#if view === "library" && !facade.isMobile}
-            <details class="glean-saved-views-fold" class:glean-saved-views-fold--has-active={Boolean(savedViewId)}>
-                <summary class="glean-saved-views-fold__summary">
-                    <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanBookmark" /></svg>
-                    <span>{savedViewId ? `${t(i18n, "library.savedViews")}: ${savedViews.find(v => v.id === savedViewId)?.name || ""}` : t(i18n, "library.savedViews")}</span>
-                </summary>
-                <div class="glean-saved-views" aria-label={t(i18n, "library.savedViews")}>
-                    <select class="b3-select" aria-label={t(i18n, "library.savedViews")} value={savedViewId} onchange={(event) => applySavedViewState((event.currentTarget as HTMLSelectElement).value)}>
-                        <option value="">{t(i18n, "library.savedViews")}</option>
-                        {#each savedViews as saved (saved.id)}<option value={saved.id}>{saved.name}</option>{/each}
-                    </select>
-                    <input class="b3-text-field" maxlength="40" value={savedViewName} placeholder={t(i18n, "library.savedViewName")} aria-label={t(i18n, "library.savedViewName")} oninput={(event) => (savedViewName = (event.currentTarget as HTMLInputElement).value)} onkeydown={(event) => { if (event.key === "Enter" && !event.isComposing) { event.preventDefault(); saveCurrentView(); } }} />
-                    <button class="glean-btn" disabled={!savedViewName.trim() || savedViews.length >= 20} onclick={saveCurrentView}>{t(i18n, "library.savedViewSave")}</button>
-                    <button class="glean-btn glean-btn--ghost" disabled={!savedViewId} onclick={makeDefaultSavedView}>{t(i18n, "library.savedViewDefault")}</button>
-                    <button class="glean-btn glean-btn--ghost" disabled={!savedViewId} onclick={removeSavedView}>{t(i18n, "library.savedViewDelete")}</button>
-                    <select class="b3-select glean-saved-views__smart" aria-label={t(i18n, "library.smartPresets")} value="" disabled={savedViews.length >= 20} onchange={(event) => { const key = (event.currentTarget as HTMLSelectElement).value; if (key) void createSmartPresetView(key); (event.currentTarget as HTMLSelectElement).value = ""; }}>
-                        <option value="" disabled selected>{t(i18n, "library.smartPresets")}</option>
-                        {#each SMART_VIEW_PRESETS as preset (preset.key)}
-                            <option value={preset.key}>+ {t(i18n, preset.nameKey)}</option>
-                        {/each}
-                    </select>
-                </div>
-            </details>
-        {/if}
-
         {#if !facade.isMobile && filterChips.length > 0}
             <div class="glean-filter-chips" aria-label={t(i18n, "library.filters")}>
                 {#each filterChips as chip (chip.key)}
@@ -3866,6 +4148,7 @@ $effect(() => {
                 {/each}
             </div>
         {/if}
+
         {#if facade.isMobile && mobileFilterOpen}
             <div class="glean-mobile-filter-layer">
                 <button
@@ -3981,90 +4264,109 @@ $effect(() => {
 
         {#snippet libraryContextBanners()}
             {#if authorTimeline && selectedAuthor}<p class="glean-author-timeline" role="status">{t(i18n, "author.timeline", { author: selectedAuthor })}</p>{/if}
-            {#if currentViewWechatWithoutAuthor.length > 0}
-                <div class="glean-quota glean-wechat-banner" role="status">
-                    <svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanSpark" /></svg>
-                    <span class="glean-banner__text">{t(i18n, "wechat.unrecognizedBanner", { n: currentViewWechatWithoutAuthor.length })}</span>
-                    <button
-                        type="button"
-                        class="glean-cap-btn glean-cap-btn--pri"
-                        disabled={wechatScanning}
-                        aria-busy={wechatScanning}
-                        onclick={() => void startBatchWechatScan()}
-                    >
-                        {wechatScanning ? wechatScanProgressText : t(i18n, "wechat.startAutoRecognize")}
-                    </button>
+            {#if kbdHelpOpen && !facade.isMobile && isTabCanvas}
+                <div class="glean-kbdhint" class:glean-kbdhint--active={Boolean(keyboardEntry)}>
+                    <span class="glean-kbdhint__keys" aria-hidden="true">
+                        <kbd>J</kbd><kbd>K</kbd> {t(i18n, "library.keyboardMove")}
+                        <kbd>Enter</kbd> {t(i18n, "library.keyboardView")}
+                        <kbd>O</kbd> {t(i18n, "library.keyboardSource")}
+                        <kbd>R</kbd> {t(i18n, "library.keyboardRead")}
+                        <kbd>A</kbd> {t(i18n, "library.keyboardLater")}
+                        <kbd>E</kbd> {t(i18n, "library.keyboardArchive")}
+                        <kbd>X</kbd> {t(i18n, "library.keyboardSelect")}
+                        <kbd>S</kbd> {t(i18n, "library.keyboardSelectDisplayed")}
+                        <kbd>F</kbd> {selection.size > 0 ? t(i18n, "library.keyboardKeepFiltered") : t(i18n, "roaming.favoriteAction")}
+                        <kbd>C</kbd> {selection.size > 0 ? t(i18n, "library.keyboardClearSelection") : t(i18n, "citation.copyGBT")}
+                        <kbd>Shift+C</kbd> BibTeX
+                        <kbd>P</kbd><kbd>1-5</kbd> {t(i18n, "library.keyboardPriority")}
+                        <kbd>M</kbd> {t(i18n, "library.keyboardRating")}
+                        <kbd>Y</kbd> {t(i18n, "action.copyBlockRef")}
+                        <kbd>B</kbd> {t(i18n, "roaming.button")}
+                        <kbd>/</kbd> {t(i18n, "action.search")}
+                        <kbd>Esc</kbd> {t(i18n, "library.keyboardExit")}
+                    </span>
                 </div>
             {/if}
-            {#if governanceCueCount > 1 && !governanceExpanded}
-                <div class="glean-governance-summary" role="status">
-                    <svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanSpark" /></svg>
-                    <span class="glean-banner__text">{t(i18n, "panel.governanceSummary", { n: governanceCueCount })}</span>
-                    <button type="button" class="glean-cap-btn" aria-expanded={governanceExpanded} onclick={() => (governanceExpanded = true)}>
-                        {t(i18n, "panel.governanceExpand")}
-                    </button>
-                </div>
-            {/if}
-            {#if governanceDetailsVisible}
-                {#if governanceCueCount > 1}
-                    <div class="glean-governance-collapse">
-                        <button type="button" class="glean-linkish" aria-expanded={governanceExpanded} onclick={() => (governanceExpanded = false)}>
-                            {t(i18n, "panel.governanceCollapse")}
+            {#if governanceToolsOpen}
+                {#if facade.settings.cloudInboxEnabled}
+                    <InboxSection {facade} onMutated={() => void reload()} />
+                {/if}
+                {#if currentViewWechatWithoutAuthor.length > 0}
+                    <div class="glean-quota glean-wechat-banner" role="status">
+                        <svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanSpark" /></svg>
+                        <span class="glean-banner__text">{t(i18n, "wechat.unrecognizedBanner", { n: currentViewWechatWithoutAuthor.length })}</span>
+                        <button
+                            type="button"
+                            class="glean-cap-btn glean-cap-btn--pri"
+                            disabled={wechatScanning}
+                            aria-busy={wechatScanning}
+                            onclick={() => void startBatchWechatScan()}
+                        >
+                            {wechatScanning ? wechatScanProgressText : t(i18n, "wechat.startAutoRecognize")}
                         </button>
                     </div>
                 {/if}
-                {#if overQuota && activeQueue === "inbox" && !authorTimeline && !governanceCueMuted("quota", governanceMuted)}
-                    <div class="glean-quota">
-                        <svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanInbox" /></svg>
-                        <span class="glean-banner__text">{t(i18n, "panel.quotaOver", { total: inboxTotal, quota: facade.settings.inboxQuota })}</span>
-                        <button class="glean-linkish" onclick={() => void muteGovernanceCue("quota")}>{t(i18n, "panel.governanceMuteToday")}</button>
-                    </div>
-                {/if}
-                {#if stalePool.length > 0 && (activeQueue === "inbox" || activeQueue === "later") && !governanceCueMuted("stale", governanceMuted)}
-                <div class="glean-quota">
-                    <svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanArchive" /></svg>
-                    <span class="glean-banner__text">{t(i18n, "panel.staleCandidates", { n: stalePool.length })}</span>
-                    <button class="glean-cap-btn" onclick={() => toggleStalePreview()}>
-                        {stalePreviewOpen ? t(i18n, "panel.staleHide") : t(i18n, "panel.archiveStale")}
-                    </button>
-                    <button class="glean-linkish" onclick={() => void muteGovernanceCue("stale")}>{t(i18n, "panel.governanceMuteToday")}</button>
-                </div>
-                {#if stalePreviewOpen}
-                    <div class="glean-stale-preview">
-                        <div class="glean-stale-preview__hint">{t(i18n, "panel.staleHint", { n: facade.settings.staleDays })}</div>
-                        {#each stalePool as entry (entry.id)}
-                            <label class="glean-stale-preview__row">
-                                <input
-                                    type="checkbox"
-                                    checked={staleSelected.has(entry.id)}
-                                    disabled={archivingStale}
-                                    onchange={() => toggleStalePick(entry.id)}
-                                />
-                                <span class="glean-stale-preview__title" title={entry.title}>{entry.title || t(i18n, "panel.untitled")}</span>
-                                <span class="glean-stale-preview__meta">{entry.site || sourceFallback(entry)} · {t(i18n, "panel.staleDays", { n: ageDays(entry.time) })}</span>
-                            </label>
-                        {/each}
-                        <div class="glean-stale-preview__ops">
-                            <button class="glean-cap-btn" disabled={archivingStale} onclick={() => { staleSelected = new Set(stalePool.map((entry) => entry.id)); }}>
-                                {t(i18n, "panel.staleSelectAll")}
+                {#if governanceDetailsVisible}
+                    {#if governanceCueCount > 1}
+                        <div class="glean-governance-collapse">
+                            <button type="button" class="glean-linkish" aria-expanded={governanceExpanded} onclick={() => (governanceExpanded = !governanceExpanded)}>
+                                {governanceExpanded ? t(i18n, "panel.governanceCollapse") : t(i18n, "panel.governanceExpand")}
                             </button>
-                            <button
-                                class="glean-cap-btn glean-cap-btn--pri"
-                                disabled={archivingStale || staleSelected.size === 0}
-                                aria-busy={archivingStale}
-                                onclick={() => void doArchiveStale()}
-                            >{archivingStale ? t(i18n, "panel.loading") : t(i18n, "panel.staleConfirm", { n: staleSelected.size })}</button>
                         </div>
-                    </div>
-                {/if}
-                {/if}
-                {#if candidateCount > 0 && !governanceCueMuted("candidates", governanceMuted)}
-                <div class="glean-candidates" role="status" aria-live="polite" aria-atomic="true">
-                    <svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanInbox" /></svg>
-                    <span class="glean-banner__text">{t(i18n, "panel.candidatesDetected", { n: candidateCount })}</span>
-                    <button class="glean-cap-btn" onclick={openCandidateQueue}>{t(i18n, "panel.viewCandidates")}</button>
-                    <button class="glean-linkish" onclick={() => void muteGovernanceCue("candidates")}>{t(i18n, "panel.governanceMuteToday")}</button>
-                </div>
+                    {/if}
+                    {#if overQuota && activeQueue === "inbox" && !authorTimeline && !governanceCueMuted("quota", governanceMuted)}
+                        <div class="glean-quota">
+                            <svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanInbox" /></svg>
+                            <span class="glean-banner__text">{t(i18n, "panel.quotaOver", { total: inboxTotal, quota: facade.settings.inboxQuota })}</span>
+                            <button class="glean-linkish" onclick={() => void muteGovernanceCue("quota")}>{t(i18n, "panel.governanceMuteToday")}</button>
+                        </div>
+                    {/if}
+                    {#if stalePool.length > 0 && (activeQueue === "inbox" || activeQueue === "later") && !governanceCueMuted("stale", governanceMuted)}
+                        <div class="glean-quota">
+                            <svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanArchive" /></svg>
+                            <span class="glean-banner__text">{t(i18n, "panel.staleCandidates", { n: stalePool.length })}</span>
+                            <button class="glean-cap-btn" onclick={() => toggleStalePreview()}>
+                                {stalePreviewOpen ? t(i18n, "panel.staleHide") : t(i18n, "panel.archiveStale")}
+                            </button>
+                            <button class="glean-linkish" onclick={() => void muteGovernanceCue("stale")}>{t(i18n, "panel.governanceMuteToday")}</button>
+                        </div>
+                        {#if stalePreviewOpen}
+                            <div class="glean-stale-preview">
+                                <div class="glean-stale-preview__hint">{t(i18n, "panel.staleHint", { n: facade.settings.staleDays })}</div>
+                                {#each stalePool as entry (entry.id)}
+                                    <label class="glean-stale-preview__row">
+                                        <input
+                                            type="checkbox"
+                                            checked={staleSelected.has(entry.id)}
+                                            disabled={archivingStale}
+                                            onchange={() => toggleStalePick(entry.id)}
+                                        />
+                                        <span class="glean-stale-preview__title" title={entry.title}>{entry.title || t(i18n, "panel.untitled")}</span>
+                                        <span class="glean-stale-preview__meta">{entry.site || sourceFallback(entry)} · {t(i18n, "panel.staleDays", { n: ageDays(entry.time) })}</span>
+                                    </label>
+                                {/each}
+                                <div class="glean-stale-preview__ops">
+                                    <button class="glean-cap-btn" disabled={archivingStale} onclick={() => { staleSelected = new Set(stalePool.map((entry) => entry.id)); }}>
+                                        {t(i18n, "panel.staleSelectAll")}
+                                    </button>
+                                    <button
+                                        class="glean-cap-btn glean-cap-btn--pri"
+                                        disabled={archivingStale || staleSelected.size === 0}
+                                        aria-busy={archivingStale}
+                                        onclick={() => void doArchiveStale()}
+                                    >{archivingStale ? t(i18n, "panel.loading") : t(i18n, "panel.staleConfirm", { n: staleSelected.size })}</button>
+                                </div>
+                            </div>
+                        {/if}
+                    {/if}
+                    {#if candidateCount > 0 && !governanceCueMuted("candidates", governanceMuted)}
+                        <div class="glean-candidates" role="status" aria-live="polite" aria-atomic="true">
+                            <svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanInbox" /></svg>
+                            <span class="glean-banner__text">{t(i18n, "panel.candidatesDetected", { n: candidateCount })}</span>
+                            <button class="glean-cap-btn" onclick={openCandidateQueue}>{t(i18n, "panel.viewCandidates")}</button>
+                            <button class="glean-linkish" onclick={() => void muteGovernanceCue("candidates")}>{t(i18n, "panel.governanceMuteToday")}</button>
+                        </div>
+                    {/if}
                 {/if}
             {/if}
         {/snippet}
@@ -4116,7 +4418,6 @@ $effect(() => {
                             </div>
                         {/if}
                         {#each col.items as entry (entry.id)}
-                            {@const snapHealth = calculateSnapshotHealth(entry)}
                             <div
                                 class="glean-kcard"
                                 class:glean-kcard--selected={selection.has(entry.id)}
@@ -4140,73 +4441,15 @@ $effect(() => {
                                 </label>
                                 <button type="button" class="glean-kcard__t" aria-label={articleActionLabel(entry.title)} title={`${entry.title || t(i18n, "panel.untitled")}（右键呼出原生菜单）`} onclick={() => openDoc(entry.id)} oncontextmenu={(e) => void openDocContextMenu(e, entry)}>{entry.title || t(i18n, "panel.untitled")}</button>
                                 <div class="glean-kcard__m">
-                                    <span class={carrierClass(entry)}>{carrierLabel(entry)}</span>
-                                    {#if bodyPending(entry)}
-                                        <span class="glean-body-pending" title={t(i18n, "clip.bodyPendingHint")}>{t(i18n, "clip.bodyPending")}</span>
-                                    {/if}
-                                    {#if entry.site || isWechatEntry(entry)}<button type="button" class="glean-meta-icon glean-meta-btn" class:glean-source-wechat={isWechatEntry(entry)} onclick={(event) => { event.stopPropagation(); handleSiteClick(entry); }} title={entry.site || siteDisplayLabel(entry)}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg>{siteDisplayLabel(entry)}</button>{/if}
-                                    {#if displayWechatAuthor(entry.author)}<button class="glean-source-author" onclick={(event) => { event.stopPropagation(); selectAuthor(entry.author!); }}>· {displayWechatAuthor(entry.author)}</button>{/if}
-                                    {#if isWechatEntry(entry) && !displayWechatAuthor(entry.author) && !wechatAttemptedIds.has(entry.id)}
-                                        <button
-                                            type="button"
-                                            class="glean-mini-tag glean-mini-tag--ai"
-                                            title={t(i18n, "wechat.recognizeSingle")}
-                                            onclick={async (e) => {
-                                                e.stopPropagation();
-                                                const res = await scanAndFillWechatAuthor(facade.pluginInstance, entry.id, { url: entry.url, site: entry.site });
-                                                markWechatAttempted([entry.id]);
-                                                if (res) {
-                                                    facade.notifyDataChanged();
-                                                    await reload();
-                                                    showMessage(t(i18n, "wechat.authorRecognized", { name: res }), 2500);
-                                                } else {
-                                                    showMessage(t(i18n, "wechat.authorNotFound"), 2500);
-                                                }
-                                            }}
-                                        >
-                                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg> <span>{t(i18n, "wechat.recognizeSingle")}</span>
-                                        </button>
-                                    {/if}
-                                    {#if entry.minutes > 0}<span class="glean-tier-badge glean-tier-badge--{resolveReadingTimeTier(entry.minutes)}">· {t(i18n, "panel.minutes", { n: entry.minutes })}</span>{/if}
-                                    {#if entry.priority && entry.priority > 0}
-                                        <span class="glean-tier-badge" title={t(i18n, "library.keyboardPriority")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanBolt" /></svg> <span>P{entry.priority}</span></span>
-                                    {/if}
-                                    {#if entry.rating && entry.rating > 0}
-                                        <span class="glean-tier-badge" title={t(i18n, "library.keyboardRating")}><svg class="glean-icon glean-icon--xs glean-icon--star" aria-hidden="true"><use href="#iconGleanStar" /></svg> <span>{entry.rating}★</span></span>
-                                    {/if}
-                                    {#if entry.favorite}
-                                        <span class="glean-tier-badge glean-tier-badge--fav" title={t(i18n, "roaming.favoriteOnly")}><svg class="glean-icon glean-icon--xs glean-icon--fav" aria-hidden="true"><use href="#iconGleanHeart" /></svg></span>
-                                    {/if}
-                                    {#if entry.readPoint && (entry.status === "reading" || entry.status === "later")}<span class="glean-read-point-badge" title={t(i18n, "reading.resumePoint")}><svg class="glean-icon glean-icon--xs glean-icon--bookmark" aria-hidden="true"><use href="#iconGleanBookmark" /></svg> <span>{t(i18n, "reading.resumePointShort")}</span></span>{/if}
-                                    <span class="glean-tier-badge glean-snap-badge glean-snap-badge--{snapHealth.grade}" title={t(i18n, "snapshotHealth.scoreBadgeTitle", { label: t(i18n, snapHealth.labelKey), desc: t(i18n, snapHealth.descKey), score: snapHealth.score })}><svg class="glean-icon glean-icon--xs" class:glean-icon--shield-ok={snapHealth.grade === "healthy"} aria-hidden="true"><use href={snapHealth.grade === "healthy" ? "#iconGleanShieldCheck" : "#iconGleanShield"} /></svg> <span>{snapHealth.score}</span></span>
-                                    {#if (entry.status === "inbox" || entry.status === "later") && staleText(entry.time) !== null}
-                                        <span class="glean-stale">{staleText(entry.time)}</span>
-                                    {/if}
-                                    {#if hasSourceAction(entry.contentType, entry.url)}
-                                        <button class="glean-op-btn" title={t(i18n, "clip.openSource")} aria-label={t(i18n, "clip.openSource")} onclick={(e) => { e.stopPropagation(); openSource(entry); }}><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanExternal" /></svg></button>
-                                    {:else if entry.contentType === "link"}
-                                        <span class="glean-source-missing">{t(i18n, "clip.sourceMissing")}</span>
-                                    {/if}
-                                    {#if (entry.tags && entry.tags.length > 0) || (entry.aiTags && entry.aiTags.length > 0)}
-                                        <div class="glean-card__tags-row">
-                                            {#each (entry.tags || []).slice(0, 2) as tg}
-                                                <button type="button" class="glean-mini-tag" onclick={(e) => { e.stopPropagation(); selectTag(tg); }}>#{tg}</button>
-                                            {/each}
-                                            {#each (entry.aiTags || []).slice(0, 1) as atg}
-                                                <button
-                                                    type="button"
-                                                    class="glean-mini-tag glean-mini-tag--ai"
-                                                    class:glean-mini-tag--series={isWechatSeriesTag(atg, isWechatUrl(entry.url) || isWechatUrl(entry.site))}
-                                                    onclick={(e) => { e.stopPropagation(); selectAiTag(atg); }}
-                                                >{isWechatSeriesTag(atg, isWechatUrl(entry.url) || isWechatUrl(entry.site)) ? "📚 " : "✨"}{atg}</button>
-                                            {/each}
-                                        </div>
-                                    {/if}
+                                    {#if entry.site || isWechatEntry(entry)}<span class="glean-meta-icon">{siteDisplayLabel(entry)}</span>{/if}
+                                    {#if entry.minutes > 0}<span>· {t(i18n, "panel.minutes", { n: entry.minutes })}</span>{/if}
                                 </div>
                                 <div class="glean-kcard__foot">
                                     <ClipStatusActions
                                         {i18n}
                                         status={entry.status || "inbox"}
+                                        contentType={entry.contentType}
+                                        url={entry.url}
                                         disabled={Boolean(statusActionId)}
                                         onStartReading={() => void startReading(entry)}
                                         onSetStatus={(status) => void setStatus(entry, status)}
@@ -4216,14 +4459,7 @@ $effect(() => {
                                     <div class="glean-kcard__more">
                                         <ActionPopover label={t(i18n, "library.moreActions")} compact>
                                             <button class="glean-btn glean-btn--ghost" onclick={() => selectPreview(entry.id)}>{t(i18n, "library.keyboardView")}</button>
-                                            {#if entry.status !== "inbox" && entry.status !== "archived"}
-                                                <button class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId)} onclick={() => void setStatus(entry, "inbox")}>{t(i18n, "status.inbox")}</button>
-                                            {/if}
-                                            <AuthorEditor {facade} docId={entry.id} onSaved={reload} />
-                                            <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryBlockRef(entry)}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg> <span>{t(i18n, "action.copyBlockRef")}</span></button>
-                                            <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "gbt")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg> <span>{t(i18n, "citation.copyGBT")}</span></button>
-                                            <button class="glean-btn glean-btn--ghost" disabled={snappingId === entry.id} onclick={() => void takeSnapshot(entry)} title={snapshotLabel(entry)} aria-label={snapshotLabel(entry)}>{snapshotLabel(entry)}</button>
-                                            <button class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId)} aria-pressed={isPinnedToday(entry)} onclick={() => void toggleSurfacePin(entry)}>{surfacePinLabel(entry)}</button>
+                                            <button class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId)} onclick={() => facade.openUnregisterDialog?.(entry.id)}>{t(i18n, "action.unregister")}</button>
                                         </ActionPopover>
                                     </div>
                                 </div>
@@ -4231,13 +4467,7 @@ $effect(() => {
                         {/each}
                         {#if col.totalCount !== undefined && col.items.length < col.totalCount}
                             <div class="glean-kcol__more">
-                                <button
-                                    type="button"
-                                    class="glean-btn glean-btn--ghost glean-btn--sm glean-kcol__more-btn"
-                                    onclick={() => loadMoreCol(col.status)}
-                                >
-                                    {t(i18n, "library.loadMore")}
-                                </button>
+                                <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm glean-kcol__more-btn" onclick={() => loadMoreCol(col.status)}>{t(i18n, "library.loadMore")}</button>
                             </div>
                         {/if}
                     </div>
@@ -4251,92 +4481,58 @@ $effect(() => {
             {/if}
         {:else if !facade.isMobile && isTabCanvas && layoutMode === "list"}
             <div
-                class="glean-lib"
-                class:glean-lib--preview={Boolean(previewEntry)}
-                style="--glean-rail-w: {railWidth}px; --glean-preview-rail-width: {railCollapsed ? 0 : railWidth}px;"
+                class="glean-lib glean-gm-lib-sheet"
+                class:glean-lib--preview={previewEnabled}
+                class:glean-lib--has-facet-rail={facetRailOpen}
+                style="--glean-rail-w: {railWidth}px; --glean-preview-rail-width: {facetRailOpen && !railCollapsed ? railWidth : 0}px;"
                 bind:this={previewSplit}
             >
-                <aside class="glean-rail" hidden={railCollapsed} aria-label={t(i18n, "view.library")}>
-                    <div class="glean-rail__toolbar" role="toolbar" aria-label={t(i18n, "rail.title")}>
-                        <span class="glean-rail__toolbar-title">{t(i18n, "rail.title")}</span>
-                        <div class="glean-rail__toolbar-actions">
-                            <button
-                                type="button"
-                                class="glean-icon-btn glean-icon-btn--sm"
-                                class:glean-icon-btn--active={railAccordion}
-                                aria-pressed={railAccordion}
-                                title={t(i18n, railAccordion ? "rail.accordionOn" : "rail.accordionOff")}
-                                aria-label={t(i18n, railAccordion ? "rail.accordionOn" : "rail.accordionOff")}
-                                onclick={toggleAccordion}
-                            >
-                                <svg aria-hidden="true"><use href="#iconGleanAccordion" /></svg>
-                            </button>
-                            <button
-                                type="button"
-                                class="glean-icon-btn glean-icon-btn--sm"
-                                title={t(i18n, "rail.collapseAll")}
-                                aria-label={t(i18n, "rail.collapseAll")}
-                                onclick={collapseAllGroups}
-                            >
-                                <svg aria-hidden="true"><use href="#iconGleanCollapseAll" /></svg>
-                            </button>
-                            <button
-                                type="button"
-                                class="glean-icon-btn glean-icon-btn--sm"
-                                title={t(i18n, "rail.expandAll")}
-                                aria-label={t(i18n, "rail.expandAll")}
-                                onclick={expandAllGroups}
-                            >
-                                <svg aria-hidden="true"><use href="#iconGleanExpandAll" /></svg>
-                            </button>
-                            <button
-                                type="button"
-                                class="glean-icon-btn glean-icon-btn--sm"
-                                title={t(i18n, "rail.collapseRail")}
-                                aria-label={t(i18n, "rail.collapseRail")}
-                                onclick={toggleRailCollapsed}
-                            >
-                                <svg aria-hidden="true"><use href="#iconGleanArrowLeft" /></svg>
-                            </button>
+                {#if facetRailOpen}
+                    <aside class="glean-rail" hidden={railCollapsed} aria-label={t(i18n, "rail.title")}>
+                        <div class="glean-rail__toolbar" role="toolbar" aria-label={t(i18n, "rail.title")}>
+                            <span class="glean-rail__toolbar-title">{t(i18n, "rail.title")}</span>
+                            <div class="glean-rail__toolbar-actions">
+                                <button type="button" class="glean-icon-btn glean-icon-btn--sm" class:glean-icon-btn--active={railAccordion} aria-pressed={railAccordion} title={t(i18n, railAccordion ? "rail.accordionOn" : "rail.accordionOff")} aria-label={t(i18n, railAccordion ? "rail.accordionOn" : "rail.accordionOff")} onclick={toggleAccordion}><svg aria-hidden="true"><use href="#iconGleanAccordion" /></svg></button>
+                                <button type="button" class="glean-icon-btn glean-icon-btn--sm" title={t(i18n, "rail.collapseAll")} aria-label={t(i18n, "rail.collapseAll")} onclick={collapseAllGroups}><svg aria-hidden="true"><use href="#iconGleanCollapseAll" /></svg></button>
+                                <button type="button" class="glean-icon-btn glean-icon-btn--sm" title={t(i18n, "rail.expandAll")} aria-label={t(i18n, "rail.expandAll")} onclick={expandAllGroups}><svg aria-hidden="true"><use href="#iconGleanExpandAll" /></svg></button>
+                                <button type="button" class="glean-icon-btn glean-icon-btn--sm" title={t(i18n, "rail.collapseRail")} aria-label={t(i18n, "rail.collapseRail")} onclick={() => { facetRailOpen = false; }}><svg aria-hidden="true"><use href="#iconGleanArrowLeft" /></svg></button>
+                            </div>
                         </div>
-                    </div>
-                    <LibraryRailGroup plugin={facade.pluginInstance} {i18n} group="queues" label={t(i18n, "rail.queues")} items={queues.map((queue) => ({ value: queue, count: queueCount(queue) }))} selected={authorTimeline ? "" : activeQueue} itemLabel={(value) => queueLabel(value as ClipStatus)} dotClass={(value) => statusDotClass(value as ClipStatus)} onSelect={(value) => selectQueue(value as ClipStatus)} groupPrefs={railGroups.queues} onToggleGroup={handleToggleRailGroup} />
-                    {#if railStats.authors.length > 0 || selectedAuthor}
-                        <LibraryRailGroup plugin={facade.pluginInstance} {i18n} group="authors" label={t(i18n, "rail.authors")} items={railStats.authors} selected={selectedAuthor} dotClass={authorDotClass} onSelect={selectAuthor} groupPrefs={railGroups.authors} onToggleGroup={handleToggleRailGroup} onContextMenu={(e, item) => handleRailItemContextMenu(e, "authors", item.value)} />
+                        <LibraryRailGroup plugin={facade.pluginInstance} {i18n} group="queues" label={t(i18n, "rail.queues")} items={queues.map((queue) => ({ value: queue, count: queueCount(queue) }))} selected={authorTimeline ? "" : activeQueue} itemLabel={(value) => queueLabel(value as ClipStatus)} dotClass={(value) => statusDotClass(value as ClipStatus)} onSelect={(value) => selectQueue(value as ClipStatus)} groupPrefs={railGroups.queues} onToggleGroup={handleToggleRailGroup} />
+                        {#if railStats.authors.length > 0 || selectedAuthor}
+                            <LibraryRailGroup plugin={facade.pluginInstance} {i18n} group="authors" label={t(i18n, "rail.authors")} items={railStats.authors} selected={selectedAuthor} dotClass={authorDotClass} onSelect={selectAuthor} groupPrefs={railGroups.authors} onToggleGroup={handleToggleRailGroup} onContextMenu={(e, item) => handleRailItemContextMenu(e, "authors", item.value)} />
+                        {/if}
+                        {#if railStats.sites.length > 0 || selectedSite}
+                            <LibraryRailGroup plugin={facade.pluginInstance} {i18n} group="sites" label={t(i18n, "rail.sites")} items={railStats.sites} selected={selectedSite} itemLabel={siteItemLabel} onSelect={(value) => { markPrefsInteraction(); selectedSite = selectedSite.toLocaleLowerCase() === value.toLocaleLowerCase() ? "" : value; }} groupPrefs={railGroups.sites} onToggleGroup={handleToggleRailGroup} onContextMenu={(e, item) => handleRailItemContextMenu(e, "sites", item.value)} />
+                        {/if}
+                        {#if railStats.tags.length > 0 || selectedTag}
+                            <LibraryRailGroup plugin={facade.pluginInstance} {i18n} group="tags" label={t(i18n, "rail.tags")} prefix="#" items={railStats.tags} selected={selectedTag} itemLabel={aliasForTag} onSelect={(value) => { markPrefsInteraction(); selectedTag = selectedTag.toLocaleLowerCase() === value.toLocaleLowerCase() ? "" : value; }} groupPrefs={railGroups.tags} onToggleGroup={handleToggleRailGroup} onContextMenu={(e, item) => handleRailItemContextMenu(e, "tags", item.value)} />
+                        {/if}
+                        {#if railStats.aiTags.length > 0 || selectedAiTag}
+                            <LibraryRailGroup plugin={facade.pluginInstance} {i18n} group="aiTags" label={`✨ ${t(i18n, "rail.aiTags")}`} hint={t(i18n, "library.filterAiTagHint")} prefix="✨" items={railStats.aiTags} selected={selectedAiTag} onSelect={(value) => { markPrefsInteraction(); selectedAiTag = selectedAiTag.toLocaleLowerCase() === value.toLocaleLowerCase() ? "" : value; }} groupPrefs={railGroups.aiTags} onToggleGroup={handleToggleRailGroup} onContextMenu={(e, item) => handleRailItemContextMenu(e, "aiTags", item.value)} />
+                        {/if}
+                    </aside>
+                    {#if !railCollapsed}
+                        <input
+                            type="range"
+                            class="glean-rail-separator"
+                            min={MIN_RAIL_WIDTH}
+                            max={MAX_RAIL_WIDTH}
+                            step="1"
+                            value={railWidth}
+                            aria-label={t(i18n, "rail.resizeHandle")}
+                            oninput={(event) => { railWidth = clampRailWidth(Number(event.currentTarget.value)); void saveUiPrefs(facade.pluginInstance, { railWidth }); }}
+                            ondblclick={resetRailWidth}
+                            onpointerdown={startRailResize}
+                            onpointermove={resizeRail}
+                            onpointerup={(e) => finishRailResize(e)}
+                            onpointercancel={(e) => finishRailResize(e, true)}
+                            onlostpointercapture={(e) => finishRailResize(e)}
+                            onkeydown={railResizeKey}
+                        />
                     {/if}
-                    {#if railStats.sites.length > 0 || selectedSite}
-                        <LibraryRailGroup plugin={facade.pluginInstance} {i18n} group="sites" label={t(i18n, "rail.sites")} items={railStats.sites} selected={selectedSite} itemLabel={siteItemLabel} onSelect={(value) => { markPrefsInteraction(); selectedSite = selectedSite.toLocaleLowerCase() === value.toLocaleLowerCase() ? "" : value; }} groupPrefs={railGroups.sites} onToggleGroup={handleToggleRailGroup} onContextMenu={(e, item) => handleRailItemContextMenu(e, "sites", item.value)} />
-                    {/if}
-                    {#if railStats.tags.length > 0 || selectedTag}
-                        <LibraryRailGroup plugin={facade.pluginInstance} {i18n} group="tags" label={t(i18n, "rail.tags")} prefix="#" items={railStats.tags} selected={selectedTag} itemLabel={aliasForTag} onSelect={(value) => { markPrefsInteraction(); selectedTag = selectedTag.toLocaleLowerCase() === value.toLocaleLowerCase() ? "" : value; }} groupPrefs={railGroups.tags} onToggleGroup={handleToggleRailGroup} onContextMenu={(e, item) => handleRailItemContextMenu(e, "tags", item.value)} />
-                    {/if}
-                    {#if railStats.aiTags.length > 0 || selectedAiTag}
-                        <LibraryRailGroup plugin={facade.pluginInstance} {i18n} group="aiTags" label={`✨ ${t(i18n, "rail.aiTags")}`} hint={t(i18n, "library.filterAiTagHint")} prefix="✨" items={railStats.aiTags} selected={selectedAiTag} onSelect={(value) => { markPrefsInteraction(); selectedAiTag = selectedAiTag.toLocaleLowerCase() === value.toLocaleLowerCase() ? "" : value; }} groupPrefs={railGroups.aiTags} onToggleGroup={handleToggleRailGroup} onContextMenu={(e, item) => handleRailItemContextMenu(e, "aiTags", item.value)} />
-                    {/if}
-                </aside>
-                {#if !railCollapsed}
-                    <input
-                        type="range"
-                        class="glean-rail-separator"
-                        min={MIN_RAIL_WIDTH}
-                        max={MAX_RAIL_WIDTH}
-                        step="1"
-                        value={railWidth}
-                        aria-label={t(i18n, "rail.resizeHandle")}
-                        oninput={(event) => {
-                            railWidth = clampRailWidth(Number(event.currentTarget.value));
-                            void saveUiPrefs(facade.pluginInstance, { railWidth });
-                        }}
-                        ondblclick={resetRailWidth}
-                        onpointerdown={startRailResize}
-                        onpointermove={resizeRail}
-                        onpointerup={(e) => finishRailResize(e)}
-                        onpointercancel={(e) => finishRailResize(e, true)}
-                        onlostpointercapture={(e) => finishRailResize(e)}
-                        onkeydown={railResizeKey}
-                    />
                 {/if}
-                <div class="glean-lib__main">
+                <div class="glean-lib__main glean-gm-list-pane">
                     {#if rows.length === 0}
                         <div class="glean-empty" role="status">
                             <div class="glean-empty__art">
@@ -4354,12 +4550,8 @@ $effect(() => {
                             </div>
                             {#if facade.settings.anchorNotebooks.length === 0}
                                 <div class="glean-empty__actions">
-                                <button class="glean-btn glean-btn--pri" onclick={() => facade.openOnboarding()}>
-                                    {t(i18n, "panel.openOnboarding")}
-                                </button>
-                                <button class="glean-btn glean-btn--ghost" onclick={() => facade.openSettings()}>
-                                    {t(i18n, "panel.setupAnchor")}
-                                </button>
+                                    <button class="glean-btn glean-btn--pri" onclick={() => facade.openOnboarding()}>{t(i18n, "panel.openOnboarding")}</button>
+                                    <button class="glean-btn glean-btn--ghost" onclick={() => facade.openSettings()}>{t(i18n, "panel.setupAnchor")}</button>
                                 </div>
                             {:else if !hasFilters && totalClips === 0}
                                 <div class="glean-empty__quick-cards" role="region" aria-label={t(i18n, "library.quickStart")}>
@@ -4386,158 +4578,131 @@ $effect(() => {
                                     </button>
                                 </div>
                                 <div class="glean-empty__actions">
-                                    <button class="glean-btn glean-btn--pri" onclick={() => facade.openOnboarding()}>
-                                        {t(i18n, "panel.openOnboarding")}
-                                    </button>
+                                    <button class="glean-btn glean-btn--pri" onclick={() => facade.openOnboarding()}>{t(i18n, "panel.openOnboarding")}</button>
                                 </div>
                             {:else if hasFilters}
-                                <button class="glean-btn glean-btn--ghost glean-empty__clear-btn" onclick={clearUserFilters}>
-                                    {t(i18n, "library.clearFilters")}
-                                </button>
+                                <button class="glean-btn glean-btn--ghost glean-empty__clear-btn" onclick={clearUserFilters}>{t(i18n, "library.clearFilters")}</button>
                             {/if}
                         </div>
                     {:else}
-                        <div class="glean-dtable">
+                        <div class="glean-dtable glean-gm-dtable">
                             {#each visibleRows as entry (entry.id)}
                                 {#if entry.kind === "clip"}
                                     {@const badge = matchBadge(entry)}
-                                    {@const snapHealth = calculateSnapshotHealth(entry)}
+                                    {@const pct = entryProgressPct(entry)}
+                                    {@const dateStr = entryDateLabel(entry)}
                                     <div
-                                        class="glean-drow"
+                                        class="glean-drow glean-gm-row"
                                         data-glean-clip-id={entry.id}
                                         class:glean-drow--selected={selection.has(entry.id)}
                                         class:glean-drow--preview={previewId === entry.id}
+                                        class:is-selected={previewId === entry.id}
                                         class:glean-drow--cursor={keyboardCursorId === entry.id}
                                         aria-current={keyboardCursorId === entry.id ? "true" : undefined}
                                     >
-                                        <label class="glean-drow__select" title={t(i18n, "library.selectArticle")}>
-                                            <input type="checkbox" checked={selection.has(entry.id)} aria-label={t(i18n, "library.selectArticle")} onclick={(event) => event.stopPropagation()} onchange={(event) => toggleSelect(entry.id, event)} />
-                                        </label>
-                                        <span class={statusDotClass(entry.status)}></span>
+                                        {#if batchMode || selection.size > 0}
+                                            <label class="glean-drow__select" title={t(i18n, "library.selectArticle")}>
+                                                <input type="checkbox" checked={selection.has(entry.id)} aria-label={t(i18n, "library.selectArticle")} onclick={(event) => event.stopPropagation()} onchange={(event) => toggleSelect(entry.id, event)} />
+                                            </label>
+                                        {/if}
                                         <div class="glean-drow__body">
                                             <button type="button" class="glean-drow__ti" aria-label={articleActionLabel(entry.title, true)} title={`${entry.title || t(i18n, "panel.untitled")}（右键呼出原生菜单）`} onclick={() => selectPreview(entry.id)} oncontextmenu={(e) => void openDocContextMenu(e, entry)}>{entry.title || t(i18n, "panel.untitled")}</button>
-                                            <div class="glean-drow__meta">
+                                            <div class="glean-drow__meta glean-gm-row-sub">
                                                 {#if badge}
                                                     <span class="glean-badge glean-badge--match" title={badge}>{badge}</span>
                                                 {/if}
-                                                <span class="glean-drow__site" class:glean-source-wechat={isWechatEntry(entry)} title={entry.site || sourceFallback(entry)}><button type="button" class="glean-source-site" onclick={(event) => { event.stopPropagation(); handleSiteClick(entry); }}>{siteDisplayLabel(entry)}</button>{#if displayWechatAuthor(entry.author)}<button class="glean-source-author" onclick={(event) => { event.stopPropagation(); selectAuthor(entry.author!); }}>· {displayWechatAuthor(entry.author)}</button>{/if}</span>
-                                                {#if isWechatEntry(entry) && !displayWechatAuthor(entry.author) && !wechatAttemptedIds.has(entry.id)}
-                                                    <button
-                                                        type="button"
-                                                        class="glean-mini-tag glean-mini-tag--ai"
-                                                        title={t(i18n, "wechat.recognizeSingle")}
-                                                        onclick={async (e) => {
-                                                            e.stopPropagation();
-                                                            const res = await scanAndFillWechatAuthor(facade.pluginInstance, entry.id, { url: entry.url, site: entry.site });
-                                                            markWechatAttempted([entry.id]);
-                                                            if (res) {
-                                                                facade.notifyDataChanged();
-                                                                await reload();
-                                                                showMessage(t(i18n, "wechat.authorRecognized", { name: res }), 2500);
-                                                            } else {
-                                                                showMessage(t(i18n, "wechat.authorNotFound"), 2500);
-                                                            }
-                                                        }}
-                                                    >
-                                                        <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg> <span>{t(i18n, "wechat.recognizeSingle")}</span>
-                                                    </button>
-                                                {/if}
-                                                <span class={carrierClass(entry)} title={entry.contentType === "link" && !hasSourceAction(entry.contentType, entry.url) ? t(i18n, "clip.sourceMissing") : carrierLabel(entry)}>{carrierLabel(entry)}</span>
-                                                {#if entry.contentType === "link" && !hasSourceAction(entry.contentType, entry.url)}
-                                                    <span class="glean-source-missing">{t(i18n, "clip.sourceMissing")}</span>
-                                                {/if}
-                                                {#if bodyPending(entry)}
-                                                    <span class="glean-body-pending" title={t(i18n, "clip.bodyPendingHint")}>{t(i18n, "clip.bodyPending")}</span>
-                                                {/if}
-                                                <span class="glean-drow__len glean-drow__len--{resolveReadingTimeTier(entry.minutes)}" title={timeSource(entry)}>{lengthLabel(entry)}</span>
-                                                {#if entry.priority && entry.priority > 0}
-                                                    <span class="glean-tier-badge" title={t(i18n, "library.keyboardPriority")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanBolt" /></svg> <span>P{entry.priority}</span></span>
-                                                {/if}
-                                                {#if entry.rating && entry.rating > 0}
-                                                    <span class="glean-tier-badge" title={t(i18n, "library.keyboardRating")}><svg class="glean-icon glean-icon--xs glean-icon--star" aria-hidden="true"><use href="#iconGleanStar" /></svg> <span>{entry.rating}★</span></span>
-                                                {/if}
-                                                {#if entry.favorite}
-                                                    <span class="glean-tier-badge glean-tier-badge--fav" title={t(i18n, "roaming.favoriteOnly")}><svg class="glean-icon glean-icon--xs glean-icon--fav" aria-hidden="true"><use href="#iconGleanHeart" /></svg></span>
-                                                {/if}
-                                                {#if entry.readPoint && (entry.status === "reading" || entry.status === "later")}<span class="glean-read-point-badge" title={t(i18n, "reading.resumePoint")}><svg class="glean-icon glean-icon--xs glean-icon--bookmark" aria-hidden="true"><use href="#iconGleanBookmark" /></svg> <span>{t(i18n, "reading.resumePointShort")}</span></span>{/if}
-                                                <span class="glean-tier-badge glean-snap-badge glean-snap-badge--{snapHealth.grade}" title={t(i18n, "snapshotHealth.scoreBadgeTitle", { label: t(i18n, snapHealth.labelKey), desc: t(i18n, snapHealth.descKey), score: snapHealth.score })}><svg class="glean-icon glean-icon--xs" class:glean-icon--shield-ok={snapHealth.grade === "healthy"} aria-hidden="true"><use href={snapHealth.grade === "healthy" ? "#iconGleanShieldCheck" : "#iconGleanShield"} /></svg> <span>{snapHealth.score}</span></span>
-                                                <span class="glean-drow__st">
-                                                    <span class="glean-st-badge glean-st-badge--{entry.status}">{queueLabel(entry.status)}</span>
+                                                <span class="glean-drow__site" title={entry.site || sourceFallback(entry)}>
+                                                    <button type="button" class="glean-source-site" onclick={(event) => { event.stopPropagation(); handleSiteClick(entry); }}>{siteDisplayLabel(entry)}</button>{#if displayWechatAuthor(entry.author)}<button class="glean-source-author" onclick={(event) => { event.stopPropagation(); selectAuthor(entry.author!); }}>· {displayWechatAuthor(entry.author)}</button>{/if}
                                                 </span>
-                                                {#if (entry.tags && entry.tags.length > 0) || (entry.aiTags && entry.aiTags.length > 0)}
-                                                    <span class="glean-card__tags-row">
-                                                        {#each (entry.tags || []).slice(0, 2) as tg}
-                                                            <button type="button" class="glean-mini-tag" onclick={(event) => { event.stopPropagation(); selectTag(tg); }}>#{tg}</button>
-                                                        {/each}
-                                                        {#each (entry.aiTags || []).slice(0, 1) as atg}
-                                                            <button
-                                                                type="button"
-                                                                class="glean-mini-tag glean-mini-tag--ai"
-                                                                class:glean-mini-tag--series={isWechatSeriesTag(atg, isWechatUrl(entry.url) || isWechatUrl(entry.site))}
-                                                                onclick={(event) => { event.stopPropagation(); selectAiTag(atg); }}
-                                                            >{isWechatSeriesTag(atg, isWechatUrl(entry.url) || isWechatUrl(entry.site)) ? "📚 " : "✨"}{atg}</button>
-                                                        {/each}
-                                                    </span>
+                                                {#if entry.minutes > 0}
+                                                    <span>· {t(i18n, "panel.minutes", { n: entry.minutes })}</span>
                                                 {/if}
+                                                {#if pct > 0 && entry.status !== "archived"}
+                                                    <span class="glean-gm-mini-progress" title={`${pct}%`}>
+                                                        <span class="glean-gm-mini-track"><span class="glean-gm-mini-fill" style="width:{pct}%;"></span></span>
+                                                        <span>{pct}%</span>
+                                                    </span>
+                                                {:else if entry.status === "inbox"}
+                                                    <span class="glean-gm-pill glean-gm-pill--accent">{t(i18n, "status.inbox")}</span>
+                                                {:else if entry.status === "done"}
+                                                    <span class="glean-gm-pill glean-gm-pill--fresh">{t(i18n, "status.done")}</span>
+                                                {/if}
+                                                {#if dateStr}<span>· {dateStr}</span>{/if}
                                             </div>
                                         </div>
                                         <div class="glean-drow__ops">
-                                            {#if entry.status === "archived"}
-                                                <button class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId)} onclick={(event) => { event.stopPropagation(); facade.openRestoreDialog(entry.id); }}>{t(i18n, "action.restore")}</button>
+                                            {#if navBucket === "triage"}
+                                                <button type="button" class="glean-btn glean-gm-btn glean-gm-btn--primary" disabled={Boolean(statusActionId)} onclick={(event) => { event.stopPropagation(); void setStatus(entry, "later"); }}>{t(i18n, "library.moveToReadingList")}</button>
+                                                <button type="button" class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId)} onclick={(event) => { event.stopPropagation(); facade.openUnregisterDialog?.(entry.id); }}>{t(i18n, "action.unregister")}</button>
+                                            {:else if entry.status === "archived"}
+                                                <button type="button" class="glean-btn glean-gm-btn" disabled={Boolean(statusActionId)} onclick={(event) => { event.stopPropagation(); void startReading(entry); }}>{t(i18n, "action.readAgain")}</button>
+                                                <button type="button" class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId)} onclick={(event) => { event.stopPropagation(); facade.openRestoreDialog(entry.id); }}>{t(i18n, "library.restoreToReadingList")}</button>
                                             {:else}
-                                                <button class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId)} onclick={(event) => { event.stopPropagation(); void startReading(entry); }}>{t(i18n, entry.status === "reading" ? "action.continueReading" : entry.status === "done" ? "action.readAgain" : "action.startReading")}</button>
-                                                <button class="glean-btn glean-btn--ghost glean-drow__done-btn" disabled={Boolean(statusActionId) || entry.status === "done"} onclick={(event) => { event.stopPropagation(); void setStatus(entry, "done"); }}>{t(i18n, "action.markDone")}</button>
+                                                <button type="button" class="glean-btn glean-gm-btn glean-gm-btn--primary" disabled={Boolean(statusActionId)} onclick={(event) => { event.stopPropagation(); void startReading(entry); }}>{primaryActionLabel(entry)}</button>
+                                                <button type="button" class="glean-btn glean-btn--ghost glean-drow__done-btn" disabled={Boolean(statusActionId) || entry.status === "done"} title={t(i18n, "action.markDoneHint")} onclick={(event) => { event.stopPropagation(); void setStatus(entry, "done"); }}>{t(i18n, "action.markDone")}</button>
                                             {/if}
                                             <ActionPopover label={t(i18n, "library.moreActions")} compact>
+                                                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => openDoc(entry.id)}>{t(i18n, "library.enterReader")}</button>
+                                                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => { selectPreview(entry.id); fullPreviewMode = true; }}>{t(i18n, "library.previewProtyleToggle")}</button>
+                                                {#if hasSourceAction(entry.contentType, entry.url)}
+                                                    <button type="button" class="glean-btn glean-btn--ghost" onclick={() => openSource(entry)}>{t(i18n, "clip.openSource")}</button>
+                                                {/if}
+                                                <div class="glean-gm-popover-sep"></div>
+                                                {#if entry.status !== "archived"}
+                                                    <button type="button" class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId) || entry.status === "later"} onclick={() => void setStatus(entry, "later")}>{t(i18n, "action.moveToLater")}</button>
+                                                    <button type="button" class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId)} onclick={() => facade.openArchiveDialog(entry.id)}>{t(i18n, "action.archive")}</button>
+                                                {/if}
+                                                <button type="button" class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId)} onclick={() => facade.openUnregisterDialog?.(entry.id)}>{t(i18n, "action.unregister")}</button>
+                                                <div class="glean-gm-popover-sep"></div>
                                                 <AuthorEditor {facade} docId={entry.id} onSaved={reload} />
-                                                <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryBlockRef(entry)}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg> <span>{t(i18n, "action.copyBlockRef")}</span></button>
-                                                <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "gbt")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg> <span>{t(i18n, "citation.copyGBT")}</span></button>
+                                                {#if isWechatEntry(entry) && !displayWechatAuthor(entry.author)}
+                                                    <button type="button" class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId)} onclick={() => void recognizeSingleWechatAuthor(entry)}>{t(i18n, "wechat.recognizeSingle")}</button>
+                                                {/if}
+                                                <button type="button" class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId)} onclick={() => void setPriority(entry, cyclePriorityValue(entry.priority))}>{t(i18n, "action.priority")}: {entry.priority ? `P${entry.priority}` : "-"}</button>
+                                                <button type="button" class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId)} onclick={() => void setRating(entry, cycleRatingValue(entry.rating))}>{t(i18n, "action.rating")}: {entry.rating ? `${entry.rating}★` : "-"}</button>
+                                                <button type="button" class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId)} onclick={() => void toggleEntryFavorite(entry)}>{entry.favorite ? t(i18n, "roaming.favoriteRemoved") : t(i18n, "roaming.favoriteAction")}</button>
+                                                <button type="button" class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId)} aria-pressed={isPinnedToday(entry)} onclick={() => void toggleSurfacePin(entry)}>{surfacePinLabel(entry)}</button>
+                                                <button type="button" class="glean-btn glean-btn--ghost" disabled={snappingId === entry.id} onclick={() => void takeSnapshot(entry)} title={snapshotLabel(entry)} aria-label={snapshotLabel(entry)}>{snapshotLabel(entry)}</button>
+                                                <button type="button" class="glean-btn glean-btn--ghost" disabled={Boolean(exportingMarkdownId)} aria-busy={exportingMarkdownId === entry.id} onclick={() => void exportMarkdown(entry)}>{t(i18n, "export.markdown")}</button>
+                                                <button type="button" class="glean-btn glean-btn--ghost" disabled={enrichingId === entry.id} onclick={() => void enrich(entry)}>{t(i18n, "ai.actionEnrich")}</button>
+                                                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyEntryBlockRef(entry)}>{t(i18n, "action.copyBlockRef")}</button>
+                                                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "gbt")}>{t(i18n, "citation.copyGBT")}</button>
                                                 <details class="glean-citation-more" data-keep-popover-open>
                                                     <summary class="glean-btn glean-btn--ghost" data-keep-popover-open>BibTeX / APA / MLA</summary>
                                                     <div class="glean-citation-more__list">
-                                                        <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "bibtex")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArchive" /></svg> <span>{t(i18n, "citation.copyBibTeX")}</span></button>
-                                                        <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "apa")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanLocal" /></svg> <span>{t(i18n, "citation.copyAPA")}</span></button>
-                                                        <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "mla")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg> <span>{t(i18n, "citation.copyMLA")}</span></button>
+                                                        <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "bibtex")}>{t(i18n, "citation.copyBibTeX")}</button>
+                                                        <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "apa")}>{t(i18n, "citation.copyAPA")}</button>
+                                                        <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "mla")}>{t(i18n, "citation.copyMLA")}</button>
                                                     </div>
                                                 </details>
-                                                {#if entry.status !== "archived"}
-                                                    <button class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId) || entry.status === "later"} onclick={() => void setStatus(entry, "later")}>{t(i18n, "action.moveToLater")}</button>
-                                                    <button class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId)} onclick={() => facade.openArchiveDialog(entry.id)}>{t(i18n, "action.archive")}</button>
-                                                {/if}
-                                                <button class="glean-btn glean-btn--ghost" disabled={snappingId === entry.id} onclick={() => void takeSnapshot(entry)} title={snapshotLabel(entry)} aria-label={snapshotLabel(entry)}>{snapshotLabel(entry)}</button>
-                                                <button class="glean-btn glean-btn--ghost" disabled={Boolean(exportingMarkdownId)} aria-busy={exportingMarkdownId === entry.id} onclick={() => void exportMarkdown(entry)}>{t(i18n, "export.markdown")}</button>
-                                                <button class="glean-btn glean-btn--ghost" disabled={enrichingId === entry.id} onclick={() => void enrich(entry)}>{t(i18n, "ai.actionEnrich")}</button>
-                                                <button class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId)} aria-pressed={isPinnedToday(entry)} onclick={() => void toggleSurfacePin(entry)}>{surfacePinLabel(entry)}</button>
-                                                {#if hasSourceAction(entry.contentType, entry.url)}
-                                                    <button class="glean-btn glean-btn--ghost" onclick={() => openSource(entry)}>{t(i18n, "clip.openSource")}</button>
-                                                {/if}
                                             </ActionPopover>
                                         </div>
                                     </div>
                                 {:else}
                                     <div
-                                        class="glean-drow glean-drow--candidate"
+                                        class="glean-drow glean-gm-row glean-drow--candidate"
                                         data-glean-clip-id={entry.id}
                                         class:glean-drow--preview={previewId === entry.id}
+                                        class:is-selected={previewId === entry.id}
                                         class:glean-drow--cursor={keyboardCursorId === entry.id}
                                         aria-current={keyboardCursorId === entry.id ? "true" : undefined}
                                     >
-                                        <span class="glean-dot glean-dot--inbox"></span>
                                         <div class="glean-drow__body">
                                             <button type="button" class="glean-drow__ti" aria-label={articleActionLabel(entry.title, true)} title={`${entry.title || t(i18n, "panel.untitled")}（右键呼出原生菜单）`} onclick={() => selectPreview(entry.id)} oncontextmenu={(e) => void openDocContextMenu(e, entry)}>{entry.title || t(i18n, "panel.untitled")}</button>
-                                            <div class="glean-drow__meta">
+                                            <div class="glean-drow__meta glean-gm-row-sub">
+                                                <span class="glean-gm-pill glean-gm-pill--accent">{t(i18n, "candidate.pending")}</span>
                                                 <span class="glean-drow__site" title={entry.url || entry.hpath}>{entry.site || candidateEvidence(entry)}</span>
-                                                {#if candidateMissing(entry)}<span class="glean-drow__len">{candidateMissing(entry)}</span>{/if}
-                                                <span class="glean-drow__st">
-                                                    <span class="glean-candidate-state">{t(i18n, "candidate.pending")}</span>
-                                                    {#if entry.url}<button class="glean-card__capture" disabled={Boolean(candidateBusyId)} aria-busy={candidateBusyId === entry.id} onclick={(e) => { e.stopPropagation(); void capture(entry); }}>{t(i18n, "action.addToInbox")}</button>{/if}
-                                                </span>
+                                                {#if candidateMissing(entry)}<span>· {candidateMissing(entry)}</span>{/if}
                                             </div>
                                         </div>
                                         <div class="glean-drow__ops">
-                                            <button class="glean-op-btn" disabled={Boolean(candidateBusyId)} title={t(i18n, "candidate.fixUrl")} aria-label={t(i18n, "candidate.fixUrl")} onclick={(e) => { e.stopPropagation(); startCandidateUrlEdit(entry); }}><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanEdit" /></svg></button>
-                                            {#if !entry.url}<button class="glean-op-btn" disabled={Boolean(candidateBusyId)} title={t(i18n, "candidate.captureLocal")} aria-label={t(i18n, "candidate.captureLocal")} onclick={(e) => { e.stopPropagation(); void captureAsLocal(entry); }}><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanLocal" /></svg></button>{/if}
-                                            <button class="glean-op-btn" disabled={Boolean(candidateBusyId)} title={t(i18n, "candidate.exclude")} aria-label={t(i18n, "candidate.exclude")} onclick={(e) => { e.stopPropagation(); void excludeCandidate(entry); }}><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanClose" /></svg></button>
+                                            {#if entry.url}
+                                                <button type="button" class="glean-btn glean-gm-btn glean-gm-btn--primary" disabled={Boolean(candidateBusyId)} aria-busy={candidateBusyId === entry.id} onclick={(e) => { e.stopPropagation(); void capture(entry); }}>{t(i18n, "action.addToLibrary")}</button>
+                                            {:else}
+                                                <button type="button" class="glean-btn glean-gm-btn glean-gm-btn--primary" disabled={Boolean(candidateBusyId)} onclick={(e) => { e.stopPropagation(); void captureAsLocal(entry); }}>{t(i18n, "candidate.captureLocal")}</button>
+                                            {/if}
+                                            <button type="button" class="glean-btn glean-btn--ghost" disabled={Boolean(candidateBusyId)} onclick={(e) => { e.stopPropagation(); void excludeCandidate(entry); }}>{t(i18n, "candidate.exclude")}</button>
+                                            <button type="button" class="glean-op-btn" disabled={Boolean(candidateBusyId)} title={t(i18n, "candidate.fixUrl")} aria-label={t(i18n, "candidate.fixUrl")} onclick={(e) => { e.stopPropagation(); startCandidateUrlEdit(entry); }}><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanEdit" /></svg></button>
                                         </div>
                                     </div>
                                     {#if editingCandidateId === entry.id}
@@ -4558,14 +4723,99 @@ $effect(() => {
                         {/if}
                     {/if}
                 </div>
-                {#if previewEntry && !facade.isMobile}
-                    <input type="range" class="glean-preview-separator" min="25" max="65" step="1" value={Math.round(previewRatio * 100)} aria-label={t(i18n, "preview.resize")} oninput={(event) => { previewRatio = normalizePreviewRatio(Number(event.currentTarget.value) / 100); void savePreviewPrefs({ workbenchPreviewRatio: previewRatio }); }} onpointerdown={startPreviewResize} onpointermove={resizePreview} onpointerup={(event) => finishPreviewResize(event)} onpointercancel={(event) => finishPreviewResize(event, true)} onlostpointercapture={(event) => finishPreviewResize(event)} onkeydown={previewResizeKey} />
-                    <div class="glean-preview-pane" class:glean-preview-pane--widen={previewWiden} style:--glean-preview-ratio={previewRatio}>
-                        {#key previewId}
-                            <WorkbenchPreview {facade} entry={previewEntry} widen={previewWiden} onToggleWiden={() => { previewWiden = !previewWiden; }} onClose={closePreview} onProcessed={processedCallback(previewId, previewRevision)} onRefresh={reload} onFilterAuthor={selectAuthor} />
-                        {/key}
-                    </div>
+                {#if previewEnabled && !facade.isMobile}
+                    <aside class="glean-preview-pane glean-gm-preview-pane" style:--glean-preview-ratio={previewRatio} aria-label={t(i18n, "library.previewOverview")}>
+                        {#if previewEntry}
+                            {#if fullPreviewMode}
+                                <div class="glean-gm-preview-full-bar">
+                                    <button type="button" class="glean-btn glean-btn--ghost glean-btn--xs" onclick={() => { fullPreviewMode = false; }}>← {t(i18n, "library.previewBackSummary")}</button>
+                                    <button type="button" class="glean-btn glean-btn--ghost glean-btn--xs" onclick={closePreview}>{t(i18n, "preview.close")}</button>
+                                </div>
+                                {#key previewId}
+                                    <WorkbenchPreview {facade} entry={previewEntry} widen={previewWiden} onToggleWiden={() => { previewWiden = !previewWiden; }} onClose={closePreview} onProcessed={processedCallback(previewId, previewRevision)} onRefresh={reload} onFilterAuthor={selectAuthor} />
+                                {/key}
+                            {:else}
+                                <div class="glean-gm-preview-card">
+                                    <div class="glean-gm-preview-eyebrow">
+                                        <span>{t(i18n, "library.previewOverview")}</span>
+                                        <span class="glean-gm-pill">{previewEntry.kind === "candidate" ? t(i18n, "candidate.pending") : queueLabel(previewEntry.status)}</span>
+                                    </div>
+                                    <h4 class="glean-gm-preview-title">{previewEntry.title || t(i18n, "panel.untitled")}</h4>
+                                    <div class="glean-gm-preview-meta">
+                                        <span>{previewEntry.kind === "clip" ? siteDisplayLabel(previewEntry) : (previewEntry.site || candidateEvidence(previewEntry))}</span>
+                                        {#if previewEntry.kind === "clip" && previewEntry.minutes > 0}<span>· {t(i18n, "panel.minutes", { n: previewEntry.minutes })}</span>{/if}
+                                        {#if previewEntry.kind === "clip" && previewEntry.words > 0}<span>· {t(i18n, "panel.words", { n: previewEntry.words })}</span>{/if}
+                                        {#if previewEntry.kind === "clip" && previewEntry.author}<span>· {previewEntry.author}</span>{/if}
+                                    </div>
+                                    <div class="glean-gm-preview-box">
+                                        <b>{t(i18n, "library.previewSummaryLabel")}</b>
+                                        <p>{(previewEntry.kind === "clip" && previewEntry.summary) ? previewEntry.summary : t(i18n, "library.previewNoSummary")}</p>
+                                    </div>
+                                    {#if previewEntry.kind === "clip"}
+                                        {@const snapHealth = calculateSnapshotHealth(previewEntry)}
+                                        <div class="glean-gm-preview-box glean-gm-preview-box--white">
+                                            {#if previewEntry.tags && previewEntry.tags.length > 0}
+                                                <div class="glean-gm-preview-tags">
+                                                    {#each previewEntry.tags.slice(0, 6) as tg}<span class="glean-gm-pill">#{aliasForTag(tg)}</span>{/each}
+                                                </div>
+                                            {/if}
+                                            <div class="glean-gm-preview-meta">
+                                                {#if previewEntry.priority}<span>{t(i18n, "action.priority")} P{previewEntry.priority}</span>{/if}
+                                                {#if previewEntry.rating}<span>{t(i18n, "action.rating")} {previewEntry.rating}★</span>{/if}
+                                                <span class="glean-snap-badge glean-snap-badge--{snapHealth.grade}" title={t(i18n, "snapshotHealth.scoreBadgeTitle", { label: t(i18n, snapHealth.labelKey), desc: t(i18n, snapHealth.descKey), score: snapHealth.score })}>{t(i18n, snapHealth.labelKey)} {snapHealth.score}</span>
+                                            </div>
+                                        </div>
+                                    {/if}
+                                    <div class="glean-gm-preview-actions">
+                                        {#if previewEntry.kind === "candidate"}
+                                            {#if previewEntry.url}
+                                                <button type="button" class="glean-btn glean-gm-btn glean-gm-btn--primary" onclick={() => void capture(previewEntry)}>{t(i18n, "action.addToLibrary")}</button>
+                                            {:else}
+                                                <button type="button" class="glean-btn glean-gm-btn glean-gm-btn--primary" onclick={() => void captureAsLocal(previewEntry)}>{t(i18n, "candidate.captureLocal")}</button>
+                                            {/if}
+                                            <button type="button" class="glean-btn glean-gm-btn" onclick={() => { fullPreviewMode = true; }}>{t(i18n, "library.previewProtyleToggle")}</button>
+                                        {:else}
+                                            <button type="button" class="glean-btn glean-gm-btn glean-gm-btn--primary" onclick={() => void startReading(previewEntry)}>{t(i18n, "library.enterReader")}</button>
+                                            <button type="button" class="glean-btn glean-gm-btn" onclick={() => { fullPreviewMode = true; }}>{t(i18n, "library.previewProtyleToggle")}</button>
+                                            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => facade.openUnregisterDialog?.(previewEntry.id)}>{t(i18n, "action.unregister")}</button>
+                                        {/if}
+                                    </div>
+                                </div>
+                            {/if}
+                        {:else}
+                            <div class="glean-gm-preview-card">
+                                <div class="glean-gm-preview-eyebrow">
+                                    <span>{t(i18n, "library.previewEmptyTitle")}</span>
+                                    {#if dailySummary.picks.length > 0}<span class="glean-gm-pill">{dailySummary.picks.length}</span>{/if}
+                                </div>
+                                <p class="glean-gm-preview-desc">{t(i18n, "library.previewEmptyDesc")}</p>
+                                {#if dailySummary.picks.length > 0}
+                                    <div class="glean-gm-picks-list">
+                                        {#each dailySummary.picks.slice(0, 2) as pick (pick.item.id)}
+                                            <div class="glean-gm-pick-card">
+                                                <button type="button" class="glean-gm-pick-title" onclick={() => openDoc(pick.item.id)}>{pick.item.title || t(i18n, "panel.untitled")}</button>
+                                                <div class="glean-gm-preview-meta">
+                                                    {#if pick.item.site}<span>{pick.item.site}</span>{/if}
+                                                    {#if (pick.item.minutes ?? 0) > 0}<span>· {t(i18n, "panel.minutes", { n: pick.item.minutes ?? 0 })}</span>{/if}
+                                                </div>
+                                            </div>
+                                        {/each}
+                                    </div>
+                                {/if}
+                                <div class="glean-gm-preview-actions">
+                                    <button type="button" class="glean-btn glean-gm-btn" onclick={triggerRoamingRead}>{t(i18n, "roaming.button")}</button>
+                                    <button type="button" class="glean-btn glean-btn--ghost" onclick={() => openStatsAndTools("resurface")}>{t(i18n, "stats.tabResurface")} →</button>
+                                </div>
+                            </div>
+                        {/if}
+                    </aside>
                 {/if}
+            </div>
+            <div class="glean-gm-footer-note">
+                <span>{t(i18n, "library.footerHint")}</span>
+                <button type="button" class="glean-btn glean-btn--ghost glean-btn--xs" onclick={() => facade.openUnregisteredDocsDialog?.()}>
+                    {t(i18n, "unregister.entryButton")}{#if unregisteredCount > 0} ({unregisteredCount}){/if} →
+                </button>
             </div>
         {:else}
             <div class="glean-list">
@@ -4578,9 +4828,6 @@ $effect(() => {
                                 {/each}
                             </div>
                         {/if}
-                        {#if facade.settings.cloudInboxEnabled}
-                            <InboxSection {facade} onMutated={() => void reload()} />
-                        {/if}
                         {@render libraryContextBanners()}
                     </div>
                 {/if}
@@ -4589,59 +4836,26 @@ $effect(() => {
                         <div class="glean-empty__art"><svg aria-hidden="true"><use href="#iconGleanWheat" /></svg></div>
                         <div class="glean-empty__title">{t(i18n, hasFilters ? "library.noMatch" : "panel.empty")}</div>
                         <div class="glean-empty__hint">
-                            {facade.settings.anchorNotebooks.length === 0
-                                ? t(i18n, "panel.noAnchorHint")
-                                : t(i18n, "panel.emptyHint")}
+                            {facade.settings.anchorNotebooks.length === 0 ? t(i18n, "panel.noAnchorHint") : t(i18n, "panel.emptyHint")}
                         </div>
                         {#if facade.settings.anchorNotebooks.length === 0}
                             <div class="glean-empty__actions">
-                            <button class="glean-btn glean-btn--pri glean-empty__action" onclick={() => facade.openOnboarding()}>
-                                {t(i18n, "panel.openOnboarding")}
-                            </button>
-                            <button class="glean-btn glean-btn--ghost glean-empty__action" onclick={() => facade.openSettings()}>
-                                {t(i18n, "panel.setupAnchor")}
-                            </button>
+                                <button class="glean-btn glean-btn--pri glean-empty__action" onclick={() => facade.openOnboarding()}>{t(i18n, "panel.openOnboarding")}</button>
+                                <button class="glean-btn glean-btn--ghost glean-empty__action" onclick={() => facade.openSettings()}>{t(i18n, "panel.setupAnchor")}</button>
                             </div>
                         {:else if !hasFilters && totalClips === 0}
-                            <div class="glean-empty__quick-cards" role="region" aria-label={t(i18n, "library.quickStart")}>
-                                <button type="button" class="glean-empty__card" disabled={seedingDemoArticles} onclick={() => void handleSeedDemoArticles()}>
-                                    <div class="glean-empty__card-icon"><svg class="glean-icon"><use href="#iconGleanNews" /></svg></div>
-                                    <div class="glean-empty__card-text">
-                                        <div class="glean-empty__card-title">{t(i18n, "library.seedDemoTitle")}</div>
-                                        <div class="glean-empty__card-desc">{t(i18n, "library.seedDemoDesc")}</div>
-                                    </div>
-                                </button>
-                                <button type="button" class="glean-empty__card" onclick={() => facade.openImport()}>
-                                    <div class="glean-empty__card-icon"><svg class="glean-icon"><use href="#iconGleanDownload" /></svg></div>
-                                    <div class="glean-empty__card-text">
-                                        <div class="glean-empty__card-title">{t(i18n, "library.importBookmarksTitle")}</div>
-                                        <div class="glean-empty__card-desc">{t(i18n, "library.importBookmarksDesc")}</div>
-                                    </div>
-                                </button>
-                                <button type="button" class="glean-empty__card" onclick={() => facade.openOnboarding()}>
-                                    <div class="glean-empty__card-icon"><svg class="glean-icon"><use href="#iconGleanWheat" /></svg></div>
-                                    <div class="glean-empty__card-text">
-                                        <div class="glean-empty__card-title">{t(i18n, "library.onboardingGuideTitle")}</div>
-                                        <div class="glean-empty__card-desc">{t(i18n, "library.onboardingGuideDesc")}</div>
-                                    </div>
-                                </button>
-                            </div>
                             <div class="glean-empty__actions">
-                                <button class="glean-btn glean-btn--pri glean-empty__action" onclick={() => facade.openOnboarding()}>
-                                    {t(i18n, "panel.openOnboarding")}
-                                </button>
+                                <button class="glean-btn glean-btn--pri glean-empty__action" onclick={() => facade.openOnboarding()}>{t(i18n, "panel.openOnboarding")}</button>
                             </div>
                         {:else if hasFilters}
-                            <button class="glean-btn glean-btn--ghost glean-empty__action" onclick={clearUserFilters}>
-                                {t(i18n, "library.clearFilters")}
-                            </button>
+                            <button class="glean-btn glean-btn--ghost glean-empty__action" onclick={clearUserFilters}>{t(i18n, "library.clearFilters")}</button>
                         {/if}
                     </div>
                 {:else}
                     {#each visibleRows as entry (entry.id)}
                         {@const badge = matchBadge(entry)}
                         <article
-                            class="glean-card"
+                            class="glean-card glean-gm-card"
                             data-glean-clip-id={entry.id}
                             class:glean-card--candidate={entry.kind === "candidate"}
                             class:glean-card--selected={selection.has(entry.id)}
@@ -4651,168 +4865,77 @@ $effect(() => {
                             <div class="glean-card__body">
                                 <button type="button" class="glean-card__title" aria-label={articleActionLabel(entry.title, true)} title={`${entry.title || t(i18n, "panel.untitled")}（右键呼出原生菜单）`} onclick={() => selectPreview(entry.id)} oncontextmenu={(e) => void openDocContextMenu(e, entry)}>{entry.title || t(i18n, "panel.untitled")}</button>
                                 <div class="glean-card__meta">
+                                    {#if badge}<span class="glean-badge glean-badge--match" title={badge}>{badge}</span>{/if}
                                     {#if entry.kind === "clip"}
-                                        <span class={statusDotClass(entry.status)}></span>
-                                    {/if}
-                                    {#if badge}
-                                        <span class="glean-badge glean-badge--match" title={badge}>{badge}</span>
-                                    {/if}
-                                    {#if entry.kind === "clip" && (entry.site || isWechatEntry(entry))}
-                                        <button type="button" class="glean-card__site glean-card__site-btn" class:glean-source-wechat={isWechatEntry(entry)} onclick={(event) => { event.stopPropagation(); handleSiteClick(entry); }}>{siteDisplayLabel(entry)}</button>
-                                    {:else if entry.kind === "candidate"}
-                                        <span title={entry.url || entry.hpath}>{entry.site || candidateEvidence(entry)}</span>
-                                    {/if}
-                                    {#if entry.kind === "clip" && displayWechatAuthor(entry.author)}<button class="glean-source-author" onclick={(event) => { event.stopPropagation(); selectAuthor(entry.author!); }}>· {displayWechatAuthor(entry.author)}</button>{/if}
-                                    {#if entry.kind === "clip" && isWechatEntry(entry) && !displayWechatAuthor(entry.author) && !wechatAttemptedIds.has(entry.id)}
-                                        <button
-                                            type="button"
-                                            class="glean-mini-tag glean-mini-tag--ai"
-                                            title={t(i18n, "wechat.recognizeSingle")}
-                                            onclick={async (e) => {
-                                                e.stopPropagation();
-                                                const res = await scanAndFillWechatAuthor(facade.pluginInstance, entry.id, { url: entry.url, site: entry.site });
-                                                markWechatAttempted([entry.id]);
-                                                if (res) {
-                                                    facade.notifyDataChanged();
-                                                    await reload();
-                                                    showMessage(t(i18n, "wechat.authorRecognized", { name: res }), 2500);
-                                                } else {
-                                                    showMessage(t(i18n, "wechat.authorNotFound"), 2500);
-                                                }
-                                            }}
-                                        >
-                                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanSpark" /></svg> <span>{t(i18n, "wechat.recognizeSingle")}</span>
-                                        </button>
-                                    {/if}
-                                     {#if entry.kind === "clip"}
-                                         <span class={carrierClass(entry)}>{carrierLabel(entry)}</span>
-                                         {#if entry.contentType === "link" && !hasSourceAction(entry.contentType, entry.url)}
-                                             <span class="glean-source-missing">{t(i18n, "clip.sourceMissing")}</span>
-                                         {/if}
-                                         {#if bodyPending(entry)}
-                                             <span class="glean-body-pending" title={t(i18n, "clip.bodyPendingHint")}>{t(i18n, "clip.bodyPending")}</span>
-                                         {/if}
-                                     {/if}
-                                    {#if metaLine(entry)}
-                                        <span class="glean-tier-badge glean-tier-badge--{entry.kind === 'clip' ? resolveReadingTimeTier(entry.minutes) : 'unknown'}">· {metaLine(entry)}</span>
-                                    {/if}
-                                    {#if entry.kind === "clip" && entry.readPoint && (entry.status === "reading" || entry.status === "later")}<span class="glean-read-point-badge" title={t(i18n, "reading.resumePoint")}><svg class="glean-icon glean-icon--xs glean-icon--bookmark" aria-hidden="true"><use href="#iconGleanBookmark" /></svg> <span>{t(i18n, "reading.resumePointShort")}</span></span>{/if}
-                                    {#if entry.kind === "clip" && entry.favorite}
-                                        <span class="glean-tier-badge glean-tier-badge--fav" title={t(i18n, "roaming.favoriteOnly")}><svg class="glean-icon glean-icon--xs glean-icon--fav" aria-hidden="true"><use href="#iconGleanHeart" /></svg></span>
-                                    {/if}
-                                    {#if entry.kind === "clip"}
-                                        {@const snapHealth = calculateSnapshotHealth(entry)}
-                                        {@const days = staleDays(entry.time)}
-                                        <span class="glean-tier-badge glean-snap-badge glean-snap-badge--{snapHealth.grade}" title={t(i18n, "snapshotHealth.scoreBadgeTitle", { label: t(i18n, snapHealth.labelKey), desc: t(i18n, snapHealth.descKey), score: snapHealth.score })}><svg class="glean-icon glean-icon--xs" class:glean-icon--shield-ok={snapHealth.grade === "healthy"} aria-hidden="true"><use href={snapHealth.grade === "healthy" ? "#iconGleanShieldCheck" : "#iconGleanShield"} /></svg> <span>{snapHealth.score}</span></span>
-                                        {#if days !== null && (entry.status === "inbox" || entry.status === "later")}
-                                            <span class="glean-stale">{t(i18n, "panel.staleDays", { n: days })}</span>
-                                        {/if}
-                                        {#if (entry.tags && entry.tags.length > 0) || (entry.aiTags && entry.aiTags.length > 0)}
-                                            <div class="glean-card__tags-row">
-                                                {#each (entry.tags || []).slice(0, 2) as tg}
-                                                    <button type="button" class="glean-mini-tag" onclick={(event) => { event.stopPropagation(); selectTag(tg); }}>#{tg}</button>
-                                                {/each}
-                                                {#each (entry.aiTags || []).slice(0, 1) as atg}
-                                                    <button
-                                                        type="button"
-                                                        class="glean-mini-tag glean-mini-tag--ai"
-                                                        class:glean-mini-tag--series={isWechatSeriesTag(atg, isWechatUrl(entry.url) || isWechatUrl(entry.site))}
-                                                        onclick={(event) => { event.stopPropagation(); selectAiTag(atg); }}
-                                                    >{isWechatSeriesTag(atg, isWechatUrl(entry.url) || isWechatUrl(entry.site)) ? "📚 " : "✨"}{atg}</button>
-                                                {/each}
-                                            </div>
-                                        {/if}
+                                        <button type="button" class="glean-card__site glean-card__site-btn" onclick={(event) => { event.stopPropagation(); handleSiteClick(entry); }}>{siteDisplayLabel(entry)}</button>
+                                        {#if entry.minutes > 0}<span>· {t(i18n, "panel.minutes", { n: entry.minutes })}</span>{/if}
+                                    {:else}
+                                        <span>{entry.site || candidateEvidence(entry)}</span>
                                     {/if}
                                 </div>
                             </div>
                             {#if entry.kind === "candidate"}
                                 <div class="glean-card__ops">
-                                    {#if entry.url}<button class="glean-card__capture" disabled={Boolean(candidateBusyId)} aria-busy={candidateBusyId === entry.id} onclick={() => void capture(entry)}>{t(i18n, "action.addToInbox")}</button>{/if}
-                                    <button class="glean-op-btn" disabled={Boolean(candidateBusyId)} title={t(i18n, "candidate.fixUrl")} aria-label={t(i18n, "candidate.fixUrl")} onclick={() => startCandidateUrlEdit(entry)}><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanEdit" /></svg></button>
-                                    {#if !entry.url}<button class="glean-op-btn" disabled={Boolean(candidateBusyId)} title={t(i18n, "candidate.captureLocal")} aria-label={t(i18n, "candidate.captureLocal")} onclick={() => void captureAsLocal(entry)}><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanLocal" /></svg></button>{/if}
-                                    <button class="glean-op-btn" disabled={Boolean(candidateBusyId)} title={t(i18n, "candidate.exclude")} aria-label={t(i18n, "candidate.exclude")} onclick={() => void excludeCandidate(entry)}><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanClose" /></svg></button>
+                                    {#if entry.url}
+                                        <button type="button" class="glean-btn glean-btn--pri glean-btn--sm" disabled={Boolean(candidateBusyId)} onclick={() => void capture(entry)}>{t(i18n, "action.addToLibrary")}</button>
+                                    {:else}
+                                        <button type="button" class="glean-btn glean-btn--pri glean-btn--sm" disabled={Boolean(candidateBusyId)} onclick={() => void captureAsLocal(entry)}>{t(i18n, "candidate.captureLocal")}</button>
+                                    {/if}
+                                    <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm" disabled={Boolean(candidateBusyId)} onclick={() => void excludeCandidate(entry)}>{t(i18n, "candidate.exclude")}</button>
+                                    <button type="button" class="glean-op-btn" disabled={Boolean(candidateBusyId)} title={t(i18n, "candidate.fixUrl")} aria-label={t(i18n, "candidate.fixUrl")} onclick={(e) => { e.stopPropagation(); startCandidateUrlEdit(entry); }}><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanEdit" /></svg></button>
                                 </div>
-                                <div class="glean-candidate-detail">
-                                    <span>{t(i18n, "candidate.evidenceLabel")}: {candidateEvidence(entry)}</span>
-                                    {#if candidateMissing(entry)}<span>{candidateMissing(entry)}</span>{/if}
-                                    {#if entry.url}<span title={entry.url}>{entry.url}</span>{/if}
-                                </div>
-                                    {#if editingCandidateId === entry.id}
-                                        <div class="glean-candidate-edit">
-                                            <input class="b3-text-field" type="url" bind:value={candidateUrlInput} placeholder={t(i18n, "candidate.urlPlaceholder")} aria-label={t(i18n, "candidate.urlPlaceholder")} />
-                                            <button class="glean-btn" disabled={Boolean(candidateBusyId)} aria-busy={candidateBusyId === entry.id} onclick={() => void saveCandidateUrl(entry)}>{t(i18n, "action.save")}</button>
-                                        <button class="glean-btn glean-btn--ghost" onclick={() => (editingCandidateId = "")}>{t(i18n, "action.cancel")}</button>
+                                {#if editingCandidateId === entry.id}
+                                    <div class="glean-candidate-edit">
+                                        <input class="b3-text-field" type="url" bind:value={candidateUrlInput} placeholder={t(i18n, "candidate.urlPlaceholder")} aria-label={t(i18n, "candidate.urlPlaceholder")} />
+                                        <button type="button" class="glean-btn glean-btn--sm" disabled={Boolean(candidateBusyId)} aria-busy={candidateBusyId === entry.id} onclick={() => void saveCandidateUrl(entry)}>{t(i18n, "action.save")}</button>
+                                        <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm" onclick={() => (editingCandidateId = "")}>{t(i18n, "action.cancel")}</button>
                                     </div>
                                 {/if}
                             {:else}
                                 <div class="glean-card__foot">
                                     <div class="glean-card__foot-left">
-                                        {#if entry.priority && entry.priority > 0}
-                                            <span class="glean-tier-badge" title={t(i18n, "library.keyboardPriority")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanBolt" /></svg> <span>P{entry.priority}</span></span>
-                                        {/if}
-                                        {#if entry.rating && entry.rating > 0}
-                                            <span class="glean-tier-badge" title={t(i18n, "library.keyboardRating")}><svg class="glean-icon glean-icon--xs glean-icon--star" aria-hidden="true"><use href="#iconGleanStar" /></svg> <span>{entry.rating}★</span></span>
-                                        {/if}
-                                        <span class="glean-st-badge glean-st-badge--{entry.status}">{queueLabel(entry.status)}</span>
+                                        <span class="glean-gm-pill">{queueLabel(entry.status)}</span>
                                     </div>
                                     <div class="glean-card__foot-right">
-                                        {#if entry.status === "archived"}
-                                            <button class="glean-btn glean-btn--ghost glean-btn--sm" disabled={Boolean(statusActionId)} onclick={(event) => { event.stopPropagation(); facade.openRestoreDialog(entry.id); }}>{t(i18n, "action.restore")}</button>
+                                        {#if navBucket === "triage"}
+                                            <button type="button" class="glean-btn glean-btn--pri glean-btn--sm" disabled={Boolean(statusActionId)} onclick={(event) => { event.stopPropagation(); void setStatus(entry, "later"); }}>{t(i18n, "library.moveToReadingList")}</button>
+                                        {:else if entry.status === "archived"}
+                                            <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm" disabled={Boolean(statusActionId)} onclick={(event) => { event.stopPropagation(); facade.openRestoreDialog(entry.id); }}>{t(i18n, "library.restoreToReadingList")}</button>
                                         {:else}
-                                            <button class="glean-btn glean-btn--pri glean-btn--sm" disabled={Boolean(statusActionId)} onclick={(event) => { event.stopPropagation(); void startReading(entry); }}>{t(i18n, entry.status === "reading" ? "action.continueReading" : entry.status === "done" ? "action.readAgain" : "action.startReading")}</button>
+                                            <button type="button" class="glean-btn glean-btn--pri glean-btn--sm" disabled={Boolean(statusActionId)} onclick={(event) => { event.stopPropagation(); void startReading(entry); }}>{primaryActionLabel(entry)}</button>
                                         {/if}
                                         <ActionPopover label={t(i18n, "library.moreActions")} compact>
-                                            <AuthorEditor {facade} docId={entry.id} onSaved={reload} />
-                                            <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryBlockRef(entry)}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCopy" /></svg> <span>{t(i18n, "action.copyBlockRef")}</span></button>
-                                            <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "gbt")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanNews" /></svg> <span>{t(i18n, "citation.copyGBT")}</span></button>
-                                            <details class="glean-citation-more" data-keep-popover-open>
-                                                <summary class="glean-btn glean-btn--ghost" data-keep-popover-open>BibTeX / APA / MLA</summary>
-                                                <div class="glean-citation-more__list">
-                                                    <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "bibtex")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArchive" /></svg> <span>{t(i18n, "citation.copyBibTeX")}</span></button>
-                                                    <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "apa")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanLocal" /></svg> <span>{t(i18n, "citation.copyAPA")}</span></button>
-                                                    <button class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "mla")}><svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCard" /></svg> <span>{t(i18n, "citation.copyMLA")}</span></button>
-                                                </div>
-                                            </details>
                                             {#if entry.status !== "archived"}
-                                                <button class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId) || entry.status === "later"} onclick={() => void setStatus(entry, "later")}>{t(i18n, "action.moveToLater")}</button>
-                                                <button class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId) || entry.status === "done"} onclick={() => void setStatus(entry, "done")}>{t(i18n, "action.markDone")}</button>
-                                                <button class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId)} onclick={() => facade.openArchiveDialog(entry.id)}>{t(i18n, "action.archive")}</button>
+                                                <button type="button" class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId) || entry.status === "done"} onclick={() => void setStatus(entry, "done")}>{t(i18n, "action.markDone")}</button>
+                                                <button type="button" class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId)} onclick={() => facade.openArchiveDialog(entry.id)}>{t(i18n, "action.archive")}</button>
                                             {/if}
-                                            <button class="glean-btn glean-btn--ghost" disabled={snappingId === entry.id} onclick={() => void takeSnapshot(entry)} title={snapshotLabel(entry)} aria-label={snapshotLabel(entry)}>{snapshotLabel(entry)}</button>
-                                            <button class="glean-btn glean-btn--ghost" disabled={Boolean(exportingMarkdownId)} aria-busy={exportingMarkdownId === entry.id} onclick={() => void exportMarkdown(entry)}>{t(i18n, "export.markdown")}</button>
-                                            <button class="glean-btn glean-btn--ghost" disabled={enrichingId === entry.id} onclick={() => void enrich(entry)}>{t(i18n, "ai.actionEnrich")}</button>
-                                            <button class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId)} aria-pressed={isPinnedToday(entry)} onclick={() => void toggleSurfacePin(entry)}>{surfacePinLabel(entry)}</button>
+                                            <button type="button" class="glean-btn glean-btn--ghost" disabled={Boolean(statusActionId)} onclick={() => facade.openUnregisterDialog?.(entry.id)}>{t(i18n, "action.unregister")}</button>
                                             {#if hasSourceAction(entry.contentType, entry.url)}
-                                                <button class="glean-btn glean-btn--ghost" onclick={() => openSource(entry)}>{t(i18n, "clip.openSource")}</button>
+                                                <button type="button" class="glean-btn glean-btn--ghost" onclick={() => openSource(entry)}>{t(i18n, "clip.openSource")}</button>
                                             {/if}
+                                            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyEntryBlockRef(entry)}>{t(i18n, "action.copyBlockRef")}</button>
+                                            <button type="button" class="glean-btn glean-btn--ghost" onclick={() => void copyEntryCitation(entry, "gbt")}>{t(i18n, "citation.copyGBT")}</button>
                                         </ActionPopover>
+                                        {#if entry.kind === "clip" && (batchMode || selection.size > 0)}
+                                            <label class="glean-card__check" title={t(i18n, "library.selectArticle")}>
+                                                <input type="checkbox" checked={selection.has(entry.id)} aria-label={t(i18n, "library.selectArticle")} onclick={(event) => event.stopPropagation()} onchange={(e) => toggleSelect(entry.id, e)} />
+                                            </label>
+                                        {/if}
                                     </div>
                                 </div>
-                            {/if}
-                            {#if entry.kind === "clip"}
-                                <label class="glean-card__check" title={t(i18n, "library.selectArticle")}>
-                                    <input
-                                        type="checkbox"
-                                        checked={selection.has(entry.id)}
-                                        aria-label={t(i18n, "library.selectArticle")}
-                                        onclick={(event) => event.stopPropagation()}
-                                        onchange={(e) => toggleSelect(entry.id, e)}
-                                    />
-                                </label>
                             {/if}
                         </article>
                     {/each}
                 {/if}
             </div>
-
             {#if hasMoreRows}
                 <div class="glean-list-more" role="status">
                     <span>{t(i18n, "library.renderedCount", { shown: visibleRows.length, total: rows.length })}</span>
                     <button class="glean-btn glean-btn--ghost" onclick={loadMoreRows}>{t(i18n, "library.loadMore")}</button>
                 </div>
             {/if}
-
         {/if}
+
         <LibraryBatchBar
             {i18n}
             {...selectionScope}
@@ -4839,24 +4962,43 @@ $effect(() => {
             {allSelectedAreFavorite}
             computeDiff={computeBatchDiff}
         />
-    {:else if view === "resurface"}
-        <ResurfaceView
-            {facade}
-            {index}
-            {currentTime}
-            {loading}
-            {loadError}
-            onRetry={() => void reload()}
-            embedded
-            onMutated={() => void reload()}
-            onQuickCapture={quickCapture}
-            onQuickSearch={openLibrarySearchFromHome}
-            onQuickCandidates={openCandidateQueue}
-            onStartRoaming={triggerRoamingRead}
-            {quickCaptureBusy}
-        />
-    {:else if view === "stats"}
-        <StatsView {facade} {index} {currentTime} {loading} {loadError} onRetry={() => void reload()} onCaptured={() => void reload()} />
+    {:else if view === "resurface" || view === "stats"}
+        <div class="glean-gm-tools-shell">
+            <header class="glean-gm-lib-header">
+                <div class="glean-gm-lib-title-group">
+                    <h2 class="glean-gm-heading">{t(i18n, "stats.toolsHubTitle")}</h2>
+                    <p class="glean-gm-subheading">{t(i18n, "stats.toolsHubDesc")}</p>
+                </div>
+                <div class="glean-gm-header-right">
+                    <div class="glean-gm-seg" role="tablist" aria-label={t(i18n, "stats.toolsHubTitle")}>
+                        <button type="button" role="tab" aria-selected={view === "stats"} class="glean-gm-seg-btn" class:is-active={view === "stats"} onclick={() => openStatsAndTools("stats")}>{t(i18n, "stats.tabReview")}</button>
+                        <button type="button" role="tab" aria-selected={view === "resurface"} class="glean-gm-seg-btn" class:is-active={view === "resurface"} onclick={() => openStatsAndTools("resurface")}>{t(i18n, "stats.tabResurface")}</button>
+                    </div>
+                    <button type="button" class="glean-btn glean-gm-btn" onclick={triggerRoamingRead}>{t(i18n, "roaming.button")}</button>
+                    <button type="button" class="glean-btn glean-gm-btn" onclick={() => facade.openMigrate()}>{t(i18n, "panel.migrate")}</button>
+                    <button type="button" class="glean-btn glean-gm-btn" onclick={() => facade.openImport()}>{t(i18n, "import.title")}</button>
+                </div>
+            </header>
+            {#if view === "resurface"}
+                <ResurfaceView
+                    {facade}
+                    {index}
+                    {currentTime}
+                    {loading}
+                    {loadError}
+                    onRetry={() => void reload()}
+                    embedded
+                    onMutated={() => void reload()}
+                    onQuickCapture={quickCapture}
+                    onQuickSearch={openLibrarySearchFromHome}
+                    onQuickCandidates={openCandidateQueue}
+                    onStartRoaming={triggerRoamingRead}
+                    {quickCaptureBusy}
+                />
+            {:else}
+                <StatsView {facade} {index} {currentTime} {loading} {loadError} onRetry={() => void reload()} onCaptured={() => void reload()} />
+            {/if}
+        </div>
     {:else}
         <HighlightView {facade} />
     {/if}
@@ -4880,23 +5022,61 @@ $effect(() => {
                     onclick={() => selectMobileNav(item.key)}
                 >
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="fill:none!important;stroke:currentColor!important;" aria-hidden="true">
-                        {#if item.key === "home"}
-                            <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" fill="none" />
-                            <path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="none" />
-                        {:else if item.key === "library"}
-                            <path d="M12 7v14" fill="none" />
-                            <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" fill="none" />
+                        {#if item.key === "triage"}
+                            <path d="M4 13h4l2 3h4l2-3h4" fill="none" />
+                            <path d="M5 13V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v7l-1.5 6a2 2 0 0 1-2 1.5h-7a2 2 0 0 1-2-1.5L5 13Z" fill="none" />
+                        {:else if item.key === "list"}
+                            <path d="M4 6h16M4 12h16M4 18h10" fill="none" />
                         {:else if item.key === "highlights"}
-                            <path d="m9 11-6 6v3h3l6-6" fill="none" />
-                            <path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4" fill="none" />
+                            <path d="m14.5 4.5 5 5L8 21H3v-5L14.5 4.5Z" fill="none" />
                         {:else}
-                            <use href="#iconGleanGear" />
+                            <rect x="3" y="4" width="18" height="4" rx="1" fill="none" />
+                            <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8" fill="none" />
                         {/if}
                     </svg>
                     <span>{t(i18n, item.labelKey)}</span>
                 </button>
             {/each}
         </nav>
+    {/if}
+    {#if captureModalOpen}
+        <div class="glean-gm-modal-backdrop" role="presentation" onclick={(event) => event.target === event.currentTarget && closeCaptureModal()}>
+            <div class="glean-gm-modal" bind:this={captureModalEl} role="dialog" aria-modal="true" aria-labelledby="glean-gm-capture-title" tabindex="-1">
+                <header class="glean-gm-modal__head">
+                    <b id="glean-gm-capture-title">{t(i18n, "capture.modalTitle")}</b>
+                    <button type="button" class="glean-btn glean-btn--ghost glean-btn--xs" onclick={closeCaptureModal}>{t(i18n, "action.close")}</button>
+                </header>
+                <div class="glean-gm-modal__body">
+                    <p class="glean-gm-modal__desc">{t(i18n, "capture.modalDesc")}</p>
+                    <button type="button" class="glean-btn glean-gm-btn glean-gm-btn--primary" disabled={quickCaptureBusy} onclick={() => void captureCurrentAndClose()}>
+                        {t(i18n, "capture.currentDocBtn")}
+                    </button>
+                    <div class="glean-gm-modal__divider"></div>
+                    <input
+                        class="b3-text-field"
+                        type="url"
+                        bind:value={captureUrlInput}
+                        placeholder={t(i18n, "capture.urlPlaceholder")}
+                        aria-label={t(i18n, "capture.urlPlaceholder")}
+                        onkeydown={(e) => { if (e.key === "Enter" && !e.isComposing) { e.preventDefault(); void submitCaptureUrl(); } }}
+                    />
+                    <input
+                        class="b3-text-field"
+                        type="text"
+                        bind:value={captureTitleInput}
+                        placeholder={t(i18n, "panel.untitled")}
+                        aria-label={t(i18n, "panel.untitled")}
+                    />
+                    <div class="glean-gm-modal__foot">
+                        <button type="button" class="glean-btn glean-btn--ghost glean-btn--xs" onclick={() => { closeCaptureModal(); facade.openImport(); }}>{t(i18n, "import.title")}</button>
+                        <div class="glean-gm-modal__foot-right">
+                            <button type="button" class="glean-btn glean-btn--ghost" onclick={closeCaptureModal}>{t(i18n, "action.cancel")}</button>
+                            <button type="button" class="glean-btn glean-gm-btn glean-gm-btn--primary" disabled={captureUrlBusy || !captureUrlInput.trim()} onclick={() => void submitCaptureUrl()}>{t(i18n, "capture.urlSubmit")}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     {/if}
     {#if tagAliasManagerOpen}
         <div class="glean-tag-alias-backdrop" role="presentation" onclick={(event) => event.target === event.currentTarget && closeTagAliasManager()}>

@@ -69,8 +69,8 @@ export interface LibraryItem {
 }
 
 export interface LibraryFilter {
-    /** `all` is used by the kanban, whose columns apply status afterwards. */
-    status?: ClipStatus | "all";
+    /** `all` is used by the kanban, whose columns apply status afterwards. An array matches any listed status (e.g. `["later", "reading"]` for the unified Reading List). */
+    status?: ClipStatus | readonly ClipStatus[] | "all";
     site?: string;
     author?: string;
     tag?: string;
@@ -198,10 +198,18 @@ export function matchesLibraryFilter(item: LibraryItem, filter: LibraryFilter = 
     if (item.kind === "candidate" && !filter.includeCandidates) return false;
     if (filter.status && filter.status !== "all") {
         // 候选没有五态。Inbox 明确允许候选进入“待确认”混合视图。
-        if (item.kind === "candidate") {
-            if (filter.status !== "inbox") return false;
-        } else if (item.status !== filter.status) {
-            return false;
+        if (Array.isArray(filter.status)) {
+            if (item.kind === "candidate") {
+                if (!filter.status.includes("inbox")) return false;
+            } else if (!item.status || !filter.status.includes(item.status)) {
+                return false;
+            }
+        } else {
+            if (item.kind === "candidate") {
+                if (filter.status !== "inbox") return false;
+            } else if (item.status !== filter.status) {
+                return false;
+            }
         }
     }
     if (!matchesSite(item, filter.site)) return false;

@@ -665,7 +665,7 @@ async function probeRow(
         // source evidence are omitted so a scan cannot turn a whole notebook into
         // an apparent backlog. A status-only old clip remains visible as manual.
         if (!candidate.eligible && !hasValidClipStatus(ial)) return null;
-        if (candidate.internal || candidate.excluded) return null;
+        if (candidate.internal || candidate.excluded || candidate.unregistered) return null;
         const metadata = inspectClipMarkdown(markdown, { url: candidate.url });
         const documentTime = documentTimeFromId(row.id);
         return {

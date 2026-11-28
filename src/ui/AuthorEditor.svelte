@@ -219,11 +219,20 @@
 
     $effect(() => {
         const raw = snapshot?.raw?.trim();
+        const targetDocId = docId;
+        let active = true;
         if (raw && hasContactsInstalled) {
-            void searchPersonSafely(raw).then((p) => { contactPerson = p; });
+            void searchPersonSafely(raw).then((p) => {
+                if (active && mounted && docId === targetDocId && snapshot?.raw?.trim() === raw) {
+                    contactPerson = p;
+                }
+            });
         } else {
             contactPerson = null;
         }
+        return () => {
+            active = false;
+        };
     });
 
     function openContact(): void {
@@ -233,8 +242,11 @@
     }
 
     async function enrollContact(): Promise<void> {
-        if (!snapshot?.raw) return;
-        const res = await ensurePersonSafely(snapshot.raw, { docId });
+        const raw = snapshot?.raw;
+        const targetDocId = docId;
+        if (!raw) return;
+        const res = await ensurePersonSafely(raw, { docId: targetDocId });
+        if (!mounted || docId !== targetDocId) return;
         if (res.ok && res.person) {
             contactPerson = res.person;
             showMessage(t(i18n, res.created ? "author.enrolledToContacts" : "author.linkedToContacts"), 2500);

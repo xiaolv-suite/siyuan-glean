@@ -67,14 +67,17 @@
         controller.setCaseSensitive(!searchState.caseSensitive);
     }
 
-    function onKeyDown(event: KeyboardEvent): void {
+    function onContainerKeyDown(event: KeyboardEvent): void {
         if (event.isComposing || event.keyCode === 229) return;
         if (event.key === "Escape") {
             event.preventDefault();
             event.stopPropagation();
             closeSearch();
-            return;
         }
+    }
+
+    function onKeyDown(event: KeyboardEvent): void {
+        if (event.isComposing || event.keyCode === 229) return;
         if (event.key === "Enter") {
             event.preventDefault();
             event.stopPropagation();
@@ -126,10 +129,13 @@
 </script>
 
 {#if open}
+    <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
     <div
         class="glean-reader-search"
         role="search"
+        tabindex="-1"
         aria-label={t(i18n, "reader.searchTitle")}
+        onkeydown={onContainerKeyDown}
     >
         <svg class="glean-icon glean-reader-search__icon" aria-hidden="true"><use href="#iconGleanSearch" /></svg>
         <input

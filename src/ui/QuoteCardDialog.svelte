@@ -129,7 +129,7 @@
         // 2. 绘制卡片内框与发光微边框
         ctx.lineWidth = 1;
         ctx.strokeStyle = activeTheme.key === "teal"
-            ? "rgba(20, 184, 166, 0.4)"
+            ? "rgba(85, 189, 141, 0.4)"
             : activeTheme.key === "obsidian"
             ? "rgba(16, 185, 129, 0.3)"
             : activeTheme.key === "paper"

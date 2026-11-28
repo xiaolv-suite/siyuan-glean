@@ -50,6 +50,8 @@ export interface CandidateProbe {
     missing: CandidateMissing[];
     /** 供 UI/迁移器解释为什么不展示。 */
     excluded: boolean;
+    /** 用户显式移出拾遗库后默认抑制再次成为候选；重新入库时自动清除。 */
+    unregistered: boolean;
     internal: boolean;
 }
 
@@ -139,6 +141,7 @@ export function inspectCandidate(input: CandidateProbeInput): CandidateProbe {
     if (fromMarkdown) evidence.push(fromMarkdown.evidence);
 
     const excluded = String(ial[ATTR.excluded] ?? "").toLowerCase() === "true";
+    const unregistered = String(ial[ATTR.unregistered] ?? "").toLowerCase() === "true";
     const internal = String(ial[ATTR.internal] ?? "").toLowerCase() === "true"
         || isInternalDocument({ title: input.title, hpath: input.hpath });
     const status = String(ial[ATTR.status] ?? "").trim();
@@ -146,7 +149,7 @@ export function inspectCandidate(input: CandidateProbeInput): CandidateProbe {
     const missing: CandidateMissing[] = [];
     if (!url) missing.push("url");
     if (!hasValidStatus) missing.push("status");
-    const eligible = !excluded && !internal && evidence.length > 0 && !hasValidStatus;
+    const eligible = !excluded && !unregistered && !internal && evidence.length > 0 && !hasValidStatus;
     return {
         eligible,
         url,
@@ -154,6 +157,7 @@ export function inspectCandidate(input: CandidateProbeInput): CandidateProbe {
         evidence,
         missing,
         excluded,
+        unregistered,
         internal,
     };
 }

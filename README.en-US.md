@@ -184,8 +184,17 @@ In just 3 minutes, transform scattered clippings into structured knowledge asset
 
 ## 📝 Recent Updates
 
-**v1.4.12 (2026-11-26 Milestone Release)**:
+**v1.4.13 (2026-11-27 Maintenance Release)**:
 Full version history: [CHANGELOG.md](CHANGELOG.md)
+
+- **Graphite-Mist 4-Entry Navigation & Reader Redesign**: Decluttered navigation to 4 core entries, redesigned Reader & Highlights views, purged `#0D9488` teal leaks, and aligned family pixels and `44px` mobile touch targets;
+- **Safe Unregister & Walkthrough Polish**: Added safe unregister-from-library with persisted carded state; fixed Dock governance/subfilter, dark WYSIWYG contrast, `ReaderSearch` Escape focus return, and reactive highlight badge updates;
+- **Ecosystem `lv-kit` Alignment**: Synced zero-Protyle-DOM-residue fixes and Batch 1 A1–A4 updates with zero `:has(` and zero heavy blur.
+
+<details>
+<summary>View Historical Releases (v1.4.12 and earlier)</summary>
+
+**v1.4.12 (2026-11-26 Milestone Release)**:
 
 - **Preview-Mode Selection Excerpts & Ghostreader Companion**: Select body text directly inside `.protyle-preview` to create quote excerpts, 4-color highlights, block notes, inline **Ghostreader** Q&A, selection translation, Quote Cards, and flashcards; respects official `custom-sy-readonly` / `custom-siyuan-readonly` flags; fixed a reactive `AbortController` self-cancellation bug in `ReaderTab` and isolated reader overlays (`isolation: isolate`);
 - **Unified `.lv-ai-thinking` Wait UX Across 15 AI & Semantic Search Entrypoints**: All 15 AI/embedding flows render the cancelable `.lv-ai-thinking` progress card with `AbortSignal` support and non-blocking browser fetch, plus non-clipping companion tab pills;
@@ -193,9 +202,6 @@ Full version history: [CHANGELOG.md](CHANGELOG.md)
 - **Shared Ecosystem Hubs & Block Assistant**: Direct Launchpad entry to Glean home & secondary actions, unified AI Router, Block Assistant 1–8 native base + custom double-click, notification/activity bus, and cross-plugin backup/restore;
 - **60fps Zero `:has()` / Zero Heavy-Blur Performance**: Strictly `0` `:has()` selectors, `0` `:root` leaks, and `0` `blur(>=15px)` in source and built CSS; removed global `MutationObserver` and deferred rolling backup scheduling post-startup;
 - **Smart Formatting Modal & AI Batch Panel**: Added side-by-side Markdown cleanup preview (`FormattingDialog`) and batch AI enrichment workbench (`AiBatchPanel`).
-
-<details>
-<summary>View Historical Releases (v1.4.11 and earlier)</summary>
 
 - **v1.4.11 (2026-11-23)**: Deferred rolling backups post-startup, loadIndex generation guard, and cold-start regression hardening.
 

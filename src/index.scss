@@ -22,7 +22,7 @@
     align-items: center;
     border: 0;
     background: transparent;
-    color: var(--glean-color-action);
+    color: var(--glean-gm-accent-ink, var(--glean-color-action));
     padding: var(--glean-space-micro) var(--glean-space-1);
     cursor: pointer;
     font: inherit;
@@ -30,6 +30,10 @@
     max-width: 150px;
     overflow: hidden;
     text-overflow: ellipsis;
+
+    &:hover {
+        text-decoration: underline;
+    }
 }
 
 .glean-source-site,
@@ -47,7 +51,7 @@
     overflow-wrap: anywhere;
 
     &:hover {
-        color: var(--glean-color-action);
+        color: var(--glean-gm-accent-ink, var(--glean-color-action));
         text-decoration: underline;
     }
 }
@@ -100,45 +104,68 @@
     --glean-color-status-archived: #64748B; /* 归档石板灰 */
     --glean-color-wechat: #07c160; /* 微信生态绿 */
 
-    /* 两色分工架构：操作语义 vs 数据语义 */
-    --glean-color-action: #0D9488;
-    --glean-color-action-hover: #0F766E;
-    --glean-color-action-soft: color-mix(in srgb, #0D9488 12%, transparent);
-    --glean-color-data: #10B981;
-    --glean-color-data-hover: #059669;
-    --glean-color-data-soft: color-mix(in srgb, var(--glean-color-data) 12%, transparent);
+    /* 两色分工架构：Graphite-Mist 强调色 vs 数据语义色 */
+    --glean-color-action: #5B6AD0;
+    --glean-color-action-hover: #4756BC;
+    --glean-color-action-soft: #EEF0FD;
+    --glean-color-data: #2A7A56;
+    --glean-color-data-hover: #1F5F42;
+    --glean-color-data-soft: #EDF7F2;
 
-    /* 插件自有表面/文本/线条基元（浅色 · doc#22 v2 温润纸白层次）：
+    /* 风格 A · 石墨清雾（Graphite-Mist）语义令牌（浅色默认） */
+    --glean-gm-canvas: #F7F8FA;
+    --glean-gm-surface: #FFFFFF;
+    --glean-gm-rail: #FAFBFD;
+    --glean-gm-subtle: #F1F3F7;
+    --glean-gm-hover: #F5F7FA;
+    --glean-gm-line: #E8EBF0;
+    --glean-gm-line2: #D6DCE6;
+    --glean-gm-fg: #16181D;
+    --glean-gm-fg2: #4A505E;
+    --glean-gm-muted: #5A6275;
+    --glean-gm-faint: #A1A8B8;
+    --glean-gm-primary-bg: #1E2430;
+    --glean-gm-primary-fg: #FFFFFF;
+    --glean-gm-primary-hover: #2C3445;
+    --glean-gm-accent: #5B6AD0;
+    --glean-gm-accent-ink: #4756BC;
+    --glean-gm-accent-wash: #EEF0FD;
+    --glean-gm-accent-line: #D7DCF9;
+    --glean-gm-fresh: #2A7A56;
+    --glean-gm-fresh-wash: #EDF7F2;
+    --glean-gm-fresh-line: #CBE6D9;
+
+    /* 插件自有表面/文本/线条基元（浅色 · 石墨清雾层次）：
        保证思源换主题时拾遗界面颜色不被污染。 */
     --glean-surface-base: #ffffff;
-    --glean-ink: #181a1f;
-    --glean-ink-2: #4b5563;
-    --glean-ink-3: #6b7280;
-    --glean-line: rgba(15, 23, 42, 0.08);
-    --glean-line-strong: rgba(15, 23, 42, 0.14);
-    --glean-danger: #b91c1c;
-    --glean-ok: #166534;
+    --glean-ink: #16181d;
+    --glean-ink-2: #4a505e;
+    --glean-ink-3: #5A6275;
+    --glean-line: #e8ebf0;
+    --glean-line-strong: #d6dce6;
+    --glean-danger: #b43c32;
+    --glean-ok: #2a7a56;
     /* DL2 阶段2 补齐：b3 codemod 映射目标 token（与雷切同口径的语义补位） */
-    --glean-warning: #a15c07;
-    --glean-surface-muted: #eef1f5;
+    --glean-warning: #9c6a22;
+    --glean-surface-muted: #f1f3f7;
     --glean-color-action-faint: color-mix(in srgb, var(--glean-color-action) 6%, transparent);
     --glean-on-action: #ffffff;
     --glean-on-danger: #ffffff;
 
-    /* 品牌底色与卡片双层浮起（doc#22 v2 温润纸白底 + 纯白卡片） */
-    --glean-app-background: #f6f7f9;
+    /* 品牌底色与卡片层次（石墨清雾极浅冷雾底 + 纯白画布） */
+    --glean-app-background: #f7f8fa;
     --glean-card-surface: var(--glean-surface-base);
-    --glean-card-surface-elevated: #f8f9fb;
+    --glean-card-surface-elevated: #fafbfd;
 
-    /* 重点对比块（视觉重音）：doc#22 v2 沉稳石板深色卡片与清晰近白文字 */
-    --glean-surface-dark-contrast: #1e293b;
-    --glean-text-dark-contrast: #f8fafc;
-    --glean-text-dark-contrast-muted: #cbd5e1;
+    /* 重点对比块（视觉重音）：沉静石墨深色块 */
+    --glean-surface-dark-contrast: #1e2430;
+    --glean-text-dark-contrast: #ffffff;
+    --glean-text-dark-contrast-muted: #a1a8b8;
 
-    --glean-accent-a: #0D9488;
-    --glean-accent-b: #0F766E;
-    --glean-grad: var(--glean-color-action);
-    --glean-grad-soft: color-mix(in srgb, var(--glean-color-action) 8%, var(--glean-card-surface));
+    --glean-accent-a: #5B6AD0;
+    --glean-accent-b: #4756BC;
+    --glean-grad: var(--glean-gm-primary-bg);
+    --glean-grad-soft: var(--glean-gm-accent-wash);
     --glean-st-inbox: var(--glean-color-status-inbox);
     --glean-st-later: var(--glean-color-status-later);
     --glean-st-reading: var(--glean-color-status-reading);
@@ -155,9 +182,9 @@
     --glean-radius: 12px;
     --glean-radius-20: var(--glean-radius-xl);
     --glean-badge-bg: color-mix(in srgb, var(--glean-ink-2) 8%, transparent);
-    --glean-shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04);
-    --glean-shadow-float: 0 12px 32px rgba(15, 23, 42, 0.10), 0 2px 8px rgba(15, 23, 42, 0.05);
-    --glean-shadow-control: 0 1px 2px rgba(15, 23, 42, 0.04);
+    --glean-shadow-card: none;
+    --glean-shadow-float: 0 8px 24px rgba(16, 18, 23, 0.08);
+    --glean-shadow-control: none;
     --glean-shadow-knob: 0 1px 2px rgba(15, 23, 42, 0.18);
     --glean-shadow-accent: 0 1px 4px color-mix(in srgb, var(--glean-color-action) 22%, transparent);
     --glean-shadow-focus: 0 0 0 3px color-mix(in srgb, var(--glean-color-action) 18%, transparent);
@@ -359,20 +386,20 @@
     --glean-error-surface: color-mix(in srgb, var(--glean-danger) 8%, transparent);
     --glean-status-surface: var(--glean-card-surface);
     --glean-section-surface: var(--glean-card-surface-elevated);
-    --glean-inset-surface: #f1f3f6;
+    --glean-inset-surface: #f1f3f7;
     --glean-muted-badge-surface: color-mix(in srgb, var(--glean-ink-2) 9%, transparent);
 
     /* 运行时自适应变量默认基线 */
-    --glean-rail-w: 216px;
+    --glean-rail-w: 204px;
     --glean-trans-fast: 140ms ease-out;
     --glean-space-0-5: 2px;
-    --glean-shadow-floating: 0 8px 24px rgba(15, 23, 42, 0.12);
-    --glean-radius-dialog: 14px;
+    --glean-shadow-floating: 0 8px 24px rgba(16, 18, 23, 0.08);
+    --glean-radius-dialog: 12px;
     --glean-text-meta: 11px;
     --glean-text-body: 13px;
     --glean-motion-fast: 140ms;
     --glean-radius-s: 8px;
-    --glean-radius-m: 12px;
+    --glean-radius-m: 10px;
     --glean-safe-bottom: 0px;
     --glean-keyboard-inset: 0px;
     --glean-mobile-nav-space: 0px;
@@ -382,8 +409,8 @@
     --glean-reader-background: var(--glean-app-background);
     --glean-reader-foreground: var(--glean-ink);
     --glean-reader-font-size: 1em;
-    --glean-reader-line-height: 1.6;
-    --glean-reader-width: min(100%, 760px);
+    --glean-reader-line-height: 1.65;
+    --glean-reader-width: min(100%, 680px);
     --glean-outline-level: 1;
     --glean-visual-viewport-height: 100dvh;
     --glean-preview-rail-width: 220px;
@@ -473,47 +500,70 @@
 
 :where([data-theme-mode="dark"], [data-theme="dark"], body.body--dark, body.b3-theme-dark, .b3-theme-dark) :where(.glean-dock-root, .glean-tab-root, .glean-dialog-root, .b3-dialog.glean-dialog-host, .glean-mobile-modal, .glean-mobile-fullscreen-dialog, .glean-reading-context-host, .glean-reading-context, .glean-panel, .glean-reader, .glean-settings, .glean-workbench, .glean-ann-editor-backdrop, .glean-ann-editor, .glean-dialog, .glean-popover, .glean-action-popover__body, .glean-reader-help, .glean-preview-pane),
 :where(.glean-dock-root, .glean-tab-root, .glean-dialog-root, .b3-dialog.glean-dialog-host, .glean-mobile-modal, .glean-mobile-fullscreen-dialog, .glean-reading-context-host, .glean-reading-context, .glean-panel, .glean-reader, .glean-settings, .glean-workbench, .glean-ann-editor-backdrop, .glean-ann-editor, .glean-dialog, .glean-popover, .glean-action-popover__body, .glean-reader-help, .glean-preview-pane):where([data-theme-mode="dark"], [data-theme="dark"], .b3-theme-dark) {
-    /* 插件自有基元（暗色 · doc#22 v2 暖炭黑护眼层次）：与浅色一一对应，仍独立于宿主配色。 */
-    --glean-surface-base: #1c1f25;
-    --glean-ink: #eceff4;
-    --glean-ink-2: #b4bac5;
-    --glean-ink-3: #838a97;
-    --glean-line: rgba(255, 255, 255, 0.08);
-    --glean-line-strong: rgba(255, 255, 255, 0.14);
-    --glean-danger: #fca5a5;
-    --glean-ok: #6ee7b7;
-    --glean-on-action: #06231f;
+    /* 风格 A · 石墨清雾（暗色 · 深炭护眼层次） */
+    --glean-gm-canvas: #14161B;
+    --glean-gm-surface: #1C1F26;
+    --glean-gm-rail: #181B22;
+    --glean-gm-subtle: #1F242E;
+    --glean-gm-hover: #252A35;
+    --glean-gm-line: #252A35;
+    --glean-gm-line2: #323846;
+    --glean-gm-fg: #EEF0F4;
+    --glean-gm-fg2: #B9C0CE;
+    --glean-gm-muted: #848C9E;
+    --glean-gm-faint: #5B6273;
+    --glean-gm-primary-bg: #EEF0F4;
+    --glean-gm-primary-fg: #14171D;
+    --glean-gm-primary-hover: #FFFFFF;
+    --glean-gm-accent: #8492EA;
+    --glean-gm-accent-ink: #9AA6F0;
+    --glean-gm-accent-wash: rgba(91, 106, 208, 0.16);
+    --glean-gm-accent-line: rgba(132, 146, 234, 0.30);
+    --glean-gm-fresh: #55BD8D;
+    --glean-gm-fresh-wash: rgba(85, 189, 141, 0.14);
+    --glean-gm-fresh-line: rgba(85, 189, 141, 0.28);
+
+    /* 插件自有基元（暗色）：与浅色一一对应，仍独立于宿主配色。 */
+    --glean-surface-base: #1c1f26;
+    --glean-ink: #eef0f4;
+    --glean-ink-2: #b9c0ce;
+    --glean-ink-3: #848c9e;
+    --glean-line: #252a35;
+    --glean-line-strong: #323846;
+    --glean-danger: #f08a80;
+    --glean-ok: #55bd8d;
+    --glean-on-action: #14171d;
     --glean-on-danger: #2b0a08;
-    --glean-warning: #eab364;
-    --glean-surface-muted: #2a2f38;
+    --glean-warning: #dfa953;
+    --glean-surface-muted: #1f242e;
     --glean-color-action-faint: color-mix(in srgb, var(--glean-color-action) 8%, transparent);
 
-    --glean-color-action: #14B8A6;
-    --glean-color-action-hover: #2DD4BF;
-    --glean-color-data: #34D399;
-    --glean-app-background: #14161a;
+    --glean-color-action: #8492EA;
+    --glean-color-action-hover: #9AA6F0;
+    --glean-color-data: #55BD8D;
+    --glean-app-background: #14161b;
     --glean-card-surface: var(--glean-surface-base);
-    --glean-card-surface-elevated: #23272f;
-    --glean-surface-dark-contrast: #232a36;
-    --glean-accent-a: #14B8A6;
-    --glean-accent-b: #0D9488;
-    --glean-shadow-accent: 0 1px 4px rgba(20, 184, 166, 0.24);
-    --glean-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.24);
-    --glean-shadow-card-hover: 0 2px 10px rgba(0, 0, 0, 0.28);
-    --glean-shadow-float: 0 14px 36px rgba(0, 0, 0, 0.45);
-    --glean-shadow-control: 0 1px 2px rgba(0, 0, 0, 0.24);
+    --glean-card-surface-elevated: #181b22;
+    --glean-surface-dark-contrast: #14161b;
+    --glean-accent-a: #8492EA;
+    --glean-accent-b: #9AA6F0;
+    --glean-shadow-accent: 0 1px 4px rgba(91, 106, 208, 0.24);
+    --glean-shadow-card: none;
+    --glean-shadow-card-hover: none;
+    --glean-shadow-float: 0 12px 32px rgba(0, 0, 0, 0.45);
+    --glean-shadow-control: none;
     --glean-shadow-knob: 0 1px 2px rgba(0, 0, 0, 0.45);
-    --glean-grad-soft: color-mix(in srgb, var(--glean-color-action) 10%, var(--glean-card-surface));
-    --glean-border-soft: rgba(255, 255, 255, 0.09);
+    --glean-grad-soft: rgba(91, 106, 208, 0.16);
+    --glean-border-soft: #252a35;
     /* 暗色表面需要更明显的占位层级，避免低透明度骨架和选中态融入背景。 */
     --glean-skeleton: color-mix(in srgb, var(--glean-ink-2) 18%, var(--glean-app-background));
-    --glean-selection-surface: color-mix(in srgb, var(--glean-color-action) 12%, var(--glean-card-surface));
-    --glean-primary-soft: color-mix(in srgb, var(--glean-color-action) 15%, var(--glean-card-surface));
+    --glean-selection-surface: rgba(91, 106, 208, 0.16);
+    --glean-primary-soft: rgba(91, 106, 208, 0.16);
     --glean-metric-highlight: color-mix(in srgb, var(--glean-accent-b) 4%, var(--glean-card-surface));
     --glean-error-surface: color-mix(in srgb, var(--glean-danger) 12%, var(--glean-card-surface));
     --glean-status-surface: var(--glean-card-surface);
-    --glean-section-surface: #23272f;
-    --glean-inset-surface: #23272f;
+    --glean-section-surface: #181b22;
+    --glean-inset-surface: #1f242e;
     --glean-muted-badge-surface: color-mix(in srgb, var(--glean-ink-2) 12%, var(--glean-card-surface));
     --glean-st-inbox-text: #eab364;
     --glean-st-later-text: #93c5fd;
@@ -523,33 +573,35 @@
 
 /* 拾遗品牌变量作用域收敛：绝不污染全局 :root / 兄弟插件 */
 :where(.glean-dock-root, .glean-tab-root, .glean-dialog-root, .b3-dialog.glean-dialog-host, .glean-mobile-modal, .glean-mobile-fullscreen-dialog, .glean-reading-context-host, .glean-reading-context, .glean-panel, .glean-reader, .glean-settings, .glean-workbench, .glean-ann-editor-backdrop, .glean-ann-editor, .glean-dialog, .glean-popover, .glean-action-popover__body, .glean-reader-help, .glean-preview-pane) {
-    --lv-brand: #0D9488;
-    --lv-brand-hover: #0F766E;
-    --lv-brand-active: #115E59;
-    --lv-brand-soft: color-mix(in srgb, var(--lv-brand) 10%, transparent);
+    --lv-brand: var(--glean-gm-accent, #5B6AD0);
+    --lv-brand-hover: var(--glean-gm-accent-ink, #4756BC);
+    --lv-brand-active: #3F4DA8;
+    --lv-brand-soft: var(--glean-gm-accent-wash, #EEF0FD);
     --lv-accent-wheat: #FB923C;
     --glean-color-action: var(--lv-brand);
     --glean-color-action-hover: var(--lv-brand-hover);
     --glean-color-action-soft: var(--lv-brand-soft);
-    --glean-app-background: #f6f7f9;
-    --glean-card-surface-elevated: #f8f9fb;
-    --glean-surface-dark-contrast: #1e293b;
+    --glean-on-action: var(--glean-gm-primary-fg, #FFFFFF);
+    --glean-app-background: #f7f8fa;
+    --glean-card-surface-elevated: #fafbfd;
+    --glean-surface-dark-contrast: #1e2430;
     --glean-accent-a: var(--lv-brand);
     --glean-accent-b: var(--lv-brand-hover);
 }
 
 :where([data-theme-mode="dark"], [data-theme="dark"], body.body--dark, body.b3-theme-dark, .b3-theme-dark) :where(.glean-dock-root, .glean-tab-root, .glean-dialog-root, .b3-dialog.glean-dialog-host, .glean-mobile-modal, .glean-mobile-fullscreen-dialog, .glean-reading-context-host, .glean-reading-context, .glean-panel, .glean-reader, .glean-settings, .glean-workbench, .glean-ann-editor-backdrop, .glean-ann-editor, .glean-dialog, .glean-popover, .glean-action-popover__body, .glean-reader-help, .glean-preview-pane),
 :where(.glean-dock-root, .glean-tab-root, .glean-dialog-root, .b3-dialog.glean-dialog-host, .glean-mobile-modal, .glean-mobile-fullscreen-dialog, .glean-reading-context-host, .glean-reading-context, .glean-panel, .glean-reader, .glean-settings, .glean-workbench, .glean-ann-editor-backdrop, .glean-ann-editor, .glean-dialog, .glean-popover, .glean-action-popover__body, .glean-reader-help, .glean-preview-pane):where([data-theme-mode="dark"], [data-theme="dark"], .b3-theme-dark) {
-    --lv-brand: #14B8A6;
-    --lv-brand-hover: #2DD4BF;
-    --lv-brand-active: #0D9488;
-    --lv-brand-soft: color-mix(in srgb, var(--lv-brand) 13%, transparent);
+    --lv-brand: var(--glean-gm-accent, #8492EA);
+    --lv-brand-hover: var(--glean-gm-accent-ink, #9AA6F0);
+    --lv-brand-active: #5B6AD0;
+    --lv-brand-soft: var(--glean-gm-accent-wash, rgba(91, 106, 208, 0.16));
     --glean-color-action: var(--lv-brand);
     --glean-color-action-hover: var(--lv-brand-hover);
     --glean-color-action-soft: var(--lv-brand-soft);
-    --glean-app-background: #14161a;
-    --glean-card-surface-elevated: #23272f;
-    --glean-surface-dark-contrast: #232a36;
+    --glean-on-action: var(--glean-gm-primary-fg, #14171D);
+    --glean-app-background: #14161b;
+    --glean-card-surface-elevated: #181b22;
+    --glean-surface-dark-contrast: #14161b;
     --glean-accent-a: var(--lv-brand);
     --glean-accent-b: var(--lv-brand-hover);
 }
@@ -1442,6 +1494,24 @@
     color: var(--glean-color-action);
 }
 
+.glean-q--unregistered {
+    border-style: dashed;
+    border-color: color-mix(in srgb, var(--glean-border-soft) 80%, transparent);
+    background: transparent;
+    font-size: var(--glean-text-xs);
+    opacity: 0.88;
+
+    &:hover {
+        opacity: 1;
+        color: var(--glean-color-action);
+    }
+}
+
+.glean-candidates__subhint {
+    color: var(--glean-ink-2);
+    font-size: var(--glean-text-xs);
+}
+
 /* 读库键盘操作提示（T-3392）：桌面端行内快捷键，光标激活时加深。 */
 .glean-kbdhint {
     display: flex;
@@ -2127,7 +2197,7 @@
     color: var(--glean-reader-foreground, var(--glean-ink));
     font-size: var(--glean-reader-font-size, 1em);
     line-height: var(--glean-reader-line-height, 1.6);
-    max-width: var(--glean-reader-width, min(100%, 760px));
+    max-width: var(--glean-reader-width, min(100%, 680px));
     margin-inline: auto;
     min-height: 100%;
     padding: var(--glean-space-8) clamp(var(--glean-space-6), 5vw, 56px) var(--glean-space-16);
@@ -2200,8 +2270,8 @@ mark.glean-search-highlight {
 .glean-reader[data-reader-font-size="large"] .protyle-wysiwyg { --glean-reader-font-size: 1.1em; }
 .glean-reader[data-reader-line-height="compact"] .protyle-wysiwyg { --glean-reader-line-height: 1.35; }
 .glean-reader[data-reader-line-height="relaxed"] .protyle-wysiwyg { --glean-reader-line-height: 1.9; }
-.glean-reader[data-reader-width="narrow"] .protyle-wysiwyg { --glean-reader-width: 720px; }
-.glean-reader[data-reader-width="normal"] .protyle-wysiwyg { --glean-reader-width: 900px; }
+.glean-reader[data-reader-width="narrow"] .protyle-wysiwyg { --glean-reader-width: 600px; }
+.glean-reader[data-reader-width="normal"] .protyle-wysiwyg { --glean-reader-width: 680px; }
 .glean-reader[data-reader-width="wide"] .protyle-wysiwyg { --glean-reader-width: 1120px; }
 .glean-reader[data-reader-theme="paper"] { --glean-reader-background: var(--b3-theme-background-light); --glean-reader-foreground: var(--glean-ink); }
 .glean-reader[data-reader-theme="eye"] { --glean-reader-background: var(--b3-theme-surface-light); --glean-reader-foreground: var(--glean-ink-2); }
@@ -2918,6 +2988,12 @@ mark.glean-search-highlight {
 
 .glean-pulse-highlight {
     animation: glean-pulse 1.2s ease-out;
+}
+
+.glean-detached-overlay {
+    border-radius: var(--glean-radius-sm, 6px);
+    box-sizing: border-box;
+    pointer-events: none;
 }
 
 .glean-reader__selection-bar {
@@ -3998,15 +4074,29 @@ mark.glean-search-highlight {
     .glean-card__foot-right {
         display: inline-flex !important;
         align-items: center !important;
-        gap: 4px !important;
+        flex-wrap: nowrap !important;
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
+        gap: 6px !important;
         margin-left: auto !important;
 
         .glean-btn {
-            height: 24px !important;
-            min-height: 24px !important;
-            padding: 0 8px !important;
-            font-size: 11px !important;
-            border-radius: var(--glean-radius-sm) !important;
+            height: 28px !important;
+            min-height: 28px !important;
+            padding: 0 10px !important;
+            font-size: 12px !important;
+            white-space: nowrap !important;
+            border-radius: 7px !important;
+        }
+
+        @media (max-width: 640px) {
+            .glean-btn {
+                height: auto !important;
+                min-height: 36px !important;
+                padding: 6px 12px !important;
+                font-size: 12px !important;
+                border-radius: 8px !important;
+            }
         }
     }
 }
@@ -5093,6 +5183,11 @@ mark.glean-search-highlight {
     &--archive {
         color: var(--glean-ink-2);
     }
+
+    &--unregister {
+        color: var(--glean-ink-2);
+        border-style: dashed;
+    }
 }
 
 .glean-rank-controls {
@@ -5999,9 +6094,17 @@ mark.glean-search-highlight {
     }
 
     &.glean-btn--pri {
-        background: var(--glean-grad);
-        color: var(--glean-on-action);
-        box-shadow: var(--glean-shadow-accent);
+        background: var(--glean-gm-primary-bg, #1E2430);
+        border: 1px solid var(--glean-gm-primary-bg, #1E2430);
+        color: var(--glean-gm-primary-fg, #FFFFFF);
+        min-height: 36px;
+        border-radius: 8px;
+        box-shadow: none;
+
+        &:hover:not(:disabled) {
+            background: var(--glean-gm-primary-hover, #2C3445);
+            border-color: var(--glean-gm-primary-hover, #2C3445);
+        }
     }
 
     &.glean-btn--ghost {
@@ -11332,11 +11435,13 @@ mark.glean-search-highlight {
     }
 
     .glean-stats__overview > .glean-stats__toolbar--actions .glean-btn--pri {
-        flex: 1 1 100%;
+        flex: 0 0 auto;
+        width: 100%;
     }
 
     .glean-stats__overview > .glean-stats__toolbar--actions .glean-btn--ghost {
-        flex: 1 1 120px;
+        flex: 0 0 auto;
+        width: 100%;
         min-width: 0;
     }
 }
@@ -15054,6 +15159,8 @@ body.b3-theme-dark .glean-panel--mobile,
     bottom: calc(66px + env(safe-area-inset-bottom, 12px));
     transform: translateX(-50%);
     z-index: 12;
+    max-width: calc(100vw - 16px);
+    box-sizing: border-box;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -15108,7 +15215,7 @@ body.b3-theme-dark .glean-panel--mobile,
 .glean-mobile-sheet-backdrop {
     position: fixed;
     inset: 0;
-    z-index: 20;
+    z-index: 120;
     background: rgba(0, 0, 0, 0.45);
     display: flex;
     flex-direction: column;
@@ -15713,8 +15820,8 @@ body.b3-theme-dark .glean-panel--mobile,
 /* ══════════ 暗黑主题下小驴拾遗设置页与双端操作栏强化 ══════════ */
 :is([data-theme-mode="dark"], [data-appearance="dark"], body.body--dark, body.theme--dark, html.dark, body.dark) .glean-settings {
     .glean-settings__tab--on {
-        background: color-mix(in srgb, var(--glean-pri, #0d9488) 22%, var(--glean-surface, #1e222d)) !important;
-        color: var(--glean-pri, #2dd4bf) !important;
+        background: color-mix(in srgb, var(--glean-gm-accent, #8492EA) 20%, var(--glean-gm-surface, #1C1F26)) !important;
+        color: var(--glean-gm-accent-ink, #9AA6F0) !important;
         font-weight: 600 !important;
     }
 
@@ -15728,8 +15835,8 @@ body.b3-theme-dark .glean-panel--mobile,
         border-color: rgba(255, 255, 255, 0.12) !important;
 
         &--active {
-            border-color: var(--glean-pri, #2dd4bf) !important;
-            box-shadow: 0 0 0 2px color-mix(in srgb, var(--glean-pri, #2dd4bf) 30%, transparent) !important;
+            border-color: var(--glean-gm-accent, #8492EA) !important;
+            box-shadow: 0 0 0 2px color-mix(in srgb, var(--glean-gm-accent, #8492EA) 30%, transparent) !important;
         }
     }
 }
@@ -16166,6 +16273,8 @@ body.b3-theme-dark .glean-panel--mobile,
     right: 24px !important;
     z-index: 99 !important;
     width: auto !important;
+    max-width: calc(100vw - 24px) !important;
+    box-sizing: border-box !important;
     height: 36px !important;
     min-height: 36px !important;
     padding: 0 10px !important;
@@ -16176,14 +16285,51 @@ body.b3-theme-dark .glean-panel--mobile,
     gap: 8px !important;
     border-radius: var(--glean-radius-pill) !important;
 
+    .glean-reading-context__main,
+    .glean-reading-context__actions > :not(.glean-reading-context__pill-toggle) {
+        display: none !important;
+    }
+
     .glean-reading-context__actions {
         flex: 0 0 auto !important;
+        max-width: 100% !important;
     }
 
     &:hover,
     &:focus-within {
-        max-width: min(92vw, 760px);
-        padding: 0 12px !important;
+        max-width: min(calc(100vw - 24px), 760px) !important;
+        height: auto !important;
+        min-height: 36px !important;
+        padding: 4px 12px !important;
+        flex-wrap: wrap !important;
+
+        .glean-reading-context__main {
+            display: flex !important;
+            max-width: 100% !important;
+        }
+
+        .glean-reading-context__actions {
+            flex-wrap: wrap !important;
+        }
+
+        .glean-reading-context__actions > :not(.glean-reading-context__pill-toggle) {
+            display: inline-flex !important;
+        }
+    }
+}
+
+.glean-reading-context--pill.glean-reading-context--mobile,
+.glean-protyle--has-mobile-bar .glean-reading-context--pill {
+    bottom: calc(74px + env(safe-area-inset-bottom, 12px) + var(--glean-keyboard-inset, 0px)) !important;
+    right: 12px !important;
+    max-width: calc(100vw - 24px) !important;
+}
+
+@media (max-width: 640px) {
+    .glean-reading-context--pill {
+        bottom: calc(74px + env(safe-area-inset-bottom, 12px) + var(--glean-keyboard-inset, 0px)) !important;
+        right: 12px !important;
+        max-width: calc(100vw - 24px) !important;
     }
 }
 
@@ -16264,14 +16410,23 @@ body.b3-theme-dark .glean-panel--mobile,
 }
 
 /* 阅读器正文阅读纸感舞台与去噪（兼顾阅读模式 .protyle-preview > .b3-typography 与编辑模式 .protyle-wysiwyg） */
+.glean-reader__host .protyle-title {
+    display: none !important;
+}
+
+.glean-reader__host :is(.protyle-preview > .b3-typography h1, .protyle-wysiwyg [data-subtype="h1"]) {
+    font-size: 20px;
+    font-weight: 650;
+    line-height: 1.35;
+}
 .glean-reader[data-reader-font-size="small"] { --glean-reader-font-size: .92em; }
 .glean-reader[data-reader-font-size="normal"] { --glean-reader-font-size: 1em; }
 .glean-reader[data-reader-font-size="large"] { --glean-reader-font-size: 1.12em; }
 .glean-reader[data-reader-line-height="compact"] { --glean-reader-line-height: 1.4; }
 .glean-reader[data-reader-line-height="normal"] { --glean-reader-line-height: 1.65; }
 .glean-reader[data-reader-line-height="relaxed"] { --glean-reader-line-height: 1.92; }
-.glean-reader[data-reader-width="narrow"] { --glean-reader-width: 720px; }
-.glean-reader[data-reader-width="normal"] { --glean-reader-width: 880px; }
+.glean-reader[data-reader-width="narrow"] { --glean-reader-width: 600px; }
+.glean-reader[data-reader-width="normal"] { --glean-reader-width: 680px; }
 .glean-reader[data-reader-width="wide"] { --glean-reader-width: 1120px; }
 
 .glean-reader__host {
@@ -16299,7 +16454,7 @@ body.b3-theme-dark .glean-panel--mobile,
 .glean-reader__host .protyle-wysiwyg,
 .glean-reader__host .protyle-preview > .b3-typography {
     width: 100%;
-    max-width: var(--glean-reader-width, min(100%, 880px)) !important;
+    max-width: var(--glean-reader-width, min(100%, 680px)) !important;
     margin: 16px auto 40px !important;
     padding: 32px clamp(24px, 4.5vw, 56px) 72px !important;
     border-radius: var(--glean-radius-lg, 16px);
@@ -16378,8 +16533,8 @@ body.b3-theme-dark .glean-panel--mobile,
         transition: all 0.15s ease !important;
 
         &:hover:not(:disabled) {
-            background: color-mix(in srgb, var(--lv-brand, #0d9488) 12%, var(--glean-card-surface, #ffffff)) !important;
-            color: var(--lv-brand, #0d9488) !important;
+            background: var(--glean-gm-accent-wash, #EEF0FD) !important;
+            color: var(--glean-gm-accent-ink, #4756BC) !important;
         }
     }
 
@@ -16531,18 +16686,28 @@ body.b3-theme-dark .glean-panel--mobile,
 }
 
 /* 4. 暗黑模式兼容精修 */
-:where([data-theme-mode="dark"], body.body--dark, body.b3-theme-dark) {
+:where([data-theme-mode="dark"], [data-theme="dark"], body.body--dark, body.b3-theme-dark, .b3-theme-dark) {
+    .glean-reader[data-reader-theme="paper"] {
+        --glean-reader-background: #1a1815;
+        --glean-reader-foreground: #ede8df;
+    }
+    .glean-reader[data-reader-theme="eye"] {
+        --glean-reader-background: #141c18;
+        --glean-reader-foreground: #ddebe3;
+    }
     .glean-reader__host .protyle-wysiwyg {
         background: var(--glean-card-surface);
         border-color: rgba(255, 255, 255, 0.08);
     }
+    .glean-reader[data-reader-theme="paper"] .glean-reader__host .protyle-wysiwyg,
     .glean-reader[data-reader-theme="paper"] .protyle-wysiwyg {
-        background: #24211d;
-        color: #ede8df;
+        background: #24211d !important;
+        color: #ede8df !important;
     }
+    .glean-reader[data-reader-theme="eye"] .glean-reader__host .protyle-wysiwyg,
     .glean-reader[data-reader-theme="eye"] .protyle-wysiwyg {
-        background: #1b2520;
-        color: #ddebe3;
+        background: #1b2520 !important;
+        color: #ddebe3 !important;
     }
 }
 
@@ -16823,7 +16988,7 @@ body.b3-theme-dark .glean-panel--mobile,
     }
 }
 
-:where([data-theme-mode="dark"], body.body--dark, body.b3-theme-dark) {
+:where([data-theme-mode="dark"], [data-theme="dark"], body.body--dark, body.b3-theme-dark, .b3-theme-dark) {
     .glean-reader__host .protyle-preview > .b3-typography {
         background: var(--glean-card-surface);
         border-color: rgba(255, 255, 255, 0.08);
@@ -17275,6 +17440,1160 @@ body.b3-theme-dark .glean-panel--mobile,
     .glean-panel--mobile .glean-card,
     .glean-panel--mobile .glean-surf-card {
         padding: var(--glean-space-3) !important;
+    }
+}
+
+/* ============================================================================
+ * 风格 A · 石墨清雾（Graphite-Mist）家族统一 UI 重构层
+ * 对齐《小驴人脉》《小驴管家》与 doc#31：纯白画布 + 冷雾侧栏 + 沉静石墨黑主钮 + 1px 细线
+ * ============================================================================ */
+
+:is(.glean-panel, .glean-tab-root).glean-gm-shell:not(.glean-panel--mobile) {
+    background: var(--glean-gm-canvas);
+    color: var(--glean-gm-fg);
+}
+
+@container glean-shell (min-width: 760px) {
+    .glean-panel--shell.glean-gm-shell:not(.glean-panel--mobile) {
+        display: grid !important;
+        grid-template-columns: 204px minmax(0, 1fr) !important;
+        background: var(--glean-gm-canvas);
+
+        .glean-gm-rail {
+            width: 204px !important;
+            background: var(--glean-gm-rail) !important;
+            border-right: 1px solid var(--glean-gm-line) !important;
+            padding: 14px 10px 12px !important;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 0;
+            box-sizing: border-box;
+        }
+
+        .glean-workbench-rail__brand {
+            display: flex !important;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 9px;
+            padding: 4px 8px 12px;
+            margin-bottom: 8px;
+            border-bottom: 1px solid var(--glean-gm-line);
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .glean-gm-mark {
+            width: 26px !important;
+            height: 26px !important;
+            border-radius: 7px !important;
+            background: var(--glean-gm-primary-bg) !important;
+            color: var(--glean-gm-primary-fg) !important;
+            display: grid !important;
+            place-items: center;
+            font-size: 12px;
+            font-weight: 650;
+            flex-shrink: 0;
+            box-shadow: none !important;
+        }
+
+        .glean-gm-brand-text {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .glean-workbench-rail__name {
+            display: block !important;
+            font-size: 13px;
+            font-weight: 650;
+            line-height: 1.2;
+            color: var(--glean-gm-fg);
+        }
+
+        .glean-gm-brand-sub {
+            display: block;
+            font-size: 11px;
+            color: var(--glean-gm-muted);
+            margin-top: 2px;
+        }
+
+        .glean-workbench-rail__capture.glean-gm-primary-btn {
+            appearance: none;
+            border: 0 !important;
+            background: var(--glean-gm-primary-bg) !important;
+            color: var(--glean-gm-primary-fg) !important;
+            font-size: 12.5px !important;
+            font-weight: 550 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 6px !important;
+            padding: 8px 10px !important;
+            min-height: 36px !important;
+            height: auto !important;
+            width: 100% !important;
+            max-width: none !important;
+            border-radius: 8px !important;
+            cursor: pointer;
+            margin: 4px 0 10px !important;
+            box-shadow: none !important;
+            transition: background-color 120ms ease;
+
+            span {
+                display: inline !important;
+                font-size: 12.5px !important;
+                max-width: none !important;
+                overflow: visible !important;
+                color: var(--glean-gm-primary-fg) !important;
+            }
+
+            svg {
+                margin: 0 !important;
+            }
+
+            &:hover:not(:disabled) {
+                background: var(--glean-gm-primary-hover) !important;
+                transform: none !important;
+                box-shadow: none !important;
+            }
+        }
+
+        .glean-gm-rail-sec {
+            padding: 8px 9px 4px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--glean-gm-muted);
+        }
+
+        .glean-workbench-rail__nav {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 2px;
+            width: 100%;
+        }
+
+        .glean-gm-rail-item {
+            appearance: none;
+            border: 0 !important;
+            background: transparent;
+            color: var(--glean-gm-fg2);
+            font-size: 12.5px;
+            font-weight: 500;
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            gap: 6px;
+            padding: 7.5px 9px !important;
+            width: 100% !important;
+            min-height: 34px !important;
+            height: auto !important;
+            border-radius: 7px !important;
+            cursor: pointer;
+            text-align: left;
+            box-shadow: none !important;
+
+            span {
+                font-size: 12.5px !important;
+                line-height: 1.3 !important;
+                max-width: none !important;
+                overflow: visible !important;
+                text-overflow: clip !important;
+            }
+
+            &:hover {
+                background: var(--glean-gm-hover) !important;
+                color: var(--glean-gm-fg) !important;
+            }
+
+            &.glean-workbench-rail__item--on {
+                background: var(--glean-gm-accent-wash) !important;
+                color: var(--glean-gm-accent-ink) !important;
+                font-weight: 600;
+                box-shadow: none !important;
+
+                .glean-gm-rail-count {
+                    color: var(--glean-gm-accent-ink) !important;
+                }
+            }
+        }
+
+        .glean-gm-rail-main {
+            display: inline-flex !important;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+            flex: 1 1 auto;
+
+            span {
+                white-space: nowrap;
+            }
+        }
+
+        .glean-gm-rail-count {
+            font-size: 11px !important;
+            color: var(--glean-gm-muted);
+            flex-shrink: 0;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .glean-gm-rail-foot {
+            padding-top: 8px;
+            border-top: 1px solid var(--glean-gm-line);
+            display: grid;
+            gap: 2px;
+            width: 100%;
+        }
+
+        .glean-gm-body {
+            padding: 18px 22px 22px;
+            background: var(--glean-gm-canvas);
+            overflow-y: auto;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+    }
+}
+
+.glean-gm-svg {
+    width: 15px !important;
+    height: 15px !important;
+    flex-shrink: 0;
+    stroke: currentColor !important;
+    fill: none !important;
+    stroke-width: 1.65;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.glean-gm-svg--sm {
+    width: 13.5px !important;
+    height: 13.5px !important;
+}
+
+.glean-gm-lib-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px 16px;
+}
+
+.glean-gm-lib-title-group {
+    min-width: 0;
+}
+
+.glean-gm-heading {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 650;
+    letter-spacing: -0.015em;
+    color: var(--glean-gm-fg);
+    line-height: 1.3;
+}
+
+.glean-gm-subheading {
+    margin: 3px 0 0;
+    font-size: 12px;
+    color: var(--glean-gm-muted);
+    line-height: 1.45;
+}
+
+.glean-gm-header-right {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.glean-gm-seg {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    padding: 3px;
+    background: var(--glean-gm-subtle);
+    border-radius: 8px;
+    border: 1px solid var(--glean-gm-line);
+}
+
+.glean-gm-seg-btn {
+    appearance: none;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--glean-gm-muted);
+    font-size: 12px;
+    font-weight: 550;
+    font-variant-numeric: tabular-nums;
+    padding: 5px 10px;
+    min-height: 28px;
+    border-radius: 6px;
+    cursor: pointer;
+    white-space: nowrap;
+
+    &:hover {
+        color: var(--glean-gm-fg);
+    }
+
+    &.is-active {
+        background: var(--glean-gm-surface);
+        color: var(--glean-gm-fg);
+        border-color: var(--glean-gm-line);
+    }
+}
+
+.glean-gm-btn {
+    border: 1px solid var(--glean-gm-line2) !important;
+    background: var(--glean-gm-surface) !important;
+    color: var(--glean-gm-fg) !important;
+    border-radius: 8px !important;
+    font-size: 12px !important;
+    font-weight: 550 !important;
+    padding: 5px 12px !important;
+    min-height: 30px;
+    white-space: nowrap;
+    box-shadow: none !important;
+
+    &:hover:not(:disabled) {
+        background: var(--glean-gm-hover) !important;
+    }
+
+    &.glean-gm-btn--primary {
+        background: var(--glean-gm-primary-bg) !important;
+        border-color: var(--glean-gm-primary-bg) !important;
+        color: var(--glean-gm-primary-fg) !important;
+        min-height: 36px;
+        border-radius: 8px !important;
+
+        &:hover:not(:disabled) {
+            background: var(--glean-gm-primary-hover) !important;
+            border-color: var(--glean-gm-primary-hover) !important;
+        }
+    }
+
+    &.glean-gm-btn--accent,
+    &.glean-gm-btn--accent.is-active {
+        background: var(--glean-gm-accent-wash) !important;
+        border-color: var(--glean-gm-accent-line) !important;
+        color: var(--glean-gm-accent-ink) !important;
+    }
+
+    &.glean-gm-btn--fresh {
+        background: var(--glean-gm-fresh-wash) !important;
+        border-color: var(--glean-gm-fresh-line) !important;
+        color: var(--glean-gm-fresh) !important;
+        cursor: default;
+    }
+}
+
+.glean-gm-filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.glean-gm-search-field {
+    flex: 1 1 220px;
+    min-width: 0;
+    background: var(--glean-gm-surface) !important;
+    border: 1px solid var(--glean-gm-line2) !important;
+    border-radius: 8px !important;
+    min-height: 34px;
+    box-shadow: none !important;
+}
+
+.glean-gm-filter-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.glean-gm-select {
+    border: 1px solid var(--glean-gm-line2) !important;
+    background: var(--glean-gm-surface) !important;
+    color: var(--glean-gm-fg) !important;
+    border-radius: 7px !important;
+    font-size: 12px !important;
+    min-height: 32px;
+    padding: 4px 10px;
+}
+
+.glean-gm-icon-btn {
+    min-height: 32px;
+    min-width: 32px;
+    border: 1px solid var(--glean-gm-line2) !important;
+    background: var(--glean-gm-surface) !important;
+    border-radius: 7px !important;
+}
+
+.glean-gm-count-dot {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: var(--glean-gm-accent);
+    color: var(--glean-gm-primary-fg, #ffffff);
+    font-size: 10.5px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+:where([data-theme-mode="dark"], [data-theme="dark"], body.body--dark, body.b3-theme-dark, .b3-theme-dark) .glean-gm-count-dot {
+    color: #14161B;
+}
+
+.glean-gm-filter-drawer {
+    background: var(--glean-gm-surface);
+    border: 1px solid var(--glean-gm-line);
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: grid;
+    gap: 10px;
+}
+
+.glean-gm-saved-views {
+    padding-top: 10px;
+    border-top: 1px solid var(--glean-gm-line);
+}
+
+/* 64 / 36 呼吸感列表 + 静谧速览栏 */
+.glean-gm-lib-sheet {
+    background: var(--glean-gm-surface);
+    border: 1px solid var(--glean-gm-line);
+    border-radius: 10px;
+    overflow: hidden;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+    flex: 1 1 auto;
+    min-height: 360px;
+
+    &.glean-lib--preview {
+        grid-template-columns: minmax(0, 64fr) minmax(0, 36fr);
+    }
+
+    &.glean-lib--has-facet-rail {
+        grid-template-columns: var(--glean-rail-w, 204px) 6px minmax(0, 1fr);
+
+        &.glean-lib--preview {
+            grid-template-columns: var(--glean-rail-w, 204px) 6px minmax(0, 64fr) minmax(0, 36fr);
+        }
+    }
+}
+
+.glean-gm-lib-sheet.glean-lib--preview > .glean-lib__main {
+    display: flex !important;
+}
+
+@container glean-workbench (max-width: 640px) {
+    .glean-gm-lib-sheet.glean-lib--preview {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .glean-gm-lib-sheet .glean-gm-preview-pane {
+        display: none !important;
+    }
+}
+
+.glean-gm-list-pane {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--glean-gm-surface);
+}
+
+.glean-gm-dtable {
+    display: flex;
+    flex-direction: column;
+    gap: 0 !important;
+    padding: 0 !important;
+}
+
+.glean-panel .glean-drow.glean-gm-row {
+    margin: 0 !important;
+    padding: 13px 16px !important;
+    border: 0 !important;
+    border-bottom: 1px solid var(--glean-gm-line) !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: var(--glean-gm-surface) !important;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    transition: background-color 120ms ease;
+
+    &:last-child {
+        border-bottom: 0 !important;
+    }
+
+    &:hover {
+        background: var(--glean-gm-hover) !important;
+        box-shadow: none !important;
+        border-color: var(--glean-gm-line) !important;
+    }
+
+    &.is-selected,
+    &.glean-drow--preview {
+        background: var(--glean-gm-accent-wash) !important;
+        box-shadow: none !important;
+    }
+
+    .glean-drow__ti {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--glean-gm-fg);
+        line-height: 1.42;
+        text-align: left;
+    }
+
+    .glean-drow__ops {
+        opacity: 1 !important;
+        flex-wrap: nowrap !important;
+        white-space: nowrap !important;
+        max-width: none !important;
+        flex-shrink: 0 !important;
+        align-self: center;
+        justify-content: flex-end !important;
+        gap: 6px !important;
+
+        > .glean-btn,
+        .glean-action-popover__trigger {
+            white-space: nowrap !important;
+            flex-shrink: 0 !important;
+            min-height: 30px;
+            border-radius: 8px !important;
+        }
+    }
+}
+
+.glean-gm-row-sub {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    font-size: 12px;
+    color: var(--glean-gm-muted);
+    margin-top: 4px !important;
+}
+
+.glean-gm-mini-progress {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.glean-gm-mini-track {
+    width: 44px;
+    height: 3.5px;
+    border-radius: 999px;
+    background: var(--glean-gm-subtle);
+    overflow: hidden;
+    display: inline-block;
+}
+
+.glean-gm-mini-fill {
+    height: 100%;
+    background: var(--glean-gm-accent);
+    border-radius: 999px;
+    display: block;
+}
+
+.glean-gm-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11.5px;
+    font-weight: 550;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--glean-gm-subtle);
+    color: var(--glean-gm-fg2);
+    white-space: nowrap;
+
+    &.glean-gm-pill--accent {
+        background: var(--glean-gm-accent-wash);
+        color: var(--glean-gm-accent-ink);
+    }
+
+    &.glean-gm-pill--fresh {
+        background: var(--glean-gm-fresh-wash);
+        color: var(--glean-gm-fresh);
+    }
+}
+
+.glean-gm-preview-pane {
+    background: var(--glean-gm-rail) !important;
+    border-left: 1px solid var(--glean-gm-line) !important;
+    padding: 18px !important;
+    display: flex;
+    flex-direction: column;
+    min-width: 0 !important;
+    flex-basis: auto !important;
+    width: 100% !important;
+    box-sizing: border-box;
+}
+
+.glean-gm-preview-card {
+    display: flex;
+    flex-direction: column;
+    gap: 13px;
+    flex: 1 1 auto;
+}
+
+.glean-gm-preview-eyebrow {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--glean-gm-muted);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.glean-gm-preview-title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 650;
+    line-height: 1.4;
+    color: var(--glean-gm-fg);
+}
+
+.glean-gm-preview-meta {
+    font-size: 12px;
+    color: var(--glean-gm-muted);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+}
+
+.glean-gm-preview-desc {
+    margin: 0;
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: var(--glean-gm-fg2);
+}
+
+.glean-gm-preview-box {
+    padding: 12px 13px;
+    background: var(--glean-gm-surface);
+    border: 1px solid var(--glean-gm-line);
+    border-radius: 8px;
+    font-size: 12.5px;
+    line-height: 1.65;
+    color: var(--glean-gm-fg2);
+
+    b {
+        display: block;
+        font-size: 11.5px;
+        color: var(--glean-gm-muted);
+        margin-bottom: 4px;
+        font-weight: 600;
+    }
+
+    p {
+        margin: 0;
+    }
+}
+
+.glean-gm-preview-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.glean-gm-preview-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: auto;
+    padding-top: 12px;
+    border-top: 1px solid var(--glean-gm-line);
+}
+
+.glean-gm-preview-full-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--glean-gm-line);
+}
+
+.glean-gm-picks-list {
+    display: grid;
+    gap: 8px;
+}
+
+.glean-gm-pick-card {
+    padding: 10px 12px;
+    background: var(--glean-gm-surface);
+    border: 1px solid var(--glean-gm-line);
+    border-radius: 8px;
+    display: grid;
+    gap: 4px;
+}
+
+.glean-gm-pick-title {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    text-align: left;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--glean-gm-fg);
+    cursor: pointer;
+
+    &:hover {
+        color: var(--glean-gm-accent-ink);
+    }
+}
+
+.glean-gm-footer-note {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--glean-gm-muted);
+}
+
+/* 阅读器伴生栏三级入口次级切换与制卡按钮 */
+.glean-gm-subnav {
+    display: flex;
+    gap: 4px;
+    padding: 3px;
+    background: var(--glean-gm-subtle);
+    border: 1px solid var(--glean-gm-line);
+    border-radius: 7px;
+}
+
+.glean-gm-subnav__btn {
+    flex: 1 1 0;
+    appearance: none;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--glean-gm-muted);
+    font-size: 11.5px;
+    font-weight: 550;
+    padding: 4px 6px;
+    border-radius: 5px;
+    cursor: pointer;
+
+    &.is-active {
+        background: var(--glean-gm-surface);
+        color: var(--glean-gm-fg);
+        border-color: var(--glean-gm-line);
+    }
+}
+
+/* 高亮摘录墙石墨清雾适配 */
+.glean-gm-highlights {
+    background: var(--glean-gm-canvas);
+    padding: 18px 22px 24px !important;
+    gap: 14px !important;
+
+    .glean-highlights__title {
+        font-size: 20px !important;
+        font-weight: 650 !important;
+        color: var(--glean-gm-fg);
+    }
+
+    .glean-highlights__subtitle {
+        margin-top: 3px !important;
+        font-size: 12px !important;
+        color: var(--glean-gm-muted);
+    }
+
+    .glean-gm-metric-strip {
+        background: var(--glean-gm-surface);
+        border: 1px solid var(--glean-gm-line);
+        border-radius: 10px;
+        box-shadow: none !important;
+    }
+
+    .glean-highlights__items:not(.glean-highlights__items--grouped) {
+        padding-left: 0 !important;
+
+        &::before {
+            display: none !important;
+            content: none !important;
+        }
+
+        .glean-highlights__item::after {
+            display: none !important;
+            content: none !important;
+        }
+    }
+
+    .glean-highlights__item {
+        background: var(--glean-gm-surface) !important;
+        border: 1px solid var(--glean-gm-line) !important;
+        border-left-width: 3px !important;
+        border-radius: 10px !important;
+        box-shadow: none !important;
+        padding: 14px 16px !important;
+        height: 100%;
+        box-sizing: border-box;
+    }
+
+    .glean-gm-hl-foot {
+        margin-top: auto;
+        padding-top: 8px;
+        border-top: 1px solid var(--glean-gm-line);
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 6px;
+    }
+
+    .glean-gm-hl-foot-left {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+}
+
+/* 统计与工具箱容器 */
+.glean-gm-tools-shell {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.glean-gm-popover-sep {
+    height: 1px;
+    background: var(--glean-gm-line);
+    margin: 4px 2px;
+}
+
+.glean-gm-palette-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 6px;
+}
+
+.glean-palette-dot-mini.is-active {
+    outline: 2px solid var(--glean-gm-fg);
+    outline-offset: 1px;
+}
+
+/* 收录文章轻弹窗 */
+.glean-gm-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 260;
+    background: rgba(16, 18, 23, 0.38);
+    display: grid;
+    place-items: center;
+    padding: 16px;
+}
+
+.glean-gm-modal {
+    width: 100%;
+    max-width: 460px;
+    background: var(--glean-gm-surface);
+    border: 1px solid var(--glean-gm-line2);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--glean-shadow-float);
+}
+
+.glean-gm-modal__head {
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--glean-gm-line);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+
+    b {
+        font-size: 14.5px;
+        font-weight: 650;
+        color: var(--glean-gm-fg);
+    }
+}
+
+.glean-gm-modal__body {
+    padding: 14px 16px 16px;
+    display: grid;
+    gap: 10px;
+}
+
+.glean-gm-modal__desc {
+    margin: 0;
+    font-size: 12.5px;
+    color: var(--glean-gm-muted);
+    line-height: 1.55;
+}
+
+.glean-gm-modal__divider {
+    height: 1px;
+    background: var(--glean-gm-line);
+    margin: 2px 0;
+}
+
+.glean-gm-modal__foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.glean-gm-modal__foot-right {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Dock 窄侧栏子状态切换条 & 移动端适配 */
+.glean-gm-dock-subbar {
+    padding: 2px 0 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    &::-webkit-scrollbar { display: none; }
+
+    .glean-gm-seg {
+        width: 100%;
+    }
+
+    .glean-gm-seg-btn {
+        flex: 1 1 auto;
+        font-size: 11.5px;
+        padding: 4px 8px;
+        text-align: center;
+    }
+}
+
+.glean-gm-mobile-subbar {
+    padding: 4px 10px 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    &::-webkit-scrollbar { display: none; }
+}
+
+.glean-gm-card {
+    border: 1px solid var(--glean-gm-line) !important;
+    border-radius: 10px !important;
+    background: var(--glean-gm-surface) !important;
+    box-shadow: none !important;
+}
+
+/* 全局石墨清雾按钮/高亮流转/移动端视觉统一 */
+.glean-gm-shell .glean-btn--pri,
+.glean-gm-shell .glean-card__foot-right .glean-btn--pri,
+.glean-gm-shell .glean-drow__ops .glean-gm-btn--primary,
+.glean-gm-shell .glean-head-action--primary,
+.glean-gm-highlights .glean-btn--pri {
+    background: var(--glean-gm-primary-bg) !important;
+    border-color: var(--glean-gm-primary-bg) !important;
+    color: var(--glean-gm-primary-fg) !important;
+    box-shadow: none !important;
+}
+
+.glean-gm-shell .glean-card__foot-right {
+    flex-wrap: nowrap !important;
+    white-space: nowrap !important;
+
+    > .glean-btn,
+    .glean-action-popover__trigger {
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
+    }
+}
+
+.glean-gm-highlights .glean-gm-seg-btn {
+    border-radius: 6px !important;
+    min-height: 28px !important;
+    padding: 4px 10px !important;
+    background: transparent !important;
+    color: var(--glean-gm-muted) !important;
+    border: 1px solid transparent !important;
+    font-variant-numeric: tabular-nums;
+
+    &.is-active {
+        background: var(--glean-gm-surface) !important;
+        color: var(--glean-gm-fg) !important;
+        border-color: var(--glean-gm-line) !important;
+    }
+}
+
+.glean-gm-highlights .glean-gm-btn {
+    border-radius: 8px !important;
+    min-height: 36px !important;
+}
+
+.glean-gm-highlights .glean-highlights__pipeline-btn {
+    background: var(--glean-gm-accent-wash) !important;
+    border-color: var(--glean-gm-accent-line) !important;
+    color: var(--glean-gm-accent-ink) !important;
+    box-shadow: none !important;
+}
+
+.glean-gm-highlights .glean-highlights__pipeline-btn--enrolled {
+    background: var(--glean-gm-fresh-wash) !important;
+    border-color: var(--glean-gm-fresh-line) !important;
+    color: var(--glean-gm-fresh) !important;
+}
+
+.glean-panel--mobile.glean-gm-shell {
+    background: var(--glean-gm-canvas);
+
+    .glean-panel__head {
+        padding: 0 !important;
+        background: var(--glean-gm-surface);
+        border-bottom: 1px solid var(--glean-gm-line);
+    }
+
+    .glean-mobile-topbar {
+        min-height: 52px !important;
+        padding: 4px 8px !important;
+        gap: 4px !important;
+        border-bottom: 0 !important;
+        background: var(--glean-gm-surface) !important;
+    }
+
+    .glean-mobile-topbar__back {
+        width: 44px !important;
+        min-width: 44px !important;
+        height: 44px !important;
+        min-height: 44px !important;
+    }
+
+    .glean-mobile-topbar__mark {
+        width: 26px !important;
+        height: 26px !important;
+        border-radius: 7px !important;
+        background: var(--glean-gm-primary-bg) !important;
+        color: var(--glean-gm-primary-fg) !important;
+        font-size: 12px !important;
+        font-weight: 650 !important;
+        display: grid !important;
+        place-items: center !important;
+        box-shadow: none !important;
+    }
+
+    .glean-mobile-topbar__copy {
+        flex: 1 1 auto;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .glean-mobile-topbar__title {
+        font-size: 14px !important;
+        font-weight: 650 !important;
+        color: var(--glean-gm-fg) !important;
+        margin: 0 !important;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .glean-mobile-topbar__sub {
+        font-size: 11px !important;
+        color: var(--glean-gm-muted) !important;
+    }
+
+    .glean-mobile-task--ready {
+        padding: 4px !important;
+        border: 0 !important;
+        background: transparent !important;
+
+        .glean-mobile-task__label {
+            position: absolute !important;
+            width: 1px !important;
+            height: 1px !important;
+            padding: 0 !important;
+            margin: -1px !important;
+            overflow: hidden !important;
+            clip: rect(0, 0, 0, 0) !important;
+            white-space: nowrap !important;
+            border: 0 !important;
+        }
+    }
+
+    .glean-gm-mobile-cap-btn {
+        min-width: 44px !important;
+        min-height: 44px !important;
+        height: 44px !important;
+        padding: 0 11px !important;
+        border-radius: 9px !important;
+        font-size: 12px !important;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .glean-mobile-nav {
+        background: var(--glean-gm-surface) !important;
+        border-top: 1px solid var(--glean-gm-line) !important;
+    }
+
+    .glean-mobile-nav__item {
+        color: var(--glean-gm-muted) !important;
+    }
+
+    .glean-mobile-nav__item--on {
+        background: var(--glean-gm-accent-wash) !important;
+        color: var(--glean-gm-accent-ink) !important;
+    }
+
+    .glean-btn--sm,
+    .glean-card__foot-right .glean-btn,
+    .glean-drow__ops .glean-btn,
+    .glean-gm-seg-btn {
+        height: auto !important;
+        min-height: 36px !important;
+        padding: 6px 12px !important;
+        font-size: 12px !important;
+        border-radius: 8px !important;
+    }
+
+    .glean-gm-highlights .glean-gm-btn,
+    .glean-gm-highlights .glean-gm-seg-btn,
+    .glean-gm-highlights .glean-action-popover__trigger {
+        min-height: 44px !important;
+    }
+}
+
+.glean-gm-highlights.glean-panel--mobile {
+    .glean-gm-btn,
+    .glean-gm-seg-btn,
+    .glean-action-popover__trigger {
+        min-height: 44px !important;
+    }
+}
+
+@media (max-width: 600px) {
+    .glean-gm-highlights {
+        padding: 12px !important;
+    }
+    .glean-gm-tools-shell .glean-gm-lib-header {
+        padding: 10px 12px 0;
+    }
+    .glean-gm-shell .glean-btn--sm,
+    .glean-gm-shell .glean-gm-seg-btn {
+        height: auto !important;
+        min-height: 36px !important;
+    }
+    .glean-gm-highlights .glean-gm-btn,
+    .glean-gm-highlights .glean-gm-seg-btn,
+    .glean-gm-highlights .glean-action-popover__trigger,
+    .glean-panel--mobile .glean-gm-highlights .glean-gm-btn,
+    .glean-panel--mobile .glean-gm-highlights .glean-gm-seg-btn {
+        height: auto !important;
+        min-height: 44px !important;
     }
 }
 

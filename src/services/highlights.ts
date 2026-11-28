@@ -9,7 +9,7 @@ import {
     renderArticleHighlightsMarkdown, type AnnotationReply, type ArticleHighlightGroup,
     type HighlightExportLabels, type HighlightItem, type HighlightRoot,
 } from "../domain/highlights";
-import { CLIP_STATUSES, parseClipAttrs, parseUserTags } from "../domain/schema";
+import { ATTR, CLIP_STATUSES, parseClipAttrs, parseUserTags } from "../domain/schema";
 import { withDocLock } from "../libs/notice";
 import {
     batchReadClipAttrs, readClip, readHighlightColor, reconcileIndex,
@@ -147,9 +147,14 @@ function toHighlight(row: BlockRow, root: HighlightRoot, options: ToHighlightOpt
     const highlight = highlightMarker(ial);
     const isSiyuanComment = ial.includes('custom-siyuan-comment="true"') || ial.includes("custom-siyuan-comment=true");
     const ialMemo = parseIalAttr(ial, "memo");
-    const isMemoBlock = Boolean(ialMemo) && !ial.includes("custom-glean-slot=");
+    const hasPluginHighlightAttr = Boolean(highlight.trim())
+        || parseIalAttr(ial, ATTR.gleanHighlight).toLowerCase() === "true"
+        || /(?:^|[\s{])custom-lv-glean-highlight=true(?:\s|$|\})/i.test(ial);
+    const isMemoBlock = !hasPluginHighlightAttr && !isSiyuanComment && Boolean(ialMemo) && !ial.includes("custom-glean-slot=");
+    const carded = parseIalAttr(ial, ATTR.gleanCarded).toLowerCase() === "true"
+        || new RegExp(`(?:^|[\\s{])${ATTR.gleanCarded}=true(?:\\s|$|\\})`, "i").test(ial);
 
-    if (row.type === "d" || (row.type !== "b" && !highlight.trim() && !isSiyuanComment && !isMemoBlock)) return null;
+    if (row.type === "d" || (row.type !== "b" && !hasPluginHighlightAttr && !isSiyuanComment && !isMemoBlock)) return null;
     if (!isHighlightId(row.id) || typeof row.content !== "string" || typeof row.markdown !== "string") {
         throw new HighlightExportError("readFailed");
     }
@@ -279,6 +284,7 @@ function toHighlight(row: BlockRow, root: HighlightRoot, options: ToHighlightOpt
         groupMasterId,
         annotationKind,
         annotationTag,
+        ...(carded ? { carded: true } : {}),
         markdown: row.markdown,
         source: { content: row.content, markdown: row.markdown, type: row.type, highlight },
     };
@@ -788,7 +794,34 @@ export async function deleteAnnotation(
         return;
     }
 
-    if (mode === "unmark" || item.source?.type !== "b") {
+    let canDeleteBlock = mode === "delete-block" && item.source?.type === "b" && item.annotationKind !== "native-memo";
+    let liveHasNativeMemo = false;
+    if (canDeleteBlock) {
+        const hasItemMarker = Boolean(item.source?.highlight?.trim());
+        let hasAttrMarker = false;
+        try {
+            const liveAttrs = await getBlockAttrs(targetId);
+            if (liveAttrs && typeof liveAttrs === "object") {
+                const gleanFlag = String((liveAttrs as Record<string, unknown>)[ATTR.gleanHighlight] ?? "").trim();
+                const clipFlag = String((liveAttrs as Record<string, unknown>)["custom-clip-highlight"] ?? "").trim();
+                hasAttrMarker = Boolean(gleanFlag || clipFlag);
+                liveHasNativeMemo = !hasAttrMarker && Boolean(String((liveAttrs as Record<string, unknown>).memo ?? "").trim());
+            }
+        } catch (err) {
+            if (!item.sourceMissing && !isMissingBlockError(err)) {
+                hasAttrMarker = false;
+            } else if (hasItemMarker) {
+                hasAttrMarker = true;
+            }
+        }
+        if (!hasAttrMarker && !hasItemMarker) {
+            canDeleteBlock = false;
+        }
+    }
+
+    if (!canDeleteBlock) {
+        const markUnmarked = mode === "unmark" || item.source?.type === "b";
+        const clearNativeMemo = item.annotationKind === "native-memo" || liveHasNativeMemo;
         try {
             await writeAnnotationAttrs(targetId, {
                 "custom-clip-highlight": null,
@@ -796,8 +829,8 @@ export async function deleteAnnotation(
                 "custom-clip-hl-tag": null,
                 "custom-clip-hl-replies": null,
                 "custom-lv-glean-highlight": null,
-                "custom-clip-unmarked": mode === "unmark" ? "true" : null,
-                ...(item.annotationKind === "native-memo" ? { memo: null } : {}),
+                "custom-clip-unmarked": markUnmarked ? "true" : null,
+                ...(clearNativeMemo ? { memo: null } : {}),
             });
         } catch (err) {
             if (!item.sourceMissing && !isMissingBlockError(err)) throw err;

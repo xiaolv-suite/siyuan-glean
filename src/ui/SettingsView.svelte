@@ -13,8 +13,6 @@ import { inspectCustomEndpointSecurity } from "../domain/ai-direct";
 import { t } from "../libs/i18n";
 import { DEFAULT_SETTINGS, cloneSettings, loadSettings, mergeSettingsDraft, normalizeSettings, SettingsConflictError, settingsEqual, type GleanSettings } from "../services/settings";
 import { loadUiPrefs, saveUiPrefs } from "../services/prefs";
-import { THEME_PALETTES, type ThemePaletteId } from "../domain/theme-palette";
-import { applyThemePaletteToDom } from "../libs/theme-palette-controller";
 import type { GleanFacade } from "../types";
 import { exportAnonymousDiagnostic, exportLibraryCsv, exportLibraryMarkdownArchive } from "../services/library-export-service";
 import { installEscapeHandler } from "../libs/modal-focus";
@@ -73,7 +71,6 @@ let aiArticleQuestion = $state(DEFAULT_SETTINGS.ai.articleQuestionEnabled);
 let aiActions = $state(DEFAULT_SETTINGS.ai.presetActions);
 let usageCount = $state<number | null>(null);
 let dailyCount = $state(DEFAULT_SETTINGS.resurface.dailyCount);
-let currentThemePalette = $state<ThemePaletteId>("teal");
 let includeDone = $state(DEFAULT_SETTINGS.resurface.includeDoneHighlights);
 let inboxQuota = $state(DEFAULT_SETTINGS.inboxQuota);
 let staleDays = $state(DEFAULT_SETTINGS.staleDays);
@@ -297,7 +294,6 @@ onMount(() => {
     void loadUiPrefs(facade.pluginInstance).then((prefs) => {
         if (active) {
             showNewbieHint = !prefs.onboardingDone && !prefs.onboardingHintDismissed;
-            currentThemePalette = prefs.themePalette || "teal";
         }
     }).catch(() => undefined);
     void loadNotebookOptions();
@@ -325,17 +321,6 @@ onMount(() => {
         document.removeEventListener("glean:data-changed", refreshUsage);
     };
 });
-
-async function selectThemePalette(id: ThemePaletteId): Promise<void> {
-    currentThemePalette = id;
-    applyThemePaletteToDom(null, id);
-    try {
-        await saveUiPrefs(facade.pluginInstance, { themePalette: id });
-        facade.notifyDataChanged();
-    } catch (error) {
-        console.warn("[glean] 保存主题色彩失败:", error);
-    }
-}
 
 async function loadNotebookOptions(): Promise<void> {
     if (notebookLoading) return;
@@ -775,49 +760,6 @@ async function doMountBoard() {
             {/if}
             {#if activeSection === "workspace"}
     <div class="glean-settings__section glean-settings__section--core glean-settings__section--workspace">
-        <div class="glean-set-group glean-theme-palette-group">
-            <div class="glean-set-row">
-                <div class="glean-set-row__lb">
-                    {t(i18n, "settings.themePalette")}
-                    <div class="glean-set-row__desc">{t(i18n, "settings.themePaletteDesc")}</div>
-                </div>
-            </div>
-            <div class="glean-palette-grid" role="radiogroup" aria-label={t(i18n, "settings.themePalette")}>
-                {#each THEME_PALETTES as palette, idx (palette.id)}
-                    <button
-                        type="button"
-                        class="glean-palette-card"
-                        class:glean-palette-card--active={currentThemePalette === palette.id}
-                        role="radio"
-                        aria-checked={currentThemePalette === palette.id}
-                        tabindex={currentThemePalette === palette.id ? 0 : -1}
-                        onclick={() => void selectThemePalette(palette.id)}
-                        onkeydown={(e) => {
-                            if (e.key !== "ArrowRight" && e.key !== "ArrowDown" && e.key !== "ArrowLeft" && e.key !== "ArrowUp") return;
-                            e.preventDefault();
-                            const delta = e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : -1;
-                            const nextIdx = (idx + delta + THEME_PALETTES.length) % THEME_PALETTES.length;
-                            const nextPalette = THEME_PALETTES[nextIdx];
-                            void selectThemePalette(nextPalette.id);
-                            const cards = (e.currentTarget as HTMLElement).parentElement?.querySelectorAll<HTMLButtonElement>('[role="radio"]');
-                            cards?.[nextIdx]?.focus();
-                        }}
-                    >
-                        <div class="glean-palette-preview" style="background: linear-gradient(135deg, {palette.brand} 0%, {palette.brandHover} 100%);">
-                            <span class="glean-palette-dot" style="background: {palette.accentWheat};"></span>
-                        </div>
-                        <div class="glean-palette-info">
-                            <div class="glean-palette-name">{t(i18n, palette.nameKey)}</div>
-                            <div class="glean-palette-desc">{t(i18n, palette.descriptionKey)}</div>
-                        </div>
-                        {#if currentThemePalette === palette.id}
-                            <span class="glean-palette-check" aria-hidden="true"><svg class="glean-icon glean-icon--sm" aria-hidden="true"><use href="#iconGleanCheck" /></svg></span>
-                        {/if}
-                    </button>
-                {/each}
-            </div>
-        </div>
-
         <div class="glean-set-group">
             <div class="glean-set-row">
                 <div class="glean-set-row__lb">
@@ -1118,6 +1060,15 @@ async function doMountBoard() {
                     {exportBusy === "markdownArchive" ? t(i18n, "settings.exporting") : t(i18n, "settings.exportMarkdownArchive")}
                 </button>
             </div>
+            <div class="glean-set-row">
+                <div class="glean-set-row__lb">
+                    {t(i18n, "unregister.listTitle")}
+                    <div class="glean-set-row__desc">{t(i18n, "unregister.entryDesc")}</div>
+                </div>
+                <button type="button" class="glean-btn glean-action-btn" onclick={() => facade.openUnregisteredDocsDialog?.()}>
+                    {t(i18n, "unregister.entryButton")}
+                </button>
+            </div>
             {#if exportError}
                 <div class="glean-set-row" role="alert">
                     <span class="glean-settings__error">{exportError}</span>
@@ -1391,7 +1342,7 @@ async function doMountBoard() {
     }
 
     .glean-settings__nav {
-        flex: 0 0 220px;
+        flex: 0 0 204px;
         min-width: 0;
         display: flex;
         flex-direction: column;
@@ -1412,8 +1363,8 @@ async function doMountBoard() {
         height: 36px;
         flex: 0 0 36px;
         border-radius: var(--glean-radius-md);
-        background: var(--glean-primary-soft);
-        color: var(--glean-accent-b);
+        background: var(--glean-gm-accent-wash, #EEF0FD);
+        color: var(--glean-gm-accent-ink, #4756BC);
         box-shadow: none;
     }
 
@@ -1525,6 +1476,7 @@ async function doMountBoard() {
         background: var(--glean-inset-surface);
         color: var(--glean-ink-2);
         font-size: 11px;
+        font-variant-numeric: tabular-nums;
         line-height: 20px;
     }
 
@@ -1606,7 +1558,7 @@ async function doMountBoard() {
     }
 
     .glean-settings__page-title {
-        font-size: 26px;
+        font-size: 20px;
         font-weight: 650;
         line-height: 1.3;
         overflow-wrap: anywhere;
@@ -1614,8 +1566,8 @@ async function doMountBoard() {
     }
 
     .glean-settings__page-desc {
-        font-size: 14px;
-        line-height: 1.65;
+        font-size: 12px;
+        line-height: 1.6;
         color: var(--glean-ink-2);
     }
 
@@ -1697,8 +1649,8 @@ async function doMountBoard() {
         min-width: 0;
         gap: var(--glean-space-4);
         padding: var(--glean-space-4) var(--glean-space-5);
-        font-size: 14px;
-        line-height: 1.65;
+        font-size: 13px;
+        line-height: 1.6;
         border-color: color-mix(in srgb, var(--glean-border-soft) 85%, transparent);
         box-shadow: none;
     }
@@ -1875,7 +1827,7 @@ async function doMountBoard() {
         }
 
         .glean-settings__page-title {
-            font-size: 24px;
+            font-size: 20px;
         }
 
         .glean-settings__content {
@@ -1992,10 +1944,26 @@ async function doMountBoard() {
 
     @media (prefers-reduced-motion: reduce) {
         .glean-settings__tab,
-        .glean-palette-card,
         .glean-settings .glean-nb {
             transition: none !important;
             transform: none !important;
         }
+    }
+
+    .glean-settings .glean-btn {
+        min-height: 36px;
+        border-radius: 8px;
+    }
+
+    .glean-settings .glean-btn--pri {
+        background: var(--glean-gm-primary-bg, #1E2430);
+        border-color: var(--glean-gm-primary-bg, #1E2430);
+        color: var(--glean-gm-primary-fg, #FFFFFF);
+        box-shadow: none;
+    }
+
+    .glean-settings .glean-btn--pri:hover:not(:disabled) {
+        background: var(--glean-gm-primary-hover, #2C3445);
+        border-color: var(--glean-gm-primary-hover, #2C3445);
     }
 </style>

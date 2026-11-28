@@ -32,7 +32,10 @@
 
     function patchWechatImages(root: HTMLElement): void {
         try {
-            const images = root.querySelectorAll<HTMLImageElement>("img[src*='qpic.cn']");
+            // Zero-Touch：仅在只读预览态 .protyle-preview 修补外链防盗链属性，严禁触碰编辑态 .protyle-wysiwyg DOM
+            const previewRoot = root.querySelector<HTMLElement>(".protyle-preview");
+            if (!previewRoot) return;
+            const images = previewRoot.querySelectorAll<HTMLImageElement>("img[src*='qpic.cn']");
             for (const img of images) {
                 if (img.referrerPolicy !== "no-referrer") {
                     img.referrerPolicy = "no-referrer";

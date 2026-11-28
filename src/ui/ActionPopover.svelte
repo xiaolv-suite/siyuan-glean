@@ -57,11 +57,11 @@
             if (!open || !(target instanceof Node) || element.contains(target) || target === trigger) return;
             close();
         };
-        element.addEventListener("click", handleClick);
+        element.addEventListener("click", handleClick, true);
         element.addEventListener("keydown", onKey);
         document.addEventListener("focusin", onFocusIn, true);
         return () => {
-            element.removeEventListener("click", handleClick);
+            element.removeEventListener("click", handleClick, true);
             element.removeEventListener("keydown", onKey);
             document.removeEventListener("focusin", onFocusIn, true);
         };

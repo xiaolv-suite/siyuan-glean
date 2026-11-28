@@ -8,6 +8,7 @@
     import type { GleanFacade } from "../types";
     import type { ClipStatus } from "../domain/schema";
     import { t } from "../libs/i18n";
+    import { installModalFocus } from "../libs/modal-focus";
     import { lvLaunchpad } from "../libs/notice";
     import { loadUiPrefs, saveUiPrefs, type MobileReaderAppearance, DEFAULT_MOBILE_READER_APPEARANCE } from "../services/prefs";
     import { isMobileKeyboardOpen } from "../domain/mobile-viewport";
@@ -46,55 +47,79 @@
 
     let busyKey = $state<string | null>(null);
     let typographyOpen = $state(false);
+    let typographySheetEl = $state<HTMLElement | null>(null);
     let keyboardHidden = $state(false);
     let syncNotice = $state("");
     let syncNoticeTimer: number | null = null;
     let activeBubble = $state<{ state: string; label: string; desc: string; x: number; y: number } | null>(null);
     let longPressTimer: number | null = null;
+    let bubbleTimer: number | null = null;
     let longPressed = false;
+
+    $effect(() => {
+        const open = typographyOpen;
+        const el = typographySheetEl;
+        if (!open || !el) return;
+        const dispose = installModalFocus(el, {
+            onClose: () => { typographyOpen = false; },
+        });
+        return () => {
+            dispose();
+        };
+    });
 
     // 跨端阅读进度双向取较晚时间戳恢复与微提示
     $effect(() => {
-        if (!docId || typeof window === "undefined") return;
+        const targetDocId = docId;
+        const targetProtyle = protyleElement;
+        if (!targetDocId || typeof window === "undefined") return;
+        let cancelled = false;
 
         void (async () => {
             try {
-                const ctx = await readClipContext(docId);
+                const ctx = await readClipContext(targetDocId);
+                if (cancelled || docId !== targetDocId) return;
                 const remotePos = ctx?.readingPosition ?? null;
                 let localPos: ReadingPosition | null = null;
                 try {
-                    const localRaw = localStorage.getItem(`glean_pos_${docId}`);
+                    const localRaw = localStorage.getItem(`glean_pos_${targetDocId}`);
                     if (localRaw) localPos = parseReadingPosition(JSON.parse(localRaw));
                 } catch {}
 
                 // 双向取较晚时间戳
                 const latestPos = resolveLatestReadingPosition(remotePos, localPos);
-                if (latestPos && protyleElement) {
-                    const restored = restoreReadingPosition(protyleElement, latestPos, docId);
-                    if (restored) {
-                        const viewport = readingViewport(protyleElement);
+                const activeEl = targetProtyle ?? protyleElement;
+                if (latestPos && activeEl && !cancelled && docId === targetDocId) {
+                    const restored = restoreReadingPosition(activeEl, latestPos, targetDocId);
+                    if (restored && !cancelled && docId === targetDocId) {
+                        const viewport = readingViewport(activeEl);
                         if (viewport) {
                             const pct = estimateReadingPercentage(viewport.scrollTop, viewport.scrollHeight, viewport.clientHeight);
                             if (pct !== null && pct > 0) {
                                 syncNotice = t(i18n, "reading.syncedProgress", { pct: `${pct}%` });
                                 if (syncNoticeTimer !== null) clearTimeout(syncNoticeTimer);
                                 syncNoticeTimer = window.setTimeout(() => {
-                                    syncNotice = "";
+                                    if (!cancelled) syncNotice = "";
                                 }, 3200);
                             }
                         }
                     }
                 }
             } catch (err) {
-                console.debug("[glean] 跨端断点读取跳过:", err);
+                if (!cancelled) console.debug("[glean] 跨端断点读取跳过:", err);
             }
         })();
+
+        return () => {
+            cancelled = true;
+        };
     });
 
     // 退出或卸载时自动保存最新进度断点
     onDestroy(() => {
         if (syncNoticeTimer !== null) clearTimeout(syncNoticeTimer);
         if (longPressTimer !== null) clearTimeout(longPressTimer);
+        if (bubbleTimer !== null) clearTimeout(bubbleTimer);
         if (saveTimer !== null) clearTimeout(saveTimer);
         if (!docId || !protyleElement || typeof window === "undefined") return;
         try {
@@ -164,19 +189,29 @@
     function startLongPress(item: { key: ClipStatus; labelKey: string }, e: PointerEvent) {
         longPressed = false;
         if (longPressTimer !== null) clearTimeout(longPressTimer);
+        if (bubbleTimer !== null) {
+            clearTimeout(bubbleTimer);
+            bubbleTimer = null;
+        }
         const target = e.currentTarget as HTMLElement;
         const rect = target.getBoundingClientRect();
         longPressTimer = window.setTimeout(() => {
+            longPressTimer = null;
             longPressed = true;
             lvLaunchpad.haptic(15);
+            const vw = typeof window !== "undefined" ? window.innerWidth : 390;
+            const halfMargin = Math.min(116, Math.max(64, vw * 0.3));
+            const rawCenter = rect.left + rect.width / 2;
+            const clampedX = Math.max(halfMargin, Math.min(rawCenter, Math.max(halfMargin, vw - halfMargin)));
             activeBubble = {
                 state: item.key,
                 label: t(i18n, item.labelKey),
                 desc: t(i18n, `status.desc.${item.key}`),
-                x: rect.left + rect.width / 2,
+                x: clampedX,
                 y: rect.top,
             };
-            setTimeout(() => {
+            bubbleTimer = window.setTimeout(() => {
+                bubbleTimer = null;
                 activeBubble = null;
             }, 2600);
         }, 400);
@@ -317,17 +352,19 @@
     <div
         class="glean-mobile-sheet-backdrop"
         role="presentation"
-        onclick={() => (typographyOpen = false)}
-        onkeydown={(e) => { if (e.key === "Escape") typographyOpen = false; }}
+        onclick={(e) => { if (e.target === e.currentTarget) typographyOpen = false; }}
+        onkeydown={(e) => {
+            if (e.isComposing || e.keyCode === 229) return;
+            if (e.key === "Escape") typographyOpen = false;
+        }}
     >
         <div
+            bind:this={typographySheetEl}
             class="glean-mobile-typography-sheet"
             role="dialog"
             tabindex="-1"
             aria-modal="true"
             aria-label={t(i18n, "mobile.readingBar.typography")}
-            onclick={(e) => e.stopPropagation()}
-            onkeydown={(e) => e.stopPropagation()}
         >
             <div class="glean-mobile-typography-sheet__handle" aria-hidden="true"></div>
             <div class="glean-mobile-typography-sheet__header">

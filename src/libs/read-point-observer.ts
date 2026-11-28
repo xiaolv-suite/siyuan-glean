@@ -260,6 +260,68 @@ export function createReadPointObserver(options: ReadPointObserverOptions): Read
 }
 
 /**
+ * 判断节点是否位于可编辑的 .protyle-wysiwyg 容器内（Zero-Touch 红线守卫）。
+ */
+export function isInWysiwygEditor(el: Element | null | undefined): boolean {
+    if (!el || typeof el.closest !== "function") return false;
+    try {
+        return Boolean(el.closest(".protyle-wysiwyg"));
+    } catch {
+        return false;
+    }
+}
+
+/**
+ * 在 document.body 挂载脱离式呼吸高亮浮层，用于编辑态下替代直接向 .protyle-wysiwyg [data-node-id] 写 class。
+ * 返回清理函数（durationMs > 0 时亦会在到期后自动卸载）。
+ */
+export function showDetachedPulseOverlay(
+    target: HTMLElement,
+    durationMs = 1500,
+    variantClass = "glean-pulse-highlight",
+): () => void {
+    if (typeof document === "undefined" || !document.body || typeof target.getBoundingClientRect !== "function") {
+        return () => {};
+    }
+    const rect = target.getBoundingClientRect();
+    if (rect.width <= 0 && rect.height <= 0) {
+        return () => {};
+    }
+    const overlay = document.createElement("div");
+    overlay.className = `glean-detached-overlay ${variantClass}`;
+    overlay.setAttribute("aria-hidden", "true");
+    overlay.style.position = "fixed";
+    overlay.style.left = `${Math.max(0, rect.left)}px`;
+    overlay.style.top = `${Math.max(0, rect.top)}px`;
+    overlay.style.width = `${Math.max(12, rect.width)}px`;
+    overlay.style.height = `${Math.max(12, rect.height)}px`;
+    overlay.style.pointerEvents = "none";
+    overlay.style.zIndex = "50";
+    overlay.style.margin = "0";
+    document.body.appendChild(overlay);
+
+    let removed = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const cleanup = () => {
+        if (removed) return;
+        removed = true;
+        if (timer !== null) {
+            clearTimeout(timer);
+            timer = null;
+        }
+        try {
+            overlay.remove();
+        } catch {
+            /* ignore */
+        }
+    };
+    if (durationMs > 0) {
+        timer = setTimeout(cleanup, durationMs);
+    }
+    return cleanup;
+}
+
+/**
  * 平滑滚动至视口断点并施加呼吸聚焦动效
  */
 export function scrollAndPulseReadPoint(host: HTMLElement | null, blockId: string | null | undefined): boolean {
@@ -279,9 +341,13 @@ export function scrollAndPulseReadPoint(host: HTMLElement | null, blockId: strin
     if (!target) return false;
 
     target.scrollIntoView({ block: "center", behavior: (typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches) ? "auto" : "smooth" });
-    target.classList.add("glean-pulse-highlight");
-    setTimeout(() => {
-        target.classList.remove("glean-pulse-highlight");
-    }, 1500);
+    if (isInWysiwygEditor(target)) {
+        showDetachedPulseOverlay(target, 1500, "glean-pulse-highlight");
+    } else {
+        target.classList.add("glean-pulse-highlight");
+        setTimeout(() => {
+            target.classList.remove("glean-pulse-highlight");
+        }, 1500);
+    }
     return true;
 }

@@ -7,6 +7,7 @@
 // .glean-stats__distribution { min-width: 0; }。
 import { onDestroy, tick } from "svelte";
 import { showMessage } from "../libs/notice";
+import { installEscapeHandler } from "../libs/modal-focus";
 import type { GleanFacade } from "../types";
 import DistributionList from "./DistributionList.svelte";
 import ActionPopover from "./ActionPopover.svelte";
@@ -348,12 +349,38 @@ async function exportCompletedCsv(): Promise<void> {
 }
 
 function hasBlockingOverlay(): boolean {
+    if (rootEl?.querySelector(":popover-open")) return true;
     if (typeof document === "undefined") return false;
     const overlays = document.querySelectorAll<HTMLElement>(".b3-menu, .b3-dialog, dialog[open], [role='dialog'][aria-modal='true'], .glean-dialog");
-    return Array.from(overlays).some((element) => element.getClientRects().length > 0);
+    return Array.from(overlays).some((element) => element.getClientRects().length > 0 && !(rootEl && element.contains(rootEl)));
 }
 
 let rootEl = $state<HTMLElement | null>(null);
+
+$effect(() => {
+    const root = rootEl;
+    if (!root) return;
+    return installEscapeHandler(root, () => {
+        if (hasBlockingOverlay()) return false;
+        if (completedSearch) {
+            completedSearch = "";
+            return true;
+        }
+        if (searchInputEl && document.activeElement === searchInputEl) {
+            searchInputEl.blur();
+            return true;
+        }
+        if (session && !busy && (saveState === "ready" || saveState === "saved")) {
+            discard();
+            return true;
+        }
+        if (selectedDayDate) {
+            selectedDayDate = "";
+            return true;
+        }
+        return false;
+    });
+});
 
 function onWindowKeyDown(event: KeyboardEvent): void {
     if (event.defaultPrevented || event.isComposing || event.keyCode === 229 || event.repeat) return;
@@ -430,7 +457,7 @@ function onWindowKeyDown(event: KeyboardEvent): void {
 
 <svelte:window onkeydown={onWindowKeyDown} />
 
-<div class="glean-stats" bind:this={rootEl} tabindex="-1" aria-busy={busy}>
+<div class="glean-stats" class:glean-panel--mobile={facade.isMobile} bind:this={rootEl} tabindex="-1" aria-busy={busy}>
     {#if loading && !index.updatedAt}
         <div class="glean-stats__load-state" role="status" aria-live="polite" aria-busy="true">
             <div class="glean-empty__art" aria-hidden="true"><svg><use href="#iconGleanSpark" /></svg></div>
@@ -639,9 +666,15 @@ function onWindowKeyDown(event: KeyboardEvent): void {
                             placeholder={t(i18n, "stats.searchCompletedPlaceholder")}
                             aria-label={t(i18n, "action.search")}
                             onkeydown={(e) => {
-                                if (e.key === "Escape" && completedSearch) {
+                                if (e.isComposing || e.keyCode === 229) return;
+                                if (e.key === "Escape") {
+                                    e.preventDefault();
                                     e.stopPropagation();
-                                    completedSearch = "";
+                                    if (completedSearch) {
+                                        completedSearch = "";
+                                    } else {
+                                        searchInputEl?.blur();
+                                    }
                                 }
                             }}
                         />
@@ -823,9 +856,9 @@ function onWindowKeyDown(event: KeyboardEvent): void {
     }
 
     .glean-stats__overview h2 {
-        font-size: 26px;
-        font-weight: 700;
-        line-height: 1.35;
+        font-size: 16px;
+        font-weight: 600;
+        line-height: 1.4;
         letter-spacing: 0;
     }
 
@@ -1146,7 +1179,10 @@ function onWindowKeyDown(event: KeyboardEvent): void {
         .glean-stats__overview .glean-stats__field {
             width: 100%;
             min-width: 0;
+            height: auto;
             min-height: 44px;
+            line-height: 1.4;
+            padding-block: 8px;
         }
 
         .glean-stats__overview > .glean-stats__metrics {
@@ -1213,7 +1249,7 @@ function onWindowKeyDown(event: KeyboardEvent): void {
         }
 
         .glean-stats__overview h2 {
-            font-size: 24px;
+            font-size: 16px;
         }
 
         .glean-stats__activity {
@@ -1232,7 +1268,10 @@ function onWindowKeyDown(event: KeyboardEvent): void {
         .glean-stats__overview .glean-stats__field {
             width: 100%;
             min-width: 0;
+            height: auto;
             min-height: 44px;
+            line-height: 1.4;
+            padding-block: 8px;
         }
 
         .glean-stats__metric,

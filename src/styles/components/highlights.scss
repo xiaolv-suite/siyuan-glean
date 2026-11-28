@@ -542,6 +542,7 @@
 }
 
 @container glean-workbench (max-width: 640px) {
+    .glean-panel--shell:not(.glean-panel--mobile) {
     .glean-highlights {
         gap: var(--glean-space-2) !important;
         padding-inline: var(--glean-space-1) !important;
@@ -699,6 +700,7 @@
             padding: 2px 8px !important;
             font-size: 11px !important;
         }
+    }
     }
 }
 

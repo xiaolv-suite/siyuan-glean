@@ -256,7 +256,7 @@
                                 <span class="glean-fold-card__concept">{node.concept}</span>
                             {/if}
                             {#if node.aiEnriched}
-                                <span class="glean-fold-card__concept" style="background:color-mix(in srgb, var(--lv-brand, #0d9488) 12%, transparent);color:var(--lv-brand, #0d9488);border-color:color-mix(in srgb, var(--lv-brand, #0d9488) 25%, transparent)">✨ AI 提炼</span>
+                                <span class="glean-fold-card__concept" style="background:var(--glean-gm-accent-wash, #EEF0FD);color:var(--glean-gm-accent-ink, #4756BC);border-color:var(--glean-gm-accent-line, #D7DCF9)">✨ AI 提炼</span>
                             {/if}
                         </div>
                         <div class="glean-fold-card__ops">

@@ -227,6 +227,9 @@ async function enrichClipInner(plugin: Plugin, docId: string, settings: GleanSet
         currentSettings = activeAiSettings(plugin, settings);
         if (!aiEnabled(currentSettings)) return { ok: false, duplicates: [], skipped: "off" };
         const existingVocabulary = await loadExistingTagVocabulary(plugin, docId);
+        if (options.signal?.aborted) {
+            return { ok: false, duplicates: [], skipped: "error", aborted: true };
+        }
         const parsed: EnrichResult | null = parseEnrichResponse(typeof llm.text === "string" ? llm.text : "", existingVocabulary);
         if (!parsed) {
             await appendLog(plugin, docId, "parse", "模型响应无法解析为 JSON，已跳过");

@@ -603,6 +603,13 @@
                         >
                             <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanCamera" /></svg> <span>{attrs?.snapshot ? t(i18n, "snapshot.open") : t(i18n, "snapshot.take")}</span>
                         </button>
+                        <button
+                            type="button"
+                            class="glean-btn glean-btn--ghost"
+                            onclick={() => facade.openUnregisterDialog?.(entry.id)}
+                        >
+                            <svg class="glean-icon glean-icon--xs" aria-hidden="true"><use href="#iconGleanArrowUp" /></svg> <span>{t(i18n, "action.unregister")}</span>
+                        </button>
                     {/if}
                 </ActionPopover>
                 <button type="button" class="glean-btn glean-btn--ghost" onclick={onClose}>{t(i18n, "preview.close")}</button>
@@ -671,7 +678,7 @@
                 {:else if !attrs}
                     <span class="glean-preview__state glean-preview__state--loading" role="status" aria-live="polite">{t(i18n, "panel.loading")}</span>
                 {:else if candidate}
-                    <button type="button" class="glean-btn glean-btn--sm" disabled={busy || !normalizeUrl(sourceUrl)} onclick={() => confirm()}>{t(i18n, "action.addToInbox")}</button>
+                    <button type="button" class="glean-btn glean-btn--sm" disabled={busy || !normalizeUrl(sourceUrl)} onclick={() => confirm()}>{t(i18n, "action.addToLibrary")}</button>
                     {#if !sourceUrl}<button type="button" class="glean-btn glean-btn--sm" disabled={busy} onclick={() => confirm(true)}>{t(i18n, "candidate.captureLocal")}</button>{/if}
                     <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm" disabled={busy} onclick={editUrl}>{t(i18n, "candidate.fixUrl")}</button>
                     <button type="button" class="glean-btn glean-btn--ghost glean-btn--sm" disabled={busy} onclick={() => { const id = entry.id; void process(() => excludePreviewCandidate(facade.pluginInstance, id), "msg.candidateExcluded"); }}>{t(i18n, "candidate.exclude")}</button>

@@ -109,8 +109,8 @@
         bottom: calc(100% + 5px);
         left: 50%;
         transform: translateX(-50%) translateY(4px);
-        background: #18181B;
-        color: #FFFFFF;
+        background: var(--glean-gm-primary-bg);
+        color: var(--glean-gm-primary-fg);
         font-size: 11px;
         font-weight: 500;
         line-height: 1;
@@ -365,8 +365,8 @@
         bottom: calc(100% + 6px);
         left: 50%;
         transform: translateX(-50%) translateY(4px);
-        background: #18181B;
-        color: #FFFFFF;
+        background: var(--glean-gm-primary-bg);
+        color: var(--glean-gm-primary-fg);
         font-size: 11px;
         font-weight: 500;
         line-height: 1;
@@ -753,6 +753,7 @@
 }
 
 @container glean-workbench (max-width: 640px) {
+    .glean-panel--shell:not(.glean-panel--mobile) {
     .glean-stats {
         padding: 8px 10px !important;
         gap: 8px !important;
@@ -848,5 +849,6 @@
 
     .glean-stats__funnel-arrow {
         transform: rotate(90deg) !important;
+    }
     }
 }

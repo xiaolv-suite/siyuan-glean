@@ -5,7 +5,7 @@ import { Dialog, getFrontend } from "siyuan";
 import { mount, unmount } from "svelte";
 import type { Component } from "svelte";
 import { installMobileViewportVars } from "./mobile-viewport";
-import { installModalFocus } from "./modal-focus";
+import { consumeModalEscape, installModalFocus } from "./modal-focus";
 import { isActivationKey } from "../domain/keyboard";
 import pluginManifest from "../../plugin.json";
 import { lvSurfaceStack } from "./notice";
@@ -92,7 +92,10 @@ export const simpleDialog = (args: {
         type: "dialog",
         dismiss: () => {
             if (closed || closing) return false;
-            if (args.canClose?.() === false) return false;
+            const escapeState = consumeModalEscape(modalRoot);
+            if (escapeState === "external") return false;
+            if (escapeState === "consume") return "keep";
+            if (args.canClose?.() === false) return "keep";
             requestClose();
             return true;
         },

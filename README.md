@@ -8,7 +8,7 @@
 
 100% 数据主权 · 结构化阅读生命周期 · 视线同焦注记 · 划词金句海报 · 学术文献著录
 
-**当前版本：v1.4.12** ｜ [English Documentation](README.en-US.md) ｜ [更新日志](CHANGELOG.md)
+**当前版本：v1.4.13** ｜ [English Documentation](README.en-US.md) ｜ [更新日志](CHANGELOG.md)
 
 [![Quality gates](https://github.com/xiaolv-suite/siyuan-glean/actions/workflows/ci.yml/badge.svg)](https://github.com/xiaolv-suite/siyuan-glean/actions/workflows/ci.yml)
 [![思源笔记](https://img.shields.io/badge/思源笔记-%3E%3D%203.8.4-brightgreen.svg)](https://b3log.org/siyuan)
@@ -25,19 +25,16 @@
 
 ---
 
-## 🚀 本次更新要点（v1.4.12）
+## 🚀 本次更新要点（v1.4.13）
 
-> **全生态大重构正式版**：本次发布同步升级正式版本号至 `v1.4.12`，包含全部共享中枢协同、性能重构与体验修复：
-- **阅读台预览态划词摘录与 Ghostreader 伴读**：支持在 `.protyle-preview` 预览态直接划词摘录为引述、4 色高亮、块批注、选区翻译与 Ghostreader 行内伴读问答，兼容思源原生只读属性（`custom-sy-readonly` / `custom-siyuan-readonly`），并修复阅读器切换 AI 任务时伴生栏 `AbortController` 误中止与图层穿透模态弹窗问题；
-- **全 15 处 AI 与语义检索统一等待体验**：全仓 15 处 AI 与语义检索入口全面接入 `.lv-ai-thinking` 动态等待卡片与 `AbortSignal` 实时取消，消除浏览器端 `fetchSyncPost` 阻塞，伴生栏 5 格导航胶囊自适应防裁切；
-- **四级折叠日记区写入与防冲突加固**：阅读足迹与今日拾遗必读计划统一写入当日日记 `#### 🐴 小驴记录` 折叠区（附带统一 LifeLog 属性），优先复用全库既有日记正身并双重过滤 `hpath` 冲突副本；
-- **三大共享中枢深度融合**：接入小驴罗盘（顶栏直达拾遗主页与「今日阅读池 / 剪藏剪贴板 / 稍后读收件箱」次级行动）、全生态 AI 路由、块助手 1–8 原生底座与自定义双击触发、统一通知/活动总线与全生态联合灾备恢复；
-- **零 `:has()` / 零高模糊 60fps 极速性能**：全量样式严格 0 `:has()`、0 全局 `:root` 变量泄露、0 `blur(≥15px)`，移除全局 `MutationObserver` 与冗余死模块，将 7 份轮转备份延后至冷启后空闲调度；
-- **智能排版优化与 AI 批处理面板**：新增文章智能排版对比弹窗与 AI 批量富化工作台，并全面清理过期内部术语与历史内部标识。
+- **石墨雾灰极简 4 入口导航与阅读重塑**：收敛主导航至 4 个核心入口，重构阅读台与高亮摘录区；对齐家族像素规范，清除残留 `#0D9488` 青色并确保移动端 `44px` 触控区；
+- **安全移出读库与走查盲区清零**：支持安全移出读库（保留原笔记正文）与卡片态持久化；修复 Dock 子筛选、暗色 WYSIWYG 对比度、`ReaderSearch` Esc 焦点归位及高亮角标同步；
+- **全生态公共底座合龙**：同步最新 `lv-kit` 零 Protyle DOM 残留治理与 Batch 1 A1–A4 规范，严格保持零 `:has(` 与 60fps 渲染。
 
 <details>
-<summary>展开查看历史版本更新记录（v1.4.11 及更早版本 · 完整记录见 CHANGELOG.md）</summary>
+<summary>展开查看历史版本更新记录（v1.4.12 及更早版本 · 完整记录见 CHANGELOG.md）</summary>
 
+- **v1.4.12**：全生态大重构正式版，预览态划词摘录与 Ghostreader、全 15 处 `.lv-ai-thinking` 等待卡、`#### 🐴 小驴记录` 四级折叠日记区、三大共享中枢与 60fps 性能重构。
 - **v1.4.11**：轮转备份延后调度、索引代际守卫与上下文过滤、冷启优化回归验证。
 
 - **v1.4.8**：思源 3.8.10+ 原生适配（专注模式折叠停靠栏、原生文档树菜单）、标签别名 Escape 退出、移动端状态组修复。

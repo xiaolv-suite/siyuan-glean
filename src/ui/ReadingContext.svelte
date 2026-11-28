@@ -352,7 +352,7 @@
         <button type="button" class="glean-reading-context__source-btn" disabled={refreshing} onclick={() => void reload()}>{t(i18n, "action.retry")}</button>
     </aside>
 {:else if context}
-    <aside bind:this={rootEl} class="glean-reading-context" class:glean-reading-context--pill={pillMode} aria-labelledby={titleId} aria-busy={busy || measuring || refreshing}>
+    <aside bind:this={rootEl} class="glean-reading-context" class:glean-reading-context--pill={pillMode} class:glean-reading-context--mobile={facade.isMobile} aria-labelledby={titleId} aria-busy={busy || measuring || refreshing}>
         <div class="glean-reading-context__main">
             <div class="glean-reading-context__headline">
                 <span class={`glean-dot glean-dot--${context.status}`} aria-hidden="true"></span>
@@ -406,11 +406,14 @@
             <ClipStatusActions
                 i18n={i18n}
                 status={context.status}
+                contentType={context.contentType}
+                url={context.url}
                 disabled={busy}
                 onStartReading={startReading}
                 onSetStatus={setStatus}
                 onArchive={() => { if (context) facade.openArchiveDialog(context.id); }}
                 onRestore={() => { if (context) facade.openRestoreDialog(context.id); }}
+                onUnregister={() => { if (context) facade.openUnregisterDialog?.(context.id); }}
             />
             <button type="button" class="glean-reading-context__source-btn" title={t(i18n, "action.copyBlockRef")} aria-label={t(i18n, "action.copyBlockRef")} onclick={() => void copyDocBlockRef()}>
                 <svg class="glean-icon" aria-hidden="true"><use href="#iconGleanCopy" /></svg>

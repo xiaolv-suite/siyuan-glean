@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { tick } from "svelte";
+    import { tick, untrack } from "svelte";
     import type { App } from "siyuan";
-    import { showMessage } from "../libs/notice";
+    import { lvSurfaceStack, showMessage } from "../libs/notice";
     import { t, type I18nBundle } from "../libs/i18n";
     import { installModalFocus } from "../libs/modal-focus";
     import {
@@ -51,8 +51,6 @@
 
     let dialogEl = $state<HTMLElement | null>(null);
     let textareaEl = $state<HTMLTextAreaElement | null>(null);
-    let returnFocus: HTMLElement | null = null;
-    let disposeFocus = () => {};
 
     let memoDraft = $state("");
     let colorDraft = $state<"yellow" | "red" | "blue" | "green">("yellow");
@@ -66,43 +64,68 @@
     let confirmDelete = $state(false);
     let activeItemId = "";
 
+    // 焦点陷阱与 Esc 关闭生命周期独立于 item 对象引用刷新（如追加追记/局部保存触发的 reload）
     $effect(() => {
-        const current = item;
-        if (!current) {
+        const open = Boolean(item);
+        const el = dialogEl;
+        if (!open || !el) return;
+        const previousFocus = typeof document !== "undefined" && document.activeElement instanceof HTMLElement
+            ? document.activeElement
+            : null;
+        const popSurface = lvSurfaceStack.push({
+            id: `glean-ann-editor-${instanceId}`,
+            type: "dialog",
+            dismiss: () => {
+                if (saving || deleting) return "keep";
+                onClose();
+                return true;
+            },
+        });
+        const dispose = installModalFocus(el, {
+            onClose: () => onClose(),
+            returnFocus: previousFocus,
+        });
+        let active = true;
+        void tick().then(() => {
+            if (active && dialogEl === el) {
+                textareaEl?.focus({ preventScroll: true });
+            }
+        });
+        return () => {
+            active = false;
+            popSurface();
+            dispose();
+        };
+    });
+
+    // 表单草稿仅在切换条目 ID 时重同步，同 ID 局部刷新不卸载焦点陷阱
+    $effect(() => {
+        const currentId = item?.id ?? "";
+        if (!currentId) {
             activeItemId = "";
-            disposeFocus();
-            disposeFocus = () => {};
             return;
         }
-        if (current.id !== activeItemId) {
-            activeItemId = current.id;
-            returnFocus = typeof document !== "undefined" && document.activeElement instanceof HTMLElement
-                ? document.activeElement
-                : null;
-            memoDraft = current.memo || "";
-            const normColor = (current.color === "red" || current.color === "blue" || current.color === "green")
-                ? current.color
-                : "yellow";
-            colorDraft = normColor;
-            tagDraft = current.annotationTag || "";
-            repliesDraft = current.replies ? [...current.replies] : [];
-            replyInput = "";
-            confirmDelete = false;
-            void tick().then(() => {
-                if (dialogEl) {
-                    disposeFocus();
-                    disposeFocus = installModalFocus(dialogEl, {
-                        onClose,
-                        returnFocus,
-                    });
-                    textareaEl?.focus({ preventScroll: true });
-                }
+        if (currentId !== activeItemId) {
+            activeItemId = currentId;
+            untrack(() => {
+                const current = item;
+                if (!current) return;
+                memoDraft = current.memo || "";
+                const normColor = (current.color === "red" || current.color === "blue" || current.color === "green")
+                    ? current.color
+                    : "yellow";
+                colorDraft = normColor;
+                tagDraft = current.annotationTag || "";
+                repliesDraft = current.replies ? [...current.replies] : [];
+                replyInput = "";
+                confirmDelete = false;
+                void tick().then(() => {
+                    if (item?.id === currentId) {
+                        textareaEl?.focus({ preventScroll: true });
+                    }
+                });
             });
         }
-        return () => {
-            disposeFocus();
-            disposeFocus = () => {};
-        };
     });
 
     const isDirty = $derived.by(() => {
@@ -242,7 +265,7 @@
         }
         deleting = true;
         try {
-            await deleteAnnotation(item, item.source?.type === "b" ? "delete-block" : "unmark");
+            await deleteAnnotation(item, item.source?.type === "b" && item.annotationKind !== "native-memo" ? "delete-block" : "unmark");
             showMessage(t(i18n, "highlight.deleted"), 2000);
             onDeleted(item.id);
             onClose();

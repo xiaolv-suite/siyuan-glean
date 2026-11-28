@@ -13,7 +13,7 @@ import MigrateDialog from "./ui/MigrateDialog.svelte";
 import ImportDialog from "./ui/ImportDialog.svelte";
 import OnboardingDialog from "./ui/OnboardingDialog.svelte";
 import { loadUiPrefs } from "./services/prefs.ts";
-import { applyThemePaletteToDom, clearThemePaletteFromDom } from "./libs/theme-palette-controller.ts";
+import { clearThemePaletteFromDom } from "./libs/theme-palette-controller.ts";
 import SettingsView from "./ui/SettingsView.svelte";
 import { svelteDialog } from "./libs/dialog.ts";
 import { createDialogSingleton, type DialogSingleton } from "./libs/dialog-singleton.ts";
@@ -49,7 +49,7 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade, IGlean
     searchCleaner?: () => void; mobileEntryCleaner?: () => void; disposeSyncQueue?: () => void;
     tickerUnsubscribe?: () => void; unregisterRaikiri?: () => void;
     disposeReadingContext: (() => void) | null = null; disposeBridge: (() => void) | null = null;
-    cardsReviewedHandler?: () => void; onboardingTimer: number | null = null;
+    cardsReviewedHandler?: () => void; onboardingTimer: number | null = null; private onboardingAutoPrompted = false;
     readonly knownClipDocIds = new Set<string>(); readonly pendingLibraryDocIds = new Map<string, string>();
     readonly destroyedLibraryTabIds = new Set<string>(); readonly pendingReaderDocIds = new Map<string, string>();
     readonly destroyedReaderTabIds = new Set<string>();
@@ -157,18 +157,7 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade, IGlean
 
     onLayoutReady() {
         safePerfMark("lv:siyuan-glean:onLayoutReady:start");
-        void (async () => {
-            try {
-                const prefs = await loadUiPrefs(this);
-                if (!this.loaded) return;
-                applyThemePaletteToDom(null, prefs.themePalette);
-                if (!this.isMobile) {
-                    const onboardingInProgress = prefs.onboardingInterrupted || prefs.onboardingStep !== 1;
-                    if (prefs.onboardingDone || (this.settings.anchorNotebooks.length > 0 && !onboardingInProgress)) return;
-                    this.onboardingTimer = window.setTimeout(() => this.openOnboarding(), 800);
-                }
-            } catch {}
-        })();
+        clearThemePaletteFromDom();
         this.scheduleDeferredBackup(60000);
         if (typeof lvTicker?.onDateCross === "function") {
             this.tickerUnsubscribe = lvTicker.onDateCross("siyuan-glean", () => {
@@ -221,6 +210,7 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade, IGlean
         this.readerOpenRequest += 1; this.libraryOpenRequest += 1; this.pendingLibraryDocIds.clear(); this.destroyedLibraryTabIds.clear();
         this.pendingReaderDocIds.clear(); this.destroyedReaderTabIds.clear();
         if (this.onboardingTimer !== null) { clearTimeout(this.onboardingTimer); this.onboardingTimer = null; }
+        this.onboardingAutoPrompted = false;
         if (typeof window !== "undefined" && typeof window.removeEventListener === "function" && this.cardsReviewedHandler) {
             window.removeEventListener("lv-cards:reviewed", this.cardsReviewedHandler);
             window.removeEventListener("lv-exam:stats", this.cardsReviewedHandler);
@@ -375,13 +365,30 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade, IGlean
             }
             return;
         }
-        void this.openLibraryTab().then(() => {
+        void this.openLibraryTab().then((openedTabId) => {
             if (targetView) {
                 document.dispatchEvent(new CustomEvent("glean:switch-view", { detail: { view: targetView } }));
+            }
+            if (openedTabId) {
+                void this.maybePromptOnboardingOnWorkspaceOpen();
             }
         }).catch((err) => {
             console.warn("[glean] 打开工作台页签失败:", err);
         });
+    }
+    private async maybePromptOnboardingOnWorkspaceOpen(): Promise<void> {
+        if (!this.loaded || this.onboardingAutoPrompted) return;
+        this.onboardingAutoPrompted = true;
+        try {
+            const prefs = await loadUiPrefs(this);
+            if (!this.loaded) return;
+            if (!this.isMobile) {
+                const onboardingInProgress = prefs.onboardingInterrupted || prefs.onboardingStep !== 1;
+                if (prefs.onboardingDone || (this.settings.anchorNotebooks.length > 0 && !onboardingInProgress)) return;
+                if (this.onboardingTimer !== null) clearTimeout(this.onboardingTimer);
+                this.onboardingTimer = window.setTimeout(() => this.openOnboarding(), 320);
+            }
+        } catch {}
     }
     openWorkbench(targetView?: string): void { this.openPanel(targetView); }
     toggleDockSidebar(): void {
@@ -458,7 +465,7 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade, IGlean
         menu.addSeparator(); menu.addItem({ iconHTML: "", label: t(this.i18n, "topbarMenu.roaming"), click: () => void this.triggerRoamingPick() });
         menu.addSeparator(); menu.addItem({ iconHTML: "", label: t(this.i18n, "topbarMenu.settings"), click: () => this.openSettings() });
     }
-    openArchiveDialog(docId: string): void { this.readerActions.openArchiveDialog(docId); } openRestoreDialog(docId: string): void { this.readerActions.openRestoreDialog(docId); }
+    openArchiveDialog(docId: string): void { this.readerActions.openArchiveDialog(docId); } openRestoreDialog(docId: string): void { this.readerActions.openRestoreDialog(docId); } openUnregisterDialog(docId: string): void { this.readerActions.openUnregisterDialog(docId); } openUnregisteredDocsDialog(): void { this.readerActions.openUnregisteredDocsDialog(); }
     addCurrentDocToLibrary(): Promise<void> { return this.inboxSync.addCurrentDocToLibrary(); }
     private readonly onMenuContent = (e: any): void => { this.inboxSync.onMenuContent(e); };
     private readonly onMenuInbox = (e: any): void => { this.inboxSync.onMenuInbox(e); };
@@ -469,8 +476,8 @@ export default class LvGleanPlugin extends Plugin implements GleanFacade, IGlean
     };
     private readonly onSyncEnd = (): void => { if (this.loaded) this.notifyDataChanged(); };
     enrichCurrentDoc(): Promise<void> { return this.inboxSync.enrichCurrentDoc(); }
-    openOnboarding(): void { if (this.onboardingTimer !== null) { clearTimeout(this.onboardingTimer); this.onboardingTimer = null; } this.openOnboardingSingleton(undefined); }
-    openWorkbenchPopup(initialPreviewId?: string): void { this.openWorkbenchPopupSingleton(initialPreviewId); }
+    openOnboarding(): void { if (this.onboardingTimer !== null) { clearTimeout(this.onboardingTimer); this.onboardingTimer = null; } this.onboardingAutoPrompted = true; this.openOnboardingSingleton(undefined); }
+    openWorkbenchPopup(initialPreviewId?: string): void { this.openWorkbenchPopupSingleton(initialPreviewId); void this.maybePromptOnboardingOnWorkspaceOpen(); }
     openMigrate(): void { (this.openMigrateSingleton ??= createDialogSingleton((_args, onClose) => svelteDialog({ title: t(this.i18n, "migrate.title"), closeLabel: t(this.i18n, "action.close"), component: MigrateDialog, props: { facade: this }, width: "720px", height: "560px", callback: onClose })))(undefined); }
     openImport(): void { (this.openImportSingleton ??= createDialogSingleton((_args, onClose) => svelteDialog({ title: t(this.i18n, "import.title"), closeLabel: t(this.i18n, "action.close"), component: ImportDialog, props: { facade: this }, width: "720px", height: "560px", callback: onClose })))(undefined); }
     openSetting(): void { this.openSettings(); } openSettings(): void { (this.openSettingsSingleton ??= createDialogSingleton((_args, onClose) => svelteDialog({ title: t(this.i18n, "settings.title"), closeLabel: t(this.i18n, "action.close"), component: SettingsView, props: { facade: this }, width: "920px", height: "720px", callback: onClose })))(undefined); }

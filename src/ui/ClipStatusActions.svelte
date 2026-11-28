@@ -6,12 +6,15 @@
      * 因而可以在 Dock、桌面行表、看板和移动端共用同一套语义。
      */
     import type { ClipStatus } from "../domain/schema";
+    import { openTargetForCarrier } from "../domain/carrier";
     import type { I18nBundle } from "../libs/i18n";
     import { t } from "../libs/i18n";
 
     interface Props {
         i18n: I18nBundle;
         status: ClipStatus;
+        contentType?: string;
+        url?: string;
         disabled?: boolean;
         /** 阅读页签将完成动作提升到顶栏；其他画布保持默认显示。 */
         showDone?: boolean;
@@ -21,9 +24,11 @@
         onArchive?: () => void | Promise<void>;
         /** 提供时按宿主位置分流恢复；缺省回落到直接写入 later。 */
         onRestore?: () => void | Promise<void>;
+        /** 提供时显示「移出拾遗库（保留原文档）」入口。 */
+        onUnregister?: () => void | Promise<void>;
     }
 
-    let { i18n, status, disabled = false, showDone = true, onStartReading, onSetStatus, onArchive, onRestore }: Props = $props();
+    let { i18n, status, contentType, url, disabled = false, showDone = true, onStartReading, onSetStatus, onArchive, onRestore, onUnregister }: Props = $props();
     let pending = $state(false);
 
     async function invoke(action: () => void | Promise<void>) {
@@ -41,6 +46,7 @@
     }
 
     function labelForStart(): string {
+        if (openTargetForCarrier(contentType, url) === "source") return t(i18n, "action.openSourceLink");
         if (status === "reading") return t(i18n, "action.continueReading");
         if (status === "done") return t(i18n, "action.readAgain");
         return t(i18n, "action.startReading");
@@ -74,7 +80,7 @@
             <button
                 class="glean-status-actions__btn"
                 disabled={disabled || pending || status === "done"}
-                title={t(i18n, "action.markDone")}
+                title={t(i18n, "action.markDoneHint")}
                 onclick={(event) => { stop(event); void invoke(() => onSetStatus("done")); }}
             ><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanCheck" /></svg><span>{t(i18n, "action.markDone")}</span></button>
         {/if}
@@ -85,5 +91,13 @@
             title={t(i18n, "action.archive")}
             onclick={(event) => { stop(event); void invoke(() => onArchive ? onArchive() : onSetStatus("archived")); }}
         ><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanArchive" /></svg><span>{t(i18n, "action.archive")}</span></button>
+    {/if}
+    {#if onUnregister}
+        <button
+            class="glean-status-actions__btn glean-status-actions__btn--unregister"
+            disabled={disabled || pending}
+            title={t(i18n, "action.unregister")}
+            onclick={(event) => { stop(event); void invoke(onUnregister); }}
+        ><svg class="glean-icon" aria-hidden="true"><use href="#iconGleanArrowUp" /></svg><span>{t(i18n, "action.unregister")}</span></button>
     {/if}
 </div>

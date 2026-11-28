@@ -7,7 +7,7 @@
 import { normalizeAuthor } from "./author.ts";
 import { parseReadingPosition, serializeReadingPosition, type ReadingPosition } from "./reading-position.ts";
 
-export const PLUGIN_VERSION = "1.4.12" as const;
+export const PLUGIN_VERSION = "1.4.13" as const;
 
 export const CLIP_STATUSES = ["inbox", "later", "reading", "done", "archived"] as const;
 export type ClipStatus = (typeof CLIP_STATUSES)[number];
@@ -51,6 +51,8 @@ export const ATTR = {
     highlightColor: "custom-clip-hl-color",
     /** 引述金句块属性标记（供多维数据库 AV Collection 自动化感知收集，符合 Issue #17 建议） */
     gleanHighlight: "custom-lv-glean-highlight",
+    /** 高亮块已通过生态桥成功创建闪卡的持久标记（不参与文章根块 ClipAttrs 投影）。 */
+    gleanCarded: "custom-lv-glean-carded",
     time: "custom-clip-time",
     status: "custom-clip-status",
     /** 最近一次显式标记读完的时刻；缺键 = 完成时间未知（D-0028）。 */
@@ -72,6 +74,8 @@ export const ATTR = {
     timeSource: "custom-clip-time-source",
     /** 用户确认“不是文章”后写入，避免候选扫描反复打扰。 */
     excluded: "custom-clip-excluded",
+    /** 用户主动“移出拾遗库（保留原文档）”后写入；默认抑制候选自动复活，重新入库时删除。 */
+    unregistered: "custom-clip-unregistered",
     /** 插件内部宿主文档标志；新建时写入，旧文档由候选规则回退推断。 */
     internal: "custom-clip-internal",
 } as const;
@@ -104,6 +108,7 @@ export interface ClipAttrs {
     contentType?: ClipContentType;
     timeSource?: ClipTimeSource;
     excluded?: boolean;
+    unregistered?: boolean;
     internal?: boolean;
 }
 
@@ -221,6 +226,7 @@ export function parseClipAttrs(ial: Record<string, string | undefined>): ClipAtt
         // 旧数据没有来源标记；保留原时间且如实呈现为 legacy。
         timeSource: parseTimeSource(ial[ATTR.timeSource]) ?? (ial[ATTR.time] ? "legacy" : undefined),
         excluded: parseFlag(ial[ATTR.excluded]),
+        unregistered: parseFlag(ial[ATTR.unregistered]),
         internal: parseFlag(ial[ATTR.internal]),
     };
 }
@@ -302,6 +308,7 @@ export function serializePatch(patch: ClipPatch): AttrPatch {
     if (patch.contentType !== undefined) put(ATTR.contentType, patch.contentType ?? null);
     if (patch.timeSource !== undefined) put(ATTR.timeSource, patch.timeSource ?? null);
     if (patch.excluded !== undefined) put(ATTR.excluded, patch.excluded ? "true" : null);
+    if (patch.unregistered !== undefined) put(ATTR.unregistered, patch.unregistered ? "true" : null);
     if (patch.internal !== undefined) put(ATTR.internal, patch.internal ? "true" : null);
     return out;
 }
